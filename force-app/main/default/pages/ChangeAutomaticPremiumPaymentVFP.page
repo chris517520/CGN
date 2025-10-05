@@ -1,0 +1,509 @@
+<apex:page standardController="Policy_Change_Request__c" extensions="ManagePolicyChangeCRTL" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+    
+        <style>
+            .form-toggle-tab {
+                padding: 10px;
+                border-bottom: 1px solid #f2f2f2;
+                font-weight: bold;
+            }
+            
+            .form-toggle-content {
+                padding: 10px 0px 10px 0px;
+            }
+            
+            .short-form-field{
+                width: 30% !important;
+                text-align: center;
+            }
+            
+            select{
+                width: 100%;
+            }
+            
+            ul{
+                margin: 2px 0;
+            }
+            
+            li{
+                margin: 5px 0;
+            }
+            
+            .hidden-input-field{
+                height:0px; 
+                width:0px; 
+                border:0px !important;
+                webkit-appearance: none;
+            }
+            
+        </style>
+    
+        <apex:define name="additionalLibraries">
+             <!--additional css, bootstrap, jquery,js libraries-->
+             <!-- CR-56_Link_20220214 -->
+		     <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+             <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+             <apex:outputPanel rendered="{!userLanguage == 'zh_TW'}" layout="none">
+                 <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+             </apex:outputPanel>
+        </apex:define>
+    </head>
+
+    <div class="bs">
+        <div id="form-container" class="bs container">
+        
+            <!--Form Information-->
+            <apex:form id="change-auto-premium-payment">
+                
+                <div class="bs col-sm-12 col-xs-12 cigna-fg-blue-light form-toggle-tab">
+                        {!$Label.Automatic_Premium_Payment} 
+                </div>
+                <div id="auto-premium-payment-action-info" class="bs col-sm-12 col-xs-12 form-toggle-content">
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-12 col-xs-12">
+                            <div class="bs row form-field">
+                                <div class="bs col-sm-12 col-xs-12">
+                                    <div class="form-note">{!$Label.Auto_Premi_Payment_Note}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">{!$Label.Option}</div>
+                        <div class="bs col-sm-9">
+                            <apex:inputField id="auto-premium-payment-action-list" value="{!Request.Automatic_Premium_Payment_Action__c}" styleclass="form-field-style-select" onchange="changeAction(this.value)" /> 
+                        </div>
+                    </div>
+                    <div id="auto-premium-payment-action-list-apply" class="bs row auto-premium-payment-action-list-content" style="display:none;">
+                        <div class="bs col-sm-12 col-xs-12">
+                            <div class="bs row">
+                                <div class="bs col-sm-3 col-xs-12">
+                                    {!$Label.Auto_Premi_Payment_Period_from}
+                                </div>
+                                <div class="bs col-sm-9 col-xs-12" >
+                                    <apex:inputText id="apply-from-month" style="width:30%;" value="{!Request.Effective_Start_Date_Month__c}" html-placeholder="{!$Label.MM}" maxlength="2" styleClass="text-center form-field-style" onblur="checkEffectiveDate('applyfrom')"></apex:inputText>
+                                    <apex:inputText id="apply-from-year" style="width:50%;" value="{!Request.Effective_Start_Date_Year__c}" html-placeholder="{!$Label.YYYY}" maxlength="4" styleClass="text-center form-field-style" onblur="checkEffectiveDate('applyfrom')">&nbsp;/&nbsp;</apex:inputText>
+                                </div>
+                                <div class="bs col-sm-offset-3 col-xs-12">
+                                    <apex:inputText id="Required-number-apply-effective-date-from" styleClass="hidden-input-field" onfocus="hiddenonblur(this)"/>
+                                </div>
+                            </div>
+                            <div class="bs row">
+                                <div class="bs col-sm-3 col-xs-12">
+                                    {!$Label.To}
+                                </div>
+                                <div class="bs col-sm-9 col-xs-12" >
+                                    <apex:inputText id="apply-to-month" style="width:30%;" value="{!Request.Effective_End_Date_Month__c}" html-placeholder="{!$Label.MM}" maxlength="2" styleClass="text-center form-field-style" onblur="checkEffectiveDate('applyto')"></apex:inputText>
+                                    <apex:inputText id="apply-to-year" style="width:50%;" value="{!Request.Effective_End_Date_Year__c}" html-placeholder="{!$Label.YYYY}" maxlength="4" styleClass="text-center form-field-style" onblur="checkEffectiveDate('applyto')">&nbsp;/&nbsp;</apex:inputText>
+                                    {!$Label.Auto_Premi_Payment_Period_inclusive}
+                                </div>
+                                <div class="bs col-sm-offset-3 col-xs-12">
+                                    <apex:inputText id="Required-number-apply-effective-date-to" styleClass="hidden-input-field" onfocus="hiddenonblur(this)"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="auto-premium-payment-action-list-apply-further" class="bs row auto-premium-payment-action-list-content" style="display:none;">
+                        <div class="bs col-sm-12 col-xs-12">
+                            <div class="bs row">
+                                <div class="bs col-sm-3 col-xs-12">
+                                    {!$ObjectType.Policy_Change_Request__c.fields.Effective_Month__c.Label}
+                                </div>
+                                <div class="bs col-sm-9 col-xs-12" >
+                                    <apex:inputText id="apply-further-month" style="width:20%;" value="{!Request.Effective_Month__c}" html-placeholder="{!$Label.MM}" maxlength="2" styleClass="text-center form-field-style" onblur="checkEffectiveDate('further')"></apex:inputText>
+                                    <apex:inputText id="apply-further-year" style="width:40%;" value="{!Request.Effective_Year__c}" html-placeholder="{!$Label.YYYY}" maxlength="4" styleClass="text-center form-field-style" onblur="checkEffectiveDate('further')">&nbsp;/&nbsp;</apex:inputText>
+                                </div>
+                                <div class="bs col-sm-offset-3 col-xs-12">
+                                    <input id="number-apply-further-effective-date" class="hidden-input-field" onfocus="hiddenonblur(this)"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="auto-premium-payment-action-list-cancel" class="bs row auto-premium-payment-action-list-content" style="display:none;">
+                        <div class="bs col-sm-12 col-xs-12">
+                            <div class="bs row form-field">
+                                <div class="bs col-sm-3 col-xs-12">
+                                    {!$ObjectType.Policy_Change_Request__c.fields.Effective_Month__c.Label}
+                                </div>
+                                <div class="bs col-sm-9 col-xs-12" >
+                                    <apex:inputText id="cancel-month" style="width:20%;" value="{!Request.Effective_Month_Cancel__c}" html-placeholder="{!$Label.MM}" maxlength="2" styleClass="text-center form-field-style" onblur="checkEffectiveDate('cancel')" ></apex:inputText>
+                                    <apex:inputText id="cancel-year" style="width:40%;" value="{!Request.Effective_Year_Cancel__c}" html-placeholder="{!$Label.YYYY}" maxlength="4" styleClass="text-center form-field-style" onblur="checkEffectiveDate('cancel')">&nbsp;/&nbsp;</apex:inputText>
+                                </div>
+                                <div class="bs col-sm-offset-3 col-xs-12">
+                                    <input id="number-cancel-effective-date" class="hidden-input-field" onfocus="hiddenonblur(this)"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!---sequence--->
+                <div id="sequence-area">
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-12 col-xs-12">
+                            {!$Label.Auto_Premi_Payment_Assign_Seq}
+                        </div>
+                        <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>
+                        <div class="bs col-xs-6 col-sm-6 sequence-confirm onclick-pointer cigna-fg-gray-dark text-center" onclick="showAssignSeq(this,'yes')">
+                            <i class="fa fa-check-circle-o" style="padding-right:20px;" />{!$Label.Yes}
+                        </div>
+                        <div class="bs col-xs-6 col-sm-6 sequence-confirm onclick-pointer cigna-fg-orange-dark text-center" onclick="showAssignSeq(this,'no')">
+                            <i class="fa fa-times-circle-o" style="padding-right:20px;" />{!$Label.No}
+                        </div>
+                    </div>
+                    <div class="bs row" id="sequence-list" style="display:none;">
+                        <div class="bs col-sm-12 col-xs-12">
+                            <div class="bs row">
+                                <div class="bs row listcontent-header hidden-xs">
+                                   <div class="bs col-sm-4">{!$ObjectType.Policy_Change_Request_Detail__c.fields.Fund_Name__c.Label}</div>
+                                   <div class="bs col-sm-4">{!$ObjectType.Policy_Change_Request_Detail__c.fields.Total__c.Label}</div>
+                                   <div class="bs col-sm-4">{!$ObjectType.Policy_Change_Request_Detail__c.fields.Sequence__c.Label}</div>
+                                </div>
+                                <apex:repeat value="{!ListAppFundDetail}" var="requestDetail">
+                                    <div class="bs row listcontent">
+                                        <div class="bs table-row col-xs-12 col-sm-4" style="padding:0px !important;">
+                                           <div class="bs col-xs-6 visible-xs table-cell">{!$ObjectType.Policy_Change_Request_Detail__c.fields.Fund_Name__c.Label}</div>
+                                           <div class="bs col-xs-6 col-sm-12 table-cell">
+                                               <apex:outputField value="{!requestDetail.Fund_Name__c}" styleclass="form-field-style"/>
+                                           </div>
+                                        </div>
+                                        <div class="bs table-row col-xs-12 col-sm-4" style="padding:0px !important;">
+                                           <div class="bs col-xs-6 visible-xs table-cell">{!$ObjectType.Policy_Change_Request_Detail__c.fields.Total__c.Label}</div>
+                                           <div class="bs col-xs-6 col-sm-12 table-cell"><apex:outputField value="{!requestDetail.Total__c}" styleclass="form-field-style"/></div>
+                                        </div>
+                                        <div class="bs table-row col-xs-12 col-sm-4" style="padding:0px !important;">
+                                           <div class="bs col-xs-6 visible-xs table-cell">{!$ObjectType.Policy_Change_Request_Detail__c.fields.Sequence__c.Label}</div>
+                                           <div class="bs col-xs-6 col-sm-12 table-cell">
+                                               <apex:selectList id="Fund-Sequence" styleClass="bs form-field-style-select cigna-fg-gray-dark onclick-pointer"
+                                                             size="1" value="{!requestDetail.Sequence__c}">
+                                                    <apex:selectOptions value="{!fundSequence}" />
+                                                </apex:selectList>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </apex:repeat>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                                
+                <apex:actionFunction name="SavePolicyChange" action="{!SavePolicyChange}" status="loader-icon" oncomplete="refreshEsignature()" />
+                <apex:actionFunction name="SaveAndQuit" action="{!SavePolicyChange}" status="loader-icon" oncomplete="Cigna.Util.navigateToVFP('PolicyChangeVFP');console.log('app form save!');" rerender="false"/>
+            </apex:form>
+            <script>
+            
+                
+                function changeAction(choice){
+                                    
+                    $('.auto-premium-payment-action-list-content').hide();
+                    
+                    if(choice == "Apply"){
+                        $('#auto-premium-payment-action-list-apply').show();
+                        $('#sequence-area').show();
+                        $('#sequence-btn').show();
+                        $('#sequence-list').hide();
+                        clearSequence();
+                    }else if(choice == "Apply until further notice"){
+                        $('#auto-premium-payment-action-list-apply-further').show();
+                        $('#sequence-area').show();
+                        $('#sequence-btn').show();
+                        $('#sequence-list').hide();
+                        clearSequence();
+                    }else if(choice == "Cancel"){
+                        $('#auto-premium-payment-action-list-cancel').show();
+                        $('#sequence-area').hide();
+                        $('#sequence-btn').hide();
+                        $('#sequence-list').hide();
+                        clearSequence();
+                    }
+                    
+                }
+                
+                function clearSequence(){
+                    $("select[id*='Fund-Sequence']").each(function(idx, elem){
+                        $(elem).val('');
+                    });
+                }
+                
+                function showAssignSeq(input,option){
+                    if(option == 'no'){
+                       $('#sequence-list').hide();
+                    }else{
+                        $('#sequence-list').show();
+                    }
+                }
+                
+                function hiddenonblur(input){
+                    var InputId = input.id;
+                    //CR-56_Link_20220214
+                    $("input[id*='" + InputId + "']").trigger("blur");
+                }
+                
+            
+                /*Validation*/
+                var paidToDate = '{!policyPaymentPaidToDate}';
+                var effectiveMonthFrom = '';
+                var effectiveYearFrom = '';
+                
+                $("form[id*='change-auto-premium-payment']").validate();
+                
+                
+                jQuery.validator.addMethod("effectiveDate", function(value, element) {
+                    return this.optional(element) || isValidEffectiveDate(value);
+                }, "{!$Label.Err_Msg_Invalid_Effective_Date}");
+                
+                jQuery.validator.addMethod("effectiveEndDate", function(value, element) {
+                    return this.optional(element) || isValidEffectiveEndDate();
+                }, "{!$Label.Err_Msg_Invalid_Effective_End_Date}");
+
+                $("input[id*='number-']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        digits: true
+                    });
+                });
+                
+                $("input[id*='effective-date']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        effectiveDate: true
+                    });
+                });
+                
+                
+                var App = App || {};
+                App.Validate = function(){
+        
+                    function formValidation(){
+                        
+                        $("form[id*='change-auto-premium-payment']").validate();
+                        
+                        jQuery.validator.addMethod("noDuplicateSequence", function(value, element) {
+                        return this.optional(element) || checkSequenceDuplicate(value, element);
+                        }, "{!$Label.Err_Msg_No_Same_Sequence}");
+                        
+                        /*$("input[id*='apply-to-year']").focus();
+                        $("input[id*='apply-to-month']").focus();*/
+
+                        if($("select[id*='auto-premium-payment-action-list']").val() == "Apply"){
+
+                            $("input[id*='Required-']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    required: true
+                                });
+                            });
+
+                        }else if($("select[id*='auto-premium-payment-action-list']").val() == "Apply until further notice"){
+                            
+                            
+                            //CR-56_Link_20220214
+                            $("input[id*='number-apply-further-effective-date']").trigger("focus");
+                            $("input[id*='number-apply-further-effective-date']").rules("add", {
+                                required: true
+                            });
+                            
+                            
+    
+                            
+                        }else if($("select[id*='auto-premium-payment-action-list']").val() == "Cancel"){
+
+                            //CR-56_Link_20220214
+                            $("input[id*='number-cancel-effective-date']").trigger("focus");
+                            $("input[id*='number-cancel-effective-date']").rules("add", {
+                                required: true
+                            });
+                            
+                            
+                            
+                        }
+                        
+                        $("select[id*='auto-premium-payment-action-list']").rules("add", {
+                                required: true
+                        });
+                        
+                        
+                        
+                        $("select[id*='Fund-Sequence']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                noDuplicateSequence : true
+                            });
+                        });
+                    }
+    
+                    function checkSequenceDuplicate(value, element) {
+                        var pass = true;
+                        $("select[id*='Fund-Sequence']").each(function( index ) {
+                            if (!$(this).is($(element))){
+                                if (value == $(this).val() && value !='') {
+                                    pass = false;
+                                    return false;
+                                }
+                            }
+                        });
+                        
+                        return pass;
+                    }
+                    
+                   return {
+                            formValidation : formValidation,
+                            checkSequenceDuplicate : checkSequenceDuplicate
+                        }
+               }();
+            
+                
+
+                function isValidEffectiveDate(value) {
+
+                    if (value == ''){
+                        return true;
+                    }
+                    
+                    if (value.length != 6){
+                        return false;
+                    }else{
+                        
+                        if(paidToDate!=''){
+                            var yearpaidtoday = paidToDate.substring(0,4);
+                            var monthpaidtoday = paidToDate.substring(5,7);
+                            effectiveMonthFrom = value.substring(0,2);
+                            effectiveYearFrom = value.substring(2,6);
+                            
+                            
+                            if (effectiveYearFrom < yearpaidtoday){
+                                return false;
+                            }
+                            else if (effectiveYearFrom > yearpaidtoday && effectiveMonthFrom <= 12 && effectiveMonthFrom != 0 ){
+                                return true;
+                            }
+                            else{
+                                if ( effectiveMonthFrom > 12 || effectiveMonthFrom < monthpaidtoday){
+                                    return false;
+                                }
+                                else{
+                                    return true;
+                                }
+                            }
+                        }else{
+                            //no paid to date
+                            return true;
+                        }
+                    }
+                }
+                
+                
+                function isValidEffectiveEndDate() {
+                    var effectiveDateFrom = $("input[id*='apply-from-year']").val() + $("input[id*='apply-from-month']").val();
+                    var effectiveDateTo = $("input[id*='apply-to-year']").val() + $("input[id*='apply-to-month']").val();
+
+                    if(effectiveDateFrom <= effectiveDateTo){
+                        return true;
+                    }else{
+                        return false;
+                    }
+
+                }
+                
+                function checkEffectiveDate(type){
+                
+                    var effectiveDate = '';
+                    var effectiveDateEnd = '';
+                    
+                    if(type == 'applyfrom'){
+                        
+                        effectiveDate = $("input[id*='apply-from-month']").val() + $("input[id*='apply-from-year']").val();
+                        
+                        if( ($("input[id*='apply-from-month']").val().length >= 1 && $("input[id*='apply-from-year']").val().length >= 1) || effectiveDate == '' ){
+                            
+                            $("input[id*='number-apply-effective-date-from']").val(effectiveDate);
+                            //CR-56_Link_20220214
+                            $("input[id*='number-apply-effective-date-from']").trigger("focus");
+                        
+                        }
+
+                     }else if(type == 'applyto'){  
+                        effectiveDateEnd = $("input[id*='apply-to-month']").val() + $("input[id*='apply-to-year']").val();
+                        $("input[id*='number-apply-effective-date-to']").rules("add", {
+                                effectiveEndDate: true
+                        });
+                       
+                        if( ($("input[id*='apply-to-month']").val().length >= 1 && $("input[id*='apply-to-year']").val().length >= 1) || effectiveDateEnd == '' ){
+                            
+                            $("input[id*='number-apply-effective-date-to']").val(effectiveDateEnd);
+                            //CR-56_Link_20220214
+                            $("input[id*='number-apply-effective-date-to']").trigger("focus");
+                        }
+
+                    
+                    }else if(type == 'further'){
+                    
+                        effectiveDate = $("input[id*='apply-further-month']").val() + $("input[id*='apply-further-year']").val();
+                         
+                        if( ($("input[id*='apply-further-month']").val().length >= 1 && $("input[id*='apply-further-year']").val().length >= 1) || effectiveDate == '' ){
+                            
+                            $("input[id*='number-apply-further-effective-date']").val(effectiveDate);
+                            //CR-56_Link_20220214
+                            $("input[id*='number-apply-further-effective-date']").trigger("focus");
+                        
+                        }
+                        
+                    }else if(type == 'cancel'){
+                    
+                        effectiveDate = $("input[id*='cancel-month']").val() + $("input[id*='cancel-year']").val();
+                        
+                        if( ($("input[id*='cancel-month']").val().length >= 1 && $("input[id*='cancel-year']").val().length >= 1) || effectiveDate == '' ){
+                    
+                            $("input[id*='number-cancel-effective-date']").val(effectiveDate);
+                            //CR-56_Link_20220214
+                            $("input[id*='number-cancel-effective-date']").trigger("focus");
+                        
+                        }
+                    }
+                    
+                
+                }
+                
+                
+                /*Document Ready*/
+                
+
+                var appFormAction = '{!Request.Automatic_Premium_Payment_Action__c}';
+    
+                if(appFormAction == "Apply"){
+                    checkEffectiveDate('applyfrom');
+                    checkEffectiveDate('applyto');
+                    $('#auto-premium-payment-action-list-apply').show();
+                    $('#sequence-area').show();
+                    $('#sequence-btn').show();
+                    $('#sequence-list').hide();
+                }else if(appFormAction == "Apply until further notice"){
+                    checkEffectiveDate('further');
+                    $('#auto-premium-payment-action-list-apply-further').show();
+                    $('#sequence-area').show();
+                    $('#sequence-btn').show();
+                    $('#sequence-list').hide();
+                }else if(appFormAction == "Cancel"){
+                    checkEffectiveDate('cancel');
+                    $('#auto-premium-payment-action-list-cancel').show();
+                    $('#sequence-area').hide();
+                    $('#sequence-btn').hide();
+                    $('#sequence-list').hide();
+                }else{
+                    $('.auto-premium-payment-action-list-content').hide();
+                    $('#sequence-area').hide();
+                    $('#sequence-btn').hide();
+                    $('#sequence-list').hide();
+                }
+
+                /*Single Select Sequence Color*/  
+                //CR-56_Link_20220214 
+                $('.sequence-confirm').on("click",function(){   
+                   $(this).siblings('.sequence-confirm').removeClass('cigna-fg-orange-dark').addClass('cigna-fg-gray-dark');
+                   $(this).removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                });
+        
+                
+                
+            </script>
+        </div>
+    </div>
+</apex:page>

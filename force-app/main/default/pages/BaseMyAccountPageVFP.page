@@ -1,0 +1,661 @@
+<apex:page sidebar="false" Controller="MyAccountPageCtrl">
+  <head>
+      <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+      <apex:include pageName="CignaCommonCSS" />
+      <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+      
+      <style>
+            
+            
+            .tooltip {
+                position: relative;
+                display: inline-block;
+            }
+            
+            .tooltip .tooltiptext {
+                visibility: hidden;
+                width: 120px;
+                background-color: black;
+                color: #fff;
+                text-align: center;
+                border-radius: 6px;
+                padding: 5px 0;
+            
+                position: relative;
+                z-index: 99;
+            }
+            
+            .tooltip:hover .tooltiptext {
+                visibility: visible;
+            }
+            
+            .tooltip-inner {
+                /* Change the tooltip width here */
+                max-width: 250px !important;
+                /* If max-width does not work, try using width instead */
+                width: 250px; 
+                min-width: 100px;
+            }
+            
+            .helptext-icon {
+                background:none !important;
+                border-top:none !important;
+                border-right:none !important;
+                border-left:none !important;
+                border-radius:0px !important;
+                border-color:#58595B !important;
+                //color: #E35205 !important;
+                //font-size:14px !important;
+            }
+            .form-field-style-output{
+              border:0px;
+              //border-bottom:1px solid #58595B;
+              width: 100%;
+              box-shadow: none !important;
+              border-radius: 0px;
+              color: #58595B;
+              height: 34px;
+              outline: none;
+              -webkit-box-shadow: none;
+              -moz-box-shadow: none;
+              box-shadow: none;
+              padding: 6px 0px;
+              line-height: 1.42857143 !important;
+              background: transparent;
+            }
+            .form-field-style-align{
+              border:0px;
+              border-bottom:1px solid #58595B;
+              width: 100%;
+              box-shadow: none !important;
+              border-radius: 0px;
+              color: #58595B;
+              height: 34px;
+              outline: none;
+              -webkit-box-shadow: none;
+              -moz-box-shadow: none;
+              box-shadow: none;
+              padding: 6px 0px;
+              line-height: 1.42857143 !important;
+              background: transparent;
+          }
+          .form-field-style-select-align {
+              border:0px;
+              border-bottom:1px solid #58595B;
+              background: url('{!$Resource.select_arrow_style}') no-repeat 98% 50% !important;
+              background-size: 7px 7px !important;
+              padding-right:20px;
+              padding-left:0px;
+              -moz-appearance: none; 
+              -webkit-appearance: none; 
+              appearance: none;
+              width: 100%;
+              border-radius: 0px;
+              height:34px !important;
+          }
+          select.form-field-style-select-align::-ms-expand {
+              display: none;
+          }
+          .bs .form-control  {
+                border-top: 0 !important;
+                border-left: 0 !important;
+                border-right: 0 !important;
+                border-bottom: 1px solid #58595B !important;
+                background: transparent;
+                width: 100%;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                font-size:17px !important;
+                padding-left: 0px !important;
+          }
+          span[id$="cigna-message"] span div.message{
+                //border:2px solid green;
+                border: 0 !important;
+                background-color: #fff;
+                opacity: .9;
+                margin-bottom:10px;
+                margin-top:10px;
+                margin-left:-13px !important;
+                width:100%;
+            }
+            
+            span[id$="cigna-message"] span div.message table.messageTable tbody tr td img{
+                display: none;
+            }
+            
+            span[id$="cigna-message"] span div.message table.messageTable tbody tr td.messageCell div span{
+                display: none;
+            }
+            
+            span[id$="cigna-message"] span div.message table.messageTable tbody tr td.messageCell{
+                //color: #fff;
+                //color: #F68621;
+                color:green;
+                /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+                font-family: "ValueSansRegular";
+                font-weight:bold;
+                
+            }
+            
+            /*span[id$="cigna-message"] .messageText::before{
+                content: "\f071\20";
+                font: normal normal normal 14px/1 FontAwesome;
+                font-size: inherit;
+                text-rendering: auto;
+                -webkit-font-smoothing: antialiased;
+                padding-right: 7px;
+            }*/
+            
+            span[id$="cigna-error"] span div.message{
+                //border:2px solid red;
+                border: 0 !important;
+                background-color: #fff;
+                opacity: .9;
+                margin-bottom:10px;
+                margin-top:10px;
+                margin-left:-13px !important;
+                width:100%;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td img{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell div span{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell{
+                //color: #fff;
+                //color: #F68621;
+                color:red;
+                /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+                font-family: "ValueSansRegular";
+                font-weight:bold;
+            }
+            
+            /*span[id$="cigna-error"] .messageText::before{
+                content: "\f071\20";
+                font: normal normal normal 14px/1 FontAwesome;
+                font-size: inherit;
+                text-rendering: auto;
+                -webkit-font-smoothing: antialiased;
+                //padding-right: 7px;
+            }*/
+       </style>
+       
+       <script>
+       
+       $(document).ready(function(){     
+       
+           //getPersonBasicApex(); //Add by Manuel that supplement a field indicate preferred language   
+
+           if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                  //$('#action-bar').css('position', 'absolute');
+                  //$('#mobile-app-padding').css('display', 'block');
+                  $("div[id*='mobile-app-padding']").css('display', 'block');
+                  $("div[id*='languageLabel']").css('display', 'block');
+                  $("div[id*='language']").css('display', 'block');
+           }
+           
+            // CR-56_Link_20220214, commented by minghua, data-toggle="tooltip" is not existing
+            // $('[data-toggle="tooltip"]').tooltip();
+       });
+       
+       </script>
+
+     
+
+  </head>
+  <apex:define name="additionalLibraries">
+      
+      <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+      <!--<link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap_ns.css')}" />
+      <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap.min.js')}"></script>
+      <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />-->
+      
+      <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/Chart.min.js')}"></script>
+      <apex:stylesheet value="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+      <!-- CR-56_Link_20220214 -->
+      <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap3.4.1.css')}" />
+      <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+     <!-- CR-56_Link_20220214 -->
+     <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-3.6.0.min.js')}"/>
+     <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-migrate-3.3.2.js')}"/>
+     <!-- CR-56_Link_20220214, commented by minghua, CignaUtilJS exist in CustomerPageTemplate -->
+     <!-- <apex:include pageName="CignaUtilJS"/> -->
+     <!-- CR-56_Link_20220214 -->
+     <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+      <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+      <apex:outputPanel rendered="{!userLanguage == 'zh_TW'}" layout="none">
+          <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+      </apex:outputPanel>
+      <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}" />
+  </apex:define>
+  <apex:define name="body">
+      <apex:form id="mainPage">
+        <script>
+            
+            //Add by Manuel to match 852-SMS or Non852-Email requirement
+            function validateChannelMatch() {
+                var countryCode = $("input[id*='Country-Code']").val();
+                var preferChannel = $("select[id*='selected-notification-channel']").val();
+                if(countryCode !='' && countryCode!='852' && countryCode!='+852' && preferChannel=='SMS'){
+                    return false;
+                }
+                return true;
+            }
+            
+            function isValidPhone() {
+               var patt = /^[0-9]{1,12}$/i;
+               var phone = $("input[id*='contact-No-Mobile']").val();
+               if(patt.exec(phone)==null){
+                   return false;
+               }
+               
+               var len = phone.toString().length;
+               var countryCode = $("input[id*='Country-Code']").val();
+               if((countryCode=='852' || countryCode=='') && len!=8){
+                   return false;
+               }
+               if(countryCode=='86' && len!=11){
+                   return false;
+               }
+               return true;
+            }
+       
+            function validateSupportEmail(){
+                  var supportE = $("input[id*='supportemail']").val();
+                  if(supportE ==null || supportE ==''){
+                      return true;
+                  }else{
+                      return isValidEmail(supportE);
+                  }
+                  return true;
+            }
+           
+            function validatePhoneLength(){
+                var phone = $("input[id*='contact-No-Mobile']").val();
+                if(phone.length > 20){
+                   return false;
+                }
+                return true;
+            }
+            
+            function validateCountryCodeLength(){
+                var countryCode = $("input[id*='Country-Code']").val();
+                if(countryCode.length > 5){
+                   return false;
+                }
+                return true;
+            }
+            
+            function validateSupportEmailLength(){
+                var supportemail = $("input[id*='supportemail']").val();
+                if(supportemail.length > 100){
+                   return false;
+                }
+                return true;
+            }
+            
+            if ('{!hasError}' == 'true') {
+
+                /*if (Cigna.Util.isBrokerPortal()) {
+                    $("#displayLanguageLabel").show();
+                    $("#displayLanguage").show();
+                }*/
+            } else if ('{!submitted}' == 'true') {
+                if('{!$Setup.Portal_Settings__c.Broker_Portal_Lightning_Site_Name__c}' == '{!$Site.name}') {
+                    top.location.href = "/newbroker/s/sfdcpage/%2Fapex%2FBrkMyAccountPageVFP%3FupdateResult%3DSuccess";
+                } else {
+                    Cigna.Util.navigateToVFP('MyAccountPageVFP?updateResult=Success');
+                }
+            }
+            
+        </script>
+        
+        <div class="bs container" style="width: 90%;">
+           <!--<div class="bs form-field col-xs-12">
+               <h4>{!$Label.Acc_General_information}</h4>
+           </div>
+           <div class="bs col-xs-12">
+               <i style="font-style:italic; font-size:80%;">{!$Label.Acc_My_Account_Remark}</i><br/><br/>
+           </div>-->
+           <apex:outputPanel rendered="{!!hasError && !isBroker}">
+                <div class="col-xs-12 col-sm-12">
+                    <apex:pageMessages id="cigna-message"/>
+                </div>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!hasError}">
+                <div class="col-xs-12 col-sm-12">
+                    <apex:pageMessages id="cigna-error"/>
+                </div>
+            </apex:outputPanel>
+           <form>
+                <apex:outputPanel rendered="{!isBroker}">
+                   <div class="bs col-sm-12 col-xs-12 cigna-fg-green-medium cigna-bg-white" style="{!IF(updateResult,'','display:none')};padding-left:14px;font-weight: bold;">
+                       {!$Label.Acc_Save_Message}
+                   </div>
+               </apex:outputPanel>    
+                  
+                   <!--Display Language-->
+                   <br/>
+                   <br/>
+                   <br/>
+                   <apex:outputPanel layout="block" styleClass="bs form-group col-sm-5 col-xs-12" rendered="{!isBroker}">
+                       {!$Label.Acc_Display_Language}
+                   </apex:outputPanel>
+                   <apex:outputPanel styleClass="bs form-group col-sm-7 col-xs-12" rendered="{!isBroker}">
+                      <apex:selectList value="{!displayLanguage }" size="1" styleClass="bs form-field-style-select-align" style="font-weight: bold;">
+                            <apex:selectOptions value="{!LanguageList}"></apex:selectOptions>
+                        </apex:selectList>
+                   </apex:outputPanel>
+                   
+                   <!--Update Email-->
+                   <div class="bs form-group col-sm-5 col-xs-12" >
+                      {!$Label.Acc_Email_Address}
+                   </div>
+                   <div class="bs form-group col-sm-6 col-xs-10"  >
+                      <!--<apex:inputText id="email" value="{!emailAddress}" styleClass="bs form-field-style-output" style="font-weight: bold;" />-->
+                      <Label style="font-weight: bold;color: #000000;" >{!emailAddress}</Label><br/>
+                      <apex:outputText style="font-size:12px;" styleClass="cigna-fg-orange-dark" value="{!$Label.Acc_Email_Note}"/>
+                   </div>
+                   
+                   <div class="bs form-group col-sm-1 col-xs-2" style="text-align:right;" onclick="Cigna.Util.navigateToVFP('MyAccountUpdatePageVFP?updateType=email')">
+                      <a class="action-btn " role="button" href="#"><span class="ci-hk-pencil" aria-hidden="true"></span></a>
+                   </div>
+                   
+                   <!--Update Verification Email-->
+                   <!-- Rancho_BPE63_20210507 vertification email only display in customer portal -->
+                   <apex:outputPanel rendered="{!!isBroker}">
+                     <div class="bs form-group col-sm-5 col-xs-12" >
+                        <apex:outputText value="{!transField['VerificationEmail'][$Label.Header_Language_Code_Current]}" rendered="{!contains(transKey, '~VerificationEmail~')}"/>
+                     </div>
+                   
+                     <div class="bs form-group col-sm-6 col-xs-10"  >
+                        <!--<apex:inputText id="email" value="{!emailAddress}" styleClass="bs form-field-style-output" style="font-weight: bold;" />-->
+                        <Label style="font-weight: bold;color: #000000;" >{!personalEMailAddress}</Label><br/>
+                        <apex:outputText style="font-size:12px;" styleClass="cigna-fg-orange-dark" value="{!transField['updateVEmailNote'][$Label.Header_Language_Code_Current]}" rendered="{!contains(transKey, '~updateVEmailNote~')}"/>
+                     </div>
+                   
+                     <div class="bs form-group col-sm-1 col-xs-2" style="text-align:right;" onclick="Cigna.Util.navigateToVFP('MyAccountUpdatePageVFP?updateType=vEmail')">
+                        <a class="action-btn " role="button" href="#"><span class="ci-hk-pencil" aria-hidden="true"></span></a>
+                     </div>
+                   </apex:outputPanel>
+                  <!--Update Password-->
+                   <div class="bs form-group col-sm-5 col-xs-12" >
+                      {!$Label.Acc_Update_Password}
+                   </div>
+                   <div class="bs form-group col-sm-6 col-xs-10" >
+                      <!--<input class="bs form-field-style-output" value="**********" style="font-weight: bold;color: #000000;"/>-->
+                      <Label style="font-weight: bold;color: #000000;" >**********</Label>
+                      <!--Nicole_Nov2020 - Password Policy Upgrade_20201122-->
+                      <apex:outputPanel rendered="{!isUpdatePasswordDisable}">
+                          <br/><apex:outputText style="font-size:12px;" styleClass="cigna-fg-orange-dark" value="{!transField['Disable_Change_Password_Within_24hrs'][$Label.Header_Language_Code_Current]}" rendered="{!contains(transKey, '~Disable_Change_Password_Within_24hrs~')}"/>
+                       </apex:outputPanel>
+                   </div>
+                   
+                   <apex:outputPanel rendered="{!!isUpdatePasswordDisable}"> <!--Nicole_Nov2020 - Password Policy Upgrade_20201122-->
+                     <div class="bs form-group col-sm-1 col-xs-2" style="text-align:right" onclick="Cigna.Util.navigateToVFP('MyAccountUpdatePageVFP?updateType=password')" >
+                        <a class="action-btn " role="button" href="#"><span class="ci-hk-pencil" aria-hidden="true"></span></a>
+                     </div>
+                    </apex:outputPanel>
+               
+
+                    <!-- 20231101 - minghua - JOBR-335 MFA in existing MyCigna web and app -->
+                   <!--Contact Number-->
+                   <div class="bs form-group col-sm-5 col-xs-12" style="margin-top:15px">
+                      {!$Label.Acc_Contact_Number}
+                   </div>
+                   <!-- 20231101 - minghua - JOBR-335 MFA in existing MyCigna web and app -->
+                   <div class="col-sm-7 col-xs-12" style="padding-left:0px">
+                       <div class="bs form-group col-sm-5 col-xs-4" style="font-weight: bold;margin-bottom: 1px;">
+                          <apex:inputText id="Country-Code" value="{!countryCode}" html-placeholder="852" styleClass="bs form-control" />
+                       </div>
+                       <div class="bs form-group col-sm-7 col-xs-8" style="font-weight: bold;margin-bottom: 1px;">
+                          <apex:inputText id="contact-No-Mobile" value="{!mobileNumber}" styleClass="bs form-field-style-align"  />
+                       </div>
+                       <div class="col-sm-12 col-xs-12">
+                          <apex:outputText style="font-size:12px;" styleClass="cigna-fg-orange-dark" value="{!transField['updateContactNumNote'][$Label.Header_Language_Code_Current]}" rendered="{!contains(transKey, '~updateContactNumNote~')}"/>
+                       </div>
+                   </div>
+                   <div class="col-sm-12 col-xs-12"></div>
+                   <!-- 20231101 - minghua - JOBR-335 MFA in existing MyCigna web and app -->
+                   <div class="bs form-group col-sm-5 col-xs-12"  style="margin-top:15px">
+                      {!$Label.Acc_Notification_Channel}<br/>
+                   </div>
+                   <div class="bs form-group radio col-sm-7 col-xs-12" >
+                      <!-- apex:selectList value="{!user.Notification_Channel__c}" size="1" styleClass="bs form-field-style-select-align" style="font-weight: bold;color: #000000;" -->
+                      <!-- Add by Manuel to match 852-SMS or Non852-Email requirement -->
+                      <apex:selectList id="selected-notification-channel" value="{!user.Notification_Channel__c}" size="1" styleClass="bs form-field-style-select-align" style="font-weight: bold;color: #000000;">
+                          <apex:selectOptions value="{!NotificationChannelList}" />
+                      </apex:selectList>
+                   </div>
+                   
+                   <apex:outputPanel layout="block" styleClass="bs form-group col-sm-5 col-xs-12" rendered="{!isBroker}" style="height:50px;" >
+                       {!$Label.Acc_Support_Email_Address}<br/>
+                       <apex:outputText style="font-size:12px;" value="{!$Label.Acc_Notification_Channel_Note}"/>
+                   </apex:outputPanel>
+                   <apex:outputPanel styleClass="bs form-group col-sm-7 col-xs-12" rendered="{!isBroker}" style="height:50px;padding-top:5px;">
+                      <apex:inputText id="supportemail" value="{!user.Notification_Email_Address__c}" styleClass="bs form-field-style-align" style="font-weight: bold;"/>
+                   </apex:outputPanel>
+                    
+                  
+                   <div id="langguageLabel" class="bs form-group col-sm-5 col-xs-12" >
+                      {!$Label.Acc_Notification_Language}
+                   </div>
+                    
+                   <div id="langguage" class="bs form-group col-sm-7 col-xs-12" >
+                      <!--<apex:inputField value="{!user.LanguageLocaleKey}" id="language" styleClass="bs form-field-style" />-->
+                      <apex:selectList value="{!user.Notification_Language__c}" size="1" styleClass="bs form-field-style-select-align" style="font-weight: bold;color: #000000;">
+                            <apex:selectOptions value="{!LanguageList}"></apex:selectOptions>
+                        </apex:selectList>
+                   </div>
+
+                   <!-- 20201028 - marketing opt out -->
+                   <apex:outputPanel styleClass="bs form-group col-sm-5 col-xs-12" rendered="{! AND(showMarkOptOut,!isBroker)}">
+                      {!$Label.Agree_Marketing_Opt_Out}
+                   </apex:outputPanel>
+                
+                   <apex:outputPanel id="markOpt" styleClass="bs form-group col-sm-7 col-xs-12" rendered="{!AND(showMarkOptOut, !isBroker)}">
+                      <apex:inputCheckbox value="{!markOptOut}" />
+                   </apex:outputPanel>
+                    
+                    <!-- 20231101 - minghua - JOBR-335 MFA in existing MyCigna web and app -->
+                    <div class="bs col-sm-12 col-xs-12">
+                    </div>
+                    <apex:outputPanel styleClass="bs form-group col-sm-5 col-xs-7">
+                      {!$Label.MFA_SMS_Authentication}
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!hasSMSFactor}" styleClass="bs form-group col-sm-7 col-xs-5">
+                        <input class="btn btn-primary" value="✓" type="button"  disabled="true" style="width:70%;background-color: #e35205;" />
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!!hasSMSFactor}" styleClass="bs form-group col-sm-7 col-xs-5">
+                        <apex:outputPanel rendered="{!disableOktaSetup}">
+                            <input class="btn btn-primary" disabled="true" value="{!$Label.MFA_Setup}" type="button" style="width:70%;background-color: #e35205;" />
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!!disableOktaSetup}">
+                            <input class="btn btn-primary" value="{!$Label.MFA_Setup}" type="button" style="width:70%;background-color: #e35205;" onclick="Cigna.Util.navigateToVFP('MyAccountUpdatePageVFP?updateType=SMSFactor&isFromSetup=true')" />
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    <apex:outputPanel id="emailButton">
+                        <div class="bs form-group col-sm-5 col-xs-7">
+                            {!$Label.MFA_Email_Authentication}
+                        </div>
+                        <div class="bs form-group col-sm-7 col-xs-5">
+                            <apex:outputPanel rendered="{!hasEmailFactor}">
+                                <input class="btn btn-primary" value="✓" type="button" disabled="true" style="width:70%;background-color: #e35205;" />
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!!hasEmailFactor}">
+                                <apex:outputPanel rendered="{!disableOktaSetup}">
+                                    <input class="btn btn-primary" disabled="true" value="{!$Label.MFA_Setup}" type="button" style="width:70%;background-color: #e35205;"/>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!!disableOktaSetup}">
+                                    <input class="btn btn-primary" value="{!$Label.MFA_Setup}" type="button" style="width:70%;background-color: #e35205;" onclick="Cigna.Util.navigateToVFP('MyAccountUpdatePageVFP?updateType=eFactor&isFromSetup=true')"/>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </div>
+                    </apex:outputPanel>
+
+                   <div class="bs col-sm-12 col-xs-12">
+                
+                        <div style="padding:20px;"></div>
+                        <!--desktop action button-->
+                        <div class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="refrePageApex()">
+                            {!$Label.Update_Information}
+                        </div>
+                            
+                        <!--mobile action button-->    
+                        <apex:outputPanel rendered="{!!isBroker}">
+                        <div id="mobile-app-padding" class="bs row" style="display: none; padding-bottom: 100px;">
+                            <div class="bs col-xs-12"></div>
+                        </div>
+                    
+                        <div id="action-bar" class="bs row visible-xs cigna-floating-bottom-panel" style="left:0px;">
+                            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark onclick-pointer" onclick="refrePageApex()">
+                                <a class="action-btn cigna-fg-white" role="button"><span class="fa fa-pencil" aria-hidden="true"></span><br/><span id="firstbtnxstext">{!$Label.Update_Information}</span></a>
+                            </div>
+                        </div>
+                        </apex:outputPanel>
+                    </div>
+           </form>
+       
+           <script>
+           if (Cigna.Util.isIOS() && Cigna.Util.isCustomerPortal() && $(window).width() < 768 ) {
+                //CR-56_Link_20220214
+                $('.bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select, .bs textarea').on("focus",function(evt){
+                    if ($('#action-bar').is(':visible')){
+                        $('#action-bar').addClass('hidden-xs').removeClass('visible-xs');
+                    }
+                });
+                //CR-56_Link_20220214
+                $('.bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select, .bs textarea').on("blur",function(evt){
+                    if ($('#action-bar').hasClass('hidden-xs')){
+                        $('#action-bar').addClass('visible-xs').removeClass('hidden-xs');
+                    }
+                });
+            }
+           </script>
+           <!-- 20231101 - minghua - JOBR-335 MFA in existing MyCigna web and app -->
+           <!-- <apex:actionFunction action="{!updateUserInfo}" name="updateInfoApex" reRender="mainPage" status="loader-icon"/> -->
+           <apex:actionFunction action="{!updateUserInfo}" name="updateInfoApex" oncomplete="updateOktaInfo()" reRender="mainPage" status="loader-icon"/>
+           <apex:actionFunction action="{!updateOktaInfo}" name="updateOktaInfo" reRender="mainPage" status="loader-icon" />
+
+           <apex:actionFunction action="{!refrePage}" name="refrePageApex" oncomplete="updatefunction()" reRender="mainPage" status="loader-icon"/>
+           <!-- Add by Manuel that supplement a field indicate preferred language -->
+      
+          <!--  <apex:actionFunction action="{!getPersonBasic}" name="getPersonBasicApex" reRender="mainPage" status="loader-icon"/> -->
+           <script>
+               function update() {
+                   updateInfoApex();
+               }
+               
+                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+        
+                    /*$(document).ready(function(){
+                        var targetHeight = window.screen.height;
+                        var sfOneHeaderHeight = 44 + 20; //window.parent.document.getElementsByClassName('oneHeader')[0].offsetHeight;
+                        
+                        if($(window).width() > $(window).height()){
+                            targetHeight = window.screen.width;   
+                        }
+                        
+                        //$('body').css('height', (targetHeight  - (targetHeight * 0.09)) + 'px');
+                        $('body').css('height', (targetHeight - sfOneHeaderHeight) + 'px');
+                        $('body').bind('touchmove', function(e){$('#action-bar').css('opacity', '0');});
+                        $('body').bind('touchend', function(e){setTimeout(function(){$('#action-bar').css('opacity', '1');}, 700);});
+                        
+                    });*/
+                    
+                    //$('#mobile-app-padding').css('display', 'block');
+                    
+                    $("a").attr("target","");
+                    
+                }
+           </script>
+        </div>
+    </apex:form>
+      <script>
+          function setFocusOnLoad() {}  
+            
+          function updatefunction(){
+              if(validateForm_mainPage()){
+                  update();
+              }
+              
+          }
+          
+          function validateForm_mainPage(){
+          
+              //Add by Manuel to match 852-SMS or Non852-Email requirement
+              jQuery.validator.addMethod("isInvalidChannelMatch", function(value, element){
+                  return validateChannelMatch();
+              }, "{!$Label.Error_Message_RegionChannel_Not_Match}");
+              
+              jQuery.validator.addMethod("isInvalidPhone", function(value, element) {
+                  return isValidPhone();
+              }, "{!$Label.Error_Message_Contact_Number_Not_Valid}");
+              
+              jQuery.validator.addMethod("isInvalidSupportEmail", function(value, element) {
+                  return validateSupportEmail();
+              }, "{!$Label.Error_Message_Email_Not_Valid}");
+              
+              jQuery.validator.addMethod("validatePhoneLength", function(value, element) {
+                  return validatePhoneLength();
+              }, "{!$Label.Error_Message_20_characters}");
+              
+              jQuery.validator.addMethod("validateCountryCodeLength", function(value, element) {
+                  return validateCountryCodeLength();
+              }, "{!$Label.Error_Message_5_characters}");
+              
+              jQuery.validator.addMethod("validateSupportEmailLength", function(value, element) {
+                  return validateSupportEmailLength();
+              }, "{!$Label.Error_Message_100_characters}");
+              
+              $("form[id*='mainPage']").validate({
+                  errorPlacement: function(label, element) {
+                      label.addClass('errorDiv');
+                      label.insertAfter(element);
+                  },
+                      wrapper: 'div'
+              });
+              
+              //Add by Manuel to match 852-SMS or Non852-Email requirement
+              $("form[id*='mainPage'] select[id*='selected-notification-channel']").each(function(idx, elem){
+                                    $(elem).rules("add", {
+                                        isInvalidChannelMatch: true
+                                    });
+              });
+              
+              $("form[id*='mainPage'] input[id*='contact-No']").each(function(idx, elem){
+                                    $(elem).rules("add", {
+                                        required: true
+                                    });
+              });
+              
+              $("form[id*='mainPage'] input[id*='Country-Code']").each(function(idx, elem){
+                                    $(elem).rules("add", {
+                                        validateCountryCodeLength: true
+                                    });
+              });
+              
+              $("form[id*='mainPage'] input[id*='contact-No-Mobile']").each(function(idx, elem){
+                                    $(elem).rules("add", {
+                                        isInvalidPhone: true,
+                                        validatePhoneLength: true
+                                    });
+              });
+
+              $("form[id*='mainPage'] input[id*='supportemail']").each(function(idx, elem){
+                                    $(elem).rules("add", {
+                                        isInvalidSupportEmail: true,
+                                        validateSupportEmailLength: true
+                                    });
+              });
+              
+              return $("form[id*='mainPage']").validate().form();
+          }            
+           
+    </script>
+   </apex:define>
+</apex:page>

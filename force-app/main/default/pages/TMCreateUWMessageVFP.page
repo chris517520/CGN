@@ -1,0 +1,395 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" title="Message" controller="TMCreateUWMessageCtrl" action="{!getFileStoreRecord}">
+    <apex:define name="additionalLibraries">
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}" />
+        <apex:stylesheet value="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap_ns.css')}" />
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+        <apex:includeScript value="/support/console/33.0/integration.js" />
+        <apex:include pageName="CignaUtilJS" />
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap.min.js')}"></script>
+    </apex:define>
+    <script type="text/javascript">
+        var __sfdcSessionId = '{!GETSESSIONID()}';
+        var filesToUpload = '';
+        var uploadedFile = 0;
+    </script>
+    <style>
+        .row {
+            width: 100%
+        }
+        
+        span[id*='errFileSize'] {
+            display: none;
+        }
+        
+        span[id*='errFileType'] {
+            display: none;
+        }
+        
+        span[id*='errNoFile'] {
+            display: none;
+        }
+        
+        span[id*='errOnlyAllowOneFile'] {
+            display: none;
+        }
+        
+        span[id*='errEmptyMessage'] {
+            display: none;
+        }
+        
+        span[id*='errSizeNType'] {
+            display: none;
+        }
+        
+        /** add by kit **/
+        .overlay{
+            position:absolute;
+            top:0;
+            right:0;
+            left:0;
+            bottom:0;
+            background-color:rgba(0,0,0,0.4);
+            z-index:9; 
+        }
+        
+        .modal{
+            position:absolute;
+            width:36%;
+            left:50%;
+            top:50%;
+            transform: translate(-50%, -50%);
+            text-align:center;
+            background-color:#fff;
+            border-radius:8px;
+        }
+        
+        .noShow{
+            display:none;
+        }
+        
+        .modal>p{
+            font-size:18px;
+            font-weight:bold;
+            padding-bottom:8px;
+            border-bottom:1px solid #e1e1e1;
+        }
+        
+        .content{
+            font-size:14px;
+            padding-bottom:16px;
+        }
+        
+        .small{
+            margin-top:8px;
+            font-size:8px;
+        }
+        
+        .modal>.bottom{
+            border-top:1px solid #e1e1e1;
+            padding:8px 4px;
+            background-color:rgb(243,241,242);
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            text-align: center;
+        }
+        
+        #confirmBtn{
+            color:#fff;
+            background:#3a379d;
+            border:none;
+            padding:8px;
+        }
+        
+    </style>
+    <script src="/soap/ajax/32.0/connection.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        var Cigna = Cigna || {};
+        Cigna.CreateMessage = function() {
+
+            function showLoadingIcon(id) {
+                $('#' + id).show();
+            }
+
+            function hideLoadingIcon(id) {
+                $('#' + id).hide();
+            }
+
+            function uploadFile(parentId, attType) {
+
+                console.log('filestoreId :' + parentId);
+
+                showLoadingIcon('snd-loading-phurl');
+
+                $("span[id*='errNoFile']").hide();
+                $("span[id*='errEmptyMessage']").hide();
+                $("span[id*='errFileSize']").hide();
+                $("span[id*='errFileType']").hide();
+
+                $("#" + attType).each(function() {
+
+                    filesToUpload = $(this)[0].files[0];
+
+                });
+
+                console.log('size: ' + $('[att-type="User_CreateMessage"]').size());
+                if($('[att-type="User_CreateMessage"]').size() >= 5) { // allow to upload 5 attachments at once
+
+                    $("span[id*='errOnlyAllowOneFile']").show();
+                    hideLoadingIcon('snd-loading-phurl');
+                    return;
+                } else {
+                    $("span[id*='errOnlyAllowOneFile']").hide();
+                }
+
+                if(filesToUpload == '' || filesToUpload == undefined) {
+                    hideLoadingIcon('snd-loading-phurl');
+                    return;
+                }
+
+                var reader = new FileReader();
+                reader.file = filesToUpload;
+                reader.onload = function(e) {
+                    var maxFileSize = 7340032; // each attachment's size should not larger than 7mb
+                    var passFileSize;
+                    var passFileType;
+
+                    if(this.file.size > maxFileSize && this.file.type != 'application/pdf' && this.file.type != 'image/png' && this.file.type != 'image/jpeg' && this.file.type != 'image/gif') {
+                        $("span[id*='errSizeNType']").show();
+                        passFileType = false;
+                        passFileSize = true;
+                    } else {
+                        $("span[id*='errSizeNType']").hide();
+                        if(this.file.size > maxFileSize) {
+                            //File size exceed
+                            $("span[id*='errFileSize']").show();
+                            passFileType = false;
+                        } else {
+                            passFileSize = 'true';
+                            $("span[id*='errFileSize']").hide();
+                        }
+
+                        if(this.file.type != 'application/pdf' && this.file.type != 'image/png' && this.file.type != 'image/jpeg' && this.file.type != 'image/gif') {
+                            //File Type Invalid
+                            $("span[id*='errFileType']").show();
+                        } else {
+                            passFileType = 'true';
+                            $("span[id*='errFileType']").hide();
+                        }
+                    }
+
+                    if(passFileType == 'true' && passFileSize == 'true' && parentId && parentId != undefined) {
+                        var att = new sforce.SObject("Attachment");
+                        var num = Math.random() * 9999;
+                        num = parseInt(num, 10);
+
+                        $('input[type="hidden"][id$="randomNum"]').val(num);
+                        console.log('randomNum' + num);
+
+                        att.Name = attType + '_' + this.file.name;
+                        att.ContentType = this.file.type;
+                        att.ParentId = parentId;
+
+                        var binary = "";
+                        var bytes = new Uint8Array(e.target.result);
+                        var length = bytes.byteLength;
+
+                        for(var i = 0; i < length; i++) {
+                            binary += String.fromCharCode(bytes[i]);
+                        }
+
+                        att.Body = (new sforce.Base64Binary(binary)).toString();
+
+                        sforce.connection.create([att], {
+
+                            onSuccess: function(result, source) {
+                                if(result[0].getBoolean("success")) {
+                                    console.log("new attachment created with id " + result[0].id);
+                                    hideLoadingIcon('snd-loading-phurl');
+                                    refreshAttlist();
+                                    //checkAtt();
+                                    $("html, body").animate({
+                                        scrollTop: $(document).height()
+                                    }, "slow");
+
+                                } else {
+                                    console.log("failed to create attachment " + result[0]);
+                                    //alert("failed to create attachment " + result[0]);
+                                    hideLoadingIcon('snd-loading-phurl');
+
+                                }
+                            },
+                            onFailure: function(error, source) {
+                                console.log("an error has occurred " + error);
+                                //alert("an error has occurred " + error);
+                                hideLoadingIcon('snd-loading-phurl');
+                            }
+                        });
+
+                    } //if
+                    else {
+                        hideLoadingIcon('snd-loading-phurl');
+                    }
+                }; //reader.onload
+                console.log('#filesToUpload ' + filesToUpload);
+                if(filesToUpload != '' || filesToUpload != '1') {
+                    reader.readAsArrayBuffer(filesToUpload);
+                    $("span[id*='errNoFile']").hide();
+                } else {
+                    $("span[id*='errNoFile']").show();
+                }
+                $("#User_CreateMessage").val("");
+            } //UploadFile
+
+            function submitMessage(event) {
+                var str = $("textarea[id*='UWMessage']").val();
+                if($('[att-type="User_CreateMessage"]').size() < 1 && !str) {
+                    $("span[id*='errEmptyMessage']").show();
+                    $("span[id*='errFileType']").hide();
+                    $("span[id*='errFileSize']").hide();
+                } else if($('[att-type="User_CreateMessage"]').size() > 0 || str) {
+                    CreateUWMessage.submit();
+                }
+                event.preventDefault();
+
+            }
+
+            return {
+                uploadFile: uploadFile,
+                submitMessage: submitMessage,
+                hideLoadingIcon: hideLoadingIcon,
+                showLoadingIcon: showLoadingIcon
+            }
+
+        }(); //Cigna.CreateMessage
+    
+        function closeTab() {
+            sforce.console.getFocusedSubtabId(closeTabId);
+        }
+
+        var closeTabId = function closeTabId(result) {
+            sforce.console.closeTab(result.id);
+        };
+
+        function hideFileLimitMessage() {
+            $("span[id*='errOnlyAllowOneFile']").hide();
+            Cigna.CreateMessage.hideLoadingIcon('snd-loading-phurl');
+        }
+
+        function removeAttachment(AttId) {
+            removeAtt(AttId);
+            Cigna.CreateMessage.showLoadingIcon('snd-loading-phurl');
+        }
+    
+        function showDialog(){
+            $(".overlay").show();
+        }
+    </script>
+    <!--  <div class="bs col-xs-12 form-horizontal">
+         <div id="errFileSize" class="alert alert-danger" role="alert" style="display:none;">
+              <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+              {!$Label.TM_File_Size_Error}
+         </div>
+         <div id="errFileType" class="alert alert-danger" role="alert" style="display:none;">
+              <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+              {!$Label.TM_File_Type_Error}
+         </div>
+         <div id="errNoFile" class="alert alert-danger" role="alert" style="display:none;">
+              <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+              {!$Label.TM_No_File_Error}
+         </div>
+         <div id="errOnlyAllowOneFile" class="alert alert-danger" role="alert" style="display:none;">
+              <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+              {!$Label.TM_Allow_5_Files}
+         </div>
+        
+      </div> -->
+    <apex:form >
+        <apex:pageMessage summary="{!$Label.TM_File_Size_Error}" severity="error" strength="3" id="errFileSize" title="error" />
+        <apex:pageMessage summary="{!$Label.TM_File_Type_Error}" severity="error" strength="3" id="errFileType" title="error" />
+        <apex:pageMessage summary="{!$Label.TM_No_File_Error}" severity="error" strength="3" id="errNoFile" title="error" />
+        <apex:pageMessage summary="{!$Label.TM_Allow_5_Files}" severity="error" strength="3" id="errOnlyAllowOneFile" title="error" />
+        <apex:pageMessage summary="{!$Label.TM_Empty_Message}" severity="error" strength="3" id="errEmptyMessage" title="error" />
+        <apex:pageMessage summary="{!$Label.TM_Upload_Tips}" severity="error" strength="3" id="errSizeNType" title="error" />
+    </apex:form>
+    <apex:form id="messageForm">
+        <apex:actionFunction name="removeAtt" action="{!removeAtt}" rerender="uploadatt" oncomplete="hideFileLimitMessage()">
+            <apex:param name="id" value="" assignTo="{!removeAttId}" />
+        </apex:actionFunction>
+        <apex:actionFunction name="refreshAttlist" action="{!getUploadFileList}" rerender="uploadatt" status="loader-icon" />
+        <apex:actionFunction name="submit" action="{!submit}" namespace="CreateUWMessage" status="loader-icon" oncomplete="showDialog()"  />
+        
+        <apex:actionStatus id="loader-icon">
+            <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                    &nbsp;
+                </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 10% 45%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        
+        <apex:pageBlock >
+            <div style="margin-top:20px;">
+                <u style="font-weight:bold;">{!$Label.TM_Message_to_UW}</u>
+            </div>
+            <apex:inputTextarea style="margin-top:20px;" id="UWMessage" value="{!UWMessage}" cols="160" rows="6" />
+            <apex:pageBlockSection >
+            </apex:pageBlockSection>
+            <apex:outputText style="display:block;font-weight:bold;margin-top:20px;" value="{!$Label.TM_Upload_Application_Form}" />
+            <apex:outputText style="display:block;font-weight:bold;" value="{!$Label.TM_Upload_Tips}" />
+            <div class="bs row col-xs-12">
+                <input id="User_CreateMessage" type="file" class="fileInput cigna-validation" onchange="Cigna.CreateMessage.uploadFile('{!fileStoreId}','User_CreateMessage');" style="display:none;" />
+                <input type="button" style="cursor:pointer" value="{!$Label.TM_Browse_File}" onclick="$('#User_CreateMessage').click()" />
+                <div class="snd-loading-div">
+                    <span id="snd-loading-phurl" style="display: none;">
+                        <div class="bs col-xs-12 col-lg-12 loading-div">
+                            <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+                </span>
+            </div>
+            <div style="padding:20px;">
+                <apex:outputPanel id="uploadatt">
+                    <apex:repeat value="{!UploadFileList}" var="idAtt">
+                        <div att-type="User_CreateMessage" class="col-xs-12 col-sm-12 uploaded-filelist">
+                            {!idAtt.Name}
+                            <i class="ci-hk-x pull-right onclick-pointer" style="cursor:pointer;" onclick="removeAttachment('{!idAtt}');" aria-hidden="true"></i>
+                        </div>
+                        <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                    </apex:repeat>
+                </apex:outputPanel>
+            </div>
+            </div>
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Submit" onclick="Cigna.CreateMessage.submitMessage(event)"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+        <!-- dialog -->
+        <div class="overlay noShow">
+            <div class="modal">
+                <p>
+                    Message
+                </p>
+                <div class="content">
+                    Your message has been sent                    
+              <!--      <div class="small">
+                       (If you can't see the message,please refresh the page) 
+                    </div> -->
+                </div>
+                <div class="bottom">
+                   <button id="confirmBtn" onclick="closeTab()">
+                       Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </apex:form>
+
+</apex:page>

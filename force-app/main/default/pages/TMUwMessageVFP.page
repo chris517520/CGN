@@ -1,0 +1,141 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" standardController="New_Policy__c" extensions="TMUwMessageCtrl">
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+        <style>
+            .onclick-pointer {
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <apex:define name="additionalLibraries">
+        <apex:stylesheet value="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}" />
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap_ns.css')}" />
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+        <apex:include pageName="CignaUtilJS" />
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap.min.js')}"></script>
+        <apex:includeScript value="/support/console/33.0/integration.js" />
+    </apex:define>
+    <apex:form >
+        <apex:actionFunction name="LoadUWMessageList" action="{!LoadUWMessageList}" status="loader-icon" reRender="MessageList" />
+        <apex:actionFunction action="{!downloadFile}" name="downloadFile" status="loader-icon" reRender="fileURL" oncomplete="getDoc();">
+            <apex:param name="selectedDocId" assignTo="{!selectedDocId}" value=""/>
+        </apex:actionFunction>
+        <apex:inputHidden id="fileURL" value="{!docURL}"/>
+        <apex:actionStatus id="loader-icon">
+            <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                    &nbsp;
+                </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 10% 45%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+
+        <apex:pageBlock id="MessageList" rendered="{!isReferCase}">
+            <apex:commandButton value="Create" onclick="openCreateTab()" style="margin-left:30%;margin-bottom:8px" oncomplete="refreshTab()" rendered="{!canCreateMessage}"></apex:commandButton>
+            <apex:commandButton value="Refresh" onclick="refreshTab()" style="margin-left:5%;margin-bottom:8px"></apex:commandButton>
+            
+            <apex:pageBlockTable value="{!messageList}" var="item">
+                <apex:column headerValue="Date & Time">
+                    <apex:outputText value="{!item.createDate}">
+                    </apex:outputText>
+                </apex:column>
+                <apex:column headerValue="Message">
+                    <div class="onclick-pointer block-header_link" style="text-decoration:underline">
+                        <apex:repeat value="{!item.contentList}" var="con">
+                            <apex:commandLink value="{!con}" reRender="attachments" action="{!showAttachments}">
+                                <apex:param name="showAttachment" value="{!item.messageID}" assignTo="{!messageID}" />
+                            </apex:commandLink>
+                            <br></br>
+                            <!--  <a href="javascript:void(0);" onclick="refreshAttachment('{!item}')">{!item.content}</a>  -->
+                        </apex:repeat>
+                    </div>
+                </apex:column>
+                <apex:column headerValue="Commenter">
+                    <apex:outputText value="{!item.commenter}"></apex:outputText>
+                </apex:column>
+                <apex:column headerValue="Seen">
+                    <apex:outputPanel rendered="{!item.isSeen}">
+                        <img width="21" height="16" title="Checked" alt="Checked" src="/img/checkbox_checked.gif" />
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!!item.isSeen}">
+                        <img width="21" height="16" title="Checked" alt="Checked" src="/img/checkbox_unchecked.gif" />
+                    </apex:outputPanel>
+                </apex:column>
+            </apex:pageBlockTable>
+            <!-- Attachment -->
+            <div id="attList">
+                <p style="margin:12px 4px 4px 4px"><b>Attachment</b></p>
+                <apex:pageBlockTable value="{!attachments}" var="a" id="attachments">
+                    <apex:column headerValue="Date & Time">
+                        <apex:outputLabel value="{!a.CreatedDate}" />
+                    </apex:column>
+                    <apex:column headerValue="Document Name">
+                        <a href="javascript:void(0);" onclick="downloadFile('{!a.documentId}');return false">{!a.fileName}</a>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </div>
+            <apex:input value="{!TrackingId}" style="display:none" styleClass="trackingId" />
+        </apex:pageBlock>
+        <apex:actionFunction action="{!clickSeen}" name="clickCheckBoxs" reRender="MessageList" />
+    </apex:form>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            LoadUWMessageList();
+        });
+
+        function openCreateTab() {
+            if(sforce.console.isInConsole()) {
+                sforce.console.getFocusedPrimaryTabId(function(result) {
+                    if(result.success) {
+                        sforce.console.openSubtab(result.id, '/apex/TMCreateUWMessageVFP?trackingid=' + $(".trackingId").val(), true,
+                            'Message with underwriters', null, null, null);
+                    } else {
+                        console.log('/////////' + result);
+                    }
+                });
+            }
+        }
+
+        function openDetailTab() {
+            if(sforce.console.isInConsole()) {
+                sforce.console.getFocusedPrimaryTabId(function(result) {
+                    if(result.success) {
+                        sforce.console.openSubtab(result.id, '/apex/TMUWMessageDetailVFP?messageid=' + $(".messageId").val(), true,
+                            'Read Detail Messgae', null, null, null);
+                    } else {
+                        console.log('/////////' + result);
+                    }
+                });
+            }
+        }
+
+        function refreshTab() {
+            if(sforce.console.isInConsole()) {
+                sforce.console.getEnclosingTabId(function(result) {
+                    sforce.console.refreshSubtabById(result.id, false);
+                });
+            }
+        }
+        
+        function getDoc(){
+            var txnName = $('input[type="hidden"][id$="fileURL"]').val();
+            if(txnName != null && txnName != ''){
+                window.open(txnName);
+            }
+        }
+
+        var eventHandler = function(result) {
+            LoadUWMessageList();
+        }
+
+        sforce.console.onFocusedSubtab(eventHandler);
+    </script>
+</apex:page>

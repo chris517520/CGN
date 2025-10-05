@@ -1,0 +1,33 @@
+<apex:page standardController="New_Policy__c" extensions="TMPolicyNavigationCtrl" title="PolicyNavigation" tabStyle="New_Policy__c" docType="html-5.0">
+    <apex:include pageName="CignaUtilJS"/>
+    <apex:includeScript value="/support/console/33.0/integration.js"/>
+    <script type="text/javascript">
+
+    sforce.console.getEnclosingPrimaryTabId(function(result){
+        var primaryTabId = result.id;
+        var newPolicyId = '{!newPolicy.id}';
+        if('{!newPolicy.Policy_Transaction__r.Status__c}' == 'Submitted' || {!isTMLeader} == true || '{!newPolicy.Policy_Transaction__r.Status__c}' == 'ToIPAS & AppianFailed' || '{!newPolicy.Policy_Transaction__r.Status__c}' == 'ToAppianFailed' || '{!newPolicy.Policy_Transaction__r.Status__c}' == 'ToIPASFailed'){//SPS-667 jakc add
+            sforce.console.getEnclosingPrimaryTabObjectId(function(resultA){
+
+                if( newPolicyId.indexOf(resultA.id) >= 0 ){
+                    sforce.console.openPrimaryTab(primaryTabId,'/apex/ViewPolicyVFP?id='+'{!newPolicy.id}',true,'Policy Details');
+                }else{
+                    sforce.console.getFocusedSubtabId(function(resultB){
+                        sforce.console.openSubtab(primaryTabId,'/apex/ViewPolicyVFP?id='+'{!newPolicy.id}',true,'Policy Details',resultB.id);
+                    });
+                }
+
+            });
+        }else{
+            sforce.console.getEnclosingPrimaryTabObjectId(function(resultA){
+                if( newPolicyId.indexOf(resultA.id) >= 0 ){
+                    sforce.console.openPrimaryTab(primaryTabId,'/apex/'+'TMCreatePolicyVFP?id='+'{!newPolicy.Policy_Transaction__c}',true,'New Policy');
+                }else{
+                    sforce.console.openSubtab(primaryTabId,'/apex/'+'TMCreatePolicyVFP?id='+'{!newPolicy.Policy_Transaction__c}',true,'New Policy',null);
+                }
+            });                
+        }
+    });
+    
+    </script>
+</apex:page>

@@ -1,0 +1,452 @@
+<apex:page docType="html-5.0" id="CreateAccAndOppVFP" title="Create Account & Oppty" Controller="TMCreateAccAndOppCtrl" showHeader="false" sidebar="false" tabStyle="Campaign">
+      <head>
+        <style>
+            .duplicateMessage{
+                font-weight: bold;
+                color: #c00;
+                text-align: center;
+            }
+        </style>
+      </head>
+      
+    <apex:form id="CreateAccAndOpp">
+            
+            <apex:actionStatus id="loader-icon">
+              <apex:facet name="start">
+                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                         &nbsp;
+                     </div>
+                    <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                        <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                            <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                            <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                        </div>
+                     </div>
+                </apex:facet>
+            </apex:actionStatus>
+            
+        <apex:define name="additionalLibraries">
+           <meta name="viewport" content="width=device-width, initial-scale=1" />
+           <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap_ns.css')}" />
+           <apex:includeScript value="/support/console/33.0/integration.js"/>
+           <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+      
+        </apex:define>
+        
+        
+        <apex:pageBlock title="{!$Label.TM_Create_Account_Opportunity}">
+        <apex:pageMessages />
+          <apex:pageBlockButtons location="both">
+            <apex:commandButton value="Save" action="{!saveAccAndOppty}" status="loader-icon" reRender="CreateAccAndOpp"  />
+            <!--
+            <apex:commandButton value="Save&New" action="{!saveAndNew}" / >
+            -->
+            <apex:commandButton value="Cancel" 
+                      html-data-loading-text="Loading..." 
+                      onclick="this.form.reset(); return false;" / >      
+                      
+            
+            
+          </apex:pageBlockButtons>
+          
+          <!-- Table for possible duplicate account record -->
+          <apex:outputPanel id="duplicateAccountReocrdTable" rendered="{!duplicateCount > 0 && !isShowTransferNotification}" >
+            <p class="duplicateMessage">{!duplicateCount} Possible Duplicate Record Found</p>
+            <p class="duplicateMessage">Duplicate Alert: Please select the corresponding Account to proceed.</p>
+            
+            <apex:pageBlockTable value="{!possibleDuplicateAccount}" var="a">
+                
+                <apex:column headerValue="{!$ObjectType.Account.Fields.Name.Label}">
+                    <a href="javascript:void(0);" onclick="openAccount('{!a.id}');">{!a.name}</a>
+                </apex:column>
+                <apex:column headerValue="{!$Label.TM_Personal_ID}">
+                    {!a.SSN__c}
+                </apex:column>
+                <apex:column headerValue="{!$ObjectType.Account.Fields.PersonMobilePhone.Label}">
+                    {!a.PersonMobilePhone}
+                </apex:column>
+                <apex:column headerValue="Creation Date">
+                    <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                        <apex:Param value="{!a.createddate}"/>
+                    </apex:OutputText>
+                </apex:column>
+                <apex:column headerValue="Action">
+                    <input type="button" class="btn" style="align:center" value="Save" onclick="checkDuplicateOppty('{!a.id}');" /> 
+                </apex:column>
+                <!--
+                <apex:facet name="footer" >
+                    <apex:commandButton value="Direct Create" action="{!directCreate}" status="loader-icon" reRender="CreateAccAndOpp"  />
+                </apex:facet>
+                -->
+            </apex:pageBlockTable>
+            <apex:actionFunction action="{!checkDuplicateOppty}" name="checkDuplicateOppty" reRender="CreateAccAndOpp" status="loader-icon" >
+                <apex:param name="acctId" value="" />
+            </apex:actionFunction>
+            
+            <p></p>
+          </apex:outputPanel>
+          
+          <apex:outputPanel id="duplicateOpptyReocrdTable" rendered="{!duplicateOpptyCount > 0 && isShowTransferNotification}">
+            <p class="duplicateMessage">{!duplicateOpptyCount} Possible Duplicate Opportunity Found</p>
+            <p class="duplicateMessage">Duplicate Alert: Please select the corresponding Opportunity to proceed.</p>
+            
+            <apex:pageBlockTable value="{!possibleDuplicateOppty}" var="a">
+                <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Opportunity_ID__c.Label}">
+                    {!a.Opportunity_ID__c}
+                </apex:column>
+                <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Name.Label}">
+                    <a href="javascript:void(0);" onclick="openOppty('{!a.id}');">{!a.Name}</a>
+                </apex:column>
+                <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Batch_No__c.Label}">
+                    {!a.Batch_No__c}
+                </apex:column>
+                <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Result__c.Label}">
+                    {!a.Result__c}
+                </apex:column>
+                <apex:column headerValue="Owner Full Name">
+                    <a href="javascript:void(0);" onclick="openOppty('{!a.ownerid}');">{!a.Owner.Name}</a>
+                </apex:column>
+                <apex:column headerValue="Action">
+                    <input type="button" class="btn" style="align:center" value="Request Transfer" onclick="updateDuplicateOppty();" /> 
+                </apex:column>
+            </apex:pageBlockTable>
+            <apex:actionFunction action="{!updateDuplicateOppty}" name="updateDuplicateOppty" reRender="CreateAccAndOpp" status="loader-icon" >
+            </apex:actionFunction>
+            <p></p>
+          </apex:outputPanel>
+          
+          <apex:pageBlockSection title="{!$Label.TM_Account_Information}" columns="2" id="accountInformation">
+            <apex:pageblocksectionitem >
+                <apex:outputlabel value="{!$Label.TM_Account_Record_Type}" />
+                <apex:outputText value="{!accountRecordTypeStr}" />
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+                <apex:outputlabel value="{!$Label.TM_Invalid_Inbound_Call}" />
+                <apex:inputCheckbox value="{!isUnidentifiedCall}"  />
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+                <apex:outputlabel value="{!$ObjectType.Account.Fields.LastName.Label}" />
+                <apex:outputPanel >
+                <div class="requiredInput" >
+                    <div id="OptionalField" class="requiredBlock"></div>
+                    <apex:inputText value="{!lastName}"  />
+                    <apex:selectList value="{!salutation}" size="1">
+                        <apex:selectOptions value="{!salutationList}"/>
+                    </apex:selectList>
+                </div>
+                </apex:outputPanel>
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Account.Fields.FirstName.Label}" />
+              <apex:inputText value="{!firstName}" />
+            </apex:pageblocksectionitem>
+            <!--<apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Account.Fields.Chinese_Name__c.Label}" />
+              <apex:inputField value="{!newAccount.Chinese_Name__c}" />
+            </apex:pageblocksectionitem>-->
+            <apex:pageblocksectionitem >
+                <apex:outputlabel value="{!$ObjectType.Account.Fields.PersonMobilePhone.Label}" />
+                <apex:outputPanel >
+                <div class="requiredInput" >
+                    <div id="OptionalField" class="requiredBlock"></div>
+                    <apex:inputField value="{!newAccount.PersonMobilePhone}" />
+                    <apex:inputCheckbox value="{!isMobileEmpty}" style="display:none"/>
+                    <!--
+                    No Mobile Phone
+                    -->
+                </div>
+                </apex:outputPanel>
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Account.Fields.Email__c.Label}" />
+                <apex:outputPanel >
+                    <div class="requiredInput" >
+                        <div id="OptionalField" class="requiredBlock"></div>
+                        <apex:inputField value="{!newAccount.Email__c}" />
+                        <apex:inputCheckbox value="{!isEmailEmpty}" />
+                        No Email
+                    </div>
+                </apex:outputPanel>
+              
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$Label.TM_Fax}" />
+              <apex:inputField value="{!newAccount.Fax}" />
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$Label.TM_Personal_ID}" for="ssn" />
+              <apex:inputField id="ssn" value="{!newAccount.SSN__c}" />
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+                <apex:outputlabel value="{!$ObjectType.Account.Fields.Gender__c.Label}" />
+                <apex:outputPanel >
+                    <div class="requiredInput" >
+                        <div id="OptionalField" class="requiredBlock"></div>
+                        <apex:inputField value="{!newAccount.Gender__c}" />
+                    </div>
+                </apex:outputPanel>
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$Label.TM_Date_of_Birth}" />
+              <!--<apex:inputField id="birthday" value="{!newAccount.PersonBirthdate}" onchange="calculateAge();" />-->
+              <apex:actionRegion >
+                  <apex:inputField id="birthday" value="{!newAccount.PersonBirthdate__c}"  >
+                      <apex:actionSupport event="onchange" action="{!autoCalculateAge}" rerender="ACCage" />
+                  </apex:inputField>
+              </apex:actionRegion>
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Account.Fields.Age__c.Label}" />
+              <apex:outputText id="ACCage" value="{!ACCage}" ></apex:outputText>
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Account.Fields.Nationality__c.Label}" />
+              <apex:inputField value="{!newAccount.Nationality__c}" />
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Account.Fields.TM_Industry__c.Label}" />
+              <apex:inputField value="{!newAccount.TM_Industry__c}" style="width:174px;" />
+            </apex:pageblocksectionitem>
+            
+            <!--TM Portable Medical Plan CR added by Andy 0807 begin
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Account.Fields.LHB_policy_number__c.Label}" />
+              <apex:inputField value="{!newAccount.LHB_policy_number__c}" />
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Account.Fields.LHB_certificate_number__c.Label}" />
+              <apex:inputField value="{!newAccount.LHB_certificate_number__c}" />
+            </apex:pageblocksectionitem>
+            <!--TM Portable Medical Plan CR added by Andy 0807 end -->
+            
+            <apex:pageblocksectionitem >
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+            </apex:pageblocksectionitem>
+            
+            
+            <apex:pageblocksectionitem >
+                <!--<apex:outputlabel value="{!$ObjectType.Opportunity.Fields.Batch_No__c.Label}" />-->
+                <apex:outputlabel value="{!$ObjectType.Campaign.Label}" />
+                <apex:actionRegion >
+                    <apex:inputField value="{!newOppty.Campaign__c}" required="true" >
+                         <apex:actionSupport event="onchange" action="{!selectCampaign}" rerender="camCloseDate" />
+                    </apex:inputfield>
+                </apex:actionRegion>
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+                <apex:outputlabel value="{!$ObjectType.Opportunity.Fields.Hotline_Number__c.Label}" />
+                <apex:outputPanel >
+                    <div class="requiredInput" >
+                        <div id="OptionalField" class="requiredBlock"></div>
+                        <apex:inputField value="{!newOppty.Hotline_Number__c}"  />
+                    </div>
+                </apex:outputPanel>
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+                <apex:outputlabel value="{!$ObjectType.Opportunity.Fields.Phone_Source__c.Label}" />
+                <apex:inputField value="{!newOppty.Phone_Source__c}"  />
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+                <apex:outputlabel value="{!$ObjectType.Opportunity.Fields.Source__c.Label}" />
+                        <apex:inputField value="{!newOppty.Source__c}"  />
+                        <!--
+              <apex:outputPanel>
+                            <apex:selectList value="{!newOppty.Source__c}" size="1" required="true">
+                                    <apex:selectOptions value="{!sourceList}"/>
+                            </apex:selectList>
+                        </apex:outputPanel>
+                        -->
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Opportunity.Fields.Category__c.Label}" />
+                        <apex:inputField value="{!newOppty.Category__c}"  />
+                        <!--
+              <apex:outputPanel>
+                            <apex:selectList value="{!newOppty.Category__c}" size="1" required="true">
+                                    <apex:selectOptions value="{!categoryList}"/>
+                            </apex:selectList>
+                        </apex:outputPanel>
+                        -->
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+                <apex:outputlabel value="{!$ObjectType.Opportunity.Fields.Gift__c.Label}" />
+                <apex:inputField value="{!newOppty.Gift__c}" />
+            </apex:pageblocksectionitem>
+            <!--
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Opportunity.Fields.Product_1__c.Label}" />
+              <apex:inputField value="{!newOppty.Product_1__c}" />
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Opportunity.Fields.Product_2__c.Label}" />
+              <apex:inputField value="{!newOppty.Product_2__c}" />
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Opportunity.Fields.Product_3__c.Label}" />
+              <apex:inputField value="{!newOppty.Product_3__c}" />
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Opportunity.Fields.Product_4__c.Label}" />
+              <apex:inputField value="{!newOppty.Product_4__c}" />
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Opportunity.Fields.Product_5__c.Label}" />
+              <apex:inputField value="{!newOppty.Product_5__c}" />
+            </apex:pageblocksectionitem>
+            -->
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Opportunity.Fields.Hotline_Type__c.Label}" />
+              <apex:outputText value="{!newOppty.Hotline_Type__c}" />
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Opportunity.Fields.TVC_version__c.Label}" />
+              <apex:outputText value="{!newOppty.TVC_version__c}" />
+            </apex:pageblocksectionitem>
+            
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Opportunity.Fields.Lead_Source__c.Label}" />
+              <apex:outputText value="{!newOppty.Lead_Source__c}" />
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Opportunity.Fields.Hotline_Product__c.Label}" />
+              <apex:outputText value="{!newOppty.Hotline_Product__c}" />
+            </apex:pageblocksectionitem>
+            
+            
+            
+            <!--
+            <apex:pageblocksectionitem >
+                <apex:outputlabel value="{!$ObjectType.Opportunity.Fields.CloseDate.Label}" />
+                <apex:OutputText id="camCloseDate" value="{0,date,yyyy/MM/dd}" escape="false">
+                    <apex:Param value="{!opptyCloseDate}"/>
+                </apex:OutputText>
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Opportunity.Fields.StageName.Label}" />
+              <apex:outputText value="Open" />
+            </apex:pageblocksectionitem>
+            -->
+            
+            
+            
+            
+            <apex:pageblocksectionitem rendered="{!isReferralOpp}">
+              <apex:outputlabel value="{!$ObjectType.Opportunity.Fields.Referee_Opportunity__c.Label}" />
+              <apex:outputText value="{!referOpptyName}" />
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem rendered="{!isReferralOpp}">
+              <apex:outputlabel value="{!$ObjectType.Opportunity.Fields.Referral_Relationship__c.Label}" />
+              <apex:inputField value="{!newOppty.Referral_Relationship__c}" required="true" />
+            </apex:pageblocksectionitem>
+            
+            
+          </apex:pageBlockSection>
+          <apex:pageBlockSection title="{!$Label.TM_Home_Contact_Information}" columns="2">
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Account.Fields.Home_Address_Line_1__c.Label}" />
+              <apex:inputField value="{!newAccount.Home_Address_Line_1__c}" />
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Account.Fields.Home_Address_Line_2__c.Label}" />
+              <apex:inputField value="{!newAccount.Home_Address_Line_2__c}" />
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Account.Fields.Home_Address_Line_3__c.Label}" />
+              <apex:inputField value="{!newAccount.Home_Address_Line_3__c}" />
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Account.Fields.Home_Address_Line_4__c.Label}" />
+              <apex:inputField value="{!newAccount.Home_Address_Line_4__c}" />
+            </apex:pageblocksectionitem>
+            <apex:pageblocksectionitem >
+              <apex:outputlabel value="{!$ObjectType.Account.Fields.PersonHomePhone.Label}" />
+              <apex:inputField value="{!newAccount.PersonHomePhone}" />
+            </apex:pageblocksectionitem>
+            
+                <script>
+                    autoCalculateAge();
+                </script>
+                <apex:actionFunction name="autoCalculateAge" action="{!autoCalculateAge}"  status="loader-icon" reRender="ACCage" />
+                
+                </apex:pageBlockSection>
+        </apex:pageBlock>  
+        <apex:inputHidden id="AcctAgeHidden" value="{!acctAge}"/>
+            <script>
+                
+                function calculateAge(){         
+                    var returnAge;  
+                    var strBirthday = $("input[id*='birthday']").val();
+                    var strBirthdayArr=strBirthday.split("-");  
+                    var birthYear = strBirthdayArr[0];  
+                    var birthMonth = strBirthdayArr[1];  
+                    var birthDay = strBirthdayArr[2];  
+                      
+                    d = new Date();  
+                    var nowYear = d.getFullYear();  
+                    var nowMonth = d.getMonth() + 1;  
+                    var nowDay = d.getDate();  
+                      
+                    if(nowYear == birthYear){  
+                        returnAge = 0;
+                    }  
+                    else{  
+                        var ageDiff = nowYear - birthYear ; 
+                        if(ageDiff > 0){ 
+                            if(nowMonth == birthMonth) {  
+                                var dayDiff = nowDay - birthDay;
+                                if(dayDiff < 0){  
+                                    returnAge = ageDiff - 1;  
+                                }  
+                                else{  
+                                    returnAge = ageDiff ;  
+                                }  
+                            }  
+                            else{  
+                                var monthDiff = nowMonth - birthMonth;
+                                if(monthDiff < 0){  
+                                    returnAge = ageDiff - 1;  
+                                }  
+                                else{  
+                                    returnAge = ageDiff ;  
+                                }  
+                            }  
+                        }  
+                        else{  
+                            returnAge = -1;
+                        }  
+                    }  
+                    $("span[id*='ACCage']").html(returnAge);
+                    $("input[id*='AcctAgeHidden']").val(returnAge);
+                }  
+                
+                function openAccount(id){
+                    if(id!=null && id!=''){
+                        var rnd = Math.floor(Math.random() * 1000000000000);
+                        sforce.console.openPrimaryTab(null, '/' + id + '?pageRnd=' + rnd, true, 'Account Detail', null, 'Account Detail');
+                        sforce.console.setCustomConsoleComponentVisible(false);       
+                    } 
+                }
+                
+                function openOppty(id){
+                    if(id!=null && id!=''){
+                        var rnd = Math.floor(Math.random() * 1000000000000);
+                        sforce.console.openPrimaryTab(null, '/' + id + '?pageRnd=' + rnd, true, 'Opportunity Detail', null, 'Opportunity Detail');
+                        sforce.console.setCustomConsoleComponentVisible(false);       
+                    } 
+                }
+                
+                function openUser(id){
+                    if(id!=null && id!=''){
+                        var rnd = Math.floor(Math.random() * 1000000000000);
+                        sforce.console.openPrimaryTab(null, '/' + id + '?pageRnd=' + rnd, true, 'Owner Detail', null, 'Owner Detail');
+                        sforce.console.setCustomConsoleComponentVisible(false);     
+                    } 
+                }
+                
+                
+                
+            </script>
+      
+        </apex:form>
+</apex:page>

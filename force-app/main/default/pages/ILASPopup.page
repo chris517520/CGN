@@ -1,0 +1,182 @@
+<apex:page showHeader="false" sidebar="false" controller="ILASPopup"> 
+    <style>
+        @media (max-width: 767px) {
+            body {
+                padding-top: 50px;
+            }
+            
+            div#ilasBox {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 100px auto 0px auto;
+                width: 90%;
+                height: 60%;
+                background: #FFF;
+                color: #000;
+                left: 5%;
+                padding: 20px;
+                border-radius: 5px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            body {
+                padding-top: 50px;
+            }
+
+            div#ilasBox {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 150px auto 0px auto;
+                width: 80%;
+                height: 60%;
+                background: #FFF;
+                color: #000;
+                left: 10%;
+                padding:20px;
+                border-radius:5px;
+            }
+        }
+
+        div#overlayILAS {
+            display: none;
+            z-index: 10;
+            background: #D9D9D6;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0px;
+            left: 0px;
+            text-align: center;
+          }
+
+          #closeOverlayILAS {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+          }
+
+          #contentILAS {
+            padding:10px;
+            color:#000;
+            font-size:12px;
+            width: 100%;
+            height: 95%;
+            overflow-y:auto;
+          }
+          .tableCS>thead>tr>th,
+          .tableCS>tbody>tr>td {
+            border:1px solid;
+            text-align: center;
+          } 
+    </style>
+    <script>
+        function showILASPanl() {
+            var overlay = document.getElementById('overlayILAS');
+            var ilasBox = document.getElementById('ilasBox');
+            overlay.style.opacity = .95;
+            if (overlay.style.display == "block") {
+                overlay.style.display = "none";
+                ilasBox.style.display = "none";
+            } else {
+                overlay.style.display = "block";
+                ilasBox.style.display = "block";
+            }
+            return false;
+        }
+    </script>
+    
+    <div id="overlayILAS" style="display:none;">
+      <div id="ilasBox">
+        <a><div id="closeOverlayILAS" class="onclick-pointer ci-hk-x" onclick="showILASPanl();"></div></a>
+          <h4>{!$Label.ILAS_Cigna_Funds_Risk_Level_Table}</h4>
+          <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+          <div id="contentILAS" style="text-align:center">
+            <div style="text-align:center" class="col-xs-12">
+              Risk tolerance and Investment products comparison
+              <table border="1" width="100%" class="tableCS">
+                <thead>
+                  <tr bgcolor="#00BFFF">
+                      <th rowspan="2" style="text-align: center;">Name of Investment Choice (English)</th>
+                      <th rowspan="2" style="text-align: center;">Name of Investment Choice (Chinese)</th>
+                      <th rowspan="2" style="text-align: center;">Risk level (as of Jan 2020 English)</th>
+                      <th rowspan="2" style="text-align: center;">Risk level (as of Jan 2020 Chinese)</th>
+                  </tr>
+                </thead>
+                <tbody >
+                  <apex:repeat var="fund" value="{!fundRiskList}">
+                      <tr>
+                        <td>{!fund.fundName}</td>
+                        <td>{!fund.fundNameChi}</td>
+                        <td>{!fund.riskLevel}</td>
+                        <td>{!fund.riskLevelChi}</td>
+                      </tr>
+                  </apex:repeat>
+                </tbody>
+                <!-- <tbody>
+                  <tr>
+                    <td>CIGNA - Aberdeen Global North American Equity Fund</td>
+                    <td>信諾 - 安本環球北美股票基金</td>
+                    <td>Aggressive</td><td>進取</td>
+                  </tr>
+                  <tr>
+                    <td>CIGNA - Aberdeen Global Asian Smaller Companies Fund</td><td>信諾 - 安本環球亞洲小型公司基金</td><td>Aggressive</td><td>進取</td>
+                  </tr>
+                  <tr>
+                    <td>CIGNA - Aberdeen Global Indian Equity Fund</td><td>信諾 - 安本環球印度股票基金</td><td>Aggressive</td><td>進取</td>
+                  </tr>
+                  <tr>
+                    <td>CIGNA - Aberdeen Global Select Emerging Markets Bond Fund</td><td>信諾 - 安本環球新興市場債券基金</td><td>Balanced</td><td>平衡</td>
+                  </tr>
+                  <tr>
+                    <td>CIGNA - Baring Eastern Europe Fund</td><td>信諾 - 霸菱東歐基金</td><td>Aggressive</td><td>進取</td>
+                  </tr>
+                  <tr>
+                    <td>CIGNA - Baring Global Resources Fund</td><td>信諾 - 霸菱環球資源基金</td><td>Aggressive</td><td>進取</td>
+                  </tr>
+                  <tr>
+                    <td>CIGNA - Barings Developed and Emerging Markets High Yield Bond Fund</td><td>信諾 - 霸菱成熟及新興市場高收益債券基金</td><td>Conservative</td><td>保守</td>
+                  </tr>
+                  <tr>
+                    <td>CIGNA - Baring Hong Kong China Fund</td><td>信諾 - 霸菱香港中國基金</td><td>Aggressive</td><td>進取</td>
+                  </tr>
+                  <tr>
+                    <td>CIGNA - Baring Global Leaders Fund</td><td>信諾 - 霸菱環球領先基金</td><td>Aggressive</td><td>進取</td>
+                  </tr>
+                  <tr>
+                    <td>CIGNA - Fidelity Asian Special Situations Fund</td><td>信諾 - 富達亞洲特別機會基金</td><td>Aggressive</td><td>進取</td>
+                  </tr>
+                  <tr>
+                    <td>CIGNA - Fidelity Emerging Europe, Middle East and Africa Fund</td><td>信諾 - 富達新興歐非中東基金</td><td>Aggressive</td><td>進取</td>
+                  </tr>
+                  <tr>
+                    <td>CIGNA - Invesco Global HealthCare Fund</td><td>信諾 - 景順健康護理基金</td><td>Aggressive</td><td>進取</td></tr>
+                  <tr><td>CIGNA -  Invesco Global Consumer Trends Fund</td><td>信諾 - 景順環球消費趨勢基金</td><td>Aggressive</td><td>進取</td></tr>
+                  <tr><td>CIGNA – Invesco US Equity Fund</td> <td>信諾－景順美國股票基金</td><td>Aggressive</td><td>進取</td></tr>
+                  <tr><td>CIGNA - JPMorgan ASEAN Fund</td><td>信諾 - 摩根東協基金</td><td>Aggressive</td><td>進取</td></tr>
+                  <tr><td>CIGNA - JPMorgan Korea Fund</td><td>信諾 - 摩根南韓基金</td><td>Aggressive</td><td>進取</td></tr>
+                  <tr><td>CIGNA - JPMorgan Pacific Technology Fund</td><td>信諾 - 摩根太平洋科技基金</td><td>Aggressive</td><td>進取</td></tr>
+                  <tr><td>CIGNA - JPMorgan USD Money Market VNAV Fund</td><td>信諾 - 摩根美元浮動淨值貨幣基金</td><td>Conservative</td><td>保守</td></tr>
+                  <tr><td>CIGNA - Templeton Asian Growth Fund</td><td>信諾 - 鄧普頓亞洲增長基金</td><td>Aggressive</td><td>進取</td></tr>
+                  <tr><td>CIGNA - Franklin Biotechnology Discovery Fund</td><td>信諾 - 富蘭克林生物科技新領域基金</td><td>Aggressive</td><td>進取</td></tr>
+                  <tr><td>CIGNA - Templeton China Fund</td><td>信諾 - 鄧普頓中國基金</td><td>Aggressive</td><td>進取</td></tr>
+                  <tr><td>CIGNA - Templeton Emerging Markets Fund</td><td>信諾 - 鄧普頓新興市場基金</td><td>Aggressive</td><td>進取</td></tr>
+                  <tr><td>CIGNA – Templeton Euroland Fund</td><td>信諾–鄧普頓歐元區基金 </td><td>Aggressive</td><td>進取</td></tr>
+                  <tr><td>CIGNA - Templeton Global Balanced Fund</td><td>信諾 - 鄧普頓環球均衡增長基金</td><td>Moderately Aggressive</td><td>中度進取
+</td></tr>
+                  <tr><td>CIGNA - Templeton Global Total Return Fund</td><td>信諾 - 鄧普頓環球總收益基金</td><td>Conservative</td><td>保守</td></tr>
+                  <tr><td>CIGNA - Templeton Latin America Fund</td><td>信諾 - 鄧普頓拉丁美洲基金</td><td>Aggressive</td><td>進取</td></tr>
+                  <tr><td>CIGNA - Franklin U.S. Government Fund</td><td>信諾 - 富蘭克林美國政府基金</td><td>Conservative</td><td>保守</td></tr>
+                  <tr><td>CIGNA - Investec Global Energy Fund</td><td>信諾 - 天達環球能源基金</td><td>Aggressive</td><td>進取</td></tr>
+                  <tr><td>CIGNA - Investec Global Gold Fund</td><td>信諾 - 天達環球黃金基金</td><td>Aggressive</td><td>進取</td></tr>
+                  <tr><td>CIGNA - Investment Growth Fund</td><td>信諾投資增值基金</td><td>Balanced</td><td>平衡</td></tr>
+                  <tr><td>CIGNA - Pacific Equity Fund</td><td>信諾太平洋增值基金</td><td>Aggressive</td><td>進取</td></tr>
+                </tbody> -->
+              </table>
+            </div>
+          </div>
+      </div>
+    </div>
+</apex:page>

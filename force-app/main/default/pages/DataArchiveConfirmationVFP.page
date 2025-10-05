@@ -1,0 +1,115 @@
+<apex:page sidebar="false" controller="DataArchiveConfirmationCtrl" tabStyle="Admin_Center__tab" >   
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>    
+    <script>
+       $(document).ready(function(){
+         getDataArchiveList();     
+        });
+    
+        
+          
+    </script>
+    
+   <apex:form id="theForm">           
+       <apex:actionFunction action="{!getDataArchiveList}" name="getDataArchiveList"  status="loader-icon" reRender="dataArchivePageBlock" />    
+       <apex:actionFunction action="{!archive}" name="archive" status="loader-icon" reRender="dataArchivePageBlock" >
+            <apex:param name="itemObjectNameParam" assignTo="{!selectObjectName}" value="" />
+            <apex:param name="itemIdParam" assignTo="{!selectItemId}" value="" />
+        </apex:actionFunction>
+       <apex:actionFunction action="{!removeSFDC}" name="removeSFDC" status="loader-icon" reRender="dataArchivePageBlock" >
+            <apex:param name="itemObjectNameParam" assignTo="{!selectObjectName}" value="" />
+            <apex:param name="itemIdParam" assignTo="{!selectItemId}" value="" />        
+       </apex:actionFunction>
+       <apex:actionFunction action="{!removeFiles}" name="removeFiles" status="loader-icon" reRender="dataArchivePageBlock" >           
+            <apex:param name="itemIdParam" assignTo="{!selectItemId}" value="" />        
+       </apex:actionFunction>
+       <apex:actionFunction action="{!downloadFile}" name="downloadFile" status="loader-icon" reRender="dataArchivePageBlock" >           
+            <apex:param name="itemIdParam" assignTo="{!selectItemId}" value="" />
+            <apex:param name="downloadFileNameParam" assignTo="{!downloadFileName}" value="" />
+            <apex:param name="attIdParam" assignTo="{!selectAttachmentId}" value="" />
+       </apex:actionFunction>
+       <apex:actionStatus id="loader-icon">
+           <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                     &nbsp;
+                 </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Please Wait...</span>
+                    </div>
+                 </div>
+            </apex:facet>
+        </apex:actionStatus>         
+       
+        <apex:pageBlock id="dataArchivePageBlock" mode="maindetail" title="Archive of Expired Data">
+            <script>
+                function reGenerate(objectName,itemId){
+                    archive(objectName,itemId);
+                }
+            
+                function deleteSFDC(objectName,itemId){
+                    removeSFDC(objectName,itemId);
+                }
+            
+                function deleteAtt(itemId){        
+                    removeFiles(itemId);
+                }
+                
+                function downloadAchivedFile(itemId,fileName,attId){
+                    console.log('itemId='+itemId+',fileName='+fileName);
+                    downloadFile(itemId,fileName,attId);            
+                }
+            
+                function viewActionHistory(){
+                    var url= "/apex/DataArchiveActionHistoryVFP?dataArchiveId={!dataArchiveId}&department={!department}";
+                    console.log("url=" + url);
+                    window.open(url);
+                }        
+            </script>
+            <apex:pageMessages id="pageMessage" />                        
+            <apex:pageBlockSection id="itemListPageBlock" columns="1" collapsible="">               
+                <apex:outputPanel >  
+                   <apex:selectList value="{!department}" size="1" style="width:100px;">
+                       <apex:selectoption itemLabel="Department" itemValue="" itemDisabled="true"></apex:selectoption>                                
+                       <apex:selectOptions value="{!departmentOptions}"></apex:selectOptions>
+                       <apex:actionSupport event="onchange" status="loader-icon" action="{!searchDataArchiveByDepartment}" reRender="dataArchivePageBlock"/>
+                   </apex:selectList>
+                   <apex:outputLabel >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</apex:outputLabel>
+                    <apex:commandButton onclick="viewActionHistory()" value="Action History" />
+                   <!-- <a href="/test">Action History</a> -->
+                </apex:outputPanel>
+                <apex:pageBlockTable value="{!wrapperList}" var="w">
+                    <apex:column headerValue="Action" width="225" >
+                        <apex:outputPanel >
+                            <apex:commandButton value="Archive" disabled="{!(w.filesArchivedRecordsQty == w.sfdcArchivedRecordsQty && w.disabledDeleteAttFlag ) || w.sfdcArchivedRecordsQty == 0 }" onclick="reGenerate('{!w.dataArchiveDetail.Category__c}','{!w.dataArchiveDetail.id}')" rerender="null" />                            
+                            <apex:commandButton value="Remove Files" disabled="{!w.disabledDeleteAttFlag}" onclick="deleteAtt('{!w.dataArchiveDetail.id}')" rerender="null"/>
+                            <apex:commandButton value="Remove Data" disabled="{!w.sfdcArchivedRecordsQty == 0 }" onclick="deleteSFDC('{!w.dataArchiveDetail.Category__c}','{!w.dataArchiveDetail.id}')" rerender="null"/>                      
+                        </apex:outputPanel>
+                    </apex:column>
+                    <apex:column headerValue="Category" >{!w.dataArchiveDetail.Category__c}</apex:column>
+                    <apex:column headerValue="Archived File" >
+                        <apex:repeat value="{!w.attachmentList}" var="att">
+                           <a href="{!archivedFileUrl}{!att.id}" target="_blank" onclick="downloadAchivedFile('{!w.dataArchiveDetail.id}','{!att.name}','{!att.id}');" >{!att.name}</a><br/> 
+                           <!--
+                            <apex:commandLink action="{!archivedFileUrl}{!att.id}" target="_blank" value="{!att.name}">
+                                <apex:param name="downloadFileName" assignTo="{!downloadFileName}" value="{!att.name}"/>
+                                <apex:param name="itemIdParam" assignTo="{!selectItemId}" value="" />
+                            </apex:commandLink><br/> -->     
+                        </apex:repeat>
+                    </apex:column>
+                    <apex:column headerValue="No. of Archived Records in files" style="text-align:right;" width="170" >{!w.filesArchivedRecordsQty}</apex:column>
+                    <apex:column headerValue="No. of Archived Records on SFDC" style="text-align:right;" width="180">{!w.sfdcArchivedRecordsQty}</apex:column>
+                    <apex:column headerValue="Last Action">{!w.dataArchiveDetail.Last_Action__c}</apex:column>
+                    <apex:column headerValue="Last Action By">
+                        <apex:outputText style="{!IF(w.dataArchiveDetail.Last_Action__c == null, 'display:none;', '')}" value="{!w.dataArchiveDetail.lastModifiedBy.Name}"></apex:outputText>                    
+                    </apex:column>
+                    <apex:column headerValue="Last Action Date/Time" style="text-align:center;">
+                        <apex:outputText style="{!IF(w.dataArchiveDetail.Last_Action__c == null, 'display:none;', '')}" value="{!w.lastActionDateTime}"></apex:outputText>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+
+    </apex:form>
+    
+</apex:page>

@@ -1,0 +1,2408 @@
+<!--Please change apex page title-->
+<apex:page docType="html-5.0" showHeader="false" extensions="SubmitHospitalController" standardController="Claim__c" >
+   <head>
+      <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+        <style>
+             @media 
+             only screen and (max-width: 760px),
+             (min-device-width: 768px) and (max-device-width: 1024px){
+                 .nav-pills:active{
+                     color: #fff !important;
+                     background-color: #2E2E2E !important;   
+                 }
+                 
+                 .myTitle
+                 {
+                     font-weight: bold;  
+                 }
+                 
+                 .myTable
+                 {
+                     border-top:0px !important;
+                 }
+                 .bs .nav-pills>li.active>a, .bs .nav-pills>li.active>a:focus, .bs .nav-pills>li.active>a:hover {
+                     color: #FFF !important;
+                     background-color: #2E2E2E !important;
+                 }
+                 .bs .nav-pills>li>a:hover {
+                     color: #FFF !important;
+                     background-color: #BDBDBD !important;
+                 }
+                 .bs .nav-pills>li>a{
+                     color: #2E2E2E !important;
+                     background-color: #FFF !important;
+                 }
+                 
+                 .credit-card-box{
+                    padding: 0;
+                    min-width: 58px;
+                    //width: 58px !important;
+                 }
+                 
+                     
+             }
+             
+             .credit-card-box{
+                width: auto;
+             }
+             
+             .seacrh-bar-style{
+                 border:0px;
+                 background: transparent;
+                 width:100%;
+                 box-shadow: none !important;
+                 border-radius: 0px;
+                 color: #58595B;
+                 outline: none;
+                 -webkit-box-shadow: none;
+                 -moz-box-shadow: none;
+                 box-shadow: none;
+             }   
+             
+             .search-wrapper{
+                 border-bottom:1px solid #58595B;
+                 padding:10px;
+             }  
+             
+             .header-action{
+                 padding:10px;
+             }      
+            
+            .content-choice{
+                font-size:14px !important;
+                padding-top:20px !important;
+                padding-bottom:20px !important;
+                border-bottom:1px solid #f2f2f2 !important;
+            }   
+            
+            .content-choice-noUnderLine{
+                font-size:14px !important;
+                padding-top:20px !important;
+                padding-bottom:20px !important;
+            }       
+                   
+            .content-icon {
+                font-size:20px;
+                padding-right:10px !important;
+                text-align:center;
+                width:50px;
+            }        
+               
+            .content-question{
+                font-size:16px;
+                padding-top:10px;
+                padding-bottom:10x;
+            }         
+            
+            .content-step{
+                color:#58595B;
+                padding:20px;
+            }
+            
+            .content-active {
+                color:#39B54A;
+            } 
+            
+            .progress-bar-font {
+                font-size: 10px;
+            }
+            
+            .loading-spinner{
+                top: 50%;
+                display: none;
+                position: absolute;
+                z-index: 11;
+            }
+            
+            .loading-label {
+                font-weight: bold;
+                font-size: 18px;
+            }
+                        
+            .form-group > div > p > label {
+                font-weight: normal !important;
+            }
+            
+            div.errorDiv {
+            
+            }
+            
+            label.cusError {
+                font-size: 14px;
+                color: red;
+            }
+            
+            div#overlay, div#overlayPIC{
+                display: none;
+                z-index: 10;
+                background: #D9D9D6;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                text-align: left;
+            }
+            
+            div#specialBox, div#specialBoxPIC {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 150px auto 0px auto;
+                width: 80%;
+                height: 50%;
+                background: #FFF;
+                color: #000;
+                left: 10%;
+                padding:20px;
+                border-radius:5px;
+            }
+            
+            #closeOverlay, #closeOverlayPIC {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
+            
+            #tccontent {
+                padding:5px;
+                color:#000;
+                font-size:12px;
+                width: 100%;
+                height: 90%;
+                overflow-y:auto;
+            } 
+            
+            #PICcontent {
+                padding:5px;
+                color:#000;
+                font-size:12px;
+                width: 100%;
+                height: 85%;
+                overflow-y:auto;
+            } 
+            
+            /***override salesforce datepicker css
+            .dateInput {
+                white-space: normal !important;
+            }
+            */     
+            
+            /*CR-56_Link_20220214*/
+            .ui-tooltip {
+                background: black !important;
+                max-width: 250px !important;
+                width: 250px; 
+                min-width: 100px;
+                color: white !important;
+                z-index: 1070;
+                display: block;
+                text-align: center !important;
+                font-size: 12px !important;
+                border-radius: 5px !important;
+            }   
+            /* HKITSPDC-42 BEGIN */
+            ol.tnc-list li, ul.tnx-list li {
+                margin-bottom: 10px;
+            }
+            .note-box {
+                border-radius: 10px;
+                padding: 20px;
+                margin: 10px;
+                background-color: #f5e553;
+                border: 1px solid;
+            }
+            .alert-low-bottom {
+                padding: 15px;
+                margin-bottom: 5px;
+                border: 1px solid transparent;
+                border-radius: 4px;
+            }
+            /* HKITSPDC-42 END */
+        </style>
+        <apex:define name="additionalLibraries">
+             <!--additional css, bootstrap, jquery,js libraries-->
+             <!-- CR-56_Link_20220214 -->
+             <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+             <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+             <apex:outputPanel rendered="{!userLanguage == 'zh_TW'}" layout="none">
+                 <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+             </apex:outputPanel>
+             
+             
+             <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+             
+             <!-- Date Picker -->
+             <link rel="stylesheet" href="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/jquery-ui.min.css')}" />
+             <!--CR-56_Link_20220214-->
+             <script type="text/javascript" src="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/jquery-ui-1.13.min.js')}"></script>
+             <script type="text/javascript" src="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/datepicker-zh-TW.js')}"></script>
+        </apex:define>
+    
+        <!--for upload attachement-->
+        <script type="text/javascript">
+            var __sfdcSessionId = '{!GETSESSIONID()}';
+            var filesToUpload = '';  
+            var uploadedFile = 0;
+        </script>
+        
+        <script src="/soap/ajax/32.0/connection.js" type="text/javascript"></script>
+       
+        <script> 
+            /* Default value */ 
+            /* Considering to delete these variables - TO BE DELETED */
+            var backAtFive = 0;
+            //var backAtTen = 0;
+            var backAtEleven = 0;
+            
+            var recordCreated = false;
+            
+            var beforePageLoaded = true;
+            
+            var changeLanguageWarningRequired = true;
+            
+            //HKITSFDC-42 BEGIN
+            var attrTypeName;
+
+            //HKITSFDC-42 END
+            
+            $(document).ready(function(){   
+                initDisplay();
+                initPersonInsuredList();
+                beforePageLoaded = false;
+            });
+            
+            
+            
+            function initDisplay(){
+                //HKITSFDC-42 BEGIN
+                console.log('{!acceptPaymentTC}',' = ','{!claimId}');
+
+                if('{!acceptPaymentTC}' === 'false'){
+                    $("#submitCCNextDesk, #submitCCNextMob").hide();
+                }else{
+                    $("#submitCCNextDesk, #submitCCNextMob").show();                    
+                }
+                //HKITSFDC-42 END
+
+                if(Cigna.Util.isCustomerPortal()){
+                    sforce.connection.serverUrl = "{!$Site.Prefix}/services/Soap/u/32.0";
+                } 
+                
+                if ('{!eligible}' == 'false'){
+                    $('.content-step[data-step="404"]').fadeIn();
+                }
+                else{
+                
+                    if ('{!claimId}' != '' && '{!claimId}' != null && '{!claimId}' != 'test'){
+                        if('{!currentStep}' != '' && '{!currentStep}' != null){
+                            
+                            /* go to current step page */
+                            if ($('.content-step[data-step="{!currentStep}"]').length > 0) {
+                                $('.content-step[data-step="{!currentStep}"]').fadeIn();
+                            }
+                            else {
+                                // HKITSFDC-42 BEGIN
+                                // $('.content-step[data-step="1"]').fadeIn();
+                                $('.content-step[data-step="0"]').fadeIn();
+                                // HKITSFDC-42 END
+                            }
+                            
+                            /* render progress bar */
+                            // HKITSFDC-42 BEGIN
+                            // if ('{!currentStep}' > 10){
+                            //     $("#progress-bar-esignature").addClass('active');  
+                            // }
+                            // else if ('{!currentStep}' > 4){
+                            //     $("#progress-bar-payment-information").addClass('active');  
+                            // }
+                            // else if ('{!currentStep}' > 3){
+                            //     $("#progress-bar-attachment").addClass('active'); 
+                            // }
+                            // else if('{!currentStep}' > 0){
+                            // else if('{!currentStep}' >= 0){
+                            //     $("#progress-bar-admission-datail").addClass('active');                 
+                            // }
+                            if('{!currentStep}' >= 0 && '{!currentStep}' < 4){
+                                $("#progress-bar-admission-datail").addClass('active');
+                            }else if('{!currentStep}' == 4){
+                                $("#progress-bar-attachment").addClass('active');
+                            }else if('{!currentStep}' > 4 && '{!currentStep}' < 11){
+                                $("#progress-bar-payment-information").addClass('active');
+                            }else if('{!currentStep}' > 10 && '{!currentStep}' <= 12){
+                                $("#progress-bar-esignature").addClass('active');
+                            } 
+                            // HKITSFDC-42 END    
+                            else {
+                                Cigna.Util.navigateToVFP('SubmitHospitalVFP');          
+                            } 
+                            
+                            if ('{!currentStep}' == 11){
+                                refreshEsignature();
+                            }
+                            
+                            if ('{!acceptPaymentTC}' == 'true'){
+                                $('#credit-card-tc').prop('checked', true);
+                                $("#payment-tc-submit").show();                                
+                            }
+                        }
+                    }   
+                    /* TO BE DELETED */
+                    else if ('{!claimId}' == 'test'){
+                        if ($('.content-step[data-step="0"]').length > 0) {
+                            $('.content-step[data-step="0"]').fadeIn();
+                        }
+                    }   
+                    else {
+                        // HKITSFDC-42 BEGIN
+                        // if ($('.content-step[data-step="1"]').length > 0) {
+                        //     $('.content-step[data-step="1"]').fadeIn();
+                        if ($('.content-step[data-step="0"]').length >= 0) {
+                            $('.content-step[data-step="0"]').fadeIn();
+                        // HKITSFDC-42 END
+                            $("#progress-bar-admission-datail").addClass('active');  
+                        }
+                    }
+                     
+                    if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()){
+                        $('#action-bar').css('position', 'absolute');
+                        $('#mobile-app-padding').css('display', 'block');
+                    }
+                 
+                    /**grey separator**/
+                    var srlist = document.getElementsByClassName("listcontent");
+                    for(var i=0; i < srlist.length; i++){
+                        if(i % 2==0){
+                            var item = srlist[i];
+                            item.style.backgroundColor = '#f2f2f2';
+                        }
+                    }
+                    
+                    window.nextStep = function (goStep){
+                        console.log('enter next step function');
+                        var currentStepNum = $('.content-step:visible').data('step');
+                        var nextStepNum = currentStepNum + 1;
+                        
+                        <!-- 2 to 4 -->
+                        <!-- 3 to 5 -->      
+                        <!-- 6 to 9 -->
+                        <!-- 8 to 10 -->
+                        
+                        if(goStep != null){
+                           nextStepNum = goStep;                  
+                        }  
+                        
+                        console.log('current:' + currentStepNum );
+                        console.log('nextStepNum :' + nextStepNum );
+                        
+                        <!-- validation -->
+                        var passValidation = true;
+                        
+                        if (!$("form[id*='claim-gop-form']").validate().form()){
+                            //alert('not pass form');
+                            passValidation = false;
+                        }
+                        if (!passValidation){
+                            return;
+                        }
+                        
+                        <!--   auto-save the record when next -->
+                        <!--   select PI             ask upload            ask credit card        e-signature        -->
+                        if (currentStepNum != 1 && currentStepNum != 2 && currentStepNum != 6 && currentStepNum != 11){
+                        //if (currentStepNum != 1 && currentStepNum != 11){
+                            InputCurrentStepForNextButton(currentStepNum);
+                        }
+                        
+                        <!-- progress bar lighting -->
+                        if(nextStepNum == 4){
+                           $("#progress-bar-admission-datail").removeClass('active');
+                           $("#progress-bar-attachment").addClass('bs active');                    
+                        }
+            
+                        <!-- current is payment information (10), go to e-sign (11)-->
+                        if((currentStepNum == 10 || currentStepNum == 9) && nextStepNum == 11){
+                           $("#progress-bar-payment-information").removeClass('active');
+                           $("#progress-bar-esignature").addClass('bs active');                    
+                        }    
+                        
+                        // HKITSFDC-42 BEGIN
+                        if(currentStepNum == 7 && nextStepNum == 11){
+                            $("#progress-bar-payment-information").removeClass('active');
+                            $("#progress-bar-esignature").addClass('bs active');
+                        }
+                        // HKITSFDC-42 END
+
+                        <!-- current is e-sign (11), go to acknowledgement (12)-->
+                        if(nextStepNum == 12){
+                           $("#progress-bar-esignature").removeClass('bs active');                    
+                        }  
+                        
+            
+                         <!-- current is Attachment(4), go to Contact information(5)-->
+                        if(currentStepNum == 4 && nextStepNum == 5){
+                           $("#progress-bar-attachment").removeClass('active');
+                           $("#progress-bar-payment-information").addClass('bs active');                    
+                        } 
+            
+                         <!-- current is admission form (3), go to Contact Number(5)-->
+                        if(currentStepNum == 3 && nextStepNum == 5){
+                           $("#progress-bar-admission-datail").removeClass('active');
+                           $("#progress-bar-payment-information").addClass('bs active');                    
+                        }               
+                                                                           
+                        if ($('.content-step[data-step="' + nextStepNum + '"]').length > 0) {
+                            $('.content-step:visible').fadeOut(function(){
+                                $('.content-step[data-step="' + nextStepNum + '"]').fadeIn();
+                                if (nextStepNum == 12){
+                                    $('#back').hide();
+                                    $('#save').hide();
+                                }
+                                if (nextStepNum == 11){
+                                    $('#save').hide();
+                                    console.log('******before refresh e-signature');
+                                    refreshEsignature();
+                                }
+                            });
+                        }
+                        
+                        console.log('End of next step');
+                        
+                    }   
+                    
+                    window.previousStep = function(){
+                        var currentStepNum = $('.content-step:visible').data('step');
+                        var previousStepNum = currentStepNum - 1;
+                        
+                        console.log('currentStepNum: ',currentStepNum);
+                        console.log('previousStepNum: ',previousStepNum);
+
+                        //HKITSFDC-42 BEGIN
+                        // if (currentStepNum > 1){
+                        if (currentStepNum >= 1){
+                            //<!-- 4 to 2 -->
+                            // if(currentStepNum == '4'){
+                            //     previousStepNum --;
+                            // }               
+                            //<!-- 4 to 1 -->
+                            if(currentStepNum == '4'){
+                                previousStepNum = 1;
+                            }
+                            //HKITSFDC-42 END
+
+                            //HKITSFDC-42 BEGIN
+                            //<!-- 5 to 3 -->
+                            // if(currentStepNum == '5'){
+                            //     console.log('has admission note' + $('#has-admission-note').val());
+                            //     if ($('#has-admission-note').val() == 'true'){
+                            //         previousStepNum = 4; 
+                            //     }
+                            //     else if ($('#has-admission-note').val() == 'false'){
+                            //         previousStepNum = 3;
+                            //     }
+                            // }
+                            //<!-- 5 to 4 -->
+                            if(currentStepNum == '5'){
+                                previousStepNum = 4;
+                            }
+                            //<!-- 7 to 5 -->
+                            if(currentStepNum == '7'){
+                                previousStepNum = 5;
+                            }
+                            //HKITSFDC-42 END
+                            <!-- 9 to 6 -->
+                            if(currentStepNum == '9'){
+                                previousStepNum -= 2;
+                            }                
+                            <!-- 10 to 7 -->
+                            if(currentStepNum == '10'){
+                                previousStepNum -= 2;
+                            }
+                            // HKITSFDC-42 BEGIN
+                            // <!-- 11 to 9 -->
+                            // if (currentStepNum == '11'){
+                            //     console.log('Has_Credit_Card__c: ' + $('#has-credit-card').val());
+                            //     if ($('#has-credit-card').val() == 'true'){
+                            //         previousStepNum = 10; 
+                            //         $('#credit-card-tc').prop('checked', true);
+                            //         $("#payment-tc-submit").show();
+                            //     }
+                            //     else if ($('#has-credit-card').val() == 'false'){
+                            //         previousStepNum = 9;
+                            //     }
+                            // }    
+                            // <!-- 11 to 7 -->
+                            if(currentStepNum == '11'){
+                                previousStepNum = 7;
+                            }
+                            // HKITSFDC-42 END
+                            
+                            if ($('.content-step[data-step="' + previousStepNum + '"]').length > 0) {
+                                $('.content-step:visible').fadeOut(function(){
+                                    $('.content-step[data-step="' + previousStepNum + '"]').fadeIn();
+                                    if (currentStepNum == 11){
+                                        $('#save').show();
+                                    }
+                                });
+                            } 
+                            // HKITSFDC-42 BEGIN
+                            // if(previousStepNum == 2 && currentStepNum == 4){
+                            //    $("#progress-bar-admission-datail").addClass('bs active');     
+                            //    $("#progress-bar-attachment").removeClass('active');    
+                            // } 
+                            if(previousStepNum == 1 && currentStepNum == 4){
+                               $("#progress-bar-admission-datail").addClass('bs active');     
+                               $("#progress-bar-attachment").removeClass('active');    
+                            } 
+                            // HKITSFDC-42 END
+                                            
+                            if(previousStepNum == 3){
+                               $("#progress-bar-admission-datail").addClass('bs active');     
+                               $("#progress-bar-attachment").removeClass('active');    
+                            }
+                            
+                            if(previousStepNum == 4){
+                               $("#progress-bar-attachment").addClass('bs active');
+                               $("#progress-bar-payment-information").removeClass('active');                
+                            }                       
+                             
+                            if(previousStepNum == 3 && currentStepNum == 5){
+                               $("#progress-bar-admission-datail").addClass('bs active');     
+                               $("#progress-bar-payment-information").removeClass('active');    
+                            }      
+                        
+                            if((previousStepNum == 9 || previousStepNum == 10) && currentStepNum == 11){
+                               $("#progress-bar-payment-information").addClass('bs active');
+                               $("#progress-bar-esignature").removeClass('active');                    
+                            }  
+                            // HKITSFDC-42 BEGIN
+                            if(previousStepNum == 7 && currentStepNum == 11){
+                                $("#progress-bar-esignature").removeClass('active');
+                                $("#progress-bar-payment-information").addClass('bs active');
+                            }
+                            // HKITSFDC-42 END
+                        } 
+                        else {
+                            //Cigna.Util.navigateToVFP('SubmitHospitalVFP');
+                            Cigna.Util.navigateToVFP('MyClaimVFP');
+                        }                                    
+                    }   
+                    
+                    //CR-56_Link_20220214
+                    $('[data-toggle="tooltip"]').tooltip();        
+                    
+                    /*Single Select Policy Holder/Insured Color*/  
+                    //CR-56_Link_20220214
+                    $('.policy-member').on("click",function(){  
+                       $(this).siblings('.policy-member').removeClass('cigna-fg-orange-dark').addClass('cigna-fg-gray-dark');
+                       $(this).removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                    });
+                    /*Selected Policy Holder/Insured assigned to be orange-dark*/
+                       $('.policy-member[data-select="true"]').removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                            
+                    getCreditCardNo();
+                    getCreditCardExpiryDate();
+                    
+                    initDatePicker();
+                
+                }
+                
+            }
+                 
+            function initDatePicker(){
+                Cigna.DatepickerUtil.init("input[id*='-date-format']");
+            }
+                     
+            /*For upload attachment*/  
+            function uploadFile(parentId, attType, element){
+                    
+                showLoading();
+                console.log('parentId' + parentId);
+                $("#"+attType).each(function(){
+                    console.log('attType found----: ',"#"+attType);
+                    //$(element).each(function(){
+                    filesToUpload=$(this)[0].files[0];
+                });
+                
+                //alert('fileToUpload' + filesToUpload);
+                if (filesToUpload == undefined){
+                    finishLoading();
+                }
+        
+                var reader = new FileReader();
+        
+                // Keep a reference to the File in the FileReader so it can be accessed in callbacks
+                reader.file = filesToUpload;
+        
+                reader.onload = function(e){
+                
+                    var maxFileSize = 26214400;//7340032
+                    var passFileSize;
+                    var passFileType;
+                    
+                    if(this.file.size>maxFileSize){
+                        $("#errFileSize").show();
+                        passFileType = false;
+                    }else{
+                        passFileSize = 'true';
+                        $("#errFileSize").hide();
+                    }
+                
+                    //Heather 20190724 - remove 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 'application/msword' for Claims system project - Submit claim & GOP change
+                    if(this.file.type!='application/pdf' && this.file.type!='image/png' && this.file.type!='image/jpeg' && this.file.type!='image/tiff'){
+                        $("#errFileType").show();
+                    }else{
+                        passFileType  = 'true';
+                        $("#errFileType").hide();
+                    }
+                    
+                    if(passFileType=='true' && passFileSize=='true' && parentId && parentId!=undefined){
+                        var att = new sforce.SObject("Attachment");
+                        att.Name = attType+'_'+this.file.name;
+                        att.ContentType = this.file.type;
+                        att.ParentId = parentId;
+        
+                        var binary = "";
+                        var bytes = new Uint8Array(e.target.result);
+                        var length = bytes.byteLength;
+                        
+                        for (var i = 0; i < length; i++)
+                        {
+                            binary += String.fromCharCode(bytes[i]);
+                        }
+                        
+                        att.Body = (new sforce.Base64Binary(binary)).toString();
+                        
+                        sforce.connection.create([att],
+                        {
+                            onSuccess : function(result, source)
+                            {
+                           
+                                if (result[0].getBoolean("success"))
+                                {
+                                    console.log("new attachment created with id " + result[0].id);
+                                    //HKITSFDC-42 BEGIN
+                                    $("#"+attType+"Id,#"+attType+"Label,#"+attType+"ToolTip").hide();
+                                    //HKITSFDC-42 END
+                                    finishSubmission();
+                                    refreshAttlist();
+                                    checkAtt();
+                                    $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                                
+                                }
+                                else
+                                {
+                                    console.log("failed to create attachment " + result[0]);
+                                    alert("failed to create attachment " + result[0]);
+                                    finishSubmission();
+                                    
+                                }
+                                //displayNextBotton();
+                                
+                            },
+                            onFailure : function(error, source)
+                            {
+                                console.log("an error has occurred " + error);
+                                alert("an error has occurred " + error);
+                                finishSubmission();
+                            }
+                        });
+                        
+                    }else if (passFileType=='true' && passFileSize=='true'){
+                        alert("Missing parentId");
+                        finishSubmission();
+                    }
+                    else{
+                        finishSubmission();
+                    }
+                };
+                    
+                reader.readAsArrayBuffer(filesToUpload);
+            } 
+        
+            function getCurrentStep(skipCondition){
+                let claimIdSvr = '{!claimId}';
+                console.log('{!currentStep}',' = ',claimIdSvr);
+                var currentStepNum = $('.content-step:visible').data('step');
+                //InputCurrentStep(currentStepNum);
+                if(skipCondition == 'fromStep2'){
+                    //Cigna.Util.navigateToVFP('MyClaimVFP');
+                    //Cigna.Util.navigateToVFP('SubmitHospitalVFP?claimId=test', null, null, true);
+                    InputCurrentStepForUpload(currentStepNum);
+                }
+                else{
+                    if (currentStepNum != '7' || $("form[id*='claim-gop-form']").validate().form()){
+                        InputCurrentStep(currentStepNum);
+                    }
+                }
+            }
+        
+            function delPreAdmission(id){
+                removePreAdmination(id);
+            }
+                
+            /*Loading*/
+            function showLoading() {
+                $('#att-loading').fadeIn(100);
+                $('#overlay-loading').fadeIn(100);
+            }
+            
+            function finishLoading(){
+                $('#att-loading').fadeOut(100);
+                $('#overlay-loading').fadeOut(100);
+            }
+                    
+            function finishSubmission() {
+                $('#att-loading').fadeOut(100);
+                $('#overlay-loading').fadeOut(100);
+                var currentStepNum = $('.content-step:visible').data('step');
+                //InputCurrentStep(currentStepNum);
+                //InputCurrentStepForUpload(currentStepNum);
+                JustForSaveCurrentStep(currentStepNum);
+                console.log('after JustForSaveCurrentStep(currentStepNum) currentStepNum:' + currentStepNum);
+            } 
+            
+            //HKITSFDC-42 BEGIN
+            //function removeAttachment(id){
+            //   removeAtt(id);
+            //   refreshAttlist();
+               //checkAtt();
+            //}     
+            
+            //HKITSFDC-42 END
+            
+            //HKITSFDC-42 BEGIN
+            function removeAttachment(id,attachTypeName){
+                console.log('----removeAttachmentA: ',id,' : ',attachTypeName);
+                attrTypeName = attachTypeName;
+                console.log('----removeAttachmentB: ',id,' : ',attrTypeName);
+                    removeAtt(id);
+                    refreshAttlist();
+            }
+            function checkRequiredAtt(hasAtt){
+                console.log('checkRequiredAtt A: ',hasAtt);
+                let hasAttBool = (hasAtt === 'true');
+                console.log('checkRequiredAtt B: ',hasAttBool);
+                if(hasAttBool){
+                    $('#errFileToUpload').hide();
+                    nextStep();
+                }else{
+                    $('#errFileToUpload').show();
+                    return;
+                }
+            }
+            function restoreAvailableAttUpload(){
+                console.log('restoreAvailableAttUpload : ',attrTypeName);
+                let attTypeLower = attrTypeName.toLowerCase();
+                if(attTypeLower === 'preApprovalFormAtt'.toLowerCase()){
+                    $('#preApprovalFormAttId,#preApprovalFormAttLabel,#preApprovalFormAttToolTip').show();    
+                }else if(attTypeLower === 'preAdmissionAtt'.toLowerCase()){
+                    $('#preAdmissionAttId,#preAdmissionAttLabel,#preAdmissionAttToolTip').show();   
+                }else if(attTypeLower === 'doctorReferralLetterAtt'.toLowerCase()){
+                    $('#doctorReferralLetterAttId,#doctorReferralLetterAttLabel,#doctorReferralLetterAttToolTip').show();
+                }else if(attTypeLower === 'diagnosisAtt'.toLowerCase()){    
+                    $('#diagnosisAttId,#diagnosisAttLabel,#diagnosisAttToolTip').show();
+                }else if(attTypeLower === 'pastMedicalNoteAtt'.toLowerCase()){
+                    $('#pastMedicalNoteAttId,#pastMedicalNoteAttLabel,#pastMedicalNoteAttToolTip').show();
+                }else if(attTypeLower === 'quotationLetterAtt'.toLowerCase()){
+                    $('#quotationLetterAttId,#quotationLetterAttLabel,#quotationLetterAttToolTip').show();
+                }
+            } 
+            
+            //HKITSFDC-42 END
+            
+            //function showSearchResultList(){
+                //displayList(currentTab);
+            //}  
+            
+            <!--Nicole_2019.12.21_GOP_Select_Policy_Event_Log-->
+            function selectPolicyMember(id,name,policyNo){
+                selectedPolicyMember(id,name,policyNo);
+                //$("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                //scroll to next button
+            }
+            
+            function selectUploadAdmissionNote(value){
+                if (value == 'true'){
+                    if (recordCreated || '{!claimId}' != ''){
+                        saveUploadParam(value);
+                        nextStep('4');
+                    }
+                    else{
+                        selectedUploadAdmissionNote(value);
+                        recordCreated = true;
+                    }
+                }
+                else if (value == 'false'){
+                    saveUploadParam(value);
+                    nextStep(); 
+                }
+            }
+            
+            /**
+            function selectFillInCreditCard(value){
+                selectedFillInCreditCard(value);
+            }
+            */
+            
+            function returnHome(){
+                if (Cigna.Util.isBrokerPortal()) {
+                    Cigna.Util.navigateToVFP('BrokerLandingVFP', null, null, true);
+                }
+                else if (Cigna.Util.isCustomerPortal()) {
+                    window.location.href='{!$Site.Prefix}/CustomerLandingPage';
+                }
+            }
+            
+            
+       </script> 
+    </head>
+    <!-- add bob 20201229 -->
+    <apex:outputPanel id="errorMessage">
+        <apex:pagemessages />
+    </apex:outputPanel>
+    <apex:form id="claim-gop-form">
+    <apex:actionFunction name="initPersonInsuredList" action="{!initPersonInsuredList}" reRender="selectPIPanel, noPIPanel, headerPanel" status="loader-icon" oncomplete="initDisplay()" />
+    <apex:actionFunction name="refreshEsignature" reRender="esignature-form" status="loader-icon" oncomplete="Cigna.ESignatureComp.forceResizeCanvas();"/>
+    <!-- Body Started -->
+    <div id="container" class="bs container">
+        <div id="headeraction" class="bs header-action">
+            <apex:outputPanel id="headerPanel">
+                <div id="back" class="bs col-xs-6 col-sm-6" style="padding-left:0px !important;"><a onclick="previousStep();" class="bs cigna-fg-orange-medium pull-left onclick-pointer" style="text-decoration: none;">
+                    <i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}
+                </a></div>    
+      
+                <div id="save" class="bs col-xs-6 col-sm-6" style="padding-right:0px !important;{!IF(personInsuredList.size == 0, 'display:none;', '')}">
+                    <a class="bs cigna-fg-orange-medium pull-right onclick-pointer" onclick="getCurrentStep();showLoading();" style="text-decoration: none;">
+                        {!$Label.Save} <i class="ci-hk-briefcase" aria-hidden="true" style="font-weight:bold;"></i> 
+                    </a>
+                </div>
+                
+                <!--Save Action Function For Upload, will rerender attachment list, but will not redirect-->
+                <apex:actionFunction name="SavePreAdmissionRecordForUpload" action="{!SavePreAdmission}" rerender="false" status="loader-icon" oncomplete="refreshClaim();"/>
+                <apex:actionFunction name="InputCurrentStepForUpload" action="{!InputCurrentStep}" status="loader-icon" oncomplete="SavePreAdmissionRecordForUpload();" rerender="false">
+                    <apex:param name="step" value="" assignTo="{!currentStep}"/>
+                </apex:actionFunction>
+                
+                <!--Save Action Function For Upload, will rerender attachment list, but will not redirect-->
+                <apex:actionFunction name="SavePreAdmissionRecordForNextButton" action="{!SavePreAdmission}" rerender="hiddenInputPanel" />
+                <apex:actionFunction name="InputCurrentStepForNextButton" action="{!InputCurrentStep}" oncomplete="SavePreAdmissionRecordForNextButton();" rerender="false">
+                    <apex:param name="step" value="" assignTo="{!currentStep}"/>
+                </apex:actionFunction>
+                
+                <apex:actionFunction name="JustForSaveCurrentStep" action="{!JustForSaveCurrentStep}" rerender="false">
+                    <apex:param name="step" value="" assignTo="{!currentStep}"/>
+                </apex:actionFunction>
+                
+                <!--Real Save Action Function, will redirect back to My Claim List Page-->
+                <apex:actionFunction name="SavePreAdmissionRecord" action="{!SavePreAdmission}" rerender="false" status="loader-icon" oncomplete="Cigna.Util.navigateToVFP('MyClaimVFP');"/> <!-- oncomplete="Cigna.Util.navigateToVFP('SubmitHospitalVFP?claimId=test', null, null, true);" -->
+                <apex:actionFunction name="InputCurrentStep" action="{!InputCurrentStep}" status="loader-icon" oncomplete="SavePreAdmissionRecord();" rerender="false">
+                    <apex:param name="step" value="" assignTo="{!currentStep}"/>
+                </apex:actionFunction>
+            </apex:outputPanel>                     
+        </div>   
+        
+        <div id="progressbar" class="bs cigna-progress-bar">
+           <div class="bs cigna-progress-bar-inner">
+               <div id="progress-bar-admission-datail" class="bs progress-bar-font">{!$Label.Admission_Details}</div>
+               <div id="progress-bar-attachment" class="bs progress-bar-font">{!$Label.Attachment}</div>
+               <div id="progress-bar-payment-information" class="bs progress-bar-font">{!$Label.Payment_Information_GOP}</div>
+               <div id="progress-bar-esignature" class="bs progress-bar-font">{!$Label.E_Signature}</div>
+           </div>
+        </div>
+                
+        <apex:outputPanel id="hiddenInputPanel">
+            <input type="hidden" id="has-credit-card" value="{!hasCreditCard}" />
+            <input type="hidden" id="has-admission-note" value="{!uploadAdmissionNote}" />
+            <input type="hidden" id="accepted-payment-t-c" value="{!acceptPaymentTC}" />
+        </apex:outputPanel>
+    
+        <!-- TO BE DELETED -->
+        <!-- the step 0 just for testing and will be integrated to Claim -->
+        <!--------------- step 0 start ------------------>
+        <!--------------- CLAIM LIST -------------------->
+        <div class="bs row content-step" data-step="0" style='display:none' >
+            <!-- HKITSFDC-42 BEGIN -->
+            <!-- <apex:outputPanel id="preAdmissionListPanel"> -->
+                
+                <!-- <script>
+                    /**grey separator**/
+                    var srlist = document.getElementsByClassName("listcontent");
+                    for(var i=0; i < srlist.length; i++){
+                        if(i % 2==0){
+                            var item = srlist[i];
+                            item.style.backgroundColor = '#f2f2f2';
+                        }
+                    }
+                </script>
+                <div class="bs row listcontent-header hidden-xs">
+                   <div class="bs col-sm-2">Claim Id</div>
+                   <div class="bs col-sm-2">Policy Id</div>
+                   <div class="bs col-sm-3">Receive Date</div>
+                   <div class="bs col-sm-2">Step (For Testing)</div>
+                   <div class="bs col-sm-3">Status</div>
+                </div>     
+                -->
+                <!--Delete Action Function-->
+                <!-- <apex:actionFunction name="removePreAdmination" action="{!removePreAdmination}" ReRender="preAdmissionListPanel">
+                    <apex:param name="removePreAdminationId" value="" assignTo="{!removePreAdminationId}" />
+                </apex:actionFunction>    -->
+                <!--commont by tovid 20210528-->
+                <!-- 
+                  <apex:repeat value="{!PreAdmissionList}" var="pa" >
+                     <div  class="bs row listcontent">
+                        <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                           <div class="bs col-xs-6 visible-xs table-cell">Claim Id</div>
+                           <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                               <apex:outputField value="{!pa.Name}" />
+                               <apex:outputPanel rendered="{! If(pa.Status__c!='Not Submitted' ,true,false) }">
+                                   <i class="ci-hk-arrow-31 pull-right visible-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                               </apex:outputPanel>
+                               <apex:outputPanel rendered="{! If(pa.Status__c=='Not Submitted' ,true,false) }">
+                                   <i class="ci-hk-pencil pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="Cigna.Util.navigateToVFP('SubmitHospitalVFP?claimId={!pa.id}', null, null, true)" aria-hidden="true"></i>
+                               </apex:outputPanel>
+                           </div>
+                        </div>
+                        
+                        <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                           <div class="bs col-xs-6 visible-xs table-cell">Policy Id</div>
+                           <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">N/A</div>
+                        </div>
+            
+                        <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                           <div class="bs col-xs-6 visible-xs table-cell">Receive Date</div>
+                           <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">N/A</div>
+                        </div>
+                        
+                        <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                           <div class="bs col-xs-6 visible-xs table-cell">Step (For Testing)</div>
+                           <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pa.Steps__c}</div>
+                        </div>
+                                    
+                        <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                           <div class="bs col-xs-6 visible-xs table-cell">Status</div>
+                           <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                               {!pa.Status__c}
+                               <apex:outputPanel >
+                                   <i class="fa fa-trash  pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="delPreAdmission('{!pa.id}')" aria-hidden="true"/>
+                               </apex:outputPanel>
+                               <apex:outputPanel >
+                                   <i style="padding-left: 10px;" class="fa fa-trash pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="delPreAdmission('{!pa.id}')" aria-hidden="true"/>
+                               </apex:outputPanel>
+                               <apex:outputPanel >
+                                   <i class="fa fa-pencil pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="Cigna.Util.navigateToVFP('SubmitHospitalVFP?claimId={!pa.id}', null, null, true)" aria-hidden="true"></i>
+                                   //onclick="nextStep({!pa.steps__c})" 
+                               </apex:outputPanel>
+                           </div>
+                        </div>
+                        
+                     
+                     </div>
+                   </apex:repeat>
+                    -->
+                <!-- <div class="bs policy-member cigna-fg-gray-dark" onclick="nextStep(1)">
+                    create new 
+                </div> 
+            
+            </apex:outputPanel> -->
+            
+            <apex:outputPanel id="getReadyForSubmissionPanel">
+                <apex:variable var="downloadLink" value="https://www.cigna.com.hk/iwov-resources/docs/Cigna-Pre-Approval-Form-For-Cashless-Medical-Service.pdf" />
+                <div>
+                    <apex:outputLabel value="{!$Label.Submit_GOP_Step_0_title}" />
+                </div>
+                <!-- <div style="margin: 5px; padding: 10px; background-color: #f5e553; color: black; border: 1px solid; border-radius: 25px;"> -->
+                <div class="note-box">
+                    <ul>
+                        <li><apex:outputLabel value="{!$Label.Submit_GOP_Step_0_Notice_List_01}" /></li>
+                        <li><apex:outputLabel value="{!$Label.Submit_GOP_Step_0_Notice_List_02}" /></li>
+                    </ul>
+                </div>
+                <div>
+                    <ol class="tnx-list">
+                        <li>
+                            <apex:outputLabel value="{!$Label.Submit_GOP_Step_0_Prereq_01}" />
+                            <ul class="tnx-list">
+                                <li><apex:outputText value="{!$Label.Submit_GOP_Step_0_Prereq_Detail_01}" /></li>
+                                <li><apex:outputText escape="false" value="{! SUBSTITUTE($Label.Submit_GOP_Step_0_Prereq_Detail_02,'{0}',downloadLink)}" /></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <apex:outputLabel value="{!$Label.Submit_GOP_Step_0_Prereq_02}" />
+                            <ul class="tnx-list">
+                                <li><apex:outputText value="{!$Label.Submit_GOP_Step_0_Prereq_02_Detail_01}" /></li>
+                                <li><apex:outputText value="{!$Label.Submit_GOP_Step_0_Prereq_02_Detail_02}" /></li>
+                                <li><apex:outputText value="{!$Label.Submit_GOP_Step_0_Prereq_02_Detail_03}" /></li>
+                                <li><apex:outputText value="{!$Label.Submit_GOP_Step_0_Prereq_02_Detail_04}" /></li>
+                                <li><apex:outputText value="{!$Label.Submit_GOP_Step_0_Prereq_02_Detail_05}" /></li>
+                                <li><apex:outputText value="{!$Label.Submit_GOP_Step_0_Prereq_02_Detail_06}" /></li>
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+                    <div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="nextStep();">
+                        <span class="action-btn cigna-fg-white" role="button">{!$Label.Submit_GOP_Step_0_Apply_Now}</span>
+                    </div>
+                    <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="nextStep();">
+                        <div  class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                            <span class="action-btn cigna-fg-white" role="button"><span class="ci-hk-home" aria-hidden="true"></span><br/>{!$Label.Submit_GOP_Step_0_Apply_Now}</span>
+                        </div>
+                    </div>
+                <apex:actionFunction name="sendPreApprovalEmail" action="{!sendPreApprovalEmail}" status="loader-icon" reRender="false"></apex:actionFunction>
+            </apex:outputPanel>
+            
+            <!-- HKITSFDC-42 END -->
+        </div>
+        <!--------------- step 0 End ------------------>
+    
+        <!--------------- step 1 Start------------------>
+        <!-- ---------- SELECT INSURED PERSON --------- -->
+        <div class="bs row content-step" data-step="1" style='display:none'>
+            <apex:outputPanel id="noPIPanel" style="{!IF(personInsuredList.size == 0, '', 'display:none;')}">
+                {!$Label.GOP_Not_Eligible}
+            </apex:outputPanel>
+            <apex:outputPanel id="selectPIPanel" style="{!IF(personInsuredList.size == 0, 'display:none;', '')}">
+                <!-- HKITSFDC-42 BEGIN -->
+                <!-- <apex:actionFunction name="selectedPolicyMember" action="{!selectedPolicyMember}" rerender="tcPanel" status="loader-icon" oncomplete="nextStep();"> -->
+                <apex:actionFunction name="selectedPolicyMember" action="{!selectedPolicyMember}" rerender="tcPanel" status="loader-icon" oncomplete="selectUploadAdmissionNote('true'); nextStep('4');">
+                <!-- HKITSFDC-42 END -->
+                    <apex:param name="selectedPersonInsuredId" value="" assignTo="{!selectedPersonInsuredId}"/>
+                    <apex:param name="selectedPersonInsuredName" value="" assignTo="{!selectedPersonInsuredName}"/>
+                    <!--Nicole_2019.12.21_GOP_Select_Policy_Event_Log-->
+                    <apex:param name="selectedPolicyNo" value="" assignTo="{!selectedPolicyNo}"/>
+                </apex:actionFunction>
+                
+                <!--
+                <script>
+                    /*Single Select Policy Holder/Insured Color*/  
+                    $('.policy-member').click(function(){  
+                       $(this).siblings('.policy-member').removeClass('cigna-fg-orange-dark').addClass('cigna-fg-gray-dark');
+                       $(this).removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                    });
+                    /*Selected Policy Holder/Insured assigned to be orange-dark*/
+                       $('.policy-member[data-select="true"]').removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                </script>    
+                -->
+                
+                <!-- <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>   -->
+                <div class="bs col-xs-12 form-note">
+                    <apex:outputText value="{!$Label.GOP_Instruction}" escape="false"></apex:outputText>
+                </div>
+                <div class="bs col-xs-12 listcontent-header">
+                    <div class="content-question">
+                        {!$Label.Who_would_you_like_to_lodge_an_application_for}
+                    </div>   
+                </div> 
+                
+                <apex:repeat value="{!personInsuredList}" var="pi">
+                    <!--Nicole_2019.12.21_GOP_Select_Policy_Event_Log-->
+                    <div class="bs policy-member content-choice cigna-fg-gray-dark onclick-pointer" data-select="{!pi.personInsuredselected}" onclick="selectPolicyMember('{!pi.personInsuredId}','{!pi.personInsured}','{!pi.policyNo}');">
+                        <i class="ci-hk-user content-icon" aria-hidden="true"></i>{!pi.policyNo}&nbsp;&nbsp;{!pi.personInsured}
+                    </div>
+                </apex:repeat>
+            </apex:outputPanel>    
+        </div>
+        <!--------------- step 1 end ------------------>
+        
+        <!--------------- step 2 start ------------------>
+        <!-- ----------- Q: ADMISSION NOTE ------------- -->
+         <!-- HKITSFDC-42 BEGIN -->
+        <!-- <div class="bs row content-step" data-step="2" style='display:none'>-->
+            <apex:actionFunction name="selectedUploadAdmissionNote" action="{!selectedUploadAdmissionNote}" status="loader-icon" rerender="false" oncomplete="getCurrentStep('fromStep2');">
+                <apex:param name="uploadAdmissionNote" value="" assignTo="{!uploadAdmissionNote}"/>
+            </apex:actionFunction>
+            
+            <apex:actionFunction name="saveUploadParam" action="{!selectedUploadAdmissionNote}" rerender="false">
+                <apex:param name="uploadAdmissionNote" value="" assignTo="{!uploadAdmissionNote}"/>
+            </apex:actionFunction>
+        <!--    
+            <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>  
+            <div class="bs col-sm-12">
+                {!$Label.Do_you_have_any_admission_note}
+            </div>
+
+            <div class="content-question">
+                <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>               
+                <div class="bs col-xs-6 col-sm-6 cigna-fg-gray-dark text-center" >
+                    <span class="onclick-pointer " onclick="selectUploadAdmissionNote('true'); ">
+                        <i class="fa fa-check-circle-o" style="padding-right:20px;"></i>
+                        {!$Label.Yes}
+                    </span>
+                </div> 
+                
+                <div class="bs col-xs-6 col-sm-6 cigna-fg-gray-dark text-center" >
+                    <span class="onclick-pointer " onclick="selectUploadAdmissionNote('false'); ">
+                        <i class="fa fa-times-circle-o" style="padding-right:20px;"></i>
+                        {!$Label.No}
+                    </span>
+                </div>                  
+            </div>        
+        </div> -->
+        <!-- HKITSFDC-42 END -->
+        <apex:actionFunction name="refreshClaim" rerender="refreshClaimId" status="loader-icon" oncomplete="nextStep('4');"/>  
+        
+        <!--------------- step 2 end ------------------>
+        
+        <!--------------- step 3 start ------------------>
+        <!----------- FILL IN ADMISSION FORM ------------>
+        <!-- HKITSFDC-42 BEGIN -->
+        <!-- <div class="bs row content-step" data-step="3" style='display:none'>
+        
+            <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>  
+
+            <div class="bs col-sm-12 col-xs-12">
+                {!$Label.Admission_Details_Note}
+            </div>
+                
+            <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>           
+            
+            <div class="bs col-xs-12"> 
+                <div class="bs row form-field">
+                    <div class="bs col-sm-3">{!$Label.Attending_Dr_Name}</div>
+                    <div class="bs col-sm-9">
+                        <apex:inputField id="GOP-attending-dr-name" value="{!claimRequest.Attending_Dr_Name__c}" styleclass="form-field-style" />
+                    </div>
+                </div>
+                
+                <div class="bs row form-field">
+                    <div class="bs col-sm-3">{!$Label.Dr_Clinic_Phone_No}</div>
+        -->
+                    <!--
+                    <div class="bs col-sm-9">
+                        <apex:inputField id="GOP-dr-contact-no-number" value="{!claimRequest.Dr_or_Clinic_Phone_Number__c}" styleclass="form-field-style" />
+                    </div>
+                    -->
+        <!--            <div class="bs col-sm-9">
+                        <span class="bs col-xs-4 col-sm-2" style="padding-left:0px !important;"><apex:inputField id="GOP-dr-contact-no-country-code" type="tel" html-placeholder="+852" value="{!claimRequest.Dr_or_Clinic_Phone_Number_Country_Code__c}" styleclass="form-field-style" /></span>
+                        <span class="bs col-xs-8 col-sm-10" style="padding-right:0px !important;"><apex:inputField id="GOP-dr-contact-no-number" type="tel" value="{!claimRequest.Dr_or_Clinic_Phone_Number__c}" styleclass="form-field-style" /></span>
+                    </div>
+                </div>              
+                
+                <div class="bs row form-field">
+                    <div class="bs col-sm-3">{!$Label.Hospital_Name}</div>
+                    <div class="bs col-sm-9">
+                        <apex:inputField id="GOP-hospital-name" value="{!claimRequest.Hospital_Name__c}" styleclass="form-field-style" />
+                    </div>
+                </div> 
+                
+                <div class="bs row form-field">
+                    <div class="bs col-sm-3">{!$Label.Admission_Date}</div>   
+                    <div class="bs col-sm-9">
+        -->            
+                        <!-- // CR-56_Link_20220214 -->
+        <!--                <input type="text" id="GOP-admission-date-format" class="form-field-style"
+                               disabled="disabled" readonly="readonly" data-date-yyyy-mm-dd="{!claimRequest.Admission_Date__c}" data-altField-id="admission-datepicker-hidden" 
+                               onfocus="$('#GOP-admission-date-format').trigger('blur');" onchange="$('#GOP-admission-date-format').trigger('blur');"/>
+                        <apex:inputHidden id="admission-datepicker-hidden" value="{!admissionDateTimestamp}" />
+        -->                                                                
+                        <!-- apex:inputField type="date" id="GOP-admission-date-format" value="{!claimRequest.Admission_Date__c}" html-data-date-yyyy-mm-dd="{!claimRequest.Admission_Date__c}" style="padding-left:0px;padding-right:0px;width:100%;" 
+                                         styleclass="form-field-style col-sm-6 col-xs-12" showDatePicker="false" html-placeholder="YYYY/MM/DD"/-->
+        <!--        </div>                 
+                </div>                    
+                
+            </div> -->
+            
+            <!--desktop action button-->
+            <!-- <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>
+            <div class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="nextStep('5')"> -->
+                <!-- <div class="ci-hk-arrow-31" /> -->
+                <!-- <span class="action-btn cigna-fg-white" role="button">{!$Label.Next}</span>
+            </div> -->
+            
+            <!--mobile action button-->
+        <!--    <div class="bs row mobile-app-padding" style="display: none; padding-bottom: 200px;">
+                <div class="bs col-xs-12"></div>
+            </div>
+            <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="nextStep('5')">
+                <div  class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                    <span class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</span>
+                </div>
+            </div>
+        </div> -->
+        <!-- HKITSFDC-42 END -->
+        <!--------------- step 3 end ------------------>
+        
+        <!--------------- step 4 start ------------------>
+        <!------------ ADMISSION FILE UPLOAD ------------>
+        <div class="bs row content-step" data-step="4" style='display:none'>
+            <!-- HKITSFDC-42 BEGIN -->
+            <apex:variable var="downloadLink" value="https://www.cigna.com.hk/iwov-resources/docs/Cigna-Pre-Approval-Form-For-Cashless-Medical-Service.pdf" />
+            <!-- HKITSFDC-42 END -->
+            <!--start of loading-->
+            <div id="overlay-loading" class="overlay" style="background: rgba(217,217,214, 0.5);">
+                <div id="att-loading" class="bs col-xs-offset-3 col-xs-6 text-center loading-spinner">
+                    <img class="bs" src="{!URLFOR($Resource.Spinners, 'slds_spinner.gif')}" width="70px" />
+                    <div class="loading-label">
+                        {!$Label.uploading}
+                    </div>
+                </div>
+            </div> 
+            <!--end of loading-->
+            
+            <div style="padding: 10px;"></div>
+            <!-- HKITSFDC-42 BEGIN -->
+            <!-- <div class="bs col-sm-12 form-field"> -->
+            <div class="bs col-sm-12">
+            <!-- HKITSFDC-42 END -->
+                {!$Label.Please_upload_the_following_attachments}
+            </div>           
+            <!-- HKITSFDC-42 BEGIN -->
+            <!-- <div class="bs col-sm-12 form-field"> -->
+            <div class="bs col-sm-12">
+                <!-- <div id="errFileSize" class="alert alert-danger" role="alert" style="display:none;"> -->
+                <div id="errFileSize" class="alert-low-bottom alert-danger" role="alert" style="display:none;">
+            <!-- HKITSFDC-42 END -->
+                    <span class="ci-hk-caution" aria-hidden="true"></span>
+                    {!$Label.File_size_exceeds_10M}
+                </div>
+            <!-- HKITSFDC-42 BEGIN -->    
+                <!-- <div id="errFileType" class="alert alert-danger" role="alert" style="display:none;"> -->
+                <div id="errFileType" class="alert-low-bottom alert-danger" role="alert" style="display:none;">
+            <!-- HKITSFDC-42 END -->        
+                    <span class="ci-hk-caution" aria-hidden="true"></span>
+                    {!$Label.Please_upload_a_valid_file} (i.e. .pdf/.jpeg/.png/.tiff)
+                </div>
+                
+            </div>
+            <!-- HKITSFDC-42 BEGIN -->
+            <div class="bs col-sm-12">
+                <div class="note-box">
+                    <apex:outputText escape="false" value="{! SUBSTITUTE($Label.Preapproval_form_no_complete_download,'{0}',downloadLink)}" />
+                </div>
+            </div>
+            <!-- HKITSFDC-42 END -->
+            <!-- HKITSFDC-42 START -->
+            <!--<apex:actionFunction name="refreshAttlist" rerender="hkidlist" />-->
+            <apex:actionFunction name="refreshAttlist" rerender="hkidlist" oncomplete="restoreAvailableAttUpload();"/>
+            <!-- HKITSFDC-42 END -->
+            <apex:actionFunction name="removeAtt" action="{!removeAtt}" rerender="hkidlist,fileUploadNextButton">
+                <apex:param name="id" value="" assignTo="{!removeAttId}"/>
+            </apex:actionFunction>
+            <apex:actionFunction name="checkAtt" action="{!checkAtt}" reRender="fileUploadNextButton"/>
+            <!-- HKITSFDC-42 BEGIN -->
+            <apex:actionFunction name="checkUploadAttStatus" action="{!checkUploadAttStatus}" reRender="hasAttPanel" oncomplete="checkRequiredAtt(document.getElementById('hasAttValue').value);"/>
+            <!-- HKITSFDC-42 END -->
+            <apex:outputPanel id="refreshClaimId">
+                <script>
+                    //CR-56_Link_20220214
+                    $('[data-toggle="tooltip"]').tooltip();
+                </script>
+
+                <div class="bs row"> <!--  content-choice-noUnderLine ?? -->
+                    <!-- HKITSFDC-42 BEGIN -->
+                    <div id="preApprovalFormAttId" class="col-xs-2 col-sm-1">
+                        <input id="preApprovalFormAtt" type="file" class="fileInput" onchange="uploadFile('{!claimId}','preApprovalFormAtt', this);" style="display:none;" />
+                        <label for="preApprovalFormAtt"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true" /></label>
+                    </div>                
+                    <div id="preApprovalFormAttLabel" class="col-xs-8 col-sm-10">{!$Label.Pre_Approval_Form + " " + $Label.Required_Bracket} </div>
+                    <div id="preApprovalFormAttToolTip" class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!IF(contains(transKey, '~Upload_Tooltip~'), transField['Upload_Tooltip'][$Label.Header_Language_Code_Current],'Upload_Tooltip')}" aria-hidden="true"></i></div>
+                    <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+
+                    <!--<div class="col-xs-2 col-sm-1">-->
+                    <div id="preAdmissionAttId" class="col-xs-2 col-sm-1">
+                    <!-- HKITSFDC-42 END -->
+                        <input id="preAdmissionAtt" type="file" class="fileInput" onchange="uploadFile('{!claimId}','preAdmissionAtt', this);" style="display:none;" />
+                        <label for="preAdmissionAtt"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true" /></label>
+                    </div>
+                
+                    <div id="preAdmissionAttLabel" class="col-xs-8 col-sm-10">{!$Label.Admission_Note + " " + $Label.If_Available}</div>
+                    <div id="preAdmissionAttToolTip" class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!IF(contains(transKey, '~Upload_Tooltip~'), transField['Upload_Tooltip'][$Label.Header_Language_Code_Current],'Upload_Tooltip')}" aria-hidden="true"></i></div>
+                    <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                    
+                    <!-- HKITSFDC-42 BEGIN -->
+                    
+
+                    <div id="doctorReferralLetterAttId" class="col-xs-2 col-sm-1">
+                        <input id="doctorReferralLetterAtt" type="file" class="fileInput" onchange="uploadFile('{!claimId}','doctorReferralLetterAtt', this);" style="display:none;" />
+                        <label for="doctorReferralLetterAtt"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true" /></label>
+                    </div>                
+                    <div id="doctorReferralLetterAttLabel" class="col-xs-8 col-sm-10">{!$Label.Doctor_Referral_Letter + " " + $Label.If_Available}</div>
+                    <div id="doctorReferralLetterAttToolTip" class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!IF(contains(transKey, '~Upload_Tooltip~'), transField['Upload_Tooltip'][$Label.Header_Language_Code_Current],'Upload_Tooltip')}" aria-hidden="true"></i></div>
+                    <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                    
+                    <!-- <div id="diagnosisAttId" class="col-xs-2 col-sm-1">
+                        <input id="diagnosisAtt" type="file" class="fileInput" onchange="uploadFile('{!claimId}','diagnosisAtt', this);" style="display:none;" />
+                        <label for="diagnosisAtt"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true" /></label>
+                    </div>                
+                    <div id="diagnosisAttLabel" class="col-xs-8 col-sm-10">{!$Label.Diagnosis + " " + $Label.If_Available}</div>
+                    <div id="diagnosisAttToolTip" class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!IF(contains(transKey, '~Upload_Tooltip~'), transField['Upload_Tooltip'][$Label.Header_Language_Code_Current],'Upload_Tooltip')}" aria-hidden="true"></i></div>
+                    <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div> -->
+                    
+                    <div id="pastMedicalNoteAttId" class="col-xs-2 col-sm-1">
+                        <input id="pastMedicalNoteAtt" type="file" class="fileInput" onchange="uploadFile('{!claimId}','pastMedicalNoteAtt', this);" style="display:none;" />
+                        <label for="pastMedicalNoteAtt"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true" /></label>
+                    </div>                
+                    <div id="pastMedicalNoteAttLabel" class="col-xs-8 col-sm-10">{!$Label.Past_Medical_Note + " " + $Label.If_Available}</div>
+                    <div id="pastMedicalNoteAttToolTip" class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!IF(contains(transKey, '~Upload_Tooltip~'), transField['Upload_Tooltip'][$Label.Header_Language_Code_Current],'Upload_Tooltip')}" aria-hidden="true"></i></div>
+                    <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                    
+                    <div id="quotationLetterAttId" class="col-xs-2 col-sm-1">
+                        <input id="quotationLetterAtt" type="file" class="fileInput" onchange="uploadFile('{!claimId}','quotationLetterAtt', this);" style="display:none;" />
+                        <label for="quotationLetterAtt"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true" /></label>
+                    </div>                
+                    <div id="quotationLetterAttLabel" class="col-xs-8 col-sm-10">{!$Label.Fee_Advisory + " " + $Label.If_Available}</div>
+                    <div id="quotationLetterAttToolTip" class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!IF(contains(transKey, '~Upload_Tooltip~'), transField['Upload_Tooltip'][$Label.Header_Language_Code_Current],'Upload_Tooltip')}" aria-hidden="true"></i></div>
+                    <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                    
+                    
+                    <!-- HKITSFDC-42 END -->
+                    
+                    <div id="uploadHKIDlist" style="padding:20px;">
+                        <apex:outputPanel id="hkidlist">
+                            <apex:repeat value="{!ListHkidAtt}" var="hkidAtt">
+                                <!-- HKITSFDC-42 BEGIN -->
+                                <!--<div class="col-xs-12 col-sm-12 uploaded-filelist">{!hkidAtt.Name}<i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!hkidAtt}');" aria-hidden="true"></i></div>-->
+                                <div class="col-xs-12 col-sm-12 uploaded-filelist"><b>{!hkidAtt.Description}:</b> {!hkidAtt.Name}<i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!hkidAtt.Id}','{!hkidAtt.Description}');" aria-hidden="true"></i></div>
+                                <!-- HKITSFDC-42 END -->
+                                <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                            </apex:repeat>
+                         </apex:outputPanel>    
+                    </div>
+                </div>
+            </apex:outputPanel>
+            <!-- HKITSFDC-42 BEGIN -->
+            <apex:outputPanel id="hasAttPanel">
+                <input type="hidden" id="hasAttValue" value="{!hasAtt}"/>
+            </apex:outputPanel>
+            <!-- HKITSFDC-42 END -->
+            
+            <apex:outputpanel id="fileUploadNextButton">
+                <!-- HKITSFDC-42 BEGIN -->
+                <!--<apex:outputpanel rendered="{!hasAtt}">-->
+                <!-- HKITSFDC-42 END -->    
+                <!-- HKITSFDC-42 BEGIN -->
+                <div id="errFileToUpload" class="alert alert-danger" role="alert" style="display:none;">
+                    <span class="ci-hk-caution" aria-hidden="true"></span>
+                    {!$Label.Please_upload_GOP_form}
+                </div>
+                <!-- HKITSFDC-42 END -->
+                
+                    <!--desktop action button-->
+                    <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>
+                    <!-- HKITSFDC-42 BEGIN -->
+                    <!--<div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="nextStep()">-->
+                    <div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="checkUploadAttStatus();">    
+                    <!-- HKITSFDC-42 END -->    
+                        <span class="action-btn cigna-fg-white" role="button">{!$Label.Next}</span>
+                    </div>
+                    
+                    <!--mobile action button-->
+                    <div class="bs row mobile-app-padding" style="display: none; padding-bottom: 200px;">
+                        <div class="bs col-xs-12"></div>
+                    </div>
+                    
+                    <!-- HKITSFDC-42 BEGIN -->
+                    <!--<div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="nextStep()">-->
+                    <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="checkAtt();">  
+                    <!-- HKITSFDC-42 END -->    
+                        <div  class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                            <span class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</span>
+                        </div>
+                    </div> 
+                <!-- HKITSFDC-42 BEGIN -->
+                <!--</apex:outputpanel>-->
+                <!-- HKITSFDC-42 END -->
+            </apex:outputpanel>    
+        </div> 
+        <!--------------- step 4 end ------------------>
+        
+        <!--------------- step 5 start ------------------>
+        <!--------------- CONTACT NO -------------------->
+        <div class="bs row content-step" data-step="5" style='display:none'>
+            <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>  
+            <div class="content-question">
+                 <div class="bs col-sm-12 col-xs-12">
+                     {!$Label.In_case_we_shall_contact_you_please_let_me_know_your_contact_phone_no}
+                 </div>
+            </div>     
+            
+            <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div> 
+            
+            <div class="bs container">
+                <div class="bs row form-field">
+                    <div class="bs col-sm-9">
+                        <span class="bs col-xs-4 col-sm-2" style="padding-left:0px !important;"><apex:inputField id="GOP-contact-no-country-code" type="tel" html-placeholder="+852" value="{!claimRequest.Contact_No_Country_Code__c}" styleclass="form-field-style" /></span>
+                        <span class="bs col-xs-8 col-sm-10" style="padding-right:0px !important;"><apex:inputField id="GOP-contact-no-number" type="tel" value="{!claimRequest.Contact_No__c}" styleclass="form-field-style" /></span>
+                    </div>
+                </div>  
+            </div>    
+            
+            <!--desktop action button-->
+            <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>
+            <!-- HKITSFDC-42 BEGIN --> 
+            <!-- <div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="nextStep()"> -->
+            <div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="nextStep('7');">
+            <!-- HKITSFDC-42 END -->
+                <span class="action-btn cigna-fg-white" role="button">{!$Label.Next}</span>
+            </div>
+            
+            <!--mobile action button-->
+            <div class="bs row mobile-app-padding" style="display: none; padding-bottom: 200px;">
+                <div class="bs col-xs-12"></div>
+            </div>
+            <!-- HKITSFDC-42 BEGIN -->
+            <!-- <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="nextStep()"> -->
+            <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="nextStep('7');">
+            <!-- HKITSFDC-42 END -->
+                <div  class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                    <span class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</span>
+                </div>
+            </div>             
+        </div>        
+        <!--------------- step 5 end ------------------>
+        
+        <!--------------- step 6 start ------------------>
+        <!--------------- Q: CREDIT CARD ---------------->
+        <!-- HKITSFDC-42 BEGIN -->
+        <!-- <div class="bs row content-step" data-step="6" style="display: none;">-->
+        
+            <apex:actionFunction name="selectedFillInCreditCard" action="{!selectedFillInCreditCard}" rerender="false">
+                <apex:param name="hasCreditCard" value="" assignTo="{!hasCreditCard}"/>
+            </apex:actionFunction>
+        <!--    
+            <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>     
+        
+            <div class="bs col-sm-12 col-xs-12">
+                {!$Label.GOP_Credit_Card_Note}
+            </div>
+            
+            <div style="padding:20px;"></div>
+            <div class="content-question" >             
+                <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>  
+                                 
+                <div class="bs col-xs-6 col-sm-6 cigna-fg-gray-dark text-center">
+                    <span class="onclick-pointer" onclick="selectedFillInCreditCard('true'); nextStep();">
+                        <i class="fa fa-check-circle-o " style="padding-right:20px;" ></i> 
+                        {!$Label.OK_please_process}
+                    </span>
+                </div>                   
+
+                <div class="bs col-xs-6 col-sm-6 cigna-fg-gray-dark text-center">
+                    <span class="onclick-pointer" onclick="selectedFillInCreditCard('false'); nextStep(9);">
+                        <i class="fa fa-times-circle-o" style="padding-right:20px;"></i> 
+                        {!$Label.I_do_not_have_credit_card}
+                    </span>
+                </div>                                     
+            </div>
+        </div> -->
+        <!-- HKITSFDC-42 END -->
+        <!--------------- step 6 end ------------------>
+        
+        <!--------------- step 7 start ------------------>
+        <!---------- FILL IN CREDIT CARD INFORMATION ---->
+        <div class="bs row content-step" data-step="7" style="display:none;">
+            
+            <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>     
+            
+            <div class="content-question">
+                <div class="bs col-sm-12 col-xs-12">{!$Label.Please_tell_me_the_credit_card_details}</div>
+            </div>
+            
+            <!-- HKITSFDC-42 BEGIN -->
+                <div class="bs col-xs-12 col-sm-12 note-box">
+                    <ul style="list-style-type: none;">
+                        <li><apex:outputLabel value="{!$Label.GOP_Credit_Card_Shortfall_Description}" /></li>
+                    </ul>
+                </div>
+                <!-- HKITSFDC-42 END -->
+            
+            <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div> 
+            
+            <div class="bs col-xs-12 form-horizontal">
+                <apex:outputPanel layout="block" styleClass="bs form-group">
+                    <!-- HKITSFDC-42 BEGIN -->
+                    <!--<div class="bs col-sm-3">
+                        <p>
+                            <apex:outputLabel value="{!$Label.Card_Holder_Name}" for="GOP-Credit-Card-Holder"/>
+                        </p>
+                    </div>
+                    <div class="bs col-sm-9">
+                        <apex:inputText id="GOP-Credit-Card-Holder" value="{!claimRequest.Card_Holder_Name__c}" styleClass="bs form-field-style" />
+                    </div>-->
+                    <!-- FirstName -->
+                    <div class="bs col-sm-3">
+                        <p>
+                            <apex:outputLabel value="{!$Label.Card_Holder_First_Name}" for="GOP-Credit-Card-Holder-First-Name"/>
+                        </p>
+                    </div>
+                    <div class="bs col-sm-3">
+                        <apex:inputText id="GOP-Credit-Card-Holder-First-Name" value="{!claimRequest.Card_Holder_First_Name__c}" styleClass="bs form-field-style" />
+                    </div>
+                    <!-- LastName -->
+                    <div class="bs col-sm-3">
+                        <p>
+                            <apex:outputLabel value="{!$Label.Card_Holder_Last_Name}" for="GOP-Credit-Card-Holder-Last-Name"/>
+                        </p>
+                    </div>
+                    <div class="bs col-sm-3">
+                        <apex:inputText id="GOP-Credit-Card-Holder-Last-Name" value="{!claimRequest.Card_Holder_Last_Name__c}" styleClass="bs form-field-style" />
+                    </div>
+                    <!-- HKITSFDC-42 END -->
+                </apex:outputPanel>
+                <apex:outputPanel layout="block" styleClass="bs form-group">
+                    <div class="bs col-sm-3">
+                        <p>
+                            <apex:outputLabel value="{!$Label.Card_Holder_HKID}" for="GOP-Card-Holder-HKID"/>
+                        </p>
+                    </div>
+                    <div class="bs col-sm-9">
+                        <!-- please change the hkid field value -->
+                        <apex:inputText id="GOP-Card-Holder-HKID" value="{!claimRequest.Card_Holder_HKID__c}" styleClass="bs form-field-style" />
+                    </div>
+                </apex:outputPanel>
+                <apex:outputPanel layout="block" styleClass="bs form-group">
+                    <div class="bs col-sm-3">
+                        <p>
+                            <apex:outputLabel value="{!$Label.Credit_Card_Number_VISA_MasterCard}" for="GOP-Check-Credit-Card"/>
+                        </p>
+                    </div>
+                    <div class="bs col-sm-9">
+                        <apex:input type="tel" value="{!paramCreditCardNum1}"
+                                               html-maxlength="4" 
+                                               styleClass="bs form-field-style text-center credit-card-box"
+                                               size="5"
+                                               style="display: inline;"
+                                               id="credit-card-digit-unit1"
+                                               onblur="getCreditCardNo()"
+                        />
+                        <span>&nbsp;-&nbsp;</span>
+                        <apex:input type="tel" value="{!paramCreditCardNum2}" 
+                                               html-maxlength="4" 
+                                               styleClass="bs form-field-style text-center credit-card-box"
+                                               size="5"
+                                               style="display: inline;"
+                                               id="credit-card-digit-unit2"
+                                               onblur="getCreditCardNo()"
+                        />
+                        <span>&nbsp;-&nbsp;</span>
+                        <apex:input type="tel" value="{!paramCreditCardNum3}" 
+                                               html-maxlength="4" 
+                                               styleClass="bs form-field-style text-center credit-card-box"
+                                               size="5"
+                                               style="display: inline;"
+                                               id="credit-card-digit-unit3"
+                                               onblur="getCreditCardNo()"
+                        />
+                        <span>&nbsp;-&nbsp;</span>
+                        <apex:input type="tel" value="{!paramCreditCardNum4}" 
+                                               html-maxlength="4" 
+                                               styleClass="bs form-field-style text-center credit-card-box"
+                                               size="5"
+                                               style="display: inline;"
+                                               id="credit-card-digit-unit4"
+                                               onblur="getCreditCardNo()"
+                        />
+                        <!-- <span onclick="clearCreditCard();"> X </span> -->
+                    </div>
+                    <div class="bs col-sm-offset-3 col-sm-9 col-xs-12">
+                        <apex:inputText id="GOP-Check-Credit-Card" 
+                                        style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none" 
+                                        onfocus="hiddenonblur(this)" tabindex="-1"/>
+                    </div>
+                    <!--
+                    <div id="creditCardErrorDiv" class="errorDiv col-sm-9 col-sm-offset-3 col-xs-12" style="display:none;">
+                        <label class="cusError" id="creditCardErrorMes" ></label>
+                    </div>
+                    -->
+                    <script>
+                        //CR-56_Link_20220214
+                        $('input.credit-card-box').on("keyup",function(evt) {
+                            var numberPattern = /\d+/g;
+                            
+                            if (this.value.length == this.maxLength && this.value.match(numberPattern)) {
+                                var $next = $(this).nextAll('.credit-card-box');
+                                if ($next.length > 0){
+                                    $(this).nextAll('.credit-card-box')[0].focus();
+                                } else {
+                                    $(this).trigger("blur");
+                                }
+                            } else if (this.value.length == 0 && evt.keyCode == 8) {
+                                // Backspace
+                                var $prev = $(this).prevAll('.credit-card-box');
+                                if ($prev.length > 0){
+                                    $(this).prevAll('.credit-card-box')[0].focus();
+                                } else {
+                                    $(this).trigger("blur");
+                                }
+                            }
+                        });
+                    </script>
+                </apex:outputPanel>
+                <apex:outputPanel layout="block" styleClass="bs form-group">
+                    <div class="bs col-sm-3">
+                        <p>
+                            <apex:outputLabel value="{!$Label.Credit_Card_Expiry_Date_MM_YYYY}" for="GOP-Credit-Card-Expiry"/>
+                        </p>
+                    </div>
+                    <div class="bs col-sm-9">
+                        <apex:input type="tel" id="card-expiry-month" value="{!expiryMonth}" 
+                                             html-maxlength="2" 
+                                             html-placeholder="MM"
+                                             size="4"
+                                             styleClass="bs form-field-style text-center credit-card-expiry"
+                                             style="display: inline; width: auto;"
+                                             onblur="getCreditCardExpiryDate()"
+                        />
+                        <span>&nbsp;/&nbsp;</span>
+                        <apex:input type="tel" id="card-expiry-year" value="{!expiryYear}" 
+                                         html-maxlength="4" 
+                                         html-placeholder="YYYY" 
+                                         styleClass="bs form-field-style text-center credit-card-expiry"
+                                         size="6"
+                                         style="display: inline; width: auto;"
+                                         onblur="getCreditCardExpiryDate()"
+                        />
+                    </div>
+                    <div class="bs col-sm-offset-3 col-sm-9 col-xs-12">
+                        <apex:inputText id="GOP-Credit-Card-Expiry-Date" 
+                                        style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none" 
+                                        onfocus="hiddenonblur(this)" tabindex="-1"/>
+                    </div>
+                    <!-- HKITSFDC-42 BEGIN -->
+                    <div class="bs cigna-answer-wrapper">
+                        <p class="text-center">
+                            <input type="checkBox" id="credit-card-tc" name="credit-card-consent" Class="bs cigna-question-checkbox" onchange="$(this).parent().siblings('input').val($(this).is(':checked'));" />
+                            <label for="credit-card-tc"><apex:outputText value="{!$Label.Credit_Card_T_C_Message}" escape="false" /></label>
+                        </p>
+                        
+                        <apex:inputHidden value="{!acceptPaymentTC}" id="acceptPaymentTC" />
+                    </div>
+                    <!-- HKITSFDC-42 END -->
+                    <script>
+                        // CR-56_Link_20220214
+                        $('input.credit-card-expiry').on("keyup",function(evt) {
+                            var numberPattern = /\d+/g;
+                            
+                            if (this.value.length == this.maxLength && this.value.match(numberPattern)) {
+                                var $next = $(this).nextAll('.credit-card-expiry');
+                                if ($next.length > 0){
+                                    $(this).nextAll('.credit-card-expiry')[0].focus();
+                                } else {
+                                    $(this).trigger("blur");
+                                }
+                            } else if (this.value.length == 0 && evt.keyCode == 8) {
+                                // Backspace
+                                var $prev = $(this).prevAll('.credit-card-expiry');
+                                if ($prev.length > 0){
+                                    $(this).prevAll('.credit-card-expiry')[0].focus();
+                                } else {
+                                    $(this).trigger("blur");
+                                }
+                            }
+                        });
+                        
+                        //HKITSFDC-42 BEGIN
+                        $('#credit-card-tc').on("click",function(){
+                            
+                            if($("#credit-card-tc").is(':checked')){
+                                $("#submitCCNextDesk, #submitCCNextMob").show();
+                            }
+                            else{
+                                $("#submitCCNextDesk, #submitCCNextMob").hide(); 
+                            }
+                        });
+                        //HKITSFDC-42 END
+                    </script>
+                </apex:outputPanel>
+            </div>
+            
+            <!--desktop action button-->
+            <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>
+            <!-- HKITSFDC-42 BEGIN -->
+            <!-- <div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="nextStep('10')"> -->
+            <div id="submitCCNextDesk" style="display:none;" class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="selectedFillInCreditCard('true'); nextStep('11')">
+            <!-- HKITSFDC-42 END -->
+                <span class="action-btn cigna-fg-white" role="button">{!$Label.Next}</span>
+            </div>
+            
+            <!--mobile action button-->
+            <div class="bs row mobile-app-padding" style="display: none; padding-bottom: 200px;">
+                <div class="bs col-xs-12"></div>
+            </div>
+            <!-- HKITSFDC-42 BEGIN -->
+            <!-- <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="nextStep('10')"> -->
+            <div id="submitCCNextMob" style="display:none;" class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="selectedFillInCreditCard('true'); nextStep('11')">
+            <!-- HKITSFDC-42 END -->
+                <div  class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                    <span class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</span>
+                </div>
+            </div>                   
+        </div>        
+        <!--------------- step 7 end ------------------>
+        
+        <!--------------- step 8 start ------------------>
+        <!--------------- REDUNDANT STEP DELETED--------->
+        <!--------------- step 8 end ------------------>
+        
+        <!--------------- step 9 start ------------------>
+        <!----------- WARNING: NO CREDIT CARD ----------->
+        <!-- HKITSFDC-42 BEGIN -->
+        <!-- <div class="bs row content-step" data-step="9" style="display:none;">
+            <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>  
+            
+            <div class="bs col-sm-12 col-xs-12 form-note">
+                {!$Label.GOP_Credit_Card_Warning}
+            </div>
+            
+            <div style="padding:20px;"></div>
+            
+            <div class="content-question" >             
+                <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>  
+                                 
+                <div class="bs col-xs-6 col-sm-6 cigna-fg-gray-dark text-center">
+                    <span class="onclick-pointer " onclick="nextStep('11')">
+                        <i class="fa fa-check-circle-o" style="padding-right:20px;"></i>
+                        {!$Label.OK_I_understand}
+                    </span>
+                </div>                   
+
+                <div class="bs col-xs-6 col-sm-6 cigna-fg-gray-dark text-center">
+                    <span class="onclick-pointer " onclick="previousStep();">
+                        <i class="fa fa-times-circle-o" style="padding-right:20px;"></i>
+                        {!$Label.No_please_go_back}
+                    </span>
+                </div>                                     
+            </div>
+            
+        </div> -->
+        <!-- HKITSFDC-42 END-->
+        <!--------------- step 9 end ------------------>
+        
+        <!--------------- step 10 start ------------------>
+        <!--------------- PAYMENT T&C -------------------->
+        <!-- HKITSFDC-42 BEGIN -->
+        <!--<div class="bs row content-step" data-step="10" style="display:none;">
+        
+            <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>   
+            
+            
+             <apex:outputPanel styleClass="bs col-xs-12" layout="block">
+                <div class="bs cigna-answer-wrapper">
+                    <p>
+                        <input type="checkBox" id="credit-card-tc" name="credit-card-consent" Class="bs cigna-question-checkbox" onchange="$(this).parent().siblings('input').val($(this).is(':checked'));" />
+                        <label for="credit-card-tc"><apex:outputText value="{!$Label.Credit_Card_T_C_Message}" escape="false" /></label>
+                    </p>
+                    
+                    <apex:inputHidden value="{!acceptPaymentTC}" id="acceptPaymentTC" />
+                </div>
+            </apex:outputPanel>
+            
+            
+            <script> 
+            //CR-56_Link_20220214
+            $('#credit-card-tc').on("click",function(){
+                
+                if($("#credit-card-tc").is(':checked')){
+                    $("#payment-tc-submit").show();
+                }
+                else{
+                    $("#payment-tc-submit").hide(); 
+                }
+            });
+            </script>
+            
+            <div id="payment-tc-submit" style="display:none;">
+            -->
+                <!--desktop action button-->
+                <!-- <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>
+                <div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="nextStep('11')">
+                    <span class="action-btn cigna-fg-white" role="button">{!$Label.Next}</span>
+                </div> -->
+                
+                <!--mobile action button-->
+                <!-- <div class="bs row mobile-app-padding" style="display: none; padding-bottom: 200px;">
+                    <div class="bs col-xs-12"></div>
+                </div>
+                <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="nextStep('11')">
+                    <div  class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                        <span class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</span>
+                    </div>
+                </div>   
+            </div>
+        
+        </div>     -->
+        <!-- HKITSFDC-42 END --> 
+        <!--------------- step 10 end ------------------>
+        
+        <!--------------- step 11 start ------------------>
+        <!--------------- E-SIGNATURE -------------------->
+        <div class="bs row content-step" data-step="11" style="display:none;">
+            <!-- Start T&C Box -->
+            <div id="overlay" style="display:none;">
+                <div id="specialBox">
+                    <a href="#"><div id="closeOverlay" class="ci-hk-x" onclick="toggleOverlay();"></div></a>
+                    <h4>{!$Label.Terms_And_Conditions}</h4>
+                    <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                    <div id="tccontent">
+                        <apex:outputPanel id="tcPanel">
+                            <!-- If PH = Selected PI -->
+                            <!-- minghua - 20221013 - JOBR-184 - JOBR-233 -->
+                            <!-- HKITSFDC-42 BEGIN  -->
+                            <!-- <apex:outputText value="{!$Label.Submit_GOP_T_C_Selected_PI_is_PH_1}" escape="false" rendered="{!(phIsPi||!piIsAdult)&&claimRequest.Is_Contain_Life_Policy__c&&!claimRequest.Is_Contain_GI_Policy__c}">
+                                <apex:param value="{!$Label.Chubb_Life_Entity_Name}" />
+                            </apex:outputText>
+                            <apex:outputText value="{!$Label.Submit_GOP_T_C_Selected_PI_is_PH_1}" escape="false" rendered="{!(phIsPi||!piIsAdult)&&!claimRequest.Is_Contain_Life_Policy__c&&claimRequest.Is_Contain_GI_Policy__c}">
+                                <apex:param value="{!$Label.GI_Entity_Name}" />
+                            </apex:outputText>
+                            <apex:outputText value="{!$Label.Submit_GOP_T_C_Selected_PI_is_PH_1}" escape="false" rendered="{!(phIsPi||!piIsAdult)&&claimRequest.Is_Contain_Life_Policy__c&&claimRequest.Is_Contain_GI_Policy__c}">
+                                <apex:param value="{!$Label.Chubb_And_Cigna_Entity_Name}" />
+                            </apex:outputText>
+
+                            <apex:outputText value="{!$Label.Submit_GOP_T_C_Selected_PI_is_PH_2}" escape="false" rendered="{!(phIsPi||!piIsAdult)&&claimRequest.Is_Contain_Life_Policy__c&&!claimRequest.Is_Contain_GI_Policy__c}">
+                                <apex:param value="{!$Label.Chubb_Life_Entity_Name}" />
+                            </apex:outputText>
+                            <apex:outputText value="{!$Label.Submit_GOP_T_C_Selected_PI_is_PH_2}" escape="false" rendered="{!(phIsPi||!piIsAdult)&&!claimRequest.Is_Contain_Life_Policy__c&&claimRequest.Is_Contain_GI_Policy__c}">
+                                <apex:param value="{!$Label.GI_Abbr_Name}" />
+                            </apex:outputText>
+                            <apex:outputText value="{!$Label.Submit_GOP_T_C_Selected_PI_is_PH_2}" escape="false" rendered="{!(phIsPi||!piIsAdult)&&claimRequest.Is_Contain_Life_Policy__c&&claimRequest.Is_Contain_GI_Policy__c}">
+                                <apex:param value="{!$Label.Both_Life_And_GI_Abbr_Name_2}" />
+                            </apex:outputText> -->
+                            <!-- If PH != Selected PI -->
+                            <!-- <apex:outputText value="{!$Label.Submit_GOP_T_C_Selected_PI_is_not_PH}" escape="false" rendered="{!!phIsPi && piIsAdult&&claimRequest.Is_Contain_Life_Policy__c&&!claimRequest.Is_Contain_GI_Policy__c}">
+                                <apex:param value="{!$Label.Chubb_Life_Entity_Name}" />
+                                <apex:param value="{!$Label.Life_Abbr_Name}" />
+                            </apex:outputText>
+                            <apex:outputText value="{!$Label.Submit_GOP_T_C_Selected_PI_is_not_PH}" escape="false" rendered="{!!phIsPi && piIsAdult&&!claimRequest.Is_Contain_Life_Policy__c&&claimRequest.Is_Contain_GI_Policy__c}">
+                                <apex:param value="{!$Label.GI_Entity_Name}" />
+                                <apex:param value="{!$Label.GI_Abbr_Name}" />
+                            </apex:outputText>
+                            <apex:outputText value="{!$Label.Submit_GOP_T_C_Selected_PI_is_not_PH}" escape="false" rendered="{!!phIsPi && piIsAdult&&claimRequest.Is_Contain_Life_Policy__c&&claimRequest.Is_Contain_GI_Policy__c}">
+                                <apex:param value="{!$Label.Chubb_And_Cigna_Entity_Name}" />
+                                <apex:param value="{!$Label.Both_Life_And_GI_Abbr_Name_2}" />
+                            </apex:outputText> -->
+
+                            <!-- PH != PI and Under 18 yrs old -->
+                            <div style="margin-bottom: 10px;">
+                                <apex:outputText value="{!$Label.Submit_GOP_T_C_PI_NOT_PH_under_18_title}"/>
+                            </div>
+                            <ol class="tnc-list">
+                                <li><apex:outputText value="{!$Label.Submit_GOP_T_C_PI_NOT_PH_under_18_01}" /> </li>
+
+                                    <li>
+                                        <apex:outputText rendered="{! !piIsAdult}" value="{!$Label.Submit_GOP_T_C_PI_NOT_PH_under_18_02}" /> 
+                                        <apex:outputText rendered="{! !phIsPi && piIsAdult}" value="{!$Label.Submit_GOP_T_C_PI_NOT_PH_18_02}" />
+                                    </li>
+
+                                    <li>
+                                        <apex:outputText rendered="{! !piIsAdult}" value="{!$Label.Submit_GOP_T_C_PI_NOT_PH_under_18_03}" /> 
+                                        <apex:outputText rendered="{! !phIsPi && piIsAdult}" value="{!$Label.Submit_GOP_T_C_PI_NOT_PH_18_03}" />
+                                    </li>
+
+                                    <li>
+                                        <apex:outputText rendered="{! !piIsAdult}" value="{!$Label.Submit_GOP_T_C_PI_NOT_PH_under_18_04}" /> 
+                                        <apex:outputText rendered="{! !phIsPi && piIsAdult}" value="{!$Label.Submit_GOP_T_C_PI_NOT_PH_18_04}" />
+                                    </li>
+
+                                    <li>
+                                        <apex:outputText rendered="{! !piIsAdult}" value="{!$Label.Submit_GOP_T_C_PI_NOT_PH_under_18_05}" /> 
+                                        <apex:outputText rendered="{! !phIsPi && piIsAdult}" value="{!$Label.Submit_GOP_T_C_PI_NOT_PH_18_05}" />
+                                    </li>                                    
+                                    
+                                    <li>
+                                        <apex:outputText rendered="{! !piIsAdult}" value="{!$Label.Submit_GOP_T_C_PI_NOT_PH_under_18_06}" />
+                                        <apex:outputText rendered="{! !phIsPi && piIsAdult}" value="{!$Label.Submit_GOP_T_C_PI_NOT_PH_18_06}" /> 
+                                    </li>
+                                    
+                                    <apex:outputPanel layout="none" rendered="{! !piIsAdult}">
+                                    <li>
+                                        <apex:outputText value="{!$Label.Submit_GOP_T_C_PI_NOT_PH_under_18_07}" /> 
+                                    </li>
+                                    </apex:outputPanel>    
+                            </ol>
+                            <div>
+                                <apex:outputText value="{!$Label.Submit_GOP_T_C_PI_NOT_PH_under_18_footer}" />
+                            </div>
+
+                            <!-- HKITSFDC-42 END -->
+                        </apex:outputPanel>
+                    </div>
+                </div>
+            </div>
+            <!-- End T&C Box -->
+            
+            <!-- Start PIC Box -->
+            <div id="overlayPIC" style="display:none;">
+                <div id="specialBoxPIC">
+                    <a href="#"><div id="closeOverlayPIC" class="ci-hk-x" onclick="toggleOverlayPIC();"></div></a>
+                    <h4>{!$Label.Personal_Information_Collection_Statement}</h4>
+                    <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                    <div id="PICcontent">
+                        <apex:outputText value="{!picString}" escape="false"/>
+                    </div>
+                </div>
+            </div>
+            <!-- End PIC Box -->
+            
+            <!-- Error Message Start -->
+            <div id="errEmptySignature" class="bs alert alert-danger" role="alert" style="display:none;">
+                <span class="ci-hk-caution" aria-hidden="true"></span>
+                {!$Label.e_signature_empty_err_msg}
+            </div>
+            <div id="errNotAcceptTNC" class="bs alert alert-danger" role="alert" style="display:none;">
+                <span class="ci-hk-caution" aria-hidden="true"></span>
+                {!$Label.e_signature_tc_err_msg}
+            </div>
+            <div id="errNotValidEmail" class="bs alert alert-danger" role="alert" style="display:none;">
+                <span class="ci-hk-caution" aria-hidden="true"></span>
+                {!$Label.Error_Message_Email_Not_Valid}
+            </div>
+            <!-- Error Messgae End -->
+            
+            <apex:outputPanel id="esignature-form">
+                <!--<c:eSignatureComp emailAddress="{!phEmail}" 
+                                  displayPICS="false"
+                                  displayTC="true"
+                                  tcMessage="{!$Label.Claims_T_and_C_Customer}"
+                                  PICSLink="{!picLink}"
+                                  sendEmailMessage="{!$Label.GOP_E_Signature_Send_Email_Message}"
+                                  signNow="true" />--> 
+                <c:eSignatureComp emailAddress="{!phEmail}" 
+                                  displayPICS="false"
+                                  displayTC="true"
+                                  isBroker="false"
+                                  PICSLink="{!picLink}"
+                                  sendEmailMessage="{!$Label.GOP_E_Signature_Send_Email_Message}"
+                                  signNow="true" />                  
+                <script>
+                    /** pop up dialog**/
+                    function toggleOverlay(){
+                        console.log('PH IS PI: ',{!phIsPi});
+                        console.log('ISADULT: ' ,{!piIsAdult});
+                        console.log('Normal: ',{! phIsPi && piIsAdult});
+                        console.log('AND Test: ',{! !phIsPi && !piIsAdult});
+
+                        var overlay = document.getElementById('overlay');
+                        var specialBox = document.getElementById('specialBox');
+                        overlay.style.opacity = .95;
+                        if(overlay.style.display == "block"){
+                            overlay.style.display = "none";
+                            specialBox.style.display = "none";
+                        } else {
+                            overlay.style.display = "block";
+                            specialBox.style.display = "block";
+                        }
+                    }
+                                    
+                    function toggleOverlayPIC(){
+                        var overlay = document.getElementById('overlayPIC');
+                        var specialBox = document.getElementById('specialBoxPIC');
+                        overlay.style.opacity = .95;
+                        
+                        if(overlay.style.display == "block"){
+                            overlay.style.display = "none";
+                            specialBox.style.display = "none";
+                        } else {
+                            overlay.style.display = "block";
+                            specialBox.style.display = "block";
+                        }
+                    }
+                    
+                    /** end pop up dialog**/ 
+                    
+                    /** override component function **/ 
+                    /** Submit button */
+                    Cigna.ESignatureComp.saveSignature = function(){
+                        $("#errNotValidEmail").hide();
+                        
+                        //if($('#esignature-sign-div').is(':visible')){
+                        if($('#esignature-sign-div #esignature-pics').is(':checked') == false){
+                            $("#errNotAcceptTNC").show();
+                            return;
+                        } else {
+                            $("#errNotAcceptTNC").hide();
+                        }
+                        
+                        if(Cigna.ESignatureComp.isEmptyCanvas(1)){
+                            $("#errEmptySignature").show();
+                            return;
+                        } else {
+                            $("#errEmptySignature").hide();
+                        }
+                        
+                        submitPreAdmissionApex(Cigna.ESignatureComp.getSignatureImage(1));
+                        $('#Ack_GOP_With_DocuSign_Customer').show();
+                        //submitPolicyChange(Cigna.ESignatureComp.getSignatureImage(1));
+                        
+                    }
+                    
+                    /** Send Email button */
+                    Cigna.ESignatureComp.sendEmail = function(){
+                        $("#errEmptySignature").hide();
+                        $("#errNotAcceptTNC").hide();
+                        
+                        console.log('enter send email');
+                        if (Cigna.ESignatureComp.getEmailAddress() == '' || Cigna.ESignatureComp.getEmailAddress() == null 
+                            || !Cigna.ValidationUtil.isValidEmail(Cigna.ESignatureComp.getEmailAddress())){
+                            $("#errNotValidEmail").show();
+                            return;
+                        }
+                        else{
+                            $("#errNotValidEmail").hide();
+                        }
+                        
+                        sendEmailSignature(Cigna.ESignatureComp.getEmailAddress());
+                        //alert(Cigna.ESignatureComp.getEmailAddress());
+                        console.log('EmailAddress:' + Cigna.ESignatureComp.getEmailAddress());
+                        //Cigna.Util.navigateToVFP('MyClaimVFP');
+                        
+                        //submitPreAdmissionApex(null);
+                        //nextStep();
+                        $('#Ack_GOP_Without_DocuSign_Customer').show();
+                        //sendEmailSignature(Cigna.ESignatureComp.getEmailAddress());
+                    }
+                                                    
+                    Cigna.ESignatureComp.nextStep = function(tabId){
+                        $('#esignature-branch-div').fadeOut(function(){
+                            $('#' + tabId).fadeIn(function(){
+                                $('#e-signature-submit').show();
+                                if (tabId == 'esignature-sign-div') {
+                                    Cigna.ESignatureComp.forceResizeCanvas();
+                                }
+                            });
+                        });
+                    }
+                    
+                </script>
+            </apex:outputPanel>
+            
+            <div id="e-signature-submit" style="display:none;">
+                <!--desktop action button-->
+                <div class="bs col-xs-12 col-sm-12" style="padding:20px;z-index:-1;"></div>
+                <div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="Cigna.ESignatureComp.saveSignature();">
+                    <span class="action-btn cigna-fg-white" role="button">{!$Label.Submit}</span>
+                </div>
+                
+                <!--mobile action button-->
+                <div class="bs row mobile-app-padding" style="display: none; padding-bottom: 200px;">
+                    <div class="bs col-xs-12"></div>
+                </div>
+                <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="Cigna.ESignatureComp.saveSignature();">
+                    <div  class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                        <span class="action-btn cigna-fg-white" role="button"><span class="fa fa-check-square-o" aria-hidden="true"></span><br/>{!$Label.Submit}</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Rancho_JOBR177_20220927 - generate pdf in oncomplete function, could not search out esignature before -->
+            
+            <apex:actionFunction name="submitPreAdmissionApex" action="{!submitPreAdmission}" rerender="false" reRender="errorMessage" status="loader-icon" oncomplete="generatePDF();nextStep();">
+                <apex:param name="imgDataParam" assignTo="{!eSignature}" value=""/>
+            </apex:actionFunction>
+            <apex:actionFunction name="generatePDF" rerender="false" action="{!generatePDF}"/>
+            <apex:actionFunction name="sendEmailSignature" rerender="false" status="loader-icon" action="{!sendEmailSignature}" oncomplete="nextStep();toSendGOPEmailSignature();">
+                <apex:param name="esignatureEmail" assignTo="{!esignatureEmail}" value=""/>
+            </apex:actionFunction>
+            <apex:actionFunction name="toSendGOPEmailSignature" rerender="false" action="{!toSendGOPEmailSignature}"  />
+            <!--
+            <apex:actionFunction name="submitEsignature" action="{!submitEsignature}" rerender="false" status="loader-icon" oncomplete="submitPolicyChange();">
+                <apex:param name="imgDataParam" assignTo="{!eSignature}" value=""/>
+            </apex:actionFunction>
+            -->
+        </div>
+        <!--------------- step 11 end ------------------>
+        
+        <!--------------- step 12 start ------------------>
+        <!--------------- CONFIRMATION PAGE -------------->
+        <div class="bs row content-step" data-step="12" style="padding-bottom:50px; display:none;">
+            <div class="col-xs-12 col-sm-12" style="text-align:center;">
+                <i class="fa fa-check-circle-o content-active" style="font-size:50px;" aria-hidden="true"></i>
+            </div>
+            <div class="col-xs-12 col-sm-12 text-center">
+            <apex:outputPanel id="acknowledgementMsg">
+                <div id="Ack_GOP_With_DocuSign_Customer" class="col-xs-12 col-sm-12" style="padding-top:30px; display: none; text-align:center;">
+                    <!-- HKITSFDC-42 BEGIN -->
+                    <!--<apex:outputText value="{!$Label.Ack_GOP_With_DocuSign_Customer}" escape="false" />  -->
+                    <apex:outputText value="{!$Label.Ack_GOP_With_Submission_Customer}" escape="false" />
+                    <!-- HKITSFDC-42 END -->
+                </div>
+                <div id="Ack_GOP_Without_DocuSign_Customer" class="col-xs-12 col-sm-12" style="padding-top:30px; display: none; text-align:center;">
+                    <!-- HKITSFDC-42 BEGIN -->
+                    <!--<apex:outputText value="{!$Label.Ack_GOP_Without_DocuSign_Customer}" escape="false" />-->
+                    <apex:outputText value="{!$Label.Ack_GOP_With_Email_Customer}" escape="false" />
+                    <!-- HKITSFDC-42 END -->
+                </div>
+                <div id="Ack_GOP_With_DocuSign_Broker" class="col-xs-12 col-sm-12" style="padding-top:30px; display: none; text-align:center;">
+                    <apex:outputText value="{!$Label.Ack_GOP_With_DocuSign_Broker}" escape="false" />  
+                </div>
+                <div id="Ack_GOP_Without_DocuSign_Broker" class="col-xs-12 col-sm-12" style="padding-top:30px; display: none; text-align:center;">
+                    <apex:outputText value="{!$Label.Ack_GOP_Without_DocuSign_Broker}" escape="false" />  
+                </div>
+            </apex:outputPanel>
+            </div>
+            <!--desktop action button-->
+            <div class="bs col-xs-12 col-sm-12" style="padding:20px;"></div>
+            <div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="returnHome();">
+                <span class="action-btn cigna-fg-white" role="button">{!$Label.Return_to_Home}</span>
+            </div>
+            <!--mobile action button-->
+            <div class="bs row mobile-app-padding" style="display: none; padding-bottom: 200px;">
+                <div class="bs col-xs-12"></div>
+            </div>
+            <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="returnHome();">
+                <div  class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                    <span class="action-btn cigna-fg-white" role="button"><span class="ci-hk-home" aria-hidden="true"></span><br/>{!$Label.Return_to_Home}</span>
+                </div>
+            </div>
+        </div>
+        <!--------------- step 12 end ------------------>
+        
+    </div>
+    <!--------------- Not Eligible Start------------------>
+    <div class="bs row content-step" data-step="404" style='display:none'>
+        <apex:outputPanel id="notEligiblePanel">
+            
+            <div class="bs col-xs-12 listcontent-header">
+                <div class="content-question">
+                    Not Eligible
+                </div>   
+            </div> 
+            
+        </apex:outputPanel>    
+    </div>
+    <!--------------- Not Eligible End ------------------>
+    </apex:form>
+    
+    <script>
+       //HKITSFDC-42 BEGIN
+       $(document).ready(function(){
+           $('#sendEmailLink, #sendPreapprovedEmailLink').click(function(event){
+                event.preventDefault();
+                console.log('Send Email');
+                sendPreApprovalEmail();
+           });
+       });
+       //HKITSFDC-42 END
+
+       
+        /*Validation*/
+        jQuery.validator.addMethod("hkid", function(value, element) {
+            return this.optional(element) || Cigna.ValidationUtil.isValidHKID(value);
+        }, "{!$Label.Error_Your_HKID_is_invalid}");
+        
+        jQuery.validator.addMethod("creditCard", function(value, element) {
+            return this.optional(element) || beforePageLoaded || isSavedCreditCardValue(value) || Cigna.ValidationUtil.isValidCreditCard(value); //|| value.length != 16 
+        }, "{!$Label.Error_Message_Invalid_Credit_Card_No}");
+        
+        jQuery.validator.addMethod("maskedCreditCard", function(value, element) {
+            return this.optional(element) || beforePageLoaded || isSavedCreditCardValue(value) || /^([0-9]*)$/.test(value); 
+        }, "{!$Label.Err_Msg_invalid_saved_credit_card}");
+        
+        jQuery.validator.addMethod("expiryDate", function(value, element) {
+            return this.optional(element) || isValidGOPCreditCardExpiryDate(value); //|| value.length != 6 
+        }, "{!$Label.Error_Message_Invalid_Expiry_Date}");
+        
+        jQuery.validator.addMethod("withinExpiryRange", function(value, element) {
+           return this.optional(element) ||  checkCcExpiry(value);
+        },"{!$Label.Error_Message_CC_About_To_Expire}"); 
+       
+        jQuery.validator.addMethod("noEarlierThanToday", function(value, element) {
+            var curDate = new Date();
+            var inputDate = new Date(value);
+            curDate.setDate(curDate.getDate() - 1);
+            //console.log('today' + curDate);
+            //console.log('input' + inputDate);
+            if (inputDate > curDate){
+                return true;
+            }
+            return false;
+        }, "{!$Label.Error_Message_Input_Date_Should_Not_Before_Today}"); 
+                
+        $("form[id*='claim-gop-form']").validate({
+            /**
+            errorPlacement: function(label, element) {
+                label.addClass('errorDiv');
+                label.insertAfter(element);
+            },
+
+            wrapper: 'div'
+            */
+        });
+        
+        $("form[id*='claim-gop-form'] input[id*='GOP-']").each(function(idx, elem){
+            $(elem).rules("add", {
+                required: true
+            });
+        });
+        
+        /**
+        $("form[id*='claim-gop-form'] input[id$='-contact-no-number']").each(function(idx, elem){
+            $(elem).rules("add", {
+                digits: true
+            });
+        });
+        */
+        
+        $("input[id*='Check-Credit-Card']").each(function(idx, elem){
+            $(elem).rules("add", {
+                //digits: true,
+                maskedCreditCard: true,
+                creditCard: true
+            });
+        });
+        
+        $("form[id*='claim-gop-form'] input[id$='-date-format']").each(function(idx, elem){
+            $(elem).rules("add", {
+                date: true,
+                noEarlierThanToday: true
+            });
+        });
+        
+       
+        /**
+        $("form[id*='claim-gop-form'] input.credit-card-box").each(function(idx, elem){
+            $(elem).rules("add", {
+                digits: true,
+                minlength: 4,
+                maxlength: 4
+            });
+        });
+        
+        
+        $("form[id*='claim-gop-form'] input[id$='-expiry-month']").each(function(idx, elem){
+            $(elem).rules("add", {
+                digits: true,
+                minlength: 2,
+                maxlength: 2,
+                range: [01, 12]
+            });
+        });
+        
+        $("form[id*='claim-gop-form'] input[id$='-expiry-year']").each(function(idx, elem){
+            $(elem).rules("add", {
+                digits: true,
+                minlength: 4,
+                maxlength: 4,
+                range: [1900, 2999]
+            });
+        });
+        */
+        
+        /** No need to check HKID
+        $("form[id*='claim-gop-form'] input[id$='-HKID']").rules("add", {
+            hkid: true
+        });
+        */
+        
+        var creditCardNo = '';
+        function getCreditCardNo(){
+            
+            creditCardNo = $("form[id*='claim-gop-form'] input[id$='credit-card-digit-unit1']").val()
+                            + $("form[id*='claim-gop-form'] input[id$='credit-card-digit-unit2']").val()
+                            + $("form[id*='claim-gop-form'] input[id$='credit-card-digit-unit3']").val()
+                            + $("form[id*='claim-gop-form'] input[id$='credit-card-digit-unit4']").val();
+            
+            $("input[id*='Check-Credit-Card']").val(creditCardNo);
+            
+            /**
+            $("form[id*='claim-gop-form']").validate();
+            $("input[id*='Check-Credit-Card']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    digits: true,
+                    creditCard: true
+                });
+            });
+            */
+            if (creditCardNo.length == 16){
+                //CR-56_Link_20220214
+               $("input[id*='Check-Credit-Card']").trigger("focus");
+            }
+        }
+        
+        function clearCreditCard(){
+            $("form[id*='claim-gop-form'] input[id$='credit-card-digit-unit1']").val('');
+            $("form[id*='claim-gop-form'] input[id$='credit-card-digit-unit2']").val('');
+            $("form[id*='claim-gop-form'] input[id$='credit-card-digit-unit3']").val('');
+            $("form[id*='claim-gop-form'] input[id$='credit-card-digit-unit4']").val('');
+        }
+        
+        function isSavedCreditCardValue(value){
+            return value == '{!savedCreditCardWithMask}';
+        }
+        
+        var creditCardExpiryDate = '';
+        function getCreditCardExpiryDate(){
+            
+            creditCardExpiryDate = $("form[id*='claim-gop-form'] input[id$='card-expiry-year']").val() 
+                            + $("form[id*='claim-gop-form'] input[id$='card-expiry-month']").val();
+            
+            $("input[id*='Credit-Card-Expiry-Date']").val(creditCardExpiryDate);
+
+            $("form[id*='claim-gop-form']").validate();
+            $("input[id*='Credit-Card-Expiry-Date']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    digits: true,
+                    expiryDate : true,
+                    withinExpiryRange : true    //HKITSFDC-42
+                });
+            });
+            
+            if (creditCardExpiryDate.length == 6){
+                //CR-56_Link_20220214
+                $("input[id*='Credit-Card-Expiry-Date']").trigger("focus");
+            }
+        }
+        
+        //HKITSFDC-42 BEGIN
+        function checkCcExpiry(creditCardExpiryDate){
+            if(creditCardExpiryDate && creditCardExpiryDate.length === 6){
+                const ccExpireInt = parseInt(creditCardExpiryDate,10);
+                if(!isNaN(ccExpireInt)){
+                    const now = new Date();
+                    const currYyyyMm = now.getFullYear() * 100 + now.getMonth() + 1;
+                        
+                    now.setMonth(now.getMonth() + 3);
+                    const threeMonthPeriod = now.getFullYear() * 100 + now.getMonth() + 1;
+                    
+                    return ccExpireInt > threeMonthPeriod;    
+                }
+             }
+             return false;
+         }
+         //HKITSFDC-42 END
+       
+        function hiddenonblur(element){
+            //CR-56_Link_20220214
+            $(element).trigger('blur');
+        }
+        
+        function isValidGOPCreditCardExpiryDate(value) {
+            if (value.length != 6){
+                return false;
+            }
+            else{
+                var todayDate = new Date();
+                var thisYear = todayDate.getFullYear();
+                var thisMonth = todayDate.getMonth() + 1; // 0 = January, 1 = Feburary, ...
+                if (value.substring(0,4) < thisYear){
+                    return false;
+                }
+                else if (value.substring(0,4) > thisYear && value.substring(4,6) <= 12 && value.substring(4,6) != 0){
+                    return true;
+                }
+                else{
+                    if (value.substring(4,6) > 12 || value.substring(4,6) < thisMonth){
+                        return false;
+                    }
+                    else{
+                        return true;
+                    }
+                }
+            }
+        }
+        
+    </script>
+    <script>
+        if (Cigna.Util.isIOS() && Cigna.Util.isCustomerPortal() && $(window).width() < 768 ) {  
+                    //CR-56_Link_20220214
+                    $('.bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select, .bs textarea').on("focus",function(evt){
+                        if ($('.action-bar').is(':visible')) {
+                            $('.action-bar').addClass('hidden-xs').removeClass('visible-xs');
+                        }
+                    });
+                    
+                    $('.bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select, .bs textarea').on("blur",function(evt){
+                        if ($('.action-bar').hasClass('hidden-xs')) {
+                            $('.action-bar').addClass('visible-xs').removeClass('hidden-xs');
+                        }
+                    });
+                }
+    </script>
+</apex:page>

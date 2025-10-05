@@ -1,0 +1,975 @@
+<apex:page showHeader="false" sidebar="false" controller="PendingMemoController" docType="html-5.0" title="Pending Memo" cache="false"> <!-- action="{!getMemoDetails}" -->
+        
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>   
+        
+        <style>
+            
+            /* Styling for the standard button */
+            .ChooseFileContainer {
+                position:relative;
+                display:inline;
+            }
+            
+            .bs .reply-action-button {
+                padding-top:5px;
+                padding-bottom:5px;
+                padding-left:10px;
+                padding-right:10px;
+                text-align:center;
+                border-radius:5px;
+            }
+            
+            label.cusError {
+              //font-size:12px;
+              color: red;
+            }
+            
+            div#submission-pop-up {
+                display: none;
+                z-index: 10;
+                background: #D9D9D6;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                text-align: center;
+              }
+              div#submission-box {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 150px auto 0px auto;
+                width: 300px;
+                height: 120px;
+                background: #FFF;
+                color: #000;
+                left: 38%;
+                top: 10%;
+                padding:20px;
+                border-radius:5px;
+                
+                
+              }
+            
+              #submission-content {
+                padding:10px;
+                color:#000;
+                font-size:12px;
+                width: 100%;
+                height: 95%;
+              } 
+              
+            .loading-spinner{
+                top: 40%;
+                display: none;
+                position: absolute;
+                z-index: 11;
+            }
+            
+            .loading-label {
+                font-weight: bold;
+                font-size: 18px;
+            }
+            
+                        
+            @media 
+            only screen and (max-width: 760px),
+            (min-device-width: 768px) and (max-device-width: 1024px)  {
+                div#submission-box {
+                    display: none;
+                    position: absolute;
+                    z-index: 11;
+                    margin: 150px auto 0px auto;
+                    width: 80%;
+                    height: 120px;
+                    background: #FFF;
+                    color: #000;
+                    left: 10%;
+                    top: 10%;
+                    padding:20px;
+                    border-radius:5px;
+                    
+                }
+            }
+            /*CR-56_Link_20220214*/
+            .ui-tooltip {
+                background: black !important;
+                max-width: 250px !important;
+                width: 250px; 
+                min-width: 100px;
+                color: white !important;
+                z-index: 1070;
+                display: block;
+                text-align: center !important;
+                font-size: 12px !important;
+                border-radius: 5px !important;
+            }
+                  
+        </style>
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+        
+        <!--for upload attachement-->
+        <script type="text/javascript">
+            var __sfdcSessionId = '{!GETSESSIONID()}';
+            var filesToUpload = '';  
+            var uploadedFile = 0;
+        </script>
+        
+        <script src="/soap/ajax/32.0/connection.js" type="text/javascript"></script>
+        
+        <script type="text/javascript">
+            function AlertRedirect(){
+                alert("{!$Label.File_Submission}");
+            }
+           
+            function redirectHomeJS() {
+                console.log('redirectHome');
+                if (checkReplied() || checkAttached()){
+                    // no error, proceed to submission
+                    // TO DO
+                    if (checkReplied()){
+                        saveReplyApex();
+                    }
+                    else{
+                        submitResponseApex();
+                    }
+                    
+                    $('#errorMes').text('');
+                    
+                    if (checkReplied() && checkAttached()){
+                        $('#SubmissionMes').text('{!$Label.File_and_Response_Submission}');
+                    }
+                    else if (checkReplied()){
+                        $('#SubmissionMes').text('{!$Label.Response_Submission}');
+                    }
+                    else if (checkAttached()){
+                        $('#SubmissionMes').text('{!$Label.File_Submission}');
+                    }
+                    
+                }
+                else if (!allowReply()){
+                    $('#errorMes').text('{!$Label.Error_Message_Pending_Memo_Attach}');
+                }
+                else{
+                    $('#errorMes').text('{!$Label.Error_Message_Pending_Memo_Reply}');
+                }
+            }
+            
+            function backHome(){
+                if (Cigna.Util.isBrokerPortal()) {
+                    Cigna.Util.navigateToVFP('PendingMemoListVFP{!IF(encryptedSearchCriteria!='','?'+URLParamName+'='+encryptedSearchCriteria,'')}', null, null, true);
+                }
+                else if (Cigna.Util.isCustomerPortal()) {
+                    //Nicole_Bypass Login_20201009
+                    if({!isCustomerSiteGuestUser}){
+                        Cigna.Util.navigateToVFP('PendingMemosListVFP?token={!paramToken}&lang={!paramLanguage}', null, null, true);
+                    }else{
+                        window.location.href='{!$Site.Prefix}/CustomerLandingPage';
+                    }
+                }
+            }
+            
+            /**
+            function sendFileJS() {
+                showLoading();
+                SendFileApex();
+                //finishSubmission();
+            }
+            */
+            
+            /*Loading*/
+            function showLoading() {
+                $('#att-loading').fadeIn(100);
+                $('#overlay-loading').fadeIn(100);
+            }
+                    
+            function finishSubmission() {
+                $('#att-loading').fadeOut(100);
+                $('#overlay-loading').fadeOut(100);
+            } 
+            
+            function checkReplied(){
+                console.log('check reply');
+                var replied = false;
+                
+                $("form[id*='formSubmitDoc'] textarea[id*='memo-msg-response']").each(function(idx, elem){
+                    if ( $(elem).val() != '' && $(elem).prop('disabled') != true){
+                        replied = true;
+                    }
+                });
+                console.log('replied?' + replied);
+                return replied;
+            }
+            
+            function allowReply(){
+                console.log('allow reply');
+                var allow = false;
+                
+                $("form[id*='formSubmitDoc'] textarea[id*='memo-msg-response']").each(function(idx, elem){
+                    if ($(elem).prop('disabled') != true){
+                        allow = true;
+                    }
+                });
+                console.log('allow reply?' + allow );
+                return allow ;
+            }
+            
+            function checkAttached(){
+                console.log('check attach');
+                var attached = false;
+                
+                $("#uploadedPmAttDiv").find('div').each(function(idx, elem){
+                    attached = true;
+                });
+                
+                console.log('attached?' + attached);
+                return attached;
+            }
+            
+            function toggleSubmissionPopUp(){
+                console.log('isCMSuperLoginUser'+{!isCMSuperLoginUser});
+                if ({!!isCMSuperLoginUser}) {
+                    var overlay = document.getElementById('submission-pop-up');
+                    var specialBox = document.getElementById('submission-box');
+                    overlay.style.opacity = .95;
+                    if(overlay.style.display == "block"){
+                        overlay.style.display = "none";
+                        specialBox.style.display = "none";
+                    } else {
+                        overlay.style.display = "block";
+                        specialBox.style.display = "block";
+                        
+                    }
+                }
+            } 
+
+            function toggleReplyBox(element) {
+                $(element).hide();
+                $(element).parent().siblings('div.replyDiv').show();
+            }
+            
+            $(function(){
+                  // script that triggers the click of the standard
+                  // choose file button 
+                  //CR-56_Link_20220214
+                  $('#CustomChooseFileButton').on("click", function(e) {
+                       $('input[type="file"]').trigger('click');});
+                       // script to hide the blinking cursor
+                      $('input[type="text"]').on("mousedown",function(e) { 
+                        e.preventDefault();
+                       $(this).trigger("blur");
+                       return false;
+                 });
+            });
+            
+            /*For upload attachment*/  
+            function uploadFile(parentId, attType, element){
+                    console.log('upload start : '  +  {!isBroker}) ; 
+                showLoading();
+                
+                //$("#"+attType).each(function(){
+                $(element).each(function(){
+                  filesToUpload=$(this)[0].files[0];
+                });
+                
+                if (filesToUpload == undefined){
+                    finishSubmission();
+                }
+        
+                var reader = new FileReader();
+        
+                // Keep a reference to the File in the FileReader so it can be accessed in callbacks
+                reader.file = filesToUpload;
+        
+                reader.onload = function(e){
+                
+                    var maxFileSize = 7340032;
+                    var passFileSize;
+                    var passFileType;
+                    
+                    if(this.file.size>maxFileSize){
+                        $("#errFileSize").show();
+                        passFileType = false;
+                    }else{
+                        passFileSize = 'true';
+                        $("#errFileSize").hide();
+                    }
+                
+                    if(this.file.type!='application/vnd.openxmlformats-officedocument.wordprocessingml.document' && this.file.type!='application/msword' && this.file.type!='application/pdf' && this.file.type!='image/png' && this.file.type!='image/jpeg' && this.file.type!='image/tiff'){
+                        $("#errFileType").show();
+                    }else{
+                        passFileType  = 'true';
+                        $("#errFileType").hide();
+                    }
+                    
+                    if(passFileType=='true' && passFileSize=='true' && parentId && parentId!=undefined){
+                        
+                        //Nicole_Bypass Login_20200924
+                        if({!isCustomerSiteGuestUser}){
+                            
+                           
+                            var binary = "";
+                            var bytes = new Uint8Array(e.target.result);
+                            var length = bytes.byteLength;
+                                                
+                            for (var i = 0; i < length; i++)
+                            {
+                                binary += String.fromCharCode(bytes[i]);
+                            }
+
+                            var attachment_object = {
+                                parentId: parentId,
+                                Body: window.btoa(binary), 
+                                Name: attType+'_'+this.file.name, 
+                                ContentType: this.file.type ,
+                                
+                            };
+                           
+                           
+                           $.post("{!$Site.prefix}/services/apexrest/fileupload/"+parentId,
+                                attachment_object,
+                                function(data, status){
+                                if(status == 'success'){
+                                    console.log(data);
+                                    alert.log('broker attachment success')
+                                    finishSubmission();
+                                    refreshAttlist();
+                                    checkAtt();
+                                $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                                }else{
+                                     alert("Upload Failed");
+                                     finishSubmission();
+                                }
+                            });
+                          
+                        }
+                        else if ({!isBroker}){ //HKITSFDC-46 broker portal view all claims begin
+                             console.log('upload broker :' );
+                           
+                            var binary = "";
+                            var bytes = new Uint8Array(e.target.result);
+                            var length = bytes.byteLength;
+                                                
+                            for (var i = 0; i < length; i++)
+                            {
+                                binary += String.fromCharCode(bytes[i]);
+                            }
+
+                            var attachment_object = {
+                                parentId: parentId,
+                                Body: window.btoa(binary), 
+                                Name: attType+'_'+this.file.name, 
+                                ContentType: this.file.type ,
+                                
+                            };
+                           
+                           
+                           $.ajax({
+                                url: "/services/apexrest/brokerfileupload/"+parentId,
+                                type: 'POST',
+                                data: JSON.stringify(attachment_object),
+                                processData: false,
+                                contentType: false,
+                                headers: {'Authorization': 'Bearer {!GETSESSIONID()}', 'Content-Type': 'application/json'},
+                                success: function(response) {
+                                    console.log(response);
+                                    console.log('insert attachment success')
+                                    finishSubmission();
+                                    refreshAttlist();
+                                    checkAtt();
+                                    $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                                },
+                                error: function(xhr, status, error) {
+                                     alert("Upload Failed");
+                                     finishSubmission();
+                                }
+                            });
+                          
+                        } // HKITSFDC-46 End
+                        else{
+                            var att = new sforce.SObject("Attachment");
+                            att.Name = attType+'_'+this.file.name;
+                            att.ContentType = this.file.type;
+                            att.ParentId = parentId;
+            
+                            var binary = "";
+                            var bytes = new Uint8Array(e.target.result);
+                            var length = bytes.byteLength;
+                            
+                            for (var i = 0; i < length; i++)
+                            {
+                                binary += String.fromCharCode(bytes[i]);
+                            }
+                            
+                            att.Body = (new sforce.Base64Binary(binary)).toString();
+                            
+                            sforce.connection.create([att],
+                            {
+                                onSuccess : function(result, source)
+                                {
+                               
+                                    if (result[0].getBoolean("success"))
+                                    {
+                                        console.log("new attachment created with id " + result[0].id);
+                                        finishSubmission();
+                                        refreshAttlist();
+                                        checkAtt();
+                                        $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                                        
+                                        $('#uploadDocErrorMesDiv').hide();
+                                    
+                                    }
+                                    else
+                                    {
+                                        console.log("failed to create attachment " + result[0]);
+                                        alert("failed to create attachment " + result[0]);
+                                        finishSubmission();
+                                        
+                                    }
+                                    //displayNextBotton();
+                                    
+                                },
+                                onFailure : function(error, source)
+                                {
+                                    console.log("an error has occurred " + error);
+                                    alert("an error has occurred " + error);
+                                    finishSubmission();
+                                }
+                            });
+                        }
+                        
+                    }else if (parentId == '' || parentId==undefined){
+                        alert("Missing parentId");
+                        finishSubmission();
+                    }
+                    else{
+                        finishSubmission();
+                    }
+                };
+                    
+                reader.readAsArrayBuffer(filesToUpload);
+            }
+                    
+            function removeAttachment(id){
+               removeAtt(id);
+               refreshAttlist();
+               //checkAtt();
+            }    
+            
+            /** For Upload Attachment End */
+            
+            //David Zhang - 190401 - Pending Memo Doc Async - For Broker Portal Salesforce1
+            function openDocument(){
+                console.log('###start openDocument');
+                var el=document.getElementById('open-attachment-link');
+                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                    el.target = "";
+                }    
+                el.click();  
+                $('input[type="hidden"][id$="is-document-download-complete"]').val(false);                                
+            }
+
+            //added for async download 
+            function documentDetector(){
+                //showLoading();
+                var isComplete = $('input[type="hidden"][id$="is-document-download-complete"]').val();
+                //var isComplete = document.getElementById('open-attachment-link');
+                console.log('###isComplete='+isComplete );
+                if(isComplete=='false'){
+                    console.log('###false');
+                    //setTimeOut(checkIsDocumentDownloadComplete,3000);
+                    setTimeout(checkIsDocumentDownloadComplete, 3000); 
+                    console.log('###false 1');               
+                }else{
+                    finishDownloadLoading();
+                    console.log('###true');
+                    openDocument();
+                }
+                
+            }
+
+            function showDownloadLoading() {
+                $('#download-loader').fadeIn(100);
+                
+            }
+            
+            function finishDownloadLoading(){
+                $('#download-loader').fadeOut(100);
+                
+            }
+
+
+            $(document).ready(function(){
+                getMemoDetailsJS();
+                
+                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                      //$('#action-bar').css('position', 'absolute');
+                      //$('#mobile-app-padding').css('display', 'block');
+                      $('#attachmentDiv').css('padding-bottom', '50px');
+                      $("div[id*='mobile-app-padding']").css('display', 'block');
+                }
+                
+                if(Cigna.Util.isCustomerPortal()){
+                    sforce.connection.serverUrl = "{!$Site.Prefix}/services/Soap/u/32.0";
+                } 
+                
+                //initSfObject();
+                
+                $("div[id*='MSG']").each(function(idx, elem){
+                    if ($(elem).text() != '') {
+                        $('#errorMes').text($(elem).text());
+                    }
+                });
+
+            });       
+            
+        </script>
+    
+    </head>
+    
+    <div id="download-loader" class="bs col-xs-12 col-lg-12 loading-div" style="display: none;">
+        <span class="loading-helper"></span>
+        <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+        <span class="sr-only">Loading...</span>
+    </div>
+    <!-- add bob 20201229 -->
+    <apex:outputPanel id="errorMessage">
+        <apex:pagemessages />
+    </apex:outputPanel>
+    <apex:form id="formSubmitDoc" enctype="multipart/form-data">
+        <apex:actionFunction action="{!getMemoDetails}" name="getMemoDetailsJS" status="loader-icon" rerender="memoPanel,brkMobileBtn" oncomplete="initSfObject();"/>
+
+        <!--Efulfillment Document Download Action-->
+        <apex:actionFunction action="{!downloadDocument}" 
+            name="downloadDocument" 
+            namespace="getMemoDetailsJS" 
+            reRender="open-attachment-link-panel"
+            oncomplete="documentDetector();">
+            <apex:param name="attID" value="" assignTo="{!selectedAttId}"/>
+            <apex:param name="attKey" value="" assignTo="{!selectedAttKey}"/>
+        </apex:actionFunction>
+
+        <apex:outputPanel id="open-attachment-link-panel" rendered="{!isBroker}">
+            <!-- 20230921 - minghua - PI-129 Vulnerability follow up request - Pentest (FND-61951) High -->
+            <!-- <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!selectedAttId}" target="_blank" id="open-attachment-link" style="display:none;" value = 'test'/> -->
+            <a href="{!$Site.BaseUrl}/servlet/servlet.FileDownload?file={!selectedAttId}" target="_blank" id="open-attachment-link" style="display:none;" value = 'test'/>
+       </apex:outputPanel>
+
+       <apex:actionFunction action="{!checkIsDocumentDownloadComplete}" name="checkIsDocumentDownloadComplete"  reRender="is-document-download-param-panel" oncomplete="documentDetector();" />
+
+       <apex:outputPanel id="is-document-download-param-panel" >
+             <apex:inputHidden value="{!isDownloadComplete}" id="is-document-download-complete"/>
+       </apex:outputPanel>
+
+        <apex:outputPanel id="memoPanel">
+            <div id="scrollable-div">
+                
+                <!--start of loading-->
+                <div id="overlay-loading" class="overlay" style="display:none; background: rgba(217,217,214, 0.5);">
+                    <div id="att-loading" class="bs col-xs-offset-3 col-xs-6 text-center loading-spinner">
+                        <img class="bs" src="{!URLFOR($Resource.Spinners, 'slds_spinner.gif')}" width="70px" />
+                        <div class="loading-label">
+                            {!$Label.uploading}
+                        </div>
+                    </div>
+                </div> 
+                <!--end of loading-->
+                
+                <!-- For Testing -->
+                <!--
+                For Testing: 
+                <a href="data:{!att.ContentType};base64,{!pdf}" download="{!att.Name}">Download</a>
+                
+                <a onclick="window.open('data:{!att.ContentType};base64,{!pdf}', '_blank');"> Preview </a>
+                -->
+                <!--
+                <a href="data:application/csv;charset=utf-8,Col1%2CCol2%2CCol3%0AVal1%2CVal2%2CVal3%0AVal11%2CVal22%2CVal33%0AVal111%2CVal222%2CVal333"
+                  download="somedata.csv">Example</a>
+                <apex:outputLink value="data:{!att.ContentType};base64,{!pdf}" html-download="test.pdf">Download2</apex:outputLink>
+                -->
+                <div class="bs container-fluid" id="memo-container-div"  style="{!IF(memoList.size == 0 && codeAMemoList.size == 0, 'display:none;', '')}"> 
+                    <div class="bs row">
+                        <div id="headeraction" class="bs header-action">
+                            <div id="back" class="bs col-xs-6 col-sm-6" style="padding-top:10px;">
+                                <a href="#" onclick="backHome();" class="bs cigna-fg-orange-medium pull-left">  <!-- redirectHomeApex(); -->
+                                    <i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}
+                                </a>
+                            </div>
+                        </div>
+                    </div> 
+                    
+                    <div id="memoErrorDiv" class="bs row form-group" style="display:none;"> <!--  -->
+                          <span class="bs col-xs-12 col-sm-12"><apex:pageMessages id="MSG"/></span>
+                    </div>
+                    
+                    <div id="policyDetailsDiv" class="bs row">
+                        <div class="bs col-xs-12 col-sm-8 col-sm-offset-2 form-field">
+                            <apex:outputPanel id="pcHeaderDetail" rendered="{!requestDetail != null}">
+                                <div class="bs row form-field">
+                                    <div class="bs col-xs-12 content-highlight">
+                                        <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                            <apex:param value="{!requestDetail.statusUpdatedDateTime}"/>
+                                        </apex:outputText>
+                                    </div>
+                                </div>
+                                <div class="bs row">
+                                    <div class="bs col-xs-4">{!$Label.Category}</div>
+                                    <div class="bs col-xs-8"><label>{!fullCategory}</label></div>
+                                </div>
+                                <div class="bs row">
+                                    <div class="bs col-xs-4">{!$Label.Policy_No}</div>
+                                    <div class="bs col-xs-8"><label>{!requestDetail.policyNumber}</label></div>
+                                </div>
+                                <div class="bs row"> <!--  style="{!IF(type != '', '', 'display:none;')}" -->
+                                    <div class="bs col-xs-4">{!$Label.Type}</div>
+                                    <div class="bs col-xs-8"><label>{!IF(fullCategory==$Label.New_Application, '-', requestDetail.salesForceWorkType)}</label></div>
+                                </div>
+                                <div class="bs row">
+                                    <div class="bs col-xs-4">{!$Label.Status}</div>
+                                    <div class="bs col-xs-8"><label>{!requestDetail.requestStatus}</label></div>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel id="clHeaderDetail" rendered="{!claimRequestDetail != null}">
+                                <div class="bs row form-field">
+                                    <div class="bs col-xs-12 content-highlight">
+                                        <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                            <apex:param value="{!claimRequestDetail.lastUpdateDateInDate}"/>
+                                        </apex:outputText>
+                                    </div>
+                                </div>
+                                <div class="bs row">
+                                    <div class="bs col-xs-4">{!$Label.Category}</div>
+                                    <div class="bs col-xs-8"><label>{!fullCategory}</label></div>
+                                </div>
+                                <div class="bs row">
+                                    <div class="bs col-xs-4">{!$Label.Policy_No}</div>
+                                    <div class="bs col-xs-8"><label>{!claimRequestDetail.polNumber}</label></div>
+                                </div>
+                                <div class="bs row"> <!--  style="{!IF(type != '', '', 'display:none;')}" -->
+                                    <div class="bs col-xs-4">{!$Label.Type}</div>
+                                    <div class="bs col-xs-8"><label>{!IF(claimRequestDetail.claimTypeDisplay=='', 'N/A', claimRequestDetail.claimTypeDisplay)}</label></div>
+                                </div>
+                                <div class="bs row">
+                                    <div class="bs col-xs-4">{!$Label.Status}</div>
+                                    <div class="bs col-xs-8"><label>{!claimRequestDetail.claimStatusDescription}</label></div>
+                                </div>
+                            </apex:outputPanel>
+                        </div>
+                    </div>
+                    
+                    
+                    <div id="downloadDiv" class="bs row" style="{!IF(docWrapperList != null && docWrapperList.size > 0, '', 'display:none;')}">
+                        <div class="bs col-xs-12 col-sm-8 col-sm-offset-2 form-field">
+                            <div class="form-field">
+                               <!-- <apex:outputLabel value="Please download the documents below if needed." escape="false"></apex:outputLabel>-->
+                               {!$Label.Please_download_the_documents_below_if_needed}
+                            </div>
+                            <div id="downloadDoc" style="width: 100%; float: left;">
+                                <apex:repeat value="{!docWrapperList}" var="docWrapper">
+                                    <apex:outputPanel rendered="{!isBroker}">
+                                        <div class="onclick-pointer form-field" onclick="showDownloadLoading();getMemoDetailsJS.downloadDocument('{!docWrapper.attId}','{!docWrapper.docId}');"> 
+                                            <div id="real-download"> 
+                                                <span id="real-download-icon" class="ci-hk-inbox content-icon" aria-hidden="true"></span>
+                                                {!docWrapper.docFileName}.{!docWrapper.docExt}
+                                            </div>
+                                        </div>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!!isBroker}">
+                                        <div class="fileWrapper onclick-pointer form-field" data-atk='{!docWrapper.docId}' data-brkatt="{!docWrapper.attId}"> 
+                                            <div id="real-download"> 
+                                                <span id="real-download-icon" class="ci-hk-inbox content-icon" aria-hidden="true"></span>
+                                                {!docWrapper.docFileName}.{!docWrapper.docExt}
+                                            </div>
+                                        </div>
+                                        <div style='display:none;'>
+                                            <a id="dlink_{!docWrapper.attId}" href="{!downloadSitePrefix}apex/ComFileDownLoadVFP?lang={!curLang}&attID={!docWrapper.attId}&attKey={!docWrapper.docId}&requestId={!requestId}&appName=CUSTOMER_PORTAL&type=WORK" target="_blank"></a>
+                                        </div>
+                                    </apex:outputPanel>
+                                </apex:repeat>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="mainReplyDiv" class="bs row" style="{!IF(memoList != null && memoList.size != 0, '', 'display:none;')}">
+                        <apex:outputPanel styleClass="bs col-xs-12 col-sm-8 col-sm-offset-2 form-field form-note" rendered="{!IF(memoCategory == 'cl' && memoList != null && memoList.size != 0, true, false)}">
+                            {!$Label.Please_assist_to_provide_the_following_information_document_s}
+                        </apex:outputPanel>
+                        <apex:repeat value="{!memoList}" var="memo">
+                            <div class="bs col-xs-12 col-sm-8 col-sm-offset-2 form-field" style="{!IF(memo.wsClaimMemo != null && memo.claimMemoCodeA , 'display:none;', '')}">
+                                <div class="bs row  ">
+                                    <div class="bs col-xs-9 col-sm-10 cigna-fg-orange-dark content-highlight">
+                                        {!If(memo.wsMemo != null, memo.wsMemo.pendingQuestion, If(memo.wsClaimMemo != null, memo.wsClaimMemo.message, ''))}
+                                    </div>
+                                    <div class="bs col-xs-3 col-sm-2" style="{!IF(memo.replied, "display:none;", "")}" > 
+                                        <a id="replyBtn-1" class="bs cigna-fg-white cigna-bg-blue-dark reply-action-button   onclick-pointer" style="text-decoration: none;" onclick="toggleReplyBox(this);">
+                                            {!$Label.Reply}
+                                        </a>
+                                    </div>
+                                    <div id="replyBox-1" class="bs col-xs-12 form-field replyDiv" style="{!IF(memo.replied, "", "display:none;")}">
+                                        <apex:inputTextarea id="memo-msg-response" styleClass="form-field-style-textarea   {!IF(memo.replyDisabled, 'cigna-bg-gray-1', '')}" rows="5" html-placeholder="{!$Label.Reply_here}{!$Label.Answer_Less_Than_255_Char}" value="{!memo.response}" style="border-radius: 5px; height:auto;" html-maxlength="255" disabled="{!memo.replyDisabled}"/>    
+                                    </div>
+                                </div>
+                            </div>
+                        </apex:repeat> 
+                    </div>
+                    
+                    <div id="codeAReplyDiv" class="bs row" style="{!IF(codeAMemoList != null && codeAMemoList.size != 0, '', 'display:none;')}">
+                        <apex:outputPanel styleClass="bs col-xs-12 col-sm-8 col-sm-offset-2 form-field form-note" style="margin-top:20px;"
+                                          rendered="{!IF(memoCategory == 'cl' && codeAMemoList != null && codeAMemoList.size != 0 , true, false)}">
+                            {!$Label.For_your_reference_only_below_action_s_is_are_taken_by_Cigna}
+                        </apex:outputPanel>
+                        <apex:repeat value="{!codeAMemoList}" var="memoCodeA">
+                            <div class="bs col-xs-12 col-sm-8 col-sm-offset-2 form-field" style="{!IF(memoCodeA.wsClaimMemo != null && !memoCodeA.claimMemoCodeA , 'display:none;', '')}">
+                                <div class="bs row  ">
+                                    <div class="bs col-xs-9 col-sm-10 cigna-fg-orange-dark content-highlight">
+                                        {!memoCodeA.wsClaimMemo.message}
+                                    </div>
+                                    <div class="bs col-xs-3 col-sm-2" style="{!IF(memoCodeA.replied, "display:none;", "")}" > 
+                                        <a id="replyBtn-2" class="bs cigna-fg-white cigna-bg-blue-dark reply-action-button   onclick-pointer" style="text-decoration: none;" onclick="toggleReplyBox(this);">
+                                            {!$Label.Reply}
+                                        </a>
+                                    </div>
+                                    <div id="replyBox-2" class="bs col-xs-12 form-field replyDiv" style="{!IF(memoCodeA.replied, "", "display:none;")}">
+                                        <apex:inputTextarea id="memo-msg-response-codeA" styleClass="form-field-style-textarea   {!IF(memoCodeA.replyDisabled, 'cigna-bg-gray-1', '')}"  rows="5" html-placeholder="{!$Label.Reply_here}{!$Label.Answer_Less_Than_255_Char}" value="{!memoCodeA.response}" style="border-radius: 5px; height:auto;" html-maxlength="255" disabled="{!memoCodeA.replyDisabled}"/>    
+                                    </div>
+                                </div>
+                            </div>
+                        </apex:repeat> 
+                    </div>
+                                        
+                    
+                    <!--
+                    <div id="referenceMemoDiv" class="bs row" style="{!IF(memoCategory == 'cl', '', 'display:none;')}">
+                        <apex:outputPanel styleClass="bs col-xs-12 col-sm-8 col-sm-offset-2 form-field form-note" style="margin-top:20px;"
+                                          rendered="{!IF(memoCategory == 'cl' && memoList != null && memoList.size != 0, true, false)}">
+                            {!$Label.For_your_reference_only_below_action_s_is_are_taken_by_Cigna}
+                        </apex:outputPanel>
+                        <apex:repeat value="{!referenceMemoList}" var="memo">
+                            <div class="bs col-xs-12 col-sm-8 col-sm-offset-2 form-field">
+                                <div class="bs row  ">
+                                    <div class="bs col-xs-12 cigna-fg-orange-dark content-highlight">
+                                        {!If(memo.wsMemo != null, memo.wsMemo.pendingQuestion, If(memo.wsClaimMemo != null, memo.wsClaimMemo.message, ''))}
+                                    </div>
+                                </div>
+                            </div>
+                        </apex:repeat> 
+                    </div>
+                    -->
+                    
+                    <div id="attachmentDiv" class="bs row" style="{!IF(showUploadAndSubmit, '', 'display:none;')}">
+                        <div class="bs col-xs-12 col-sm-8 col-sm-offset-2 form-field">
+                            <div class="bs row">
+                                <div class="bs col-sm-12 form-field">
+                                    <div id="errFileSize" class="alert alert-danger" role="alert" style="display:none;">
+                                        <span class="ci-hk-caution" aria-hidden="true"></span>
+                                        {!$Label.File_size_exceeds_7M}
+                                    </div>
+                                    <div id="errFileType" class="alert alert-danger" role="alert" style="display:none;">
+                                        <span class="ci-hk-caution" aria-hidden="true"></span>
+                                        {!$Label.Please_upload_a_valid_file} (i.e. .docx/.doc/.pdf/.jpeg/.png/.tiff)
+                                    </div>
+                                </div>
+                                <apex:actionFunction name="refreshAttlist" rerender="pmAttPanel" />
+                                <apex:actionFunction name="removeAtt" action="{!removeAtt}" rerender="pmAttPanel,fileUploadNextButton">
+                                    <apex:param name="id" value="" assignTo="{!removeAttId}"/>
+                                </apex:actionFunction>
+                                <apex:actionFunction name="checkAtt" action="{!checkAtt}" reRender="fileUploadNextButton"/>
+                                <apex:actionFunction name="initSfObject" action="{!initSfObject}" status="loader-icon" reRender="refreshClaimId"/>
+                                
+                                <apex:outputPanel id="refreshClaimId">
+                                    <script>
+                                        //CR-56_Link_20220214
+                                        $('[data-toggle="tooltip"]').tooltip();
+                                        
+                                    </script>
+                                    <div class="bs col-sm-12 form-field">
+                                        <div class="bs row"> <!--  content-choice-noUnderLine ?? PreAdmissionAtt PendingMemoAtt-->
+                                            <div class="col-xs-2 col-sm-1">
+                                                <input id="PendingMemoAtt" type="file" class="fileInput" onchange="uploadFile('{!memoHeaderId}','PendingMemoAtt', this);" style="display:none;"/> 
+                                                <label for="PendingMemoAtt" ><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true" /></label>
+                                            </div>
+                                        
+                                            <div class="col-xs-8 col-sm-10">{!$Label.Required_Attachment}</div>
+                                            <div class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right onclick-pointer" data-toggle="tooltip" title="{!$Label.Upload_Tooltip_7M}" aria-hidden="true"></i></div>
+                                            <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                                            <div id="uploadedPmAttDiv" style="padding:20px;">
+                                                <apex:outputPanel id="pmAttPanel">
+                                                    <apex:repeat value="{!PendingMemoAttList}" var="pmAtt">
+                                                        <!-- <div class="col-xs-12 col-sm-12 uploaded-filelist">{!pmAtt.Name}<i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!pmAtt}');" aria-hidden="true"></i></div> -->
+                                                        <div class="col-xs-12 col-sm-12 cigna-bg-grey-light" style="padding:2px;">
+                                                           <div class="col-xs-10 col-sm-11 uploaded-filelist" >{!pmAtt.Name}</div>
+                                                           <div class="col-xs-2 col-sm-1" ><i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!pmAtt}');" aria-hidden="true"></i></div>
+                                                        </div>
+                                                        <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                                                    </apex:repeat>
+                                                    
+                                                    <script>
+                                                        
+                                                        function checkUploadFile(){
+                                                            var pass = false;
+                                                            console.log('{!PendingMemoAttList.size}');
+                                                            if('{!PendingMemoAttList.size}' > 0){
+                                                                pass = true;
+                                                                $('#uploadDocErrorMesDiv').hide();
+                                                            }
+                                                            else{
+                                                                $('#uploadDocErrorMesDiv').show();
+                                                            }
+                                                            
+                                                            return pass;
+                                                        }
+                                                        
+                                                    </script>
+                                                    
+                                                </apex:outputPanel>    
+                                            </div>
+                                        </div>
+                                    </div>
+                                </apex:outputPanel>
+                                   
+                            </div>
+                            
+                            <div id="errorDiv" class="errorDiv bs col-sm-12 col-xs-12" style="padding-left:0;">
+                                <label class="cusError" id="errorMes" ></label>
+                            </div> 
+                        </div>
+                    </div>
+                    
+                    <div id="submission-pop-up" class="overlay" style="display:none;">
+                        <div id="submission-box" class="specialBox">
+                            <div class="submission-content">
+                                <div style="width:100%; float:left;padding-bottom:20px;">
+                                    <label id="SubmissionMes" ></label>
+                                </div>
+                                <!--Nicole_Bypass_202001007-->
+                                <div style="width: 100%; float:left; {!IF(isCustomerSiteGuestUser,'display:none;','')}" class="onclick-pointer" >
+                                    <a onclick="backHome();" style="text-decoration:none;"> OK </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    <div class="bs row mobile-app-padding" style="display: none; padding-bottom: 100px;">
+                        <div class="bs col-xs-12"></div>
+                    </div>
+                    
+                    <!--Customer Button-->
+                    <div id="button-div" class="bs" style="{!IF(showUploadAndSubmit && !isBroker, '', 'display:none;')}">
+                        <div class="bs col-sm-12 col-xs-12">
+                            <!-- <div style="padding:20px;"></div> --> 
+                            <!--desktop action button-->
+                            <div id="changebtnsm" class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="redirectHomeJS();"> <!-- onclick="redirectHomeJS();" -->
+                                {!$Label.Submit}
+                            </div>
+                            <div id="action-bar" class="bs visible-xs cigna-floating-bottom-panel" style="left:0px;padding-left:0;padding-right:0;">
+                                <div id="changebtnxs" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark onclick-pointer" onclick="redirectHomeJS();">
+                                    <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-document-send" aria-hidden="true"></span><br/>{!$Label.Submit}</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!--Broker Button-->
+                    <div id="button-div" class="bs" style="{!IF(showUploadAndSubmit && isBroker, '', 'display:none;')}">
+                        <div class="bs col-sm-12 col-xs-12">
+                            <!-- <div style="padding:20px;"></div> -->
+                            <!--desktop action button-->
+                            <div id="changebtnsm" class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="redirectHomeJS();"> <!-- onclick="redirectHomeJS();" -->
+                                {!$Label.Submit}
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+                <!-- <apex:actionFunction action="{!Sendfile}" name="SendFileApex"/> -->
+                <apex:actionFunction action="{!submitResponse}" name="submitResponseApex" status="loader-icon" reRender="errorMessage" oncomplete="toggleSubmissionPopUp();"/>
+                <apex:actionFunction action="{!saveReply}" name="saveReplyApex" status="loader-icon" oncomplete="submitResponseApex();"/>
+            </div>
+            
+            
+            
+        
+            <script>
+            
+                //Ray's Updates
+                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal() &&  $(window).width() < 768) {
+                            
+                    $('.mobile-app-padding').css('display', 'block');
+    
+                }       
+            
+    
+                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                    
+                    /*$('html').css('position', 'fixed').css('overflow', 'auto').css('width', '100%').css('height', '100%');
+                    $('body').css('position', 'fixed').css('overflow-y', 'scroll').css('width', '100%').css('height', '100%');*/
+                
+                    /*$(document).ready(function(){
+         
+                        var targetHeight = window.screen.height;
+                        var sfOneHeaderHeight = 44 + 20; 
+                       
+                        if($(window).width() > $(window).height()){
+                            targetHeight = window.screen.width;   
+                        }
+                        
+                        //$('#body').css('height', (targetHeight - sfOneHeaderHeight) + 'px');
+                        $('#scrollable-div').css('height', (targetHeight - sfOneHeaderHeight - 150) + 'px');
+                        
+                        //var scrollableBottom = $('#scrollable-div').offset().top + $('#scrollable-div').height();
+                        //var differentHeight =  scrollableBottom - targetHeight;
+                        // $('#scrollable-div').css('height', (scrollableBottom - differentHeight - 150 - sfOneHeaderHeight) + 'px');
+                        $('#action-bar').css('bottom', '0');
+                        
+                        //alert('#scrollable-div y-coordinate: ' + $('#scrollable-div').offset().top + ' height: ' + $('#scrollable-div').height() + ' button y-coor: ' + $('#action-bar').offset().top + ' height: ' + $('#action-bar').height() + ' $(window).height() :' +  $(window).height() + ' targetHeight : ' + targetHeight);
+                        
+                        $('body').bind('touchmove', function(e){$('#action-bar').css('opacity', '0');});
+                        $('body').bind('touchend', function(e){setTimeout(function(){$('#action-bar').css('opacity', '1');}, 700);});
+                        
+                    });*/
+                
+                    //$('#mobile-app-padding').css('display', 'block');
+                
+                    $("a").attr("target","");  
+                    
+                    window.onkeydown = function(){
+                        window.focus();
+                    }
+                }
+                
+                //David Zhang - 190401 - Pending Memo Doc Async
+                //CR-56_Link_20220214
+                $(".fileWrapper").on("click",function(){
+                    var brkatt = $(this).data("brkatt");
+                    var indid = "#dlink_"+ brkatt;
+                    // 20230921 - minghua - PI-129 Vulnerability follow up request - Pentest (FND-61951) High
+                    // Rancho_PI142_20231214 - fix user could not open doc in iPad/iPhone website
+                    var hrefBack=$(indid).attr("href");
+                    if (Cigna.Util.checkWebView()) {
+                        var href=hrefBack.split("/apex/");
+                        var param="/apex/"+href[1];
+                        if (Cigna.Util.isIOS()) {
+                            var openURL=openDownload(param);
+                            $(indid).attr("href",openURL);
+                        }else{
+                            $(indid).removeAttr("target");
+                            $(indid).attr("href","javascript:void(0);");
+                            $(indid).attr("onclick",openDownload(param));
+                        }
+                    }
+                    $(indid)[0].click();
+                    if (Cigna.Util.checkWebView()) {
+                        $(indid).attr("href",hrefBack);
+                    }
+                });
+        
+            </script>
+            
+        </apex:outputPanel>
+    </apex:form>
+    
+
+</apex:page>

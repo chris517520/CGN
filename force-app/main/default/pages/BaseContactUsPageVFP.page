@@ -1,0 +1,650 @@
+<apex:page sidebar="false" Controller="BaseContactUsPageCtrl">
+  <head>
+      <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+      <apex:include pageName="CignaCommonCSS" />
+      <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+      <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.carousel.css')}" />
+      <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.theme.css')}" />
+      <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.transitions.css')}" />
+      <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+      <style>
+            
+            
+            .tooltip {
+                position: relative;
+                display: inline-block;
+            }
+            
+            .tooltip .tooltiptext {
+                visibility: hidden;
+                width: 120px;
+                background-color: black;
+                color: #fff;
+                text-align: center;
+                border-radius: 6px;
+                padding: 5px 0;
+            
+                position: relative;
+                z-index: 99;
+            }
+            
+            .tooltip:hover .tooltiptext {
+                visibility: visible;
+            }
+            
+            .tooltip-inner {
+                /* Change the tooltip width here */
+                max-width: 250px !important;
+                /* If max-width does not work, try using width instead */
+                width: 250px; 
+                min-width: 100px;
+            }
+            
+            .helptext-icon {
+                background:none !important;
+                border-top:none !important;
+                border-right:none !important;
+                border-left:none !important;
+                border-radius:0px !important;
+                border-color:#58595B !important;
+                //color: #E35205 !important;
+                //font-size:14px !important;
+            }
+            .form-field-style-output{
+              border:0px;
+              //border-bottom:1px solid #58595B;
+              width: 100%;
+              box-shadow: none !important;
+              border-radius: 0px;
+              color: #58595B;
+              height: 34px;
+              outline: none;
+              -webkit-box-shadow: none;
+              -moz-box-shadow: none;
+              box-shadow: none;
+              padding: 6px 0px;
+              line-height: 1.42857143 !important;
+              background: transparent;
+            }
+            .form-field-style-align{
+              border:0px;
+              border-bottom:1px solid #58595B;
+              width: 100%;
+              box-shadow: none !important;
+              border-radius: 0px;
+              color: #58595B;
+              height: 34px;
+              outline: none;
+              -webkit-box-shadow: none;
+              -moz-box-shadow: none;
+              box-shadow: none;
+              padding: 6px 0px;
+              line-height: 1.42857143 !important;
+              background: transparent;
+          }
+          .form-field-style-select-align {
+              border:0px;
+              border-bottom:1px solid #58595B;
+              background: url('{!$Resource.select_arrow_style}') no-repeat 98% 50% !important;
+              background-size: 7px 7px !important;
+              padding-right:20px;
+              padding-left:0px;
+              -moz-appearance: none; 
+              -webkit-appearance: none; 
+              appearance: none;
+              width: 100%;
+              border-radius: 0px;
+              height:34px !important;
+          }
+          div#submission-pop-up {
+                display: none;
+                z-index: 10;
+                background: #D9D9D6;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                text-align: center;
+          }
+          div#submission-box {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 150px auto 0px auto;
+                width: 300px;
+                height: 120px;
+                background: #FFF;
+                color: #000;
+                left: 10%;
+                top: 10%;
+                padding:20px;
+                border-radius:5px;
+          }
+            
+          #submission-content {
+                padding:10px;
+                color:#000;
+                font-size:12px;
+                width: 100%;
+                height: 95%;
+          }
+          
+       </style>
+       
+       <script>
+       
+       $(document).ready(function(){        
+
+           if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                  //$('#action-bar').css('position', 'absolute');
+                  //$('#mobile-app-padding').css('display', 'block');
+                  $("div[id*='mobile-app-padding']").css('display', 'block');
+                  $("div[id*='languageLabel']").css('display', 'block');
+                  $("div[id*='language']").css('display', 'block');
+           }
+           
+           //CR-56_Link_20220214
+           $('[data-toggle="tooltip"]').tooltip();
+       });
+       
+       </script>
+
+     
+
+    </head>
+    <apex:define name="additionalLibraries">
+        <!-- CR-56_Link_20220214 -->
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+        <!-- CR-56_Link_20220214 -->
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.carousel_new.min.js')}"/>
+        <apex:outputpanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+            <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.Cobrowse_Translation_zh_TW)}" />
+        </apex:outputpanel>
+    </apex:define>
+    <apex:remoteObjects jsNamespace="Cigna">
+        <apex:remoteObjectModel name="Case" fields="Customer_Name__c,preferTime__c,Origin,Phone__c,Email__c,From_Portal_Contact_Us__c" />
+    </apex:remoteObjects>
+    <apex:define name="body">
+         
+        <apex:form id="mainPage">
+        <script>
+            function validateSupportEmail(){
+                  var supportE = $("input[id*='ContactInfoEmail']").val();
+                  if(supportE ==null || supportE ==''){
+                      return true;
+                  }else{
+                      return isValidEmail(supportE);
+                  }
+                  return true;
+            }
+
+            function isValidPhone() {
+               var patt = /^[0-9]{1,12}$/i;
+               var phone = $("input[id*='contact-No-Mobile']").val();
+               if(patt.exec(phone)==null){
+                   return false;
+               }
+               
+               var len = phone.toString().length;
+               var countryCode = $("input[id*='Country-Code']").val();
+               if((countryCode=='+852' || countryCode=='') && len!=8){
+                   return false;
+               }
+               if(countryCode=='+86' && len!=11){
+                   return false;
+               }
+               return true;
+            }
+            
+            function validateEmail(){
+                  var email = $("input[id*='ContactInfoEmail']").val();
+                  alert(email);
+                  if(email ==null || email ==''){
+                      return true;
+                  }else{
+                      return isValidEmail(email);
+                  }
+                  return true;
+            }
+
+        </script>
+
+
+        <apex:pageMessages ></apex:pageMessages>
+        <div class="bs container">
+            <form>
+                <div class="bs row"><p></p></div>
+                <div id="detail-back" class="bs row" style="padding-top: 10px"/>
+                
+                <apex:outputPanel rendered="{!!isTDUser}"><!--Nicole_SMT_20210620-->
+                    <div class="bs form-group col-sm-12 col-xs-12">
+                        <div class="bs col-sm-1 col-xs-2">
+                           <li id="liveagent_linkIcon_online" style="list-style:none;display: none;" onclick="startLiveChat()" ><a href="#" style="text-decoration:none; color:#000000; outline:none; cursor:pointer;"><i class="ci-hk-chat ci-hk-2x"></i></a></li>
+                           <li id="liveagent_linkIcon_offline" style="list-style:none;display: none;" >
+                               <a href="#" class="bs" style="text-decoration:none; color:#000000; outline:none; cursor:pointer;" onclick="Cigna.Util.navigateToVFP('{!$Label.LiveChatMessageToCasePageName}', null, null, false, false)">
+                               <i class="ci-hk-chat ci-hk-2x"></i></a></li>
+                           <li id="liveagent_linkIcon_online-app" style="list-style:none;display: none;" onclick="startLiveChat()"><a href="#" style="text-decoration:none; color:#000000; outline:none; cursor:pointer;"><i class="ci-hk-chat ci-hk-2x"></i></a></li>
+                           <li id="liveagent_linkIcon_offline-app" style="list-style:none;display: none;" >
+                               <a href="#" style="text-decoration:none; color:#000000; outline:none; cursor:pointer;" onclick="Cigna.Util.navigateToVFP('LiveChatLandingVFP?bid={!$Label.Customer_Portal_Live_Chat_Button_ID}&status=offline', null, null, false, false)">
+                                   <i class="ci-hk-chat ci-hk-2x"></i></a></li>
+                        </div>
+                        <div class="bs col-sm-4 col-xs-10">
+                           <li id="liveagent_link_online" style="list-style:none;display: none;" onclick="startLiveChat()" ><a href="#" style="text-decoration:none; color:#000000; outline:none; cursor:pointer;">{!$Label.LiveChatLink_Click_to_Chat}</a></li>
+                           <li id="liveagent_link_offline" style="list-style:none;display: none;" >
+                                    <a href="#" class="bs" style="text-decoration:none; color:#000000; outline:none; cursor:pointer;" onclick="Cigna.Util.navigateToVFP('{!$Label.LiveChatMessageToCasePageName}', null, null, false, false)">
+                                    {!$Label.LiveChatLink_Click_to_Chat}</a></li>
+                           <li id="lliveagent_link_online-app" style="list-style:none;display: none;" onclick="startLiveChat()"><a href="#" style="text-decoration:none; color:#000000; outline:none; cursor:pointer;">{!$Label.LiveChatLink_Click_to_Chat}</a></li>
+                           <li id="liveagent_link_offline-app" style="list-style:none;display: none;" >
+                                    <a href="#" style="text-decoration:none; color:#000000; outline:none; cursor:pointer;" onclick="Cigna.Util.navigateToVFP('LiveChatLandingVFP?bid={!$Label.Customer_Portal_Live_Chat_Button_ID}&status=offline', null, null, false, false)">{!$Label.LiveChatLink_Click_to_Chat}</a></li>
+                        </div>
+                        <div class="bs col-sm-7 col-xs-12">
+                        </div>
+                    </div>                
+
+                    <div class="bs form-group col-sm-12 col-xs-12">
+                        <!-- TNB-469 remove the T&C in co-browsing as confirmed by requirement. -->
+                        <!-- openTermsDialogforCoBrowsing() -->
+                        <div class="bs col-sm-1 col-xs-2">
+                            <li id="Initiate_Co_browsing" onclick="startCobrowse()" style="list-style:none;"><a href="#" style="text-decoration:none; color:#000000; outline:none; cursor:pointer;"><i class="ci-hk-family ci-hk-2x"></i></a></li>
+                        </div>
+                        <div class="bs col-sm-4 col-xs-10">
+                            
+                            <li id="Initiate_Co_browsing" onclick="startCobrowse()" style="list-style:none;"><a href="#" style="text-decoration:none; color:#000000; outline:none; cursor:pointer;">{!$Label.LiveChatLink_Initiate_Co_browsing}</a></li>
+                        </div>
+                        <div class="bs col-sm-7 col-xs-12">
+                        </div>
+                    </div>
+                </apex:outputPanel>
+     
+                <div class="bs form-group col-sm-12 col-xs-12">
+                    <div class="bs col-sm-1 col-xs-2">
+                        <li id="callusatPhoneNumberIcon" style="list-style:none;display: none;"><i class="ci-hk-phone ci-hk-2x"></i></li>
+                        <li id="callusatPhoneNumberIcon-app" style="list-style:none;display: none;"><a href='tel:852-2560-1990' style="text-decoration:none; color:#000000; outline:none; cursor:pointer;"><i class="ci-hk-phone ci-hk-2x"></i></a></li>
+                    </div>
+                    <div class="bs col-sm-4 col-xs-10">
+                        <li id="callusatPhoneNumberLink" style="list-style:none;display: none;">{!$Label.LiveChatLink_Conact_Us_Call}</li>
+                        <li id="callusatPhoneNumberLink-app" style="list-style:none;display: none;"><a href='tel:852-2560-1990' style="text-decoration:none; color:#000000; outline:none; cursor:pointer;">{!$Label.LiveChatLink_Conact_Us_Call}</a></li>
+                    </div>
+                    <div class="bs col-sm-7 col-xs-12">
+                    </div>
+                </div>           
+
+                <div class="bs form-group col-sm-12 col-xs-12">
+                    <div class="bs col-sm-1 col-xs-2">
+                        <i class="ci-hk-envelope ci-hk-2x"></i>
+                    </div>
+                    <div class="bs col-sm-4 col-xs-10">
+                        <span>{!$Label.LiveChatLink_Leave_Us_a_Message}</span>
+                    </div>
+                    <div class="bs col-sm-7 col-xs-12">
+                    </div>
+                </div>
+
+                <div class="bs form-group col-sm-12 col-xs-12">
+                    <div class="bs col-sm-2 col-xs-12">
+                        <span>{!$Label.LiveChatMessageToCase_Customer_Name}</span>
+                    </div>
+                    <div class="bs col-sm-10 col-xs-12">
+                        <apex:inputText value="{!ContactInfo.Name}" id="ContactInfoName" styleClass="bs form-field-style-align" style="font-weight: bold;color: #000000;"/>
+                    </div>
+                </div>  
+
+                <div class="bs form-group col-sm-12 col-xs-12">
+                    <div class="bs col-sm-2 col-xs-12">
+                        <span>{!$Label.Contact_Email}</span>
+                    </div>
+                    <div class="bs col-sm-10 col-xs-12">
+                        <apex:inputText value="{!ContactInfo.Email}" id="ContactInfoEmail" styleClass="bs form-field-style-align" style="font-weight: bold;color: #000000;"/>
+                    </div>
+                </div>  
+
+                <div class="bs form-group col-sm-12 col-xs-12">
+                    <div class="bs col-sm-2 col-xs-12">
+                        <span>{!$Label.Acc_Contact_Number}</span>
+                    </div>
+  
+                    <div class="bs col-sm-3 col-xs-4">
+                        <apex:inputText id="Country-Code" value="{!ContactInfo.CountryCode}" html-placeholder="+852" styleClass="bs form-field-style-align" style="font-weight: bold;color: #000000;"/>
+                    </div>
+                    <div class="bs col-sm-7 col-xs-8">
+                        <apex:inputText id="contact-No-Mobile" value="{!ContactInfo.Phone}" styleClass="bs form-field-style-align" style="font-weight: bold;color: #000000;"/>
+                    </div> 
+                </div>  
+                   
+                <div class="bs form-group col-sm-12 col-xs-12">
+                    <div class="bs col-sm-2 col-xs-12">
+                        <span>{!$Label.Preferred_Time}</span>
+                    </div>
+                    <div class="bs col-sm-10 col-xs-12">
+                        <apex:selectList value="{!ContactInfo.PreferredTime}" id="ContactInfoPreferredTime" size="1" styleClass="bs form-field-style-select-align" style="font-weight: bold;color: #000000;">
+                            <apex:selectOption itemValue="{!$Label.LiveChatMessageToCase_AnyTime}" itemLabel="{!$Label.LiveChatMessageToCase_AnyTime}"/>
+                            <apex:selectOption itemValue="{!$Label.LiveChatMessageToCase_10am1pm}" itemLabel="{!$Label.LiveChatMessageToCase_10am1pm}"/>
+                            <apex:selectOption itemValue="{!$Label.LiveChatMessageToCase_1pm630pm}" itemLabel="{!$Label.LiveChatMessageToCase_1pm630pm}"/>
+                            <apex:selectOption itemValue="{!$Label.LiveChatMessageToCase_630pm9pm}" itemLabel="{!$Label.LiveChatMessageToCase_630pm9pm}"/>
+                        </apex:selectList>
+                    </div>
+                </div>  
+
+                <div class="bs form-group col-sm-12 col-xs-12">
+                    <div class="bs col-sm-2 col-xs-12">
+                        <span>{!$Label.LiveChatMessageToCase_Customer_Message}</span>
+                    </div>
+                    <div class="bs col-sm-10 col-xs-12">
+                        <apex:inputTextarea id="ContactInfoMessage" style="height: 100px;" styleClass="form-field-style-textarea" value="{!ContactInfo.Message}"/>
+                    </div>
+                </div>
+                
+                <!-- Add by Owen,for JOBR-306 2023.03.22-->
+                <div class="bs form-group col-sm-12 col-xs-12">
+                    <div class="bs col-sm-12 col-xs-12">
+                        <apex:outputText value="{!$Label.Contact_Us_Reminder}" escape="false"></apex:outputText>
+                    </div>
+                </div>  
+                   
+               <div class="bs col-sm-12 col-xs-12">
+                   <div style="padding:20px;"></div>
+                   <!--desktop action button-->
+                    <div id="eSignaturebtnsm" class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="submitfunction();" >
+                        {!$Label.Submit}
+                    </div>
+                            
+                   <!--mobile action button-->    
+                    <div id="mobile-app-padding" class="bs row" style="display: none; padding-bottom: 100px;">
+                        <div class="bs col-xs-12"></div>
+                    </div>
+                
+                    <div id="action-bar" class="bs visible-xs cigna-floating-bottom-panel" style="left:0px;">
+                        <div id="eSignaturetnxs" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark onclick-pointer" onclick="submitfunction();">
+                            <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-document-send" aria-hidden="true"></span><br/><span id="eSignaturebtnxstext">{!$Label.Submit}</span></a>
+                        </div>
+                    </div>
+               </div>
+            <!-- Terms Dialog -->
+            <div id="TermsDialogforCoBrowsing" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">{!$Label.Initiating_CoBrowsing}</h4>
+                        </div>
+                        <div class="modal-body" style="height:300px;overflow:auto;">
+                            <p> 1.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem. Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed. 1.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem. Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed 1.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem. Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed 1.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem. Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-primary" onclick=" $('#TermsDialogforCoBrowsing').modal('hide');startCobrowse()" type="button">{!$Label.Cobrowse_Initiating_Accept}</button>
+                            <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="stopCobrowse()">{!$Label.Cobrowse_Initiating_Decline}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="TermsDialogforPhoneCall" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body" style="height:50px;overflow:auto;">
+                            <p>{!$Label.LiveChatLink_Conact_Us_Call}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-primary" onclick=" $('#TermsDialogforPhoneCall').modal('hide')" type="button">{!$Label.Cancel}</button>
+                            <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="phone('88888888')">{!$Label.OK}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="TermsDialogforSubmit" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body" style="height:70px;overflow:auto;">
+                            <p><label id="SubmissionMes" >{!$Label.LiveChatMessageToCase_Message_Has_Been_Sent}</label></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="backHome();">{!$Label.OK}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>          
+            <div id="submission-pop-up" class="overlay" style="display:none;">
+                <div id="submission-box" class="specialBox">
+                    <div class="submission-content">
+                        <div style="width:100%; float:left;padding-bottom:20px;">
+                            <label id="SubmissionMes" >{!$Label.LiveChatMessageToCase_Message_Has_Been_Sent}</label>
+                        </div>
+                        <div style="width: 100%; float:left;" class="onclick-pointer">
+                            <a onclick="backHome();" style="text-decoration:none;"> OK </a> <!-- redirectHomeApex(); -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </form>
+           
+           <apex:actionFunction action="{!submitInfoApex}" name="updateInfoApex" reRender="mainPage" />
+           <a id="Cobrowse_startSession" href="javascript:;" glance_button="startSession" style="display: none"></a>
+           <a id="Cobrowse_stopSession" href="javascript:;" glance_button="stopSession" style="display: none"></a>
+
+           <script>
+              if (!window._laq) {
+                  window._laq = [];
+              }
+
+              window._laq.push(function() {
+        
+                    if(Cigna.Util.checkWebView()){
+
+                        liveagent.showWhenOnline('{!$Label.Customer_Portal_Live_Chat_Button_ID}', $("[id$='liveagent_link_online-app']")[0]);
+                        liveagent.showWhenOffline('{!$Label.Customer_Portal_Live_Chat_Button_ID}', $("[id$='liveagent_link_offline-app']")[0]);
+
+                        liveagent.showWhenOnline('{!$Label.Customer_Portal_Live_Chat_Button_ID}', $("[id$='liveagent_linkIcon_online-app']")[0]);
+                        liveagent.showWhenOffline('{!$Label.Customer_Portal_Live_Chat_Button_ID}', $("[id$='liveagent_linkIcon_offline-app']")[0]);
+
+                        $("[id$='callusatPhoneNumberIcon-app']")[0].style.display = "block";
+                        $("[id$='callusatPhoneNumberLink-app']")[0].style.display = "block";
+                        
+                    }else{
+            
+                        liveagent.showWhenOnline('{!$Label.Customer_Portal_Live_Chat_Button_ID}', $("[id$='liveagent_link_online']")[0]);
+                        liveagent.showWhenOffline('{!$Label.Customer_Portal_Live_Chat_Button_ID}', $("[id$='liveagent_link_offline']")[0]);
+
+                        liveagent.showWhenOnline('{!$Label.Customer_Portal_Live_Chat_Button_ID}', $("[id$='liveagent_linkIcon_online']")[0]);
+                        liveagent.showWhenOffline('{!$Label.Customer_Portal_Live_Chat_Button_ID}', $("[id$='liveagent_linkIcon_offline']")[0]);
+
+                        $("[id$='callusatPhoneNumberIcon']")[0].style.display = "block";
+                        $("[id$='callusatPhoneNumberLink']")[0].style.display = "block";
+                    }
+
+                });
+
+                liveagent.addCustomDetail('Name', '{!$User.LastName} {!$User.FirstName}', true);
+                liveagent.findOrCreate("Account").map("name", "Name", true, true, true).saveToTranscript('accountId').showOnCreate();
+                liveagent.init('{!$Setup.Portal_Settings__c.Live_Agent_Init_URL__c}', '{!$Setup.Portal_Settings__c.Live_Agent_Deployment_ID__c}', '{!LEFT($Organization.Id, 15)}');
+               
+                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+        
+                    $(document).ready(function(){
+                        var targetHeight = window.screen.height;
+                        var sfOneHeaderHeight = 44 + 20; //window.parent.document.getElementsByClassName('oneHeader')[0].offsetHeight;
+                        
+                        if($(window).width() > $(window).height()){
+                            targetHeight = window.screen.width;   
+                        }
+                        
+                        //$('body').css('height', (targetHeight  - (targetHeight * 0.09)) + 'px');
+                        $('body').css('height', (targetHeight - sfOneHeaderHeight) + 'px');
+                        //CR-56_Link_20220214
+                        $('body').on('touchmove', function(e){$('#action-bar').css('opacity', '0');});
+                        $('body').on('touchend', function(e){setTimeout(function(){$('#action-bar').css('opacity', '1');}, 700);});
+                        
+                    });
+                    
+                    $('#mobile-app-padding').css('display', 'block');
+                    
+                    $("a").attr("target","");
+                    
+                }
+                
+                //Nicole_SPS-566_20200901
+                function disableSubmitButton(){
+                    $('#eSignaturebtnsm').removeAttr('onclick').addClass('cigna-bg-gray-dark').removeClass('cigna-bg-orange-dark');
+                    $('#eSignaturetnxs').removeAttr('onclick').addClass('cigna-bg-gray-dark').removeClass('cigna-bg-orange-dark');
+                }
+                
+                function enableSubmitButton(){
+                    $('#eSignaturebtnsm').addClass('cigna-bg-orange-dark').removeClass('cigna-bg-gray-dark').attr('onclick','submitfunction();');
+                    $('#eSignaturetnxs').addClass('cigna-bg-orange-dark').removeClass('cigna-bg-gray-dark').attr('onclick','submitfunction();');
+                }
+                
+                //CR-56_Link_20220214
+                $('.close').on("click",enableSubmitButton);
+
+                function submitfunction(){
+                
+                    //Nicole_SPS-566_20200901
+                    var loadingDiv =document.getElementById('loading-div');
+                    loadingDiv.style.display='block';
+                    disableSubmitButton();
+                    
+                    if(validateForm_mainPage()){
+                        //submitInfoApex();
+                        createCase();
+                    }
+                }
+                function backHome(){
+                    var userType = "{!Text($User.userType)}";
+                    if(userType == 'Guest'){
+                        Cigna.Util.navigateToVFP('CustomerLoginVFP', null, null, false, false)
+                    } else {
+                        Cigna.Util.navigateToVFP('CustomerLandingPage', null, null, false, false)
+                    }
+                }
+                function toggleSubmissionPopUp(){
+                    //TermsDialogforSubmit
+                    $('#TermsDialogforSubmit').modal('hide');
+                    $('#TermsDialogforSubmit').modal({backdrop: 'static'});
+                } 
+                function callusatPhoneNumber(){
+                    //TermsDialogforPhoneCall
+                    $('#TermsDialogforPhoneCall').modal('hide');
+                    $('#TermsDialogforPhoneCall').modal({backdrop: 'static'});
+                } 
+                function phone(date){
+                    window.location.href = 'tel://' + date;
+                }
+                function openTermsDialogforCoBrowsing(){
+                    $('#TermsDialogforCoBrowsing').modal('hide');
+                    $('#TermsDialogforCoBrowsing').modal({backdrop: 'static'});
+                }
+                function startCobrowse() {
+                    var evt = document.createEvent("MouseEvents");
+                        evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+                        var a = document.getElementById("Cobrowse_startSession");
+                        a.dispatchEvent(evt);
+                }
+
+                function stopCobrowse() {
+                    var evt = document.createEvent("MouseEvents");
+                        evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+                        var a = document.getElementById("Cobrowse_stopSession");
+                        a.dispatchEvent(evt);
+                }
+
+                function validateForm_mainPage(){
+                    jQuery.validator.addMethod("isInvalidPhone", function(value, element) {
+                     return isValidPhone();
+                    }, "{!$Label.Error_Message_Contact_Number_Not_Valid}");
+
+                jQuery.validator.addMethod("isInvalidEmail", function(value, element) {
+                    return this.optional(element) || Cigna.ValidationUtil.isValidEmail(value);
+                    }, "{!$Label.Error_Message_Email_Not_Valid}");
+
+                $("form[id*='mainPage']").validate({
+                    errorPlacement: function(label, element) {
+                       label.addClass('errorDiv');
+                       label.insertAfter(element);
+                    },
+                      wrapper: 'div'
+                });
+
+                $("form[id*='mainPage'] input[id*='ContactInfoName']").each(function(idx, elem){
+                                    $(elem).rules("add", {
+                                        required: true
+                                    });
+                });
+
+                $("form[id*='mainPage'] input[id*='ContactInfoEmail']").each(function(idx, elem){
+                                    $(elem).rules("add", {
+                                        required: true,
+                                        isInvalidEmail: true
+                                    });
+                });
+
+                $("form[id*='mainPage'] input[id*='contact-No-Mobile']").each(function(idx, elem){
+                                    $(elem).rules("add", {
+                                        required: true,
+                                        isInvalidPhone: true
+                                    });
+                });
+                return $("form[id*='mainPage']").validate().form();
+            }            
+           
+            function createCase() {
+              var countrycode = $("input[id*='Country-Code']").val();
+              if(countrycode==null || countrycode==''){
+                  countrycode = '+852';
+              }
+              var ctDetails = {
+                  Customer_Name__c: $("input[id*='ContactInfoName']").val(),
+                  preferTime__c: $("[id*='ContactInfoPreferredTime']").val(),
+                  Message__c: $("[id*='ContactInfoMessage']").val(),
+                  Email__c: $("input[id*='ContactInfoEmail']").val(),
+                  Phone__c: $("input[id*='contact-No-Mobile']").val(),
+                  Country_Code__c: countrycode,
+                  Origin: "Web",
+                  From_Portal_Contact_Us__c: true,
+                  Nature__c: 'Pending to handle',
+                  Non_One_And_Done_Reason__c: 'N/A',
+                  Media__c: 'Contact Us (Customer Portal)',
+                  Remarks__c: $("[id*='ContactInfoMessage']").val(),
+                  Prefer_Time__c:$('#preferTime').val()
+              };
+              var ct = new Cigna.Case();
+              ct.create(ctDetails, function(err) {
+              
+                  //Nicole_SPS-566_20200901
+                  var loadingDiv =document.getElementById('loading-div');
+                  loadingDiv.style.display='none';
+                  if (err) {
+                      console.log(err);
+                      alert(err.message);
+                      
+                      //Nicole_SPS-566_20200901
+                      enableSubmitButton();
+                  } else {
+                      //alert("{!$Label.LiveChatMessageToCase_Message_Has_Been_Sent}");
+                      toggleSubmissionPopUp()
+                      //console.log(ct.log());     // Dump contact to log
+                      //console.log(ct.get('Id')); // Id is set when create completes
+                  }
+                });
+            }
+           
+            function back(){
+                var a=window.location.toString().slice(-1);
+                if(a=='#') history.go(-2);
+                else history.go(-1);
+            } 
+           </script>
+        </div>
+      </apex:form>
+   </apex:define>
+</apex:page>

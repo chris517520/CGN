@@ -1,0 +1,172 @@
+<apex:page doctype="html-5.0" sidebar="false" showheader="false" title="Save Quote" controller="GenericGetQuoteCtrl">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+        <style>
+            <!-- additional inline css-->
+            
+            .bs .form-control:focus {
+                box-shadow: none !important;
+                border-bottom: 1px solid #eac048 !important;
+            }
+             
+            .bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs output[type="text"], .bs select, .bs span.form-control {
+                border-top: 0 !important;
+                border-left: 0 !important;
+                border-right: 0 !important;
+                border-bottom: 1px solid #58595B !important;
+                background: transparent;
+                width: 100%;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
+            
+            .outputText-format{
+                border-top: 0 !important;
+                border-left: 0 !important;
+                border-right: 0 !important;
+                border-bottom: 1px solid #58595B !important;
+                background: transparent;
+                width: 100%;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
+            
+        </style>
+        <script>
+
+             var changeLanguageWarningRequired = true;
+
+             var Cigna = Cigna || {};
+             Cigna.SaveQuote= function(){
+                
+                function validateForm() {
+                    return $("form[id*='SaveQuoteForm']").validate().form();
+                }
+                
+                function savingQuote(evt){
+                    console.log('savingQuote');
+                    if(validateForm()){
+                    console.log('validateForm is true');
+                        savePHName();
+                        
+                    }else {
+                        if ($('form[id$="SaveQuoteForm"] input.error').length > 0) {
+                            $('form[id$="SaveQuoteForm"] input.error')[0].focus();
+                            if (typeof evt != undefined && evt) {
+                                evt.preventDefault();
+                            }
+                        }
+                        
+                    }
+                }
+
+                function goBack(evt) {
+                    Cigna.Util.navigateToVFP('GenericGetQuoteVFP?tId={!transactionId}&plan={!selectedProduct}', null, null, true);
+                }   
+                
+                return {
+                    savingQuote : savingQuote,
+                    goBack : goBack
+                };
+            }();
+            
+        </script>
+          
+       
+    </head>
+    <apex:define name="additionalLibraries">
+        <!-- CR-56_Link_20220214 -->
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+        <apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+            <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+        </apex:outputPanel>
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    </apex:define>
+
+                                     
+    <apex:outputPanel layout="block" styleClass="bs row">
+        <div class="bs col-xs-12">
+            <p><a id="quote-back-btn" class="bs cigna-fg-orange-medium onclick-pointer" onclick="Cigna.SaveQuote.goBack();">
+            <i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a></p>
+        </div>
+    </apex:outputPanel>
+
+    <div class="bs row">
+        <div style="padding-bottom:20px" class="bs cigna-tab col-sm-offset-1 col-sm-10 col-xs-12 cigna-fg-gray-dark form-horizontal">
+            <apex:form id="SaveQuoteForm">
+                <apex:actionFunction action="{!savePHName}" name="savePHName" reRender="formDetail" oncomplete="Cigna.Util.navigateToVFP('SavedFormVFP?tab=quote');"/>
+                
+                <apex:outputpanel id="formDetail">
+
+                    <div class="bs form-group">    
+                        <div class="bs col-xs-12 col-sm-4">
+                            <apex:outputlabel value="{!$Label.Quote_Given_Name_of_Policy_Holder}" for="PH-Firstname" />
+                        </div>
+                        <div class="bs col-xs-12 col-sm-8">
+                            <apex:inputField id="PH-Firstname" value="{!PersonPH.Given_Name__c}" styleclass="bs form-control"/>
+                        </div>
+                    </div>
+
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12 col-sm-4">
+                            <apex:outputlabel value="{!$Label.Quote_Family_Name_of_Policy_Holder}" for="PH-Lastname" />
+                        </div>
+                       
+                        <div class="bs col-xs-12 col-sm-8" >
+                            <apex:inputField id="PH-Lastname" value="{!PersonPH.Family_Name__c}" styleclass="bs form-control"/>
+                        </div>
+                    </div>    
+
+                    <div class="bs col-sm-12 col-xs-12">
+                   
+                       <!--desktop action button-->
+                        <div id="savequotedesk1" class="bs hidden-xs hidden-md col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="Cigna.SaveQuote.savingQuote();">
+                            {!$Label.Quote_Save_Quote}
+                        </div>
+    
+                        <div id="savequotedesk2" class="bs visible-md col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer " style="padding-bottom: 20px;" onclick="Cigna.SaveQuote.savingQuote();">
+                            {!$Label.Quote_Save_Quote}
+                        </div>
+    
+                        
+                       <!--mobile action button-->    
+                        <div id="mobile-app-padding" class="bs row" style="display: none; padding-bottom: 100px;">
+                            <div class="bs col-xs-12"></div>
+                        </div>
+                    
+                    </div>
+
+              </apex:outputpanel>
+              
+              
+            </apex:form>
+
+        </div>
+         
+    </div>
+  
+    <script>   
+        
+        jQuery.extend(jQuery.validator.messages, {
+            required: "{!$Label.ESales_Required_Field_Error_Message}"
+        });
+        
+        $("form[id*='SaveQuoteForm']").validate({
+            ignore: ':hidden:not(.cigna-validation)'
+        });
+
+        $("form[id*='SaveQuoteForm'] input[id*='PH-']").each(function(idx, elem){
+            $(elem).rules("add", {
+                required: true,
+            });
+        });
+
+    </script>
+
+    <script>
+            if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                $('#mobile-app-padding').css('display', 'block');
+            }
+    </script>
+</apex:page>

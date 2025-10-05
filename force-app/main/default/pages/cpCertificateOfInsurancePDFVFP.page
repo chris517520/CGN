@@ -1,0 +1,317 @@
+<apex:page showHeader="false" applyHtmlTag="false" renderAs="PDF" cache="true" controller="cpCertificateOfInsuranceCtrl" action="{!inserCPEventLog}">
+    <!-- 20220105 - minghua - CP-775, add action -->
+    <head>
+        <style>
+            @page {
+                /*20211201 - minghua - CP-662*/
+                /*20211206 - Kirk - CP-681*/
+                /*padding-top: 90px;*/
+                padding-top: 140px;
+                margin-bottom: 90px;
+                
+                @top-center {
+                    content: element(header);
+                }
+                
+                @bottom-left {
+                    content: element(footer);
+                }
+            }
+            div.header {
+                font-size: 8pt;
+                display: block;
+                padding-top: 20px;
+                text-align: left;
+                position: running(header);
+                font-family: Arial Unicode MS;
+                //color:  #d3d3d3;
+            
+            }
+            div.content{
+                position:relative;
+                font-family: Arial Unicode MS;
+                font-size: 9pt;
+                fill-opacity:.5; 
+                stroke:black; 
+                stroke-width:2;
+                /** does not work **/
+                word-wrap: break-word;
+                word-break: break-all;
+                /** does not work end **/
+            }
+            
+            .rTable { 
+                display: table; 
+                width: 100%;                
+            }
+            .inner_rTable { 
+                display: table; 
+                width: 100%;
+            }
+            
+            .rTableRow{ 
+                display: table-row; 
+            }
+            .rTableCell_title { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border: 1px solid black;
+                padding:0 0 0 10px;
+                width: 50%;
+                font-weight: bold;
+                vertical-align: top;
+            }
+            
+            .rTableCell { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border: 1px solid black;
+                padding:0 0 0 10px;
+                width: 50%;
+            }
+        </style>
+    </head>
+    <div class="header">
+        <div style="width:720px;">
+            <div style="width: 95%; float:left;">
+                <div style="width:100%;">
+                    <!-- 20211201 - minghua - CP-662 -->
+                    <!-- <apex:image style="float:right;" url="{!$Resource.Cigna_Horizontal_Logo}" width="100px" />  -->
+                    <apex:image style="float:right;" url="{!$Resource.Client_Cigna_Horizontal_Logo}" width="100px" /> 
+                </div>
+                <br/>
+                <div style="padding:10px;float:left;width:100%;">
+                    Date:&nbsp;<apex:OutputText value="{0,date,dd MMM yyyy}" escape="false">
+                             <apex:Param value="{!today}"/>
+                         </apex:OutputText>
+                </div><br/>
+                <div style="float:left;width:100%;font-size:20px;font-weight:bold;text-align:center;">
+                    Certificate of {!memberInfor.companyDesc} {!memberInfor.productType}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="content">
+        <div style="width:720px;">
+            <div style="width:98%;">
+                <div style="width:100%;">
+                        This is to certify that {!memberInfor.FullName }, date of birth
+                        &nbsp;<apex:OutputText value="{0,date,dd MMM yyyy}" escape="false"><apex:Param value="{!memberInfor.birthDateInDate}"/></apex:OutputText> holds {!memberInfor.companyDesc} {!memberInfor.productType} with Cigna and is covered under Policy no. {!memberInfor.policyNumber} 
+                        held by {!memberInfor.companyDesc}. The certificate number is {!memberInfor.certificateNo}.             
+                </div><br/>
+                <div style="width:100%;">
+                        This scheme provides the benefits shown below:                 
+                </div><br/>
+                <div style="width:100%;">
+                    <apex:repeat value="{!planNameSet}" var="planN">
+                        <div class="rTable" >
+                            <div class="rTableRow">     
+                                <div class="rTableCell_title" >
+                                    <p>{!planN}</p>                  
+                                </div>
+                            </div>
+                        </div>
+                        <apex:repeat value="{!planMap[planN]}" var="benefits">
+                            <div class="rTable" >
+                                <div class="rTableRow">     
+                                    <div class="rTableCell_title" >
+                                        <p>{!benefits.benefitItemDesc}</p>                  
+                                    </div>
+                                    <div class="rTableCell_title" >
+                                        <p>{!benefits.benefitLevelDesc}</p>                  
+                                    </div>
+                                </div>
+                            </div>
+                        </apex:repeat>
+                    </apex:repeat>
+                </div><br/>
+                
+                <!-- <div style="width:100%;">
+                    <div class="rTable" >
+                        <div class="rTableRow">     
+                            <div class="rTableCell_title" >
+                                <p>Hospitalisation and surgical benefits</p>                  
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rTable" >
+                        <div class="rTableRow">
+                            <div class="rTableCell_title" >
+                                <p>Reimbursement %</p>                  
+                            </div>
+                            <div class="rTableCell" >
+                                <p>100%</p>                  
+                            </div>
+                        </div>                        
+                        <div class="rTableRow">
+                            <div class="rTableCell_title" >
+                                <p>Room Entitlement</p>                  
+                            </div>
+                            <div class="rTableCell" >
+                                <p>Semi-Private Room</p>                  
+                            </div>
+                        </div>
+                        <div class="rTableRow">
+                            <div class="rTableCell_title" >
+                                <p>Room &amp; Board</p>                  
+                            </div>
+                            <div class="rTableCell" >
+                                <p>HK$2,300 per day (Maximum 182 days)</p>                  
+                            </div>
+                        </div>
+                        <div class="rTableRow">
+                            <div class="rTableCell_title" >
+                                <p>Intensive Care Unit</p>                  
+                            </div>
+                            <div class="rTableCell" >
+                                <p>HK$4,600 per day (Maximum 10 days)</p>                  
+                            </div>
+                        </div>
+                        <div class="rTableRow">
+                            <div class="rTableCell_title" >
+                                <p>Inpatient Doctor Visit </p>                  
+                            </div>
+                            <div class="rTableCell" >
+                                <p>HK$2,300 per day (Maximum 182 days)</p>                  
+                            </div>
+                        </div>                      
+                        <div class="rTableRow">
+                            <div class="rTableCell_title" >
+                                <p>Inpatient Specialist Fees</p>                  
+                            </div>
+                            <div class="rTableCell" >
+                                <p>HK$7,900</p>                  
+                            </div>
+                        </div>
+                        <div class="rTableRow">
+                            <div class="rTableCell_title" >
+                                <p>Miscellaneous Hospital Expenses Fees </p>                  
+                            </div>
+                            <div class="rTableCell" >
+                                <p>HK$30,000</p>                  
+                            </div>
+                        </div>
+                        <div class="rTableRow">
+                            <div class="rTableCell_title" >
+                                <p>Inpatient Rehabilitation </p>                  
+                            </div>
+                            <div class="rTableCell" >
+                                <p>HKD50,000 limit per year (maximum 60 days)</p>                  
+                            </div>
+                        </div>
+                        <div class="rTableRow">
+                            <div class="rTableCell_title" >
+                                <p>Surgeon Fees (Subject to Simplified Schedule of Operation)</p>                  
+                            </div>
+                            <div class="rTableCell" >
+                                <p>Maximum HK$86,000</p>                  
+                            </div>
+                        </div>
+                        <div class="rTableRow">
+                            <div class="rTableCell_title" >
+                                <p>Anaesthetist’s Fees</p>                  
+                            </div>
+                            <div class="rTableCell" >
+                                <p>Maximum HK$25,800</p>                  
+                            </div>
+                        </div>
+                        <div class="rTableRow">
+                            <div class="rTableCell_title" >
+                                <p>Operating Theatre Fees </p>                  
+                            </div>
+                            <div class="rTableCell" >
+                                <p>Maximum HK$25,800</p>                  
+                            </div>
+                        </div>
+                        <div class="rTableRow">
+                            <div class="rTableCell_title" >
+                                <p>Supplementary Major Medical Benefits</p>                  
+                            </div>
+                            <div class="rTableCell" >
+                                <p>Maximum HK$250,000 Semi-Private Room</p>                  
+                            </div>
+                        </div>
+                        <div class="rTableRow">
+                            <div class="rTableCell_title" >
+                                <p>General Outpatient Consultations </p>                  
+                            </div>
+                            <div class="rTableCell" >
+                                <p>HK$500 per visit (Maximum 35 visits1)</p>                  
+                            </div>
+                        </div> 
+                    </div>
+                    
+                    <div class="rTable" >
+                        <div class="rTableRow">
+                            <div class="rTableCell_title" >
+                                <p>Maternity </p>                  
+                            </div>
+                        </div> 
+                    </div>
+                    <div class="rTable" >
+                        <div class="rTableRow">
+                            <div class="rTableCell_title" >
+                                <p>Normal Delivery</p>                  
+                            </div>
+                            <div class="rTableCell" >
+                                <p>HK$100,000</p>                  
+                            </div>
+                        </div>  
+                        <div class="rTableRow">
+                            <div class="rTableCell_title" >
+                                <p>Complicated Delivery</p>                  
+                            </div>
+                            <div class="rTableCell" >
+                                <p>HK$150,000</p>                  
+                            </div>
+                        </div> 
+                    </div>
+                    
+                    <div class="rTable" > 
+                        <div class="rTableRow">
+                            <div class="rTableCell_title" >
+                                <p>Dental</p>                  
+                            </div>
+                        </div> 
+                    </div>
+                    <div class="rTable" >
+                        <div class="rTableRow">
+                            <div class="rTableCell_title" >
+                                <p>Preventative and Restorative Benefits </p>                  
+                            </div>
+                            <div class="rTableCell" >
+                                <p>Overall Maximum: HK$15,600 per member</p>                  
+                            </div>
+                        </div>                       
+                    </div>
+                </div><br/> -->
+                <div style="width:100%;">
+                        This Insurance cover is valid from&nbsp;<apex:OutputText value="{0,date,dd MMM yyyy}" escape="false"><apex:Param value="{!memberInfor.effectiveDate}"/></apex:OutputText> as per policy terms and conditions.
+                </div><br/><br/>  
+                <div style="width:100%;">   
+                    This insurance includes benefits which are applicable Worldwide.
+                </div> <br/>
+                <apex:outputPanel rendered="{!dependents.size>0}">
+                    <div style="width:100%;">
+                        The dependants covered under this membership are:
+                    
+                        <apex:repeat value="{!dependents}" var="dependent">
+                            <br/>{!dependent.FullName}-date of birth &nbsp;<apex:OutputText value="{0,date,dd MMM yyyy}" escape="false"><apex:Param value="{!dependent.birthDateInDate}"/></apex:OutputText>
+                        </apex:repeat>
+                    </div> 
+                    <br/><br/>  
+                </apex:outputPanel>
+                <!-- 20211206 - Kirk - CP-681 -->
+                <div style="width:100%;">     
+                   <p><b>Yours sincerely,</b>&nbsp;</p>
+                    <p><b>This is a computer generated letter. No signature is required.</b></p>
+                    <p style="font-size:8px;">Confidential, unpublished property of Cigna. Do not duplicate or distribute.<br/>Use and distribution limited solely to authorized personnel.<br/> 
+                   &copy; Copyright Cigna</p>
+                <!-- <div style="width:100%;">
+                    Cigna -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</apex:page>

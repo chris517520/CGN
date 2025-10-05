@@ -1,0 +1,340 @@
+<apex:page Controller="MyClaimSubmitController" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+    </head>
+    <!--
+    <apex:includeScript value="{!URLFOR($Resource.signature_pad_1_5)}" />
+    -->
+    <style>
+        /** pop up dialog style **/
+        
+        .bs input[type="checkbox"].cigna-question-checkbox-single {
+            display: none;
+        }
+        
+        .bs input[type="checkbox"].cigna-question-checkbox-single ~ label {
+            cursor: pointer;
+        }
+        .bs input[type="checkbox"].cigna-question-checkbox-single + label:before {
+            font: normal normal normal 14px/1 FontAwesome;
+            display: inline-block;
+            content: "\f058";
+            height: 20px;
+            margin: 0 .25em 0 0;
+            padding: 0;
+            vertical-align: top;
+            width: 20px;
+            color: #C8C9C7;
+            font-size: 1.2em;
+        }
+        
+        .bs input[type="checkbox"].cigna-question-checkbox-single:checked + label:before {
+            color: #39B54A;
+            font: normal normal normal 14px/1 FontAwesome;
+            content: "\f058";
+            font-size: 1.2em;
+        }
+        
+        .bs input[type="checkbox"].cigna-question-checkbox-single:checked + label:before {
+            font-weight: bold;
+        }
+        
+        div#overlay, div#overlayPIC{
+            display: none;
+            z-index: 10;
+            background: #D9D9D6;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0px;
+            left: 0px;
+            text-align: left;
+        }
+        
+        div#specialBox, div#specialBoxPIC {
+            display: none;
+            position: absolute;
+            z-index: 11;
+            margin: 150px auto 0px auto;
+            width: 80%;
+            height: 50%;
+            background: #FFF;
+            color: #000;
+            left: 10%;
+            padding:20px;
+            border-radius:5px;
+        }
+        
+        #closeOverlay, #closeOverlayPIC {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        
+        #tccontent {
+            padding:5px;
+            color:#000;
+            font-size:12px;
+            width: 100%;
+            height: 90%;
+            overflow-y:auto;
+        } 
+        
+        #PICcontent {
+            padding:5px;
+            color:#000;
+            font-size:12px;
+            width: 100%;
+            height: 85%;
+            overflow-y:auto;
+        } 
+        
+        .fontWeightNormal label{
+            font-weight: normal;
+        }
+        /** end pop up dialog style **/
+
+        /** signature style **/
+        .signature-pad {
+            width: 95%;
+            height: 300px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            margin-bottom: 60px;
+        }
+        
+        .signature-pad-body {
+            width: 100%;
+            height: 300px;
+        }
+        
+        .signature-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .signature-pad-footer {
+            width: 100%;
+            height: 40px;
+        }
+        /** end signature style **/
+        
+    </style>
+    <apex:form id="brkEsignature-form" onsubmit="return false;">       
+        <!--
+        </!-- for sign on screen and no need to sign --/>
+        <apex:actionFunction name="SubmitClaimRequestAtAction" status="loader-icon" action="{!SubmitClaimRequest}" reRender="false" oncomplete="nextStep();" />
+        </!-- for nextStep complete claim --/>
+        <apex:actionFunction name="submitEsignature" status="loader-icon" action="{!submitEsignature}" rerender="false" oncomplete="SubmitClaimRequestAtAction();">
+            <apex:param name="imgDataParam" assignTo="{!eSignature}" value=""/>
+        </apex:actionFunction>
+        </!-- for e-signature --/>
+        <apex:actionFunction name="sendEmailSignature" rerender="false" status="loader-icon" action="{!sendESignatureEmail}" oncomplete="nextStep();">
+ClaimSignatureBrkVFP            <apex:param name="esignatureEmail" assignTo="{!cList[0].Email_Address_to_send__c}" value=""/>
+        </apex:actionFunction>   
+        
+        
+        <apex:actionFunction name="refreshEsignature" reRender="eSignaturePanelBrk" oncomplete="Cigna.ESignatureComp.forceResizeCanvas();"/>  esig-fasttrack-brk, esig-non-fasttrack-brk
+        -->
+        
+        
+        <!-- Start PIC Box -->
+        <!-- 
+        <div id="overlayPIC" style="display:none;">
+            <div id="specialBoxPIC">
+                <a href="javascript:void(0);" class="onclick-pointer" ><div id="closeOverlayPIC" class="glyphicon glyphicon-remove" onclick="toggleOverlayPIC();"></div></a>
+                <h4>{!$Label.Personal_Information_Collection_Statement}</h4>
+                <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                <div id="PICcontent">
+                    <apex:outputText value="{!picString}" escape="false"/>
+                </div>
+            </div>
+        </div>
+        -->
+        <!-- End PIC Box -->
+            
+        
+        <apex:outputPanel id="eSignaturePanelBrk">
+            <!-- 
+            <apex:outputPanel id="esig-fasttrack-brk" rendered="{!if(cList.size>0 && cList[0].Is_Fast_Track__c, true, false)}">
+                <c:eSignatureCompOriginal emailAddress="{!cList[0].Email_Address_to_send__c}" 
+                                          displayPICS="false"
+                                          displayTC="true"
+                                          isBroker="true"
+                                          PICSLink="{!picLink}" 
+                                          sendEmailMessage="[Placeholder] {!$Label.Ack_Fast_Track_Individual_With_DocuSign_Customer}"
+                                          sendEmailMessageParam1="200.00"
+                                          signNow="false" />
+            </apex:outputPanel>
+            Zoe's update in 03/23, this step will be identical for fast-track and non-fast track
+            -->
+            
+            <!-- Start T&C Box -->
+            <div id="overlay" style="display:none;">
+                <div id="specialBox">
+                    <a href="javascript:void(0);" class="onclick-pointer" ><div id="closeOverlay" class="glyphicon glyphicon-remove onclick-pointer" onclick="toggleOverlay();"></div></a>
+                    <h4>{!$Label.Terms_And_Conditions}</h4>
+                    <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                    <div id="tccontent">
+                        <!-- If PH = Selected PI -->
+                        <!-- Rancho_JOBR110_20220412 - update the T&C -->
+                        <!-- Rancho_JOBR133_20220530 - display entity name according to selected policy -->
+                        <apex:outputText value="{!claimFlowTerms}" escape="false" rendered="{!if(cList.size>0 && !localIsPIForTC, true, false)}"/>
+                        <!-- <apex:outputText value="{!$Label.Submit_Claim_T_C_Selected_PI_is_PH_3}{!$Label.Submit_Claim_T_C_Selected_PI_is_PH_4}{!$Label.Submit_Claim_T_C_Selected_PI_is_PH_5}{!$Label.Submit_Claim_T_C_Selected_PI_is_PH_6}" escape="false" rendered="{!if(cList.size>0 && !localIsPIForTC, true, false)}"/> -->     <!-- cList[0].Is_PI_Greater_Then_18__c --> 
+                        <!-- <apex:outputText value="{!$Label.Submit_Claim_T_C_Selected_PI_is_PH_2}" escape="false" rendered="{!if(cList.size>0 && !localIsPIForTC, true, false)}"/> -->
+                        <!-- If PH != Selected PI -->
+                        <apex:outputText value="{!claimFlowTerms}" escape="false" rendered="{!if(cList.size>0 && localIsPIForTC, true, false)}"/>
+                    </div>
+                </div>
+            </div>
+            <!-- End T&C Box -->
+            
+            <!-- Error Message Start -->
+            <div id="errEmptySignature" class="bs alert alert-danger" role="alert" style="display:none;">
+                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                {!$Label.e_signature_empty_err_msg}
+            </div>
+            <div id="errNotAcceptTNC" class="bs alert alert-danger" role="alert" style="display:none;">
+                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                {!$Label.e_signature_tc_err_msg}
+            </div>
+            <div id="errNotValidEmail" class="bs alert alert-danger" role="alert" style="display:none;">
+                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                {!$Label.Error_Message_Email_Not_Valid}
+            </div>
+            <!-- Error Messgae End -->
+            
+            <apex:outputPanel id="esig-non-fasttrack-brk" rendered="{!if(cList.size>0, true, false)}">
+                <c:eSignatureCompOriginal emailAddress="{!cList[0].Email_Address_to_send__c}" 
+                                          displayPICS="false"
+                                          displayTC="true"
+                                          isBroker="true"
+                                          PICSLink="{!picLink}" 
+                                          signNow="false"
+                                          accountNo="{!brkSelectedAccountNo}"/>
+                                          <!-- 
+                                          sendEmailMessage="{!$Label.We_are_going_to_assess_the_claim_now_but_we_cant_finalize_the_claim_until_the_cu }" -->
+            
+                
+                <div id="mobile-app-padding" class="bs row nextStepBtnPaddingIn8" style="display: none; padding-bottom: 100px;">
+                    <div class="bs col-xs-12"></div>
+                </div>
+            </apex:outputPanel>
+            
+                    
+            <script>
+                /** pop up dialog**/
+                function toggleOverlay(){
+                    var overlay = document.getElementById('overlay');
+                    var specialBox = document.getElementById('specialBox');
+                    overlay.style.opacity = .95;
+                    if(overlay.style.display == "block"){
+                        overlay.style.display = "none";
+                        specialBox.style.display = "none";
+                    } else {
+                        overlay.style.display = "block";
+                        specialBox.style.display = "block";
+                    }
+                }
+                
+                
+                /**
+                function toggleOverlayPIC(){
+                    var overlay = document.getElementById('overlayPIC');
+                    var specialBox = document.getElementById('specialBoxPIC');
+                    overlay.style.opacity = .95;
+                    
+                    if(overlay.style.display == "block"){
+                        overlay.style.display = "none";
+                        specialBox.style.display = "none";
+                    } else {
+                        overlay.style.display = "block";
+                        specialBox.style.display = "block";
+                    }
+                }
+                */
+                
+                
+                /** end pop up dialog**/ 
+                
+                /** override component function **/ 
+                
+                //Cigna.ESignatureComp.forceResizeCanvas();
+                //alert('before refresh esignature');
+                //refreshEsignature();
+                
+                Cigna.ESignatureComp.saveSignature = function(){
+                    console.log('to see saveSignature ');
+                    chooseSignOnScreen();
+                    
+                    $("#errNotValidEmail").hide();
+                    $("#errEmptySignature").hide();
+                    $("#errNotAcceptTNC").hide();
+                    
+                    if($('#esignature-sign-div #esignature-pics').is(':checked') == false){
+                        $("#errNotAcceptTNC").show();
+                        /**
+                        $("html,body").animate(
+                            { scrollTop: $("#errNotAcceptTNC").offset().top },
+                            "slow",
+                            function(){
+                                $("#errNotAcceptTNC").focus();
+                            }
+                        );
+                        */
+                        scrollTopFocus('#errNotAcceptTNC');
+                        
+                        return;
+                    } else {
+                        $("#errNotAcceptTNC").hide();
+                    }
+                    
+                    if(Cigna.ESignatureComp.isEmptyCanvas(1)){
+                        $("#errEmptySignature").show();
+                        scrollTopFocus('#errEmptySignature');
+                        return;
+                    } else {
+                        $("#errEmptySignature").hide();
+                    }
+                    
+                    submitEsignature(Cigna.ESignatureComp.getSignatureImage());
+                }
+                                
+                /** Send Email button */
+                Cigna.ESignatureComp.sendEmail = function(){
+                    chooseEsignature();
+                    console.log('to see sendEmail ');
+                    
+                    $("#errEmptySignature").hide();
+                    $("#errNotAcceptTNC").hide();
+                    
+                    console.log('enter send email');
+                    if (Cigna.ESignatureComp.getEmailAddress() == '' || Cigna.ESignatureComp.getEmailAddress() == null 
+                        || !Cigna.ValidationUtil.isValidEmail(Cigna.ESignatureComp.getEmailAddress())){
+                        $("#errNotValidEmail").show();
+                        scrollTopFocus('#errNotValidEmail');
+                        return;
+                    }
+                    else{
+                        $("#errNotValidEmail").hide();
+                    }
+                    sendEmailSignature(Cigna.ESignatureComp.getEmailAddress());
+                    console.log('EmailAddress:' + Cigna.ESignatureComp.getEmailAddress());
+                }
+                                
+                /** end override component function **/ 
+                
+                if (Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                    $('.nextStepBtnPaddingIn8').show();
+                }
+                
+                /**
+                if ({!isLoadOldClaim} && {!cList[0].Is_Chosen_Send_Esignature__c}){
+                    $('#esignature-choice').find('.choice-question-no').click();
+                }
+                */
+                
+            </script>
+        </apex:outputPanel>
+    </apex:form> 
+</apex:page>

@@ -1,0 +1,293 @@
+<apex:page docType="html-5.0" sidebar="false" controller="TMReportTmrCallReportTotalPerfUIPCtrl" id="TMReportTmrCallReportTotalPerfUIPVFP" title="TMR Call Follow Up Tracking Report (Total Performance) (UIP)" tabStyle="report">
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+        <style>
+            th{
+                text-align: center;
+            }
+        </style>
+        <script language="javascript" type="text/javascript">
+            function PrintDoc() {
+                $(".s_close").remove();
+                window.print();
+            }
+
+            function ReTabColumn(_this) {
+                $("#tdheji").attr("colspan", parseInt($("#tdheji").attr("colspan") - 1));
+                TabColRemove(_this, false);
+            }
+
+            //jQuery移除Table列,isDellast：false最后一行不受影响；true最后一行受影响
+            //<th>标题<span class="s_close" style='color: Red; cursor: pointer' onclick='ReTabColumn(this)' title='隐藏当前列'>×</span></th>
+            function TabColRemove(_this, isDellast) {
+                if (isDellast) {
+                    $(_this).parent().parent().parent().find("tr td:nth-child(" + ($(_this).parent().index() + 1) + ")").remove();
+                } else {
+                    $(_this).parent().parent().parent().find("tr:not(:last-child)").find("td:nth-child(" + ($(_this).parent().index() + 1) + ")").remove();
+                }
+            }
+
+            //jQuery HTML导出Excel文件(兼容IE及所有浏览器)
+            function HtmlExportToExcel(tableid) {
+                $(".s_close").remove();
+                var filename = 'TMR Call Follow Up Tracking Report (Total Performance) (UIP)';
+                if (getExplorer() == 'ie' || getExplorer() == undefined) {
+                    HtmlExportToExcelForIE(tableid, filename);
+                }
+                else {
+                    HtmlExportToExcelForEntire(tableid, filename)
+                }
+            }
+            //IE浏览器导出Excel
+            function HtmlExportToExcelForIE(tableid, filename) {
+                try {
+                    var winname = window.open('', '_blank', 'top=10000');
+                    var strHTML = document.getElementById(tableid).innerHTML;
+
+                    winname.document.open('application/vnd.ms-excel', 'export excel');
+                    winname.document.writeln(strHTML);
+                    winname.document.execCommand('saveas', '', filename + '.xls');
+                    winname.close();
+
+                } catch (e) {
+                    alert(e.description);
+                }
+            }
+            //非IE浏览器导出Excel
+            var HtmlExportToExcelForEntire = (function() {
+                var uri = 'data:application/vnd.ms-excel;base64,',
+            template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>{worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>{table}</table></body></html>',
+            base64 = function(s) { return window.btoa(unescape(encodeURIComponent(s))) },
+            format = function(s, c) { return s.replace(/{(\w+)}/g, function(m, p) { return c[p]; }) }
+                return function(table, name) {
+                    if (!table.nodeType) { table = document.getElementById(table); }
+                    var ctx = { worksheet: name || 'Worksheet', table: table.innerHTML }
+                    document.getElementById("dlink").href = uri + base64(format(template, ctx));
+                    document.getElementById("dlink").download = name + ".xls";
+                    document.getElementById("dlink").click();
+                }
+            })()
+            function getExplorer() {
+                var explorer = window.navigator.userAgent;
+                //ie 
+                if (explorer.indexOf("MSIE") >= 0) {
+                    return 'ie';
+                }
+                //firefox 
+                else if (explorer.indexOf("Firefox") >= 0) {
+                    return 'Firefox';
+                }
+                //Chrome
+                else if (explorer.indexOf("Chrome") >= 0) {
+                    return 'Chrome';
+                }
+                //Opera
+                else if (explorer.indexOf("Opera") >= 0) {
+                    return 'Opera';
+                }
+                //Safari
+                else if (explorer.indexOf("Safari") >= 0) {
+                    return 'Safari';
+                }
+            }
+        
+        </script>
+        <apex:includeScript value="/support/console/41.0/integration.js"/>
+        <apex:sectionHeader title="TMR Call Follow Up Tracking Report (Total Performance) (UIP)"/><br/>
+      
+
+        
+        <!--<p onclick="changeText();" class="btn">Export to excel</p>-->
+        <a id="dlink" style="display: none;"></a>
+        <br/>
+        <apex:form id="dateRange">
+            <apex:actionStatus id="loader-icon">
+            <apex:facet name="start">
+                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                         &nbsp;
+                     </div>
+                    <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                        <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                            <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                            <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                        </div>
+                     </div>
+                </apex:facet>
+            </apex:actionStatus>
+
+        
+            <apex:pageBlock >
+                <p onclick="javascript:HtmlExportToExcel('PanelExcel')" class="btn">Export to excel</p>
+                <br/><br/>
+                
+                
+                <apex:outputText value="{!$Label.TM_Opportunity_Assign_Date_Range}: "/>&nbsp;&nbsp;
+                <apex:actionRegion >
+                    <apex:inputField value="{!o1.Start_Date__c}"  > 
+                         <apex:actionSupport event="onchange" action="{!changeDateRange}" rerender="criteriaText,PerfDataTable" status="loader-icon" />
+                    </apex:inputfield>
+                </apex:actionRegion>
+                
+                &nbsp;&nbsp;&nbsp;&nbsp;<apex:outputText value="To"/>&nbsp;&nbsp;&nbsp;&nbsp;
+                
+                <apex:actionRegion >
+                    <apex:inputField value="{!o2.Start_Date__c}" >
+                         <apex:actionSupport event="onchange" action="{!changeDateRange}" rerender="criteriaText,PerfDataTable" status="loader-icon" />
+                    </apex:inputfield>
+                </apex:actionRegion>
+                <br/> <br/>
+                <div style='display:none;'>
+                    <div style='display:table-cell;'>
+                    TM Agent: &nbsp;&nbsp;
+                </div>
+                <div style='display:table-cell;'>
+                     <apex:actionRegion >
+                        <apex:inputField value="{!o1.TM_Agent__c}">
+                             <apex:actionSupport event="onchange" action="{!changeDateRange}" rerender="criteriaText,PerfDataTable" status="loader-icon" />
+                        </apex:inputfield>
+                    </apex:actionRegion>
+                 </div>   
+                </div>
+                <script>
+                    $("[id$=mlktp]").hide();
+                </script>
+                
+            </apex:pageBlock>
+            <br/>
+            <div id="PanelExcel" class="padding:10px;margin:10px">
+            <apex:outputPanel >
+                <apex:outputText value="{!$Label.TM_Report_Generation_Date}: "/>&nbsp;  
+                <apex:OutputText value="{0,date,dd/MM/yyyy}" escape="false">
+                    <apex:Param value="{!Now()}"/>
+                </apex:OutputText>
+                <br/><br/>
+                
+               <apex:outputPanel id="criteriaText">
+                    <apex:outputText value="{!$Label.TM_Opportunity_Assign_Date_Range}: "/>&nbsp;&nbsp;
+                    
+                    <apex:OutputText value="{0,date,dd/MM/yyyy}" escape="false">
+                        <apex:Param value="{!o1.Start_Date__c}"/>
+                    </apex:OutputText>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<apex:outputText value="To"/>&nbsp;&nbsp;&nbsp;&nbsp;
+                    <apex:OutputText value="{0,date,dd/MM/yyyy}" escape="false">
+                        <apex:Param value="{!o2.Start_Date__c}"/>
+                    </apex:OutputText><br/><br/>
+                    <apex:outputPanel layout="none" rendered="{!usrname!=null}">
+                        TM Agent ID: <apex:OutputText value="{!tmAgentId}"></apex:OutputText>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+            </apex:outputPanel>
+            <br/><br/>
+            <apex:outputPanel id="PerfDataTable" >
+            <table border="1" cellspacing="1" cellpadding="1" style="border-collapse: collapse;text-align:center;">
+                <tr>
+                    <th colspan="5" rowspan="2" >{!$Label.TM_Campaigns_Leads}</th>
+                    <th colspan="7">{!$Label.TM_Call_Status}</th>
+                    <th colspan="6" rowspan="2">{!$Label.TM_Number_of_Attempts_on_Follow_Up_Calls}</th>
+                    <th colspan="21">{!$Label.TM_Vintage}</th>
+                </tr>
+                <tr>
+                    <th colspan="2">{!$Label.TM_No_Follow_Up}</th>
+                    <th colspan="5">{!$Label.TM_Needs_Follow_Up}</th>
+                    <th colspan="7">{!$Label.TM_In_Current_Status}</th>
+                    <th colspan="7">{!$Label.TM_Needs_Follow_Up_2}</th>
+                    <th colspan="7">{!$Label.TM_From_Opportunity_Assigned_Date}</th>
+                </tr>
+                <tr>
+                    <th>{!$Label.TM_Opportunity_Assign_Date}</th>
+                    <th>{!$Label.TM_Partner}</th>
+                    <th>Campaign No.</th>
+                    <th>{!$Label.TM_Call_List}</th>
+                    <th>{!$Label.TM_Count_of_Opportunity}</th>
+                    
+                    <th>{!$Label.TM_Success}</th>
+                    <th>{!$Label.TM_Unsuccess}</th>
+                    <th>{!$Label.TM_New}</th>
+                    <th>{!$Label.TM_Consider}</th>
+                    <th>{!$Label.TM_DMC}</th>
+                    <th>{!$Label.TM_Unreached}</th>
+                    <th>{!$Label.TM_Follow_up_total}</th>
+                    
+                    <th>1</th>
+                    <th>2</th>
+                    <th>3</th>
+                    <th>4</th>
+                    <th>>4</th>
+                    <th>{!$Label.TM_Total}</th>
+                    
+                    <th>&lt;7 {!$Label.TM_days}</th>
+                    <th>&gt;=7 {!$Label.TM_days}</th>
+                    <th>&gt;=15 {!$Label.TM_days}</th>
+                    <th>&gt;=30 {!$Label.TM_days}</th>
+                    <th>&gt;=45 {!$Label.TM_days}</th>
+                    <th>&gt;=60 {!$Label.TM_days}</th>
+                    <th>{!$Label.TM_Total}</th>
+                    
+                    <th>&lt;7 {!$Label.TM_days}</th>
+                    <th>&gt;=7 {!$Label.TM_days}</th>
+                    <th>&gt;=15 {!$Label.TM_days}</th>
+                    <th>&gt;=30 {!$Label.TM_days}</th>
+                    <th>&gt;=45 {!$Label.TM_days}</th>
+                    <th>&gt;=60 {!$Label.TM_days}</th>
+                    <th>{!$Label.TM_Total}</th>
+                    
+                    <th>&lt;7 {!$Label.TM_days}</th>
+                    <th>&gt;=7 {!$Label.TM_days}</th>
+                    <th>&gt;=15 {!$Label.TM_days}</th>
+                    <th>&gt;=30 {!$Label.TM_days}</th>
+                    <th>&gt;=45 {!$Label.TM_days}</th>
+                    <th>&gt;=60 {!$Label.TM_days}</th>
+                    <th>{!$Label.TM_Total}</th>
+                </tr>
+                <apex:repeat value="{!reportList}" var="wrapper" >
+                <tr>
+                    <td>
+                        <apex:OutputText value="{0,date,dd/MM/yyyy}" escape="false">
+                            <apex:Param value="{!wrapper.assignDate}"/>
+                        </apex:OutputText>
+                    </td>
+                    <td>{!wrapper.partner}</td>
+                    <td>{!wrapper.campaignCode}</td>
+                    <td>{!wrapper.batchNo}</td>
+                    <td>{!wrapper.opptyCount}</td>
+                    <td>{!wrapper.successCount}</td>
+                    <td>{!wrapper.unsuccessCount}</td>
+                    <td>{!wrapper.newCount}</td>
+                    <td>{!wrapper.considerCount}</td>
+                    <td>{!wrapper.DMCCount}</td>
+                    <td>{!wrapper.unreachedCount}</td>
+                    <td>{!wrapper.followUpTotalCount}</td>
+                    <td>{!wrapper.callNumber1}</td>
+                    <td>{!wrapper.callNumber2}</td>
+                    <td>{!wrapper.callNumber3}</td>
+                    <td>{!wrapper.callNumber4}</td>
+                    <td>{!wrapper.callNumberMoreThan4}</td>
+                    <td>{!wrapper.callNumberTotal}</td>
+                    <td>{!wrapper.currentStatusDays1}</td>
+                    <td>{!wrapper.currentStatusDays2}</td>
+                    <td>{!wrapper.currentStatusDays3}</td>
+                    <td>{!wrapper.currentStatusDays4}</td>
+                    <td>{!wrapper.currentStatusDays5}</td>
+                    <td>{!wrapper.currentStatusDays6}</td>
+                    <td>{!wrapper.currentStatusDaysTotal}</td>
+                    <td>{!wrapper.pendingStatusDays1}</td>
+                    <td>{!wrapper.pendingStatusDays2}</td>
+                    <td>{!wrapper.pendingStatusDays3}</td>
+                    <td>{!wrapper.pendingStatusDays4}</td>
+                    <td>{!wrapper.pendingStatusDays5}</td>
+                    <td>{!wrapper.pendingStatusDays6}</td>
+                    <td>{!wrapper.pendingStatusDaysTotal}</td>
+                    <td>{!wrapper.currentOwnerDays1}</td>
+                    <td>{!wrapper.currentOwnerDays2}</td>
+                    <td>{!wrapper.currentOwnerDays3}</td>
+                    <td>{!wrapper.currentOwnerDays4}</td>
+                    <td>{!wrapper.currentOwnerDays5}</td>
+                    <td>{!wrapper.currentOwnerDays6}</td>
+                    <td>{!wrapper.currentOwnerDaysTotal}</td>
+                </tr>
+                </apex:repeat>
+            </table>
+            </apex:outputPanel>
+          
+            </div>
+        </apex:form>
+    </apex:page>

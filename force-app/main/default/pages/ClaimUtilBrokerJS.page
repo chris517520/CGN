@@ -1,0 +1,129 @@
+<apex:page id="ClaimUtilBrokerJS" docType="html-5.0" showHeader="false" sidebar="false" >
+    <!--addtional inline js-->
+    <script>
+        var doStickyButton = true;
+        function questionDisplayLogicBroker(currentQuestionNum){
+            //check original display list
+            
+            var tmpQuestionList = '';
+            console.log('to see questionDisplayLogic start');
+            console.log('to see currentQuestionNum    ' + currentQuestionNum);
+            if(currentQuestionNum == undefined || currentQuestionNum == null){
+                resetQuestionFlag();
+                
+                //init question                
+                if( showHIF== 1 && $('#c1' ).css('display') == 'none' && $('#cx3' ).css('display') == 'none' && sj_HIF_a && showHI<= 0 && showHPA<= 0 && showCI<= 0 && showDIS<= 0 && showHS<= 0 && showMAT<= 0  && showOP<= 0 && showOPF<= 0){
+                    hideAfterwardQuestion('c2');
+                    loadAndDisplayQuestion('c1');
+                    loadAndDisplayQuestion('cx3');
+                    //loadAndDisplayQuestion('display_upload_brk');
+                    //testing
+                    tmpQuestionList = '"cx3""c1"'; 
+                }
+                else if((showOP== 1 || showMAT>= 1 || showHS== 1) && $('#cx1' ).css('display') == 'none' ){
+                    hideAfterwardQuestion('cx2');
+                    loadAndDisplayQuestion('cx1');
+                    //testing
+                    tmpQuestionList = '"cx1"'; 
+                    
+                }
+                else{
+                    loadAndDisplayQuestion('cx3');
+                    //loadAndDisplayQuestion('display_upload_brk');
+                    //testing
+                    tmpQuestionList = '"cx3""skipStep7"'; 
+                }
+                hideNextBtnIn(5);
+                hideNextBtnIn(7);
+                
+                console.log('to see tmpQuestionList at init:    '+tmpQuestionList );
+                if (tmpQuestionList != ''){
+                    saveSelectedQuestionAtAction(tmpQuestionList);
+                }
+                return;
+            }
+            //hide btn
+            //hideNextBtn();
+            //hideNextBtnIn(7);
+            
+            /**
+                for OPF
+                sj_OP_d - need to pass data to record to justify if fast track or not, 
+                sj_OP_d no need for question logic as pass sj_OP_d or not still go next question
+            **/
+            
+            //check if question display
+            if ($('#brkSteps5').is(':Visible')){
+                if($("#cx1").is(":visible"))    tmpQuestionList += '"cx1"'; 
+                if($("#cx2").is(":visible"))    tmpQuestionList += '"cx2"'; 
+                if($("#cx3").is(":visible"))    tmpQuestionList += '"cx3"'; 
+                
+                console.log('to see tmpQuestionList at questionDisplayLogic:    '+tmpQuestionList );
+                saveSelectedExtraQuestionBrkAtAction(tmpQuestionList);
+            }
+            else if ($('#brkSteps7').is(':Visible')){
+                if($("#c1").is(":visible"))    tmpQuestionList += '"c1"'; 
+                if($("#c2").is(":visible"))    tmpQuestionList += '"c2"'; 
+                if($("#c3").is(":visible"))    tmpQuestionList += '"c3"'; 
+                if($('.nextStepBtnIn7').is(":visible"))    tmpQuestionList += '"nextIn7"'; 
+            
+                console.log('to see tmpQuestionList at questionDisplayLogic:    '+tmpQuestionList );
+                saveSelectedQuestionBrkAtAction(tmpQuestionList);
+            }
+        }
+        
+        
+        function scrollTopFocus(elem){
+            console.log('>>>>> focusing to ' + elem);
+            console.log('>>>>> $(elem).offset().top' + $(elem).offset().top);
+            
+            if (isBrokerIOSSF1()){
+                $("#claim-main-content").animate(
+                    { scrollTop: $(elem).offset().top},
+                    "slow",
+                    function(){
+                        //CR-56_Link_20220214
+                        $(elem).trigger("focus");
+                    }
+                );
+            }
+            else{
+                $("html,body").animate(
+                    { scrollTop: $(elem).offset().top},
+                    "slow",
+                    function(){
+                        //CR-56_Link_20220214
+                        $(elem).trigger("focus");
+                    }
+                );
+            }            
+        }
+        
+        function scrollToBottomFocus(){
+            // This does not work on sf1 if the page gets longer dynamically - Zoe 0412
+            console.log('>>>>> focusing to bottom');
+            
+            var body = document.body,
+                html = document.documentElement;
+            
+            var height = Math.max( body.scrollHeight, body.offsetHeight, 
+                                   html.clientHeight, html.scrollHeight, html.offsetHeight );
+            
+            $("html,body").animate(
+                { scrollTop: height },
+                "slow",
+                function(){
+                    //$(elem).focus();
+                }
+            );
+        }
+        
+        function isBrokerIOSSF1(){
+            return doStickyButton && Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal();
+            //return doStickyButton && Cigna.Util.isBrokerPortal();
+            //return false;
+        }
+        
+    </script>
+    
+</apex:page>

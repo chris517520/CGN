@@ -1,0 +1,366 @@
+<apex:page Controller="MyClaimSubmitController" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+<head>
+  <!--<meta name="viewport" content="width=device-width, initial-scale=1"/>-->
+  <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+</head>
+
+<style>
+    .question-row {
+        display: flex; /* equal height of the children */
+    }
+</style>
+
+<div class="bs">
+    
+   <!-- broker part -->
+        <apex:form id="frmAnswerClaimQuestionBrk" >
+            <div class="bs form-field row visible-lg" id="brkQuestionRemarks" >
+               <div class="bs col-xs-12 cigna-fg-blue-medium">
+                   <label id="brkQuestionRemarksLabel">
+                       {!$Label.Please_press_Enter_to_proceed_to_the_next_question}
+                   </label>
+               </div>
+               <script>
+                   if (isIE){
+                       $('#brkQuestionRemarksLabel').text('{!$Label.Please_press_Tab_to_proceed_to_the_next_question}');
+                   }
+               </script>
+            </div>
+            <div class="bs form-field row content-choice-block" id="c1" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'\"c1\"') ,'','display: none;')}"> 
+               <div class="bs col-sm-12 question-row">
+                   <div>
+                       <i class="fa fa-calendar content-icon" aria-hidden="true"></i>
+                   </div>
+                   <div>
+                       {!$Label.Do_you_have_the_admission_details_of_the_client}
+                   </div>
+               </div>
+               <div class="bs col-sm-12">
+                   <script>
+                       function hideC2(){
+                            updateHaveAdmissionDetails('false');
+                            sj_HIF_b = false;
+                            hideAfterwardQuestion('c2');
+                            displayNextBtnIn(7);
+                       }
+                        
+                       function displayC2(){
+                            updateHaveAdmissionDetails('true');
+                            sj_HIF_b = true;
+                            hideAfterwardQuestion('c2');
+                            displayQuestion('c2');
+                            hideNextBtnIn(7);
+                       }
+                   </script>
+                   <div class="bs col-sm-3 col-md-2 question-choice {!if(isLoadOldClaim && cList[0].Do_you_have_the_admission_details__c,'fg-orange','fg-grey')}" style="padding-left:40px;border-bottom: 0px;" onclick="displayC2();">
+                       <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>{!$Label.Yes}
+                       <!-- hidden input -->
+                       <input type="hidden" name="param-str" value="true" />
+                   </div>
+                   <div class="bs col-sm-3 col-sm-offset-3 col-md-2 col-md-offset-4 question-choice {!if(isLoadOldClaim && !cList[0].Do_you_have_the_admission_details__c,'fg-orange','fg-grey')}" style="padding-left:40px;border-bottom: 0px;" onclick="hideC2();">
+                       <i class="fa fa-times-circle-o content-icon " aria-hidden="true"></i>{!$Label.No}
+                       <!-- hidden input -->
+                       <input type="hidden" name="param-str" value="false" />
+                   </div>
+                   <!-- field to save data -->
+                   <apex:inputHidden value="{!cList[0].Do_you_have_the_admission_details__c}" id="hiddenValue_brk_c1"/>
+               </div>
+               
+               <apex:actionFunction name="updateHaveAdmissionDetails" status="loader-icon" action="{!dummyAction}" rerender="false" oncomplete="questionDisplayLogic('c1');">
+                   <apex:param name="haveAdmissionDetails" assignTo="{!cList[0].Do_you_have_the_admission_details__c}" value=""/>
+               </apex:actionFunction>
+            </div>
+            <div class="bs form-field row content-choice-block" id="c2" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'\"c2\"') ,'','display: none;')}">
+               <div class="bs col-sm-12 question-row">
+                   <div>
+                       <i class="ci-hk-document content-icon" aria-hidden="true"></i>
+                   </div>
+                   <div>
+                       {!$Label.Was_there_any_room_charge}
+                   </div>
+               </div>
+               <div class="bs col-sm-12">
+                   <script>
+                       function hideC3(){
+                            updateHaveRoomCharge('false');
+                            sj_HIF_c = false;
+                            hideAfterwardQuestion('c3');
+                            displayNextBtnIn(7);
+                       }
+                        
+                       function displayC3(){
+                            updateHaveRoomCharge('true');
+                            sj_HIF_c = true;
+                            displayQuestion('c3');
+                            hideNextBtnIn(7);
+                       }
+                   </script>
+                   <div class="bs col-sm-3 col-md-2 question-choice {!if(isLoadOldClaim && cList[0].Is_there_any_room_charge__c,'fg-orange','fg-grey')}" style="padding-left:40px;border-bottom: 0px;" onclick="displayC3();">
+                       <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>{!$Label.Yes}
+                       <!-- hidden input -->
+                       <input type="hidden" name="param-str" value="true" />
+                   </div>
+                   <div class="bs col-sm-3 col-sm-offset-3 col-md-2 col-md-offset-4 question-choice {!if(isLoadOldClaim && !cList[0].Is_there_any_room_charge__c,'fg-orange','fg-grey')}" style="padding-left:40px;border-bottom: 0px;" onclick="hideC3();">
+                       <i class="fa fa-times-circle-o content-icon " aria-hidden="true"></i>{!$Label.No}
+                       <!-- hidden input -->
+                       <input type="hidden" name="param-str" value="false" />
+                   </div>
+                   <!-- field to save data -->
+                   <apex:inputHidden value="{!cList[0].Is_there_any_room_charge__c}" id="hiddenValue_brk_c2"/>
+                    
+               </div>
+               <apex:actionFunction name="updateHaveRoomCharge" status="loader-icon" action="{!dummyAction}" rerender="false" oncomplete="clearwAdmittedAndDischargedFromHospitalList();">
+                   <apex:param name="haveAdmissionDetails" assignTo="{!cList[0].Is_there_any_room_charge__c}" value=""/>
+               </apex:actionFunction>
+            </div>
+            <div class="bs form-field row content-choice-block" id="c3" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'c3') ,'','display: none;')}">
+               <!--
+               <div class="bs col-sm-12 col-xs-12 question-row" style="padding-bottom: 10px;">
+                   <div >
+                       <i class="ci-hk-callendar content-icon" aria-hidden="true"></i>
+                   </div>
+                   <div>
+                       {!$Label.When_was_your_customer_admitted_and_discharged_from_hospital}
+                   </div>
+               </div>
+               -->
+               <div class="bs col-sm-12 question-row">
+                   <div>
+                       <i class="ci-hk-callendar content-icon" aria-hidden="true"></i>
+                   </div>
+                   <div>
+                       {!$Label.When_was_your_customer_admitted_and_discharged_from_hospital}
+                   </div>
+               </div>
+               <apex:outputPanel id="admissionAndDischargeDateBrkPanel">
+                   <script>
+                       admissionAndDischargeDateItemFilled = 0;
+                       admissionAndDischargeDateItem = {!wAdmittedAndDischargedFromHospitalList.size*2};
+                   </script>
+                   <apex:variable value="{!0}" var="idx_admissionAndDischargeDate"/>
+                   <!-- item --> 
+                   <apex:repeat value="{!wAdmittedAndDischargedFromHospitalList}" var="wItem">
+                       <div id="addmissionAndDischargeDateCus{!idx_admissionAndDischargeDate}" class="bs col-sm-12 col-xs-12">
+                            <div style="border-radius: 10px; margin-top: 10px;" class="bs col-sm-10 col-xs-10 form-note">      
+                               <div class="bs row form-field" >
+                                   <div class="bs col-xs-12 col-sm-6" >{!$Label.Admission_Date}</div>
+                                   <div class="bs col-xs-12 col-sm-6" >
+                                        <input type="text" id="admission-answer-date-brk-c3a-date-format-{!idx_admissionAndDischargeDate}" class="form-field-style "
+                                           disabled="true" data-date-yyyy-mm-dd="{!wItem.admissionDate}" data-altField-id="admissionDate-datepicker-hidden" 
+                                           onchange="CalculationForAddmissionAndDischargedDateAtAction();" />
+                                        <apex:inputHidden id="admissionDate-datepicker-hidden"  value="{!wItem.admissionDateTimestamp}" />
+                                   </div>
+                                   <div class="bs col-xs-12 col-sm-12" style="padding-bottom:10px; "></div>
+                                   <div class="bs col-xs-12 col-sm-6" >{!$Label.Discharge_Date}</div>
+                                   <div class="bs col-xs-12 col-sm-6" >
+                                       <input type="text" id="answer-date-brk-c3a-date-format-{!idx_admissionAndDischargeDate}" class="form-field-style"
+                                           disabled="true" data-date-yyyy-mm-dd="{!wItem.dischargeDate}" data-altField-id="dischargeDate-datepicker-hidden" onchange="CalculationForAddmissionAndDischargedDateAtAction();"  />
+                                       <apex:inputHidden id="dischargeDate-datepicker-hidden" value="{!wItem.dischargeDateTimestamp}" />
+                                   </div>
+                                </div>
+                            </div>
+                            <div id="addmissionAndDischargeDateCusPlusIcon{!idx_admissionAndDischargeDate}" class="bs col-xs-2 col-sm-2" style="padding-top: 60px; {!IF(wAdmittedAndDischargedFromHospitalList.size == 1, 'display:none;', 'display:block;')}" >
+                                <i class="glyphicon glyphicon-minus-sign content-icon " aria-hidden="true" onclick="RemoveAdmissionAndDischargeDate({!idx_admissionAndDischargeDate})" ></i>
+                            </div>
+                       </div>
+                       <apex:variable var="idx_admissionAndDischargeDate" value="{!idx_admissionAndDischargeDate + 1}"/> 
+                    
+                        <script>
+                            if({!if(wItem.admissionDate != null, true, false)}){
+                                admissionAndDischargeDateItemFilled +=1;
+                            }
+                            
+                            if({!if(wItem.dischargeDate != null, true, false)}){
+                                admissionAndDischargeDateItemFilled +=1;
+                            }
+                        </script>
+                    </apex:repeat>
+                    
+                    <script>
+                        
+                        function loadQuestionlogicWhenFillAllDate(){
+                            if(admissionAndDischargeDateItemFilled >0)    c3Validation_single();
+                            if(admissionAndDischargeDateItem == admissionAndDischargeDateItemFilled && admissionAndDischargeDateItemFilled >0){
+                                c3Validation_pair();
+                                var isFailC3  = false;    //multiple
+                                $("form[id*='frmAnswerClaimQuestionBrk'] input[id*='answer-date-brk-c3a-date-format-']").each(function(idx, elem){
+                                    $(elem).datepicker( "option", "disabled", true );  
+                                    if(!$(elem).valid())    isFailC3  = true;
+                                    $(elem).datepicker( "option", "disabled", false );  
+                                });
+                                if(!isFailC3  ){
+                                    displayNextBtnIn(7);
+                                }
+                                else{
+                                    hideNextBtnIn(7);
+                                }
+                                
+                                $("form[id*='frmAnswerClaimQuestionBrk'] input[id*='answer-date-brk-c3a-date-format-']").each(function(idx, elem){
+                                    $(elem).datepicker( "option", "disabled", true );  
+                                    //CR-56_Link_20220214
+                                    $(elem).trigger("blur");
+                                    $(elem).trigger("focus");
+                                    $(elem).datepicker( "option", "disabled", false );  
+                                });
+                            }
+                            else{
+                                hideNextBtnIn(7);
+                            }
+                            
+                            questionDisplayLogic('c3');
+                        }
+                        
+                        function loadValidationOnlyWhenFillAllDate(){
+                            if(admissionAndDischargeDateItem == admissionAndDischargeDateItemFilled && admissionAndDischargeDateItemFilled >0){
+                                c3Validation_pair();
+                            }
+                            if(admissionAndDischargeDateItemFilled >0)    c3Validation_single();
+                            
+                        }
+                        
+                    </script>
+                    <div class="bs col-sm-offset-10 col-sm-2 col-xs-offset-10 col-xs-2">
+                        <span class="glyphicon glyphicon-plus-sign fa-lg onclick-pointer" onclick="AddAdmissionAndDischargeDate()"/>
+                    </div>
+                
+                    <apex:actionFunction status="loader-icon" action="{!calculationForAddmissionAndDischargedDate}" name="CalculationForAddmissionAndDischargedDateAtAction" reRender="jSPanel,admissionAndDischargeDateBrkPanel,c3_fastTrackLogicPanel" />  
+                    <apex:actionFunction name="AddAdmissionAndDischargeDate" action="{!AddAdmissionAndDischargeDate}" status="loader-icon" rerender="admissionAndDischargeDateBrkPanel" oncomplete="loadQuestionlogicWhenFillAllDate();" />
+                    <apex:actionFunction name="RemoveAdmissionAndDischargeDate" action="{!RemoveAdmissionAndDischargeDate}" status="loader-icon" rerender="admissionAndDischargeDateBrkPanel" oncomplete="CalculationForAddmissionAndDischargedDateAtAction();" >
+                        <apex:param name="idx_admissionAndDischargeDate" value="{!idx_admissionAndDischargeDate}" assignTo="{!idx_admissionAndDischargeDate}"/>
+                    </apex:actionFunction>
+                    <!--
+                    <apex:actionFunction name="clearwAdmittedAndDischargedFromHospitalList" status="loader-icon" action="{!clearwAdmittedAndDischargedFromHospitalList}" rerender="admissionAndDischargeDateBrkPanel" oncomplete="loadQuestionlogicWhenFillAllDate();"/>
+                    -->
+                    <apex:actionFunction name="clearwAdmittedAndDischargedFromHospitalList" status="loader-icon" action="{!clearwAdmittedAndDischargedFromHospitalList}" rerender="admissionAndDischargeDateBrkPanel" oncomplete="questionDisplayLogic('c2');"/> <!--  oncomplete="loadQuestionlogicWhenFillAllDate();" -->
+                    <script>
+                       initDatePicker();
+                       
+                   </script>
+               </apex:outputPanel>
+               
+               <apex:outputPanel id="c3_fastTrackLogicPanel">
+                   <script>
+                       /** calculate fast track logic **/
+                       var currentStepNum = $('.content-step:visible').data('step');
+                       var sj_HIF_d_old = sj_HIF_d;
+                       if( currentStepNum  == 7 && {!cList[0].HIF__c} && $('#c3').is(":visible") ){
+                            sj_HIF_d = {!sj_HIF_d}; 
+                            loadQuestionlogicWhenFillAllDate();
+                       }else if(currentStepNum  == 7 && {!cList[0].HIF__c} && $('#c3').is(":hidden")){
+                            sj_HIF_d = false; 
+                            if(sj_HIF_d_old != sj_HIF_d){
+                                loadQuestionlogicWhenFillAllDate();
+                            }
+                       }                                   
+                       /** end calculate fast track logic **/
+                       
+                   </script>
+               </apex:outputPanel>
+               
+               <script>
+                   jQuery.validator.addMethod("noLaterThanToday", function(value, element) {
+                        var curDate = new Date();
+                        var inputDate = new Date(value);
+                        curDate.setDate(curDate.getDate());
+                        if ( value =='' || value == undefined || inputDate < curDate){
+                            return true;
+                        }
+                        return false;
+                    }, "{!$Label.Enter_date_cannot_later_than_today}"); 
+                    
+                    jQuery.validator.addMethod("noLaterThanAdmissionDate", function(value, element) {
+                        var curDate = new Date();
+                        var inputDate = new Date(value);
+                        
+                        var dischargeDateId = $(element).attr('id');
+                        
+                        var admissionDateId = 'admission-'+dischargeDateId ; 
+                        var admissionDateValue = $('#'+admissionDateId ).val();
+                        
+                        if (admissionDateValue == undefined || admissionDateValue == '' || value == undefined || value == '' || value >= admissionDateValue ){
+                            return true;
+                        }
+                        return false;
+                    }, "{!$Label.Admssion_Date_Cannot_Later_Than_Discharge_Date}"); 
+               
+                   function c3Validation_single(){
+                        $("form[id*='frmAnswerClaimQuestionBrk'] input[id*='answer-date-brk-c3a-date-format-']").each(function(idx, elem){
+                            $(elem).rules("remove", "required");
+                            $(elem).rules("add", {
+                                noLaterThanToday: true,
+                            });
+                            $(elem).datepicker( "option", "disabled", true );  
+                            //CR-56_Link_20220214
+                            $(elem).trigger("blur");
+                            $(elem).trigger("focus");
+                            $(elem).datepicker( "option", "disabled", false );  
+                        });
+                    
+                    }
+                    
+                    function c3Validation_pair(){
+                        $("form[id*='frmAnswerClaimQuestionBrk'] input[id*='answer-date-brk-c3a-date-format-']").each(function(idx, elem){
+                            $(elem).rules("remove", "required");
+                            
+                            $(elem).rules("add", {
+                                noLaterThanAdmissionDate: true
+                            });
+                            $(elem).datepicker( "option", "disabled", true );  
+                            //CR-56_Link_20220214
+                            $(elem).trigger("blur");
+                            $(elem).trigger("focus");
+                            $(elem).datepicker( "option", "disabled", false );  
+                        });
+                    
+                    }
+               </script>
+            </div>
+           
+           
+            <!-- next button -->
+            <!-- mobile -->
+            <div id="mobile-app-padding" class="bs row nextStepBtnPaddingIn7" style="display: none; padding-bottom: 100px;">
+                <div class="bs col-xs-12"></div>
+            </div>
+                    
+            <div id="action-bar" class="bs hidden-sm hidden-md hidden-lg cigna-floating-bottom-panel nextStepBtnIn7" style="left:0px; display:none;" onclick="nextStep();"> <!--  {!if(CONTAINS(cList[0].Selected_Question_s__c,'nextIn7') ,'','display: none;')} -->
+                <div id="callAction1" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                    <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</a>
+                </div>
+            </div>
+            
+            <!-- web -->
+            <div class="bs row hidden-xs nextStepBtnIn7" style="padding-top: 20px; padding-bottom: 20px; display:none;"> <!-- {!if(CONTAINS(cList[0].Selected_Question_s__c,'nextIn7') ,'','display: none;')}-->
+                <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3 "></div>
+                <div id="callAction2" class="bs col-sm-6 col-md-6 col-xs-6 col-lg-6 onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn" onclick="nextStep();">
+                    {!$Label.Next}
+                </div>
+                <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3"></div>
+            </div>
+           
+           <apex:actionFunction name="saveSelectedQuestionBrkAtAction" status="loader-icon" action="{!saveSelectedQuestionBrk}" reRender="jsPanel, ackPanel" >
+                <apex:param name="id" value="" assignTo="{!currentSelectedQuestionId}" />
+           </apex:actionFunction>
+           <apex:actionFunction name="saveSelectedQuestionAtAction" status="loader-icon" action="{!saveSelectedQuestion}" reRender="jsPanel, ackPanel" >
+                <apex:param name="id" value="" assignTo="{!currentSelectedQuestionId}" />
+           </apex:actionFunction>
+           
+           <script>
+               var selectedQuestion = '{!cList[0].Selected_Question_s__c}';
+               if ({!isLoadOldClaim} && selectedQuestion.includes("nextIn7")){
+                   displayNextBtnIn(7);
+                   
+                   if (Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                       $('.nextStepBtnPaddingIn7').show();
+                   }
+               }
+           </script>
+       </apex:form>
+    
+    <!-- end broker part -->
+    
+    
+</div>
+
+
+</apex:page>

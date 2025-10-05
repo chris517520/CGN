@@ -1,0 +1,82 @@
+<apex:page sidebar="false" controller="CSPendingMemoDetailsCtrl">   
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+
+    <script>
+       $(document).ready(function(){
+            getRequestData();
+            getRequestDocData();
+            });
+    </script>
+    
+   <apex:form id="theForm">        
+        <apex:actionFunction action="{!getRequestData}" name="getRequestData" status="loader-icon" reRender="requestDetailsPageBlock" />
+        <apex:actionFunction action="{!getRequestDocData}" name="getRequestDocData" status="loader-icon" reRender="documentListPageBlock,questionListPageBlock,error-message-panel" /> 
+       
+        <apex:actionStatus id="loader-icon">
+           <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                     &nbsp;
+                 </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Please Wait...</span>
+                    </div>
+                 </div>
+            </apex:facet>
+        </apex:actionStatus>        
+        
+        <apex:outputPanel id="error-message-panel">
+            <apex:pageMessages escape="false"></apex:pageMessages> 
+        </apex:outputPanel>   
+        
+        <apex:pageBlock id="csPendingMemoPageBlock" mode="maindetail" title="Pending Memo Details">        
+            <apex:pageBlockSection columns="1" id="requestDetailsPageBlock" >                
+                <apex:pageblockSectionItem dataStyle="font-size:14px;font-wight;bold;" >
+                    <apex:outputText value="{0, date, yyyy/MM/dd}">
+                            <apex:param value="{!requestDetail.statusUpdatedDateTime }"/>
+                    </apex:outputText>                                                            
+                </apex:pageblockSectionItem>                              
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel >{!$Label.Category}</apex:outputLabel>
+                    <apex:outputLabel >{!requestDetail.requestType}</apex:outputLabel>                                        
+                </apex:pageblockSectionItem>
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel >{!$Label.Policy_No}</apex:outputLabel>
+                    <apex:outputLabel >{!requestDetail.policyNumber}</apex:outputLabel>                                                               
+                </apex:pageblockSectionItem>
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel >{!$Label.Type}</apex:outputLabel>
+                    <apex:outputLabel >{!requestDetail.salesForceWorkType}</apex:outputLabel>                                                               
+                </apex:pageblockSectionItem>
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel >{!$Label.Status}</apex:outputLabel>
+                    <apex:outputLabel >{!requestDetail.RequestStatus}</apex:outputLabel>                                                               
+                </apex:pageblockSectionItem>                
+            </apex:pageBlockSection>
+            <br/>           
+                        
+            <apex:pageBlockSection id="documentListPageBlock" columns="1" title="{!$Label.Please_download_the_documents_below_if_needed}"  >
+                <apex:pageBlockTable value="{!docWrapperList}" var="docWrapper"  >
+                    <apex:column headerValue="Document Name">
+                        <a id="real-download" href="{!docWrapper.docURL}" target="_blank" > 
+                            <span id="real-download-icon" class="ci-hk-inbox content-icon" aria-hidden="true"></span>
+                             {!docWrapper.docFileName}
+                         </a> 
+                    </apex:column>                                
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>            
+            <br/>
+            
+            <apex:pageBlockSection id="questionListPageBlock" columns="1" title="Q&A"  >
+                <apex:pageBlockTable value="{!memoRequestList}" var="requestion"  >                    
+                    <apex:column width="50%" headerValue="" >{!requestion.pendingQuestion}</apex:column>
+                    <apex:column width="50%" headerValue="">{!requestion.answer}</apex:column>                    
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>    
+                    
+        </apex:pageBlock>
+     
+    </apex:form>
+</apex:page>

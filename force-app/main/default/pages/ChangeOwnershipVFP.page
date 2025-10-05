@@ -1,0 +1,1020 @@
+<apex:page standardController="Policy_Change_Request__c" extensions="ManagePolicyChangeCRTL" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+    
+        <style>
+            .form-toggle-tab {
+                padding: 10px;
+                border-bottom: 1px solid #f2f2f2;
+                font-weight: bold;
+            }
+            
+            .form-toggle-content {
+                padding: 10px 0px 10px 0px;
+            }
+            
+            .short-form-field{
+                width: 30% !important;
+                text-align: center;
+            }
+            
+            select{
+                width: 100%;
+            }
+            
+            ul{
+                margin: 2px 0;
+            }
+            
+            li{
+                margin: 5px 0;
+            }
+            
+        </style>
+
+        <apex:define name="additionalLibraries">
+             <!--additional css, bootstrap, jquery,js libraries-->
+             <!-- CR-56_Link_20220214 -->
+		     <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+             <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+             <apex:outputPanel rendered="{!userLanguage == 'zh_TW'}" layout="none">
+                 <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+             </apex:outputPanel>
+        </apex:define>
+    </head>
+
+    <div class="bs">
+        <div class="bs container">
+        
+            <!--Form Information-->
+            <apex:form id="change-ownership">
+                <div class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light">
+                        {!$Label.Ownership} 
+                </div>
+                <div id="ownership-info" class="bs col-sm-12 col-xs-12 form-toggle-content">
+                    
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.New_Policyholder_Name_in_English__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField id="Required-New-Policyholder-EnglishStrict" value="{!Request.New_Policyholder_Name_in_English__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                    
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.New_Policyholder_Name_in_Chinese__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField id="Required-New-Policyholder-ChineseStrict" value="{!Request.New_Policyholder_Name_in_Chinese__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                    
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Relationship_with_Person_Insured__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField id="Required-Relationship-with-Person-Insured" value="{!Request.Relationship_with_Person_Insured__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                                        
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">{!$ObjectType.Policy_Change_Request__c.fields.Gender__c.Label}</div>
+                        <div class="bs col-sm-9">
+                            <apex:inputField id="Required-HolderSex" value="{!Request.Gender__c}" styleclass="form-field-style-select" />
+                        </div>
+                    </div>
+
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Date_of_Birth__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12" >
+                            <apex:input type="tel" id="Day-DOB-Val" style="width:20%;" value="{!ddDOB}"  html-placeholder="{!$Label.DD}" html-maxlength="2" styleClass="text-center form-field-style question-kid-age" onblur="getCheckDOB('day',this)" />
+                            <apex:input type="tel" id="Month-DOB-Val" style="width:20%;" value="{!mmDOB}" html-placeholder="{!$Label.MM}" html-maxlength="2" styleClass="text-center form-field-style question-kid-age" onblur="getCheckDOB('month',this)" >&nbsp;/&nbsp;</apex:input>
+                            <apex:input type="tel" id="Year-DOB-Val" style="width:40%;" value="{!yyyyDOB}" html-placeholder="{!$Label.YYYY}" html-maxlength="4" styleClass="text-center form-field-style question-kid-age" onblur="getCheckDOB('year',this)" >&nbsp;/&nbsp;</apex:input>
+                        </div>
+                        <div class="bs col-sm-offset-3 col-sm-9 col-xs-12" >
+                            <apex:inputText id="DOB-Check" style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none;" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                            <apex:inputText id="Required-DOB" style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none;" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                        </div>
+                    </div>
+
+                    <!-- Rancho_IA_AML_Inspection_20211005: add below two fields -->
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Nationality__c.Label}
+                        </div>
+                        <div class="bs col-sm-9">
+                            <apex:selectList id="Required-HolderNationality" value="{!Request.Nationality__c}" size="1" styleClass="bs form-field-style-select">
+                                <apex:selectOptions value="{!nationalityList}"/>
+                            </apex:selectList>
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Place_of_Residence__c.Label}
+                        </div>
+                        <div class="bs col-sm-9">
+                            <apex:selectList id="Required-HolderPResidence" value="{!Request.Place_of_Residence__c}" size="1" styleClass="bs form-field-style-select">
+                                <apex:selectOptions value="{!countryList}"/>
+                            </apex:selectList>
+                        </div>
+                    </div>
+                    
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">{!$ObjectType.Policy_Change_Request__c.fields.Place_of_Birth__c.Label}</div>
+                        <div class="bs col-sm-9">
+                            <!-- Rancho_IA_AML_Inspection_20211005: use country list returned from WS GetMasterList as the select list -->
+                            <!-- <apex:inputField id="Required-HolderPBirth" value="{!Request.Place_of_Birth__c}" styleclass="form-field-style" /> -->
+                            <apex:selectList id="Required-HolderPBirth" value="{!Request.Place_of_Birth__c}" size="1" styleClass="bs form-field-style-select">
+                                <apex:selectOptions value="{!countryList}"/>
+                            </apex:selectList>
+                        </div>
+                    </div>
+                    
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">{!$ObjectType.Policy_Change_Request__c.fields.HKID_Passport_No__c.Label}</div>
+                        <div class="bs col-sm-9">
+                            <apex:inputField id="Required-HolderHKIDPass" value="{!Request.HKID_Passport_No__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                    
+                    
+                    <div id="lifePolicyFields" style="display:none;">
+                        <div class="bs row col-sm-12 col-xs-12" style="background-color:#f2f2f2;">
+                            <div class="bs row form-field">
+                                <div class="bs col-sm-3 col-xs-12">
+                                    {!$ObjectType.Policy_Change_Request__c.fields.Occupation__c.Label}
+                                </div>
+                                <div class="bs col-sm-9 col-xs-12">
+                                    <apex:inputField id="Required-Occupation" value="{!Request.Occupation__c}" styleclass="form-field-style" />
+                                </div>
+                            </div>
+                            
+                            <div class="bs row form-field">
+                                <div class="bs col-sm-3">{!$ObjectType.Policy_Change_Request__c.fields.Monthly_Income__c.Label}&nbsp;({!$Label.HKD})</div>
+                                <div class="bs col-sm-9">
+                                    <apex:inputField id="LP-Currency-Income" value="{!Request.Monthly_Income__c}" styleclass="form-field-style" />
+                                </div>
+                            </div>
+                            
+                            <div class="bs row form-field">
+                                <div class="bs col-sm-3 col-xs-12">
+                                    {!$ObjectType.Policy_Change_Request__c.fields.Name_of_Employer__c.Label}
+                                </div>
+                                <div class="bs col-sm-9 col-xs-12">
+                                    <apex:inputField id="LP-Name-Of-Employer" value="{!Request.Name_of_Employer__c}" styleclass="form-field-style" />
+                                </div>
+                            </div>
+                            
+                            <div class="bs row form-field">
+                                <div class="bs col-sm-3 col-xs-12">
+                                    {!$ObjectType.Policy_Change_Request__c.fields.Nature_of_Business__c.Label}
+                                </div>
+                                <div class="bs col-sm-9 col-xs-12">
+                                    <apex:inputField id="LP-Nature-Of-Business" value="{!Request.Nature_of_Business__c}" styleclass="form-field-style" />
+                                </div>
+                            </div>
+                            
+                            <div class="bs row form-field">
+                                <div class="bs col-sm-3">{!$ObjectType.Policy_Change_Request__c.fields.Business_Address__c.Label}</div>
+                                <div class="bs col-sm-9">
+                                    <apex:inputTextarea id="LP-Business-Address-English" styleClass="form-field-style-textarea" value="{!Request.Business_Address__c}" />
+                                </div>
+                            </div>
+    
+                            <div class="bs row form-field">
+                                <div class="bs col-sm-3 col-xs-12" style="padding-top:15px;">
+                                    {!$ObjectType.Policy_Change_Request__c.fields.Source_of_Fund_Ownership__c.Label} {!$Label.Ownership_Only_Application_To_Policies_With_Regular_Premium_Payments}
+                                </div>
+                                <div class="bs col-sm-9 col-xs-12">
+                                    <apex:inputField value="{!Request.Source_of_Fund_Ownership__c}"  id="Required-Choose-Source-Of-Fund" styleclass="form-field-style-select"  onchange="getSourceOfFundChoice(this.value)"/>
+                                </div>
+                            </div>
+                            <div id="otherSourceOfFund" class="bs row form-field" style="display:none;">
+                            <!--if payment method is other then show-->
+                                <div class="bs col-sm-3 col-xs-12">
+                                    {!$ObjectType.Policy_Change_Request__c.fields.Funds_by_Others__c.Label}
+                                </div>
+                                <div class="bs col-sm-9 col-xs-12">
+                                    <apex:inputField id="Required-Other-Source" value="{!Request.Funds_by_Others__c}" styleclass="form-field-style" />
+                                </div>
+                            </div>
+                            <div class="bs row form-field">
+                                <div class="bs col-sm-3">{!$ObjectType.Policy_Change_Request__c.fields.Reason_for_change_of_ownership__c.Label}</div>
+                                <div class="bs col-sm-9">
+                                    <apex:inputTextarea id="LP-Reason-Change-Ownership" styleClass="form-field-style-textarea" value="{!Request.Reason_for_change_of_ownership__c}" />
+                                </div>
+                            </div>
+                            <div class="bs row form-field col-sm-12 col-xs-12" style="padding-top:15px; padding-bottom:15px;">{!$Label.Only_applicable_for_policy} {!strIsLifePolicy}</div>
+                        </div>
+                        <div class="bs col-xs-12 col-sm-12"><div style="padding:20px;"/></div>
+                    </div>
+                    
+                    
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Residential_Address__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputTextarea id="Required-Residential-Address-English" styleClass="form-field-style-textarea" value="{!Request.Residential_Address__c}" />
+                        </div>
+                    </div>
+                    
+                     <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Permanent_Address__c.Label} {!$Label.Ownership_if_different_from_Residential_Address}
+                        </div>
+                        <div class="bs col-xs-12 col-sm-9">
+                            <span class="bs col-xs-12 col-sm-12" style="padding-left:0px !important;">
+                                <apex:inputField id="Ownership-Info-samePerAdd" value="{!Request.PAddress_same_as_RAddress__c}" onclick="validationPerAddress()"/>&nbsp;&nbsp;{!$Label.Same_as_Residential_Address}
+                            </span>
+                            <span class="bs col-xs-12 col-sm-12" id="Ownership-PerAdd" style="padding-left:0 !important; padding-right: 0 !important;">
+                                <apex:inputTextarea id="Permanent-Address-English" styleClass="form-field-style-textarea" value="{!Request.Permanent_Address__c}"/>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Correspondence_Address__c.Label}
+                        </div>
+                        <div class="bs col-xs-12 col-sm-9">
+                            <span class="bs col-xs-12 col-sm-12" style="padding-left: 0px ! important;">
+                                <apex:inputField id="Ownership-Info-sameCorrAdd" value="{!Request.CAddress_same_as_RAddress__c}" onclick="validationCorrAddress()" />&nbsp;&nbsp;{!$Label.Same_as_Residential_Address}
+                            </span>
+                            <span class="bs col-xs-12 col-sm-12" id="Ownership-CorrAdd" style="padding-left:0px !important; padding-right: 0px ! important;">
+                                <apex:inputTextarea id="Correspondence-Address-English" styleClass="form-field-style-textarea" value="{!Request.Correspondence_Address__c}" />
+                            </span>
+                        </div>
+                    </div>
+                    
+                    
+                    
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">{!$ObjectType.Policy_Change_Request__c.fields.Mobile_Number__c.Label}</div>
+
+                        <div class="bs col-xs-12 col-sm-9">
+                            <span class="bs col-xs-4 col-sm-4" style="padding-left:0px !important;"><apex:inputField id="Required-Mobile-code" type="tel" styleClass="form-field-style" html-placeholder="+852"  value="{!Request.Mobile_Number_Country_Code__c}"/></span>
+                            <span class="bs col-xs-8 col-sm-8" style="padding-right:0px !important;"><apex:inputField id="Required-Mobile" type="tel" styleClass="form-field-style" value="{!Request.Mobile_Number__c}"/></span>
+                        </div>
+                    </div>
+
+
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">{!$ObjectType.Policy_Change_Request__c.fields.Residential_Number__c.Label}</div>
+                        <div class="bs col-xs-12 col-sm-9">
+                            <span class="bs col-xs-4 col-sm-4" style="padding-left:0px !important;"><apex:inputField id="Required-Residential-code" type="tel" styleClass="form-field-style" html-placeholder="+852"  value="{!Request.Residential_Number_Country_Code__c}"/></span>
+                            <span class="bs col-xs-8 col-sm-8" style="padding-right:0px !important;"><apex:inputField id="Required-Residential" type="tel" styleClass="form-field-style"  value="{!Request.Residential_Number__c}"/></span>
+                        </div>
+                    </div>
+
+
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">{!$ObjectType.Policy_Change_Request__c.fields.Office_Number__c.Label}</div>
+                        <div class="bs col-xs-12 col-sm-9">
+                            <span class="bs col-xs-4 col-sm-4" style="padding-left:0px !important;"><apex:inputField id="Required-Office-code" type="tel" styleClass="form-field-style" html-placeholder="+852"  value="{!Request.Office_Number_Country_Code__c}"/></span>
+                            <span class="bs col-xs-8 col-sm-8" style="padding-right:0px !important;"><apex:inputField id="Required-Office" type="tel" styleClass="form-field-style"  value="{!Request.Office_Number__c}"/></span>
+                        </div>
+                    </div>
+                    
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Email_Address__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField id="Required--Email-Address" value="{!Request.Email_Address__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                    
+                    <div id="change-beneficiary-panel" class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light onclick-pointer">
+                        {!$Label.Change_Beneficiary_Optional}<i id="benesectionarrow" class="fa fa-chevron-down pull-right" aria-hidden="true"/>
+                    </div>
+                    
+                        <div id="change-beneficiary-content-panel" class="bs row" style="{!IF(ListRequestDetail.size > 0, 'display:block;', 'display:none;')}">
+                            <div class="bs col-sm-12 col-xs-12" style="padding:10px"/>
+                            <div class="bs row listcontent-header hidden-xs">
+                               <div class="bs col-sm-3">{!$ObjectType.Policy_Change_Request_Detail__c.fields.English_Name__c.Label}</div>
+                               <div class="bs col-sm-3">{!$ObjectType.Policy_Change_Request_Detail__c.fields.HKID_Birth_Cert_Passport_No__c.Label}</div>
+                               <div class="bs col-sm-3">{!$ObjectType.Policy_Change_Request_Detail__c.fields.Relationship_with_Person_Insured__c.Label}</div>
+                               <div class="bs col-sm-2">{!$ObjectType.Policy_Change_Request_Detail__c.fields.Share__c.Label}<br/>{!$Label.Total_Percentage}</div>
+                               <div class="bs col-sm-1">&nbsp;</div>
+                            </div>
+                            <apex:outputPanel id="beneficiary-info">
+                                <apex:variable value="{!0}" var="rowNum"/>
+                                <apex:repeat value="{!ListRequestDetail}" var="requestDetail">
+                                    <div class="bs row listcontent">
+                                        <div class="bs col-xs-offset-11 col-xs-1 visible-xs" >
+                                            <span class="glyphicon glyphicon-minus-sign fa-lg onclick-pointer"  onclick="removeRowBeneficiary({!rowNum},'{!requestDetail.Id}')" style="{!IF(ListRequestDetail.size == 1, 'display:none;', 'display:block;')}"/>
+                                        </div>
+                                        <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                           <div class="bs col-xs-6 visible-xs table-cell">{!$ObjectType.Policy_Change_Request_Detail__c.fields.English_Name__c.Label}</div>
+                                           <div class="bs col-xs-6 col-sm-12 table-cell"><apex:inputField id="List-Name-in-EnglishStrict-Beneficiary" value="{!requestDetail.English_Name__c}" styleclass="form-field-style" /></div>
+                                        </div>
+                                        <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                           <div class="bs col-xs-6 visible-xs table-cell">{!$ObjectType.Policy_Change_Request_Detail__c.fields.HKID_Birth_Cert_Passport_No__c.Label}</div>
+                                           <div class="bs col-xs-6 col-sm-12 table-cell"><apex:inputField id="List-HKID-Birth-Cert-Passport-No-Beneficiary" value="{!requestDetail.HKID_Birth_Cert_Passport_No__c}" styleclass="form-field-style" /></div>
+                                        </div>
+                                        <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                           <div class="bs col-xs-6 visible-xs table-cell">{!$ObjectType.Policy_Change_Request_Detail__c.fields.Relationship_with_Person_Insured__c.Label}</div>
+                                           <div class="bs col-xs-6 col-sm-12 table-cell"><apex:inputField id="List-Relationship-with-Person-Insured-Beneficiary" value="{!requestDetail.Relationship_with_Person_Insured__c}" styleclass="form-field-style" /></div>
+                                        </div>
+                                        <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                           <div class="bs col-xs-6 visible-xs table-cell">{!$ObjectType.Policy_Change_Request_Detail__c.fields.Share__c.Label}</div>
+                                           <div class="bs col-xs-6 col-sm-12 table-cell"><apex:inputField id="Number-List-Share-Percentage-Beneficiary" value="{!requestDetail.Share__c}" styleclass="form-field-style" /></div>
+                                        </div>
+                                        <div class="bs table-row col-xs-12 col-sm-1 hidden-xs" style="padding:0px !important;">
+                                           <div class="bs col-sm-12 table-cell">
+                                               <span class="glyphicon glyphicon-minus-sign fa-lg onclick-pointer" onclick="removeRowBeneficiary({!rowNum},'{!requestDetail.Id}')" style="{!IF(ListRequestDetail.size == 1, 'display:none;', 'display:block;')}" />
+                                           </div>
+                                        </div>
+                                    </div>
+                                <apex:variable value="{!rowNum + 1}" var="rowNum"/>
+                            </apex:repeat>
+                            <apex:actionFunction name="addRowBeneficiary" action="{!addRowBeneficiary}" rerender="beneficiary-info,OwnershipValidationJS,mobileNextFixJS"/>
+                            <apex:actionFunction name="removeRowBeneficiary" action="{!removeRowBeneficiary}" rerender="beneficiary-info,OwnershipValidationJS,mobileNextFixJS">
+                                  <apex:param name="rowIndex" value="" assignTo="{!rowIndex}"/>
+                                  <apex:param name="deleteReqDetailId" value="" assignTo="{!deleteReqDetailId}"/>
+                            </apex:actionFunction>
+                            <apex:actionFunction name="clearBeneficiary" action="{!clearBeneficiary}" rerender="beneficiary-info,OwnershipValidationJS"/>    
+                        </apex:outputPanel>
+        
+                                <div id="Share-Total-errMsg" class="col-xs-offset-6 col-xs-6 col-sm-offset-8 col-sm-4 error" style="display:none; padding:10px;">
+                                    {!$Label.ErrMsg_total_100}
+                                </div> 
+                                <div class="bs col-sm-offset-11 col-sm-1 col-xs-offset-11 col-xs-1">
+                                    <span class="glyphicon glyphicon-plus-sign fa-lg onclick-pointer" onclick="addRowBeneficiary()" style="{!IF(ListRequestDetail.size == 4, 'display:none;', 'display:block;')}"/>
+                                </div>
+                        </div>
+                    
+    
+                    
+                </div>
+                <apex:actionFunction name="SavePolicyChange" action="{!SavePolicyChange}" rerender="false" status="loader-icon" oncomplete="refreshAttlist()"/>
+                <apex:actionFunction name="SaveAndQuit" action="{!SavePolicyChange}" oncomplete="Cigna.Util.navigateToVFP('PolicyChangeVFP');" status="loader-icon" rerender="false"/>
+                <apex:actionFunction name="skipAttSavePolicyChange" action="{!SavePolicyChange}" rerender="false" status="loader-icon" oncomplete="submitPolicyChange();"/>
+           
+            </apex:form>
+            
+                <script>
+
+
+                    //$("input[id*='Day-DOB-Check']").val($("input[id*='Day-DOB-Val']").val());
+                    //$("input[id*='Month-DOB-Check']").val($("input[id*='Month-DOB-Val']").val());
+                    //$("input[id*='Year-DOB-Check']").val($("input[id*='Year-DOB-Val']").val());
+                    if('{!isLife}' == 'true'){
+                        $('#lifePolicyFields').show();
+                    }
+
+
+                    var Ownership = Ownership || {};
+                    Ownership.Validate = function(){
+                    
+                    
+                        function checkShareTotal(){
+
+                            if($("#change-beneficiary-content-panel").is(':visible')){
+
+                                var shareTotal = 0;
+                                $("input[id*='List-Share-Percentage']").each(function(idx, elem){
+                                    shareTotal+= parseInt($(elem).val());
+                                });
+                                
+                                if(shareTotal=='100'){
+                                    $('#Share-Total-errMsg').hide();
+                                    return true;
+                                    
+                               }else{
+                                   $('#Share-Total-errMsg').show();
+                                    return false; 
+                               }
+                           }else{
+                               return true;
+                           }
+                        }
+                        
+                        function checkDOBRequired(){
+                    
+                            $("input[id*='Required-DOB']").val('');
+                            var DOB =''; 
+                            
+                            if ( $("input[id*='Day-DOB-Val']").val()!='' &&
+                                 $("input[id*='Month-DOB-Val']").val()!=''&&
+                                 $("input[id*='Year-DOB-Val']").val()!=''){
+                                 
+                                 DOB = $("input[id*='Day-DOB-Val']").val()+
+                                       $("input[id*='Month-DOB-Val']").val()+
+                                       $("input[id*='Year-DOB-Val']").val();
+                                       
+                                 $("input[id*='Required-DOB']").val(DOB);
+                                 $("input[id*='Required-DOB']").rules("add", {
+                                    digits: true
+                                });
+                             }
+                        }
+                        
+                        function checkBeneficiaryRequired(){
+                        
+                            var isBlankBeneficiary = 0;
+                             $("input[id*='-Beneficiary']").each(function(idx, elem){
+                                    if($(elem).val() != ''){
+                                        isBlankBeneficiary += 1;
+                                    }
+                            });
+                            
+                            if(isBlankBeneficiary==0){
+                            
+                                $("input[id*='-Beneficiary']").each(function(idx, elem){
+                                    $(elem).rules("remove","required");
+                                });
+
+                                $('#Share-Total-errMsg').hide();
+                                return true;
+                                
+                            }else{
+                            
+                                $("input[id*='-Beneficiary']").each(function(idx, elem){
+                                    $(elem).rules("add", {
+                                        required: true
+                                    });
+                                });
+                                return false;
+                            }
+                        }
+                        
+                        function formValidation(){
+                            
+                            $("form[id*='change-ownership']").validate();
+                            
+                            //Ray's Updates
+                            /*
+                            jQuery.validator.addMethod("emailStrict", function(value, element) {
+                                return this.optional(element) || Cigna.ValidationUtil.isValidEmail(value);
+                            }, "{!$Label.Your_Email_Address_is_invalid}");
+                            
+                            jQuery.validator.addMethod("english", function(value, element) {
+                                return this.optional(element) || Cigna.ValidationUtil.isEnglishOnly(value);
+                            }, "{!$Label.English_Only}");
+                            
+                            jQuery.validator.addMethod("englishStrict", function(value, element) {
+                                return this.optional(element) || Cigna.ValidationUtil.isEnglishOnlyStrict(value);
+                            }, "{!$Label.English_Only}");
+                            
+                            jQuery.validator.addMethod("chineseStrict", function(value, element) {
+                                return this.optional(element) || Cigna.ValidationUtil.isChineseOnlyStrict(value);
+                            }, "{!$Label.Chinese_Only}");
+                            
+                            $("input[id*='-ChineseStrict']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    chineseStrict: true
+                                });
+                            });
+                            
+                            $("input[id*='Required-']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    required: true
+                                });
+                            });
+                            
+                            $("textarea[id*='Required-']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    required: true
+                                });
+                            });
+                            
+                            $("select[id*='Required-']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    required: true
+                                });
+                            });
+                            
+                            $("input[id*='Number-']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    digits: true
+                                });
+                            });
+                            
+                             $("input[id*='Currency-']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    number: true
+                                });
+                            });
+                            
+                            $("input[id*='Email-']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    emailStrict: true
+                                });
+                            });
+        
+                            var today = new Date();
+                            var thisYear = today.getFullYear();
+                            var thisMonth = today.getMonth()+1;
+                            
+                            $("input[id*='Number-Year-DOB']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    digits: true,
+                                    range: [1900, thisYear]
+                                });
+                            });
+                            
+                            $("input[id*='Number-Month']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    digits: true,
+                                    range: [01, 12]
+                                });
+                            });
+                            
+                            $("input[id*='Number-Day']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    digits: true,
+                                    range: [01, 31]
+                                });
+                            });
+                            
+                            $("input[id*='Day-DOB-Check']").rules("add", {
+                                range: [01, 31]
+                            });
+                            
+                            $("input[id*='Month-DOB-Check']").rules("add", {
+                                range: [01, 12]
+                            });
+                            
+                            $("input[id*='Year-DOB-Check']").rules("add", {
+                                range: [1900, thisYear]
+                            });
+                            
+                            $("textarea[id*='-English']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    english: true
+                                });
+                            });
+                            
+                            $("input[id*='-EnglishStrict']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    englishStrict: true
+                                });
+                            });
+                            
+                            */
+                            
+                            //Ray's Updates End
+                            
+                            $("input[id*='Required-']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    required: true
+                                });
+                            });
+                            
+                            $("textarea[id*='Required-']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    required: true
+                                });
+                            });
+                            
+                            $("select[id*='Required-']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    required: true
+                                });
+                            });
+                            
+                            // Updated by Linus 18 Feb 2020
+                            // JR1812 - Disable Chinese field manadatory checking
+                            $("[id$='Required-New-Policyholder-ChineseStrict']").rules("add", {
+                                required : false
+                            });
+                            
+                            if('{!isLife}' == 'true'){
+                                $("input[id*='LP-']").each(function(idx, elem){
+                                    $(elem).rules("add", {
+                                        required: true
+                                    });
+                                });
+                                $("textarea[id*='LP-']").each(function(idx, elem){
+                                    $(elem).rules("add", {
+                                        required: true
+                                    });
+                                });
+                            }
+
+                            if($("checkbox[id='Ownership-Info-sameCorrAdd']").is( ":checked" )==false){
+                                $("textarea[id*='Correspondence-Address']").rules("add", {
+                                    required: true
+                                });
+                            }
+                            
+                            if($("checkbox[id='Ownership-Info-samePerAdd']").is( ":checked" )==false){
+                                $("textarea[id*='Permanent-Address']").rules("add", {
+                                    required: true
+                                });
+                            }
+                            
+                            //CR-56_Link_20220214
+                            $("input[id*='Number-List-Share-Percentage-Beneficiary']").on("blur",function(){
+                                checkShareTotal();
+                            });
+                            
+                            
+                        }
+                        
+                        
+                        return {
+                            formValidation: formValidation,
+                            checkShareTotal: checkShareTotal,
+                            checkDOBRequired: checkDOBRequired,
+                            checkBeneficiaryRequired : checkBeneficiaryRequired
+                        }
+                    }();
+    
+                </script>
+            
+            <!-- Ray's Updates -->
+            
+            <apex:outputPanel id="OwnershipValidationJS">
+            
+                <script>
+            
+                    $("form[id*='change-ownership']").validate();
+                            
+                        jQuery.validator.addMethod("emailStrict", function(value, element) {
+                            return this.optional(element) || Cigna.ValidationUtil.isValidEmail(value);
+                        }, "{!$Label.Your_Email_Address_is_invalid}");
+                            
+                        jQuery.validator.addMethod("english", function(value, element) {
+                            return this.optional(element) || Cigna.ValidationUtil.isEnglishOnly(value);
+                        }, "{!$Label.English_Only}");
+                            
+                        jQuery.validator.addMethod("englishStrict", function(value, element) {
+                            return this.optional(element) || Cigna.ValidationUtil.isEnglishOnlyStrict(value);
+                        }, "{!$Label.English_Only}");
+                        
+                        jQuery.validator.addMethod("chineseStrict", function(value, element) {
+                            return this.optional(element) || Cigna.ValidationUtil.isChineseOnlyStrict(value);
+                        }, "{!$Label.Chinese_Only}");
+                        
+                        jQuery.validator.addMethod("validateDOB", function(value, element) {
+                            return validateDOB();
+                        }, "{!$Label.ESales_Invalid_DOB}");
+
+                        // Rancho_IA_AML_Inspection_20211005
+                        jQuery.validator.addMethod("validateNationality", function(value, element) {
+                            return checkNationality(value);
+                        }, "{!$Label.Sanctioned_Jurisdiction_Message_Nationality}");
+
+                        jQuery.validator.addMethod("validateCountry", function(value, element) {
+                            return checkCountry(value);
+                        }, "{!$Label.Sanctioned_Jurisdiction_Message_Country}");
+
+                        jQuery.validator.addMethod("validateBirthPlace", function(value, element) {
+                            return checkCountry(value); 
+                        }, "{!$Label.Sanctioned_Jurisdiction_Message_Birth_Place}");
+                        
+                        $("input[id*='-ChineseStrict']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                chineseStrict: true
+                            });
+                        });
+
+                        $("input[id*='Number-']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                digits: true
+                            });
+                        });
+                        
+                         $("input[id*='Currency-']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                number: true
+                            });
+                        });
+                        
+                        $("input[id*='Email-']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                emailStrict: true
+                            });
+                        });
+
+                        var today = new Date();
+                        var thisYear = today.getFullYear();
+                        var thisMonth = today.getMonth()+1;
+                        
+                        $("input[id*='Number-Year-DOB']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                digits: true,
+                                range: [1900, thisYear]
+                            });
+                        });
+                        
+                        $("input[id*='Number-Month']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                digits: true,
+                                range: [01, 12]
+                            });
+                        });
+                        
+                        $("input[id*='Number-Day']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                digits: true,
+                                range: [01, 31]
+                            });
+                        });
+                        
+                        $("textarea[id*='-English']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                english: true
+                            });
+                        });
+                        
+                        $("input[id*='-EnglishStrict']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                englishStrict: true
+                            });
+                        });
+                        
+                        $("input[id*='DOB-Check']").rules("add", {
+                            validateDOB:true
+                        });
+
+                        // Rancho_IA_AML_Inspection_20211005: validate if selected area is Sanctioned Jurisdiction
+                        $("[id*='Required-HolderNationality']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                validateNationality:true
+                            });
+                        });
+
+                        $("[id*='Required-HolderPResidence']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                validateCountry:true
+                            });
+                        });
+
+                        $("[id*='Required-HolderPBirth']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                validateBirthPlace:true
+                            });
+                        });
+                </script>
+            
+            </apex:outputPanel>
+            
+            <!-- Ray's Updates End -->
+            
+            <script>
+                /*Document Ready*/
+                
+                $("[id$='Required-Mobile-code']").val('+852');
+                $("[id$='Required-Residential-code']").val('+852');
+                $("[id$='Required-Office-code']").val('+852');
+
+                if($("[id$='Ownership-Info-samePerAdd']").is( ":checked" ) == true){
+                    $("#Ownership-PerAdd").hide();
+                }else{
+                    $("#Ownership-PerAdd").show();
+                }
+                
+                if($("[id$='Ownership-Info-sameCorrAdd']").is( ":checked" ) == true){
+                    $("#Ownership-CorrAdd").hide();
+                }else{
+                    $("#Ownership-CorrAdd").show();
+                }
+        
+                var sourceOfFundChoice = '{!Request.Source_of_Fund__c}';
+                
+                if(sourceOfFundChoice.includes("Others")){
+                    $('#otherSourceOfFund').show();
+                    validationOtherSource();
+                }else{
+                    $('#otherSourceOfFund').hide();
+                }
+        
+                function onRadioChange(evt) {
+                  var val = $(this).val();
+                  var parent = $(this).parent();
+             
+                  $(parent).siblings('input[type="hidden"]').val(val);
+                }
+                
+                function changeSection(section){
+                    
+                    var icon = $(section).find('i');
+                    
+                    if(icon.hasClass("fa-chevron-down")){
+                        icon.removeClass("fa-chevron-down").addClass("fa-chevron-up");
+                    }else if(icon.hasClass("fa-chevron-up")){
+                        icon.removeClass("fa-chevron-up").addClass("fa-chevron-down");
+                    }
+                }
+                
+                
+                function getSourceOfFundChoice(choice){
+                    if(choice.includes("Others")){
+                        $('#otherSourceOfFund').show();
+                        validationOtherSource();
+                    }else{
+                        $('#otherSourceOfFund').hide();
+                    }
+                }
+                
+                function validationOtherSource(){
+                    $("select[id*='Required-Other-Source']").rules("add", {
+                        required: true
+                    });
+                }
+                
+                function validationPerAddress(){
+                
+                    $("#Ownership-PerAdd").toggle();
+                    
+                }
+                
+                function validationCorrAddress(){
+                
+                    $("#Ownership-CorrAdd").toggle();
+                    
+                }
+                
+                
+                //Nicole's Update
+                    function isNumberKey(charCode, min, max) {
+                    if ((charCode >= 48 && charCode <= 57) || 
+                        $.inArray(charCode, [8, 127]) !== -1) {
+                        if (!isNaN(min) && !isNaN(max) && typeof min != undefined && typeof max != undefined) {
+                            if ((charCode - 48) >= min && (charCode - 48) <= max) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        } else {
+                            return true;
+                        }
+                    } else {
+                        return false;
+                    }
+                }
+                    
+                function onKidAgeChange(evt) {
+                    return isNumberKey(evt.charCode);
+                }
+                    
+                //CR-56_Link_20220214
+                $('.question-kid-age').on("keypress",onKidAgeChange);
+        
+                function hiddenonblur(input){                    
+                    var InputId = input.id;
+                    //CR-56_Link_20220214
+                    $("input[id*='" + InputId + "']").trigger("blur");
+                }
+                
+        
+                
+                function getCheckDOB(datetype , input){
+                
+                    $("input[id*='DOB-Check']").val('');
+                    var day = $("input[id*='Day-DOB-Val']").val();
+                    var month = $("input[id*='Month-DOB-Val']").val();
+                    var year = $("input[id*='Year-DOB-Val']").val()
+                    console.log(day+'/'+month+'/'+year);    
+                    
+                    if(day!='' && month!='' && year!=''){
+                        $("input[id*='DOB-Check']").val(day+'/'+month+'/'+year);
+                        console.log($("input[id*='DOB-Check']").val());  
+                    }
+                    //CR-56_Link_20220214
+                    $("input[id*='DOB-Check']").trigger("focus");
+                    
+                    Ownership.Validate.checkDOBRequired();
+                    $("input[id*='Required-DOB']").trigger("focus");
+                }
+                
+                function validateDOB(){
+                
+                    var day = $("input[id*='Day-DOB-Val']").val();
+                    var month = $("input[id*='Month-DOB-Val']").val();
+                    var year = $("input[id*='Year-DOB-Val']").val();
+                    console.log('input'+year+'/'+month+'/'+day);
+                    
+                    var thedate=new Date();
+                    var nowYear=thedate.getFullYear();
+                    var nowMonth=thedate.getMonth()+1;
+                    var nowDay=thedate.getDate();
+                    console.log('now'+nowYear+'/'+nowMonth+'/'+nowDay);
+                    
+                    if(day=='' || month=='' || year==''){
+                        return true;
+                    } 
+                    
+                    if(day!='' ){
+                        console.log('day'+day);
+                        if(day==0 || day>31){
+                            return false;
+                        }else if(year==nowYear && month==nowMonth &&　day>nowDay){
+                            return false;
+                        }
+                        
+                        if(month==2){
+                            if(day>29) return false;
+                            if(day == 29){
+                                console.log('Feb'+year%4);
+                                if(year%4!=0) return false;
+                            }
+                        }
+                        
+                        if(month==4 || month==6 || month==9 || month==11){
+                            if(day>30) return false;
+                        }
+                    } 
+                    
+                    if(month!=''){    
+                        console.log('month'+month);
+                        if(month==0 || month>12){
+                             return false;
+                        }else if(year==nowYear && month>nowMonth){
+                            return false;
+                        }
+                    }
+                    if(year!=''){      
+                        console.log('year'+year);                  
+                        if(year<1900 || year>nowYear){
+                             return false;
+                        }
+                    }
+                    return true;
+                }
+                
+                function changeSection(section){
+                    var icon = $(section).find('i');
+                    
+                    if(icon.hasClass("fa-chevron-down")){
+                        icon.removeClass("fa-chevron-down").addClass("fa-chevron-up");
+                    }else if(icon.hasClass("fa-chevron-up")){
+                        icon.removeClass("fa-chevron-up").addClass("fa-chevron-down");
+                    }
+                }
+                
+                // Rancho_IA_AML_Inspection_20211005: check selected area
+                function checkNationality(value){
+                    //Link_IA_AML_Inspection_20211229
+                    var codeList = {!isSanctionCodeListNa};
+                    var count = 0;
+                    console.log("value:"+value);
+                    console.log("codeList:"+codeList);
+                    codeList.forEach((data)=>{
+                        if(value == data.toString()){
+                            count++;
+                        }
+                    });
+                    if(count>0){
+                        return false;
+                    }
+                    return true;
+                }
+
+                function checkCountry(value){
+                    //Link_IA_AML_Inspection_20211229
+                    var codeList = {!isSanctionCodeListCou};
+                    var count = 0;
+                    console.log("value:"+value);
+                    console.log("codeList:"+codeList);
+                    codeList.forEach((data)=>{
+                        if(value == data.toString()){
+                            count++;
+                        }
+                    });
+                    if(count>0){
+                        return false;
+                    }
+                    return true;
+                }
+
+                //CR-56_Link_20220214
+                $("#change-beneficiary-panel").on("click",function() {
+                    if($("#change-beneficiary-content-panel").is(':visible')){
+                    
+                        var isBlankBeneficiary = 0;
+                         $("input[id*='-Beneficiary']").each(function(idx, elem){
+                                if($(elem).val() != ''){
+                                    isBlankBeneficiary += 1;
+                                }
+                        });
+                        
+                        if(isBlankBeneficiary==0){
+                           $("#change-beneficiary-content-panel").hide(changeSection(this));
+                           clearBeneficiary();
+                        }
+                    
+                    }else{
+                        $("#change-beneficiary-content-panel").show(changeSection(this));
+                        addRowBeneficiary();
+                    }
+                
+                });
+                
+                //Ownership.Validate.formValidation();
+
+            </script>
+
+        </div>
+    </div>
+</apex:page>

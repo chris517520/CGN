@@ -1,0 +1,943 @@
+<apex:page cache="false" standardcontroller="Account" extensions="AccountCreateCaseController" docType="html-5.0">
+    <apex:includescript value="{!URLFOR($Resource.jQuery_1_8_2_JS)}" />
+    <apex:includeScript value="/support/console/40.0/integration.js" />
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <apex:remoteObjects >
+        <apex:remoteObjectModel name="Case" fields="Id,Chat_Key__c,Subject,Origin" />
+    </apex:remoteObjects>
+    <script type="text/javascript">
+        var chatKey = '';
+        $j = jQuery.noConflict();
+        $(function() {
+            getChatKey();
+        });
+
+        /* add by Jack on 2022-08-25 for project: JOBR-150 retrieve UCID in Service Console */
+        window.onload = function(){
+            // console.log('url:'+window.location.href);
+            // console.log('url 2:'+document.referrer);
+            // console.log('url 3:'+document.location.href);
+            // console.log('param 4:'+window.parent.location.search);
+            // console.log('url 4:'+window.parent.location.href);
+            if("{!UCID}".length == 0){
+                getUCID();
+            }
+        }
+        
+        function getDetailsSuccess(result) {
+            if(result.success == true) {
+                console.log(result);
+                chatKey = result.details.chatKey;
+                $('input[type="hidden"][id$="ckey"]').val(chatKey);
+            } 
+        }
+
+        // add by Jack on 2021-11-09 for project: Case recategory begin
+        function getCategoryNature(){
+                var nature = document.querySelector("[id$='Nature']");
+                var category = document.querySelector("[id$='Category']");
+                var type = document.querySelector("[id$='theType']");
+                natureOnChange(category.value, nature.value,type.value);
+            // if(type=='Category'){
+            //     console.log('nature:' + nature.value);
+            //     console.log('category:' + value);
+            //     categoryOnChange(category.value, nature.value,type.value);
+            // }else if(type=='Nature'){
+            //     categoryOnChange(category.value, nature.value,type.value);
+            // }else{
+            //     typeOnChange(category.value, nature.value,type.value)
+            // }
+            // var resultMap=new Map();
+            // resultMap.set('nature', nature);
+            // resultMap.set('category', value);
+            // var jsonString=JSON.stringify(resultMap);
+            // console.log(jsonString);
+        }
+        // add by Jack on 2021-11-09 for project: Case recategory end
+
+        //kirk---Edit doctor information---20210409
+        // function editOnClick(){
+        //     // isEdit=value;
+        //     var edi = document.querySelector("input[id$='DoctorName']");
+        //     var num = document.querySelector("input[id$='physicianContact']");
+        //     edi.disabled=!edi.disabled;
+        //     num.disabled=!num.disabled;
+        //     // num.type="number";
+        // }
+        //kirk---Change email properties---20210410
+        function emailClick(){
+            var eml = document.querySelector("input[id$='phyEmail']");
+            eml.type="email";
+        }
+        //kirk---email regular expression validation---20210410
+        function emailChange(){
+            var eml = document.querySelector("input[id$='phyEmail']");
+            let str = eml.value;
+            const reg = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/;
+            if (reg.test(str)) {
+                return true;   
+            }else{
+                alert("Email format error.");
+            }
+        }
+
+        function panelOnClick(){
+            var pal = document.querySelector("select[id$='selectedPanelName']");
+            pal.disabled=!pal.disabled;
+            if(pal.value!='N'){
+                $('select[id$="selectedPanelName"]').val('N');
+            }
+        }
+    
+        function getChatKey() {
+            var primaryTabId = '';
+            sforce.console.getEnclosingPrimaryTabId(function(result) {
+                primaryTabId = result.id;
+                sforce.console.chat.getDetailsByPrimaryTabId(primaryTabId, getDetailsSuccess);
+            });
+        }
+        function refreshPage() {
+            // initDisable();
+            reRenderInsertValueAndBtnPanel();  //rerender to get updated insert flag and button disbaled->false as default, enable btn again, added by Connor
+            var insertSuccess = $('input[type="hidden"][id$="insertSuccess"]').val();
+            if(insertSuccess == 1) {
+                alert('Case successfully saved');
+                if (sforce.console.isInConsole()) {
+                    sforce.console.getPrimaryTabIds(function(result){
+                        for(var i=0;i<result.ids.length;i++){
+                            sforce.console.refreshPrimaryTabById(result.ids[i], true , null , true);
+                        }
+                    });
+                }
+                else{
+                     refresh();
+                }
+            }
+            // add by kit
+            $(".col-sm-1").each(function(){
+                if($(this)[0].checked){
+                    checkSameValue($(this)[0],$(this).parent().next().text());
+                }
+            });
+            $(".col-sm-2").each(function(){
+                if($(this)[0].checked){
+                    checkSameValue($(this)[0],$(this).parent().next().text());
+                }
+            });
+        }
+    </script>
+
+    <script>
+        var $j = jQuery.noConflict();
+
+        function isSalesforce1() {
+            if((typeof sforce != 'undefined') && (sforce != null))
+                return true;
+            return false;
+        }
+        /* add by Jack on 2022-08-29 for project: JOBR-150 retrieve UCID in Service Console */
+        var preType='';
+        function disableButton(type) { //modified by Connor
+            //$j('#divCreateCase .btn').button('loading');
+            // console.log('UCID:{!UCID}');
+            // var UCID = $('span[id$="opUCID"]').text();
+            // console.log('UCID2:'+UCID);
+
+            console.log('this button type:'+type);
+            var UCID = $('span[id$="opUCID"]').text();
+            console.log('UCID2:'+UCID);
+            var overlay = document.getElementById('confirmPageOverlay');
+            var specialBox = document.getElementById('confirmPageOverlayPagePop');
+            if (type == 'Save' || type == 'SaveAndNew') {
+                if (UCID!=null&&UCID!=""&&UCID!=undefined) {
+                    // $j('#divCreateCase .btn').attr('disabled','true');
+                    if(type == 'Save'){
+                        saveAF();
+                    }else if(type == 'SaveAndNew'){
+                        saveAndNew();
+                    }
+                }else{
+                   if (overlay.style.display=="none") {
+                        console.log('confirmPageOverlay block');
+                        preType = type;
+                        overlay.style.display = "block";
+                        specialBox.style.display = "block";
+                   } 
+                }
+            }else if (type=='confirm') {
+                console.log('confirm none');
+                // $j('#divCreateCase .btn').attr('disabled','true');
+                if(preType == "SaveAndNew"){
+                    saveAndNew();
+                }else{
+                    saveAF();
+                }
+                overlay.style.display = "none";
+                specialBox.style.display = "none";
+            }else if (type=='cancel') {
+                console.log('cancel none');
+                overlay.style.display = "none";
+                specialBox.style.display = "none";
+            }
+            // $('div[id$="CaseForm"]').submit();
+           // $j('#divCreateCase .btn').attr('disabled','true'); //prevent multi-click
+           // saveAF();  // then call apex method
+        }
+
+        function getUCID(){
+            $('[id="refreshBtn"]').addClass("btnDisabled");
+            $('[id="refreshBtn"]').attr("disabled",true);
+            getUCIDFromWS();
+        }
+
+    </script>
+    <style>
+        .requiredAsterisk {
+            color: #c00;
+            font-size: 18px;
+            vertical-align: middle;
+        }
+        /* add by Jack on 2022-08-29 for project: JOBR-150 retrieve UCID in Service Console */
+        #confirmPopUp{
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        div#confirmPageOverlay {
+            display: none;
+            z-index: 10;
+            background: rgba(0,0,0,0.2);/*#D9D9D6;*/
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0px;
+            left: 20px;
+            text-align: center;
+        }
+        @media (max-width: 767px) {
+            div#confirmPageOverlayPagePop {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 100px auto 0px auto; 
+                width: 80%;
+                max-height: 70%;
+                /*overflow-y: auto;*/
+                background: #ffff;
+                color: #000;
+                left: 5%;
+                padding: 20px;
+                border-radius: 5px;
+            }
+        }
+        @media (min-width: 768px) {
+            div#confirmPageOverlayPagePop {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 124px auto;
+                width: 40%;
+                max-height: 70%;
+                /*overflow-y: auto;*/
+                background: #ffff;
+                color: #000;
+                left: 30%;
+                padding: 20px;
+                border-radius: 5px;
+            }
+        }   
+        .UCID-grid-container {
+            display: grid;
+            grid-template-columns: 17% 20% 2% 10%;
+            grid-template-rows: 24px;
+            gap: 2px;
+            border-bottom-color: rgb(224, 227, 229);
+            border-bottom-style: solid;
+            border-bottom-width: 1px;
+        }
+        .UCID-grid-item{
+            padding: 4px 0px;
+        }
+    </style>
+
+    <!--junda add 20210113-->
+    <div class="bs col-xs-12 col-sm-12 field-value" style="{!IF(isCMUser, '', 'display:none')}">
+        <apex:outputText value="{!$Label.CMCreateCaseMsg}"/>
+    </div>
+
+    <div id="divCreateCase" style="width:765px;{!IF(isCMUser, 'display:none', '')}">
+        <!--junda add end-->
+
+        <div>
+            <apex:outputpanel id="casePanel">
+                <apex:form id="CaseForm">
+                    <apex:actionFunction name="setValue" action="{!nullfunction}" rerender="nonreasonPanel" />
+                    <apex:actionFunction name="refresh" action="{!backToRecord}" rerender="casePanel"/>
+                    <!-- add by Jack on 2022-08-29 for project: JOBR-150 retrieve UCID in Service Console -->
+                    <apex:actionFunction name="saveAF" action="{!onSave}" oncomplete="refreshPage()" rerender="casePanel" status="loader-icon"/><!--added by Connor-->
+                    <apex:actionFunction name="saveAndNew" action="{!onSaveAndNew}" oncomplete="refreshPage()" rerender="casePanel" status="loader-icon"/><!--added by Connor-->
+                    <apex:actionFunction name="editOnClick" action="{!editOnClick}" reRender="casePanel" immediate="true" status="loader-icon"/>
+                    <apex:actionFunction name="doctorOnChange" action="{!doctorOnChange}" rerender="casePanel" immediate="true">
+                     <apex:param name="thirdParam" assignTo="{!doctor}" value="" />
+                    </apex:actionFunction>
+                    <!--  add by Jack on 2021-11-09 for project: Case recategory  begin-->
+                    <apex:actionFunction name="natureOnChange" action="{!natureOnChange}" rerender="casePanel" immediate="true" status="loader-icon"><!-- Rancho_HC17_20210422 -->
+                        <apex:param name="category" assignTo="{!category}" value="" />
+                        <apex:param name="nature" assignTo="{!nature}" value="" />
+                        <apex:param name="type" assignTo="{!type}" value="" />
+                    </apex:actionFunction>
+                    <!-- <apex:actionFunction name="categoryOnChange" action="{!categoryOnChange}" rerender="casePanel" immediate="true" status="loader-icon">
+                        <apex:param name="category" assignTo="{!category}" value="" />
+                        <apex:param name="nature" assignTo="{!nature}" value="" />
+                        <apex:param name="type" assignTo="{!type}" value="" />
+                    </apex:actionFunction>
+                    <apex:actionFunction name="typeOnChange" action="{!typeOnChange}" rerender="casePanel" immediate="true" status="loader-icon">
+                        <apex:param name="category" assignTo="{!category}" value="" />
+                        <apex:param name="nature" assignTo="{!nature}" value="" />
+                        <apex:param name="type" assignTo="{!type}" value="" />
+                    </apex:actionFunction> -->
+                    <!--  add by Jack on 2021-11-09 for project: Case recategory end-->
+                    <apex:actionFunction name="reRenderInsertValueAndBtnPanel" rerender="insertSuccess,btnPanel"><!--added by Connor-->
+                    </apex:actionFunction> 
+                    <!-- Rancho_HC17_20210422 -->
+                    <apex:actionFunction name="checkTreatmentLocation" action="{!checkTreatmentLocation}" reRender="casePanel" immediate="true">
+                        <apex:param name="locationValue" assignTo="{!locationValue}" value=""/>
+                    </apex:actionFunction>
+                    <apex:actionFunction name="checkCSRReason" action="{!checkCSRReason}" reRender="casePanel" immediate="true">
+                        <apex:param name="CSRReasonValue" assignTo="{!reasonValue}" value=""/>
+                    </apex:actionFunction>
+                    <apex:actionFunction name="checkPriority" action="{!checkPriority}" reRender="casePanel" immediate="true">
+                        <apex:param name="priorityValue" assignTo="{!priorityValue}" value=""/>
+                    </apex:actionFunction>
+                    <!-- add by Jack on 2022-08-29 for project: JOBR-150 retrieve UCID in Service Console -->
+                    <apex:actionFunction name="getUCIDFromWS" action="{!getUCIDFromWS}" reRender="UCIDPanel,pageMessage" immediate="true" status="UCID-loader-icon"/>
+
+                    <apex:pageblock >
+                        <apex:pageblockbuttons location="top">
+                         <apex:outputpanel id="btnPanel"> <!--panel added by Connor-->
+                         <!-- add by Jack on 2022-08-29 for project: JOBR-150 retrieve UCID in Service Console -->
+                            <input class="btn" onclick="disableButton('Save')" value="Save" type="button"/><!--modified by Connor-->
+                            <input class="bs btn btn-primary pull-left" onclick="disableButton('SaveAndNew')" value="Save&New"  type="button"/><!--modified by Connor-->
+                            <apex:commandbutton styleclass="bs btn btn-primary pull-left" action="{!onCancel}" value="Cancel" rerender="casePanel" />
+                        </apex:outputpanel>
+                        </apex:pageblockbuttons>
+                        <!-- add by Jack on 2022-08-29 for project: JOBR-150 retrieve UCID in Service Console -->
+                        <apex:pagemessages id="pageMessage"/>
+                        <apex:outputPanel id="UCIDPanel">
+                            <div class="UCID-grid-container">
+                            <div class="UCID-grid-item"><apex:outputLabel style="float: right;font-size: 91%;font-weight: lighter;">{!$ObjectType.Case.Fields.UCID__c.Label}</apex:outputLabel></div>
+                            <div class="UCID-grid-item"><apex:outputText style="padding-left: 15px;" id="opUCID" value="{!UCID}"></apex:outputText></div>
+                            <div class="UCID-grid-item">
+                                <apex:actionStatus id="UCID-loader-icon">
+                                <apex:facet name="start">      
+                                    <apex:outputPanel >
+                                        <img src="/img/loading32.gif" width="13" height="13" />
+                                    </apex:outputPanel>      
+                                </apex:facet>
+                            </apex:actionStatus>
+                        </div>
+                            <div style="padding:2px 0;"><input style="margin:0;" id="refreshBtn" class="btn" onclick="getUCID()" type="button" value="Refresh"/></div>
+                            <script>
+                                if("{!UCID}".length>0){
+                                    $('[id="refreshBtn"]').addClass("btnDisabled");
+                                    $('[id="refreshBtn"]').attr("disabled",true);
+                                }
+                            </script>
+                            </div>
+                            <!-- <apex:commandButton styleclass="btn" disabled="{!!ISBLANK(UCID)}" onclick="getUCID();" value="Refresh"/> -->
+                        </apex:outputPanel>
+                        <apex:pageblocksection columns="1">
+                            
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >Case Owner</apex:outputLabel>
+                                <apex:outputField id="Status" value="{!newCase.Ownerid}" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Title</apex:outputlabel>
+                                <apex:inputfield id="Type" value="{!newCase.Title__c}" required="true" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Account Name</apex:outputlabel>
+                                <apex:inputfield id="account" value="{!newCase.accountid}" required="true" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel >Contact Name</apex:outputlabel>
+                                <apex:inputfield id="ContactName" value="{!newCase.contactid}" required="true" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel >Source</apex:outputlabel>
+                                <apex:inputfield id="Type" value="{!newCase.Source__c}" required="true" />
+                            </apex:pageblocksectionitem>
+                            <!-- Rancho_HC236_20231024 - capture the consent and pass the information to clinical team -->
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >Introduce CMS</apex:outputLabel>
+                                <apex:inputField id="introduceCMS" value="{!newCase.Introduce_CMS__c}" required="true" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Nature__c.label}" for="Nature" />
+                                <apex:inputfield id="Nature" value="{!newCase.Nature__c}" required="true" onchange="getCategoryNature()" /><!--  add by Jack on 2021-11-09 for project: Case recategory -->
+                            </apex:pageblocksectionitem>
+                            <!-- add by Jack on 2021-11-09 for project: Case recategory begin. To remove Pending to handle option in nature__c field -->
+                            <script type="text/javascript">
+                                var natureOption = document.querySelectorAll('[id$="Nature"]')[0];
+                                if (natureOption) {
+                                    console.log('remove pending to handle');
+                                    for (var i=0; i<natureOption.length; i++) {
+                                        if (natureOption.options[i].value == 'Pending to handle'){
+                                            natureOption.remove(i);
+                                        }
+                                    }
+                                }
+                            </script>
+                            <!-- add by Jack on 2021-11-09 for project: Case recategory end -->
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Media__c.label}" for="Media" />
+                                <apex:inputfield id="Media" value="{!newCase.Media__c}" required="true" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Channel__c.label}" for="Channel" />
+                                <apex:inputfield id="Channel" value="{!newCase.Channel__c}" required="true" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Category__c.label}" for="Category" />
+                                <apex:inputfield id="Category" value="{!newCase.Category__c}" required="true" onchange="getCategoryNature()" /><!--  add by Jack on 2021-11-09 for project: Case recategory-->
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Type__c.label}" for="Type" />
+                                <apex:inputfield id="theType" value="{!newCase.Type__c}" required="true" onchange="getCategoryNature()" /><!--  add by Jack on 2021-11-09 for project: Case recategory-->
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Sub_Type__c.label}" for="SubType" />
+                                <apex:inputfield id="SubType" value="{!newCase.Sub_Type__c}" required="true" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.status.label}" for="Status" />
+                                <apex:inputfield id="Channel" value="{!newCase.status}" required="true" />
+                            </apex:pageblocksectionitem>
+                            <!--add by Jack on 2022-9-07 for project: Case .new customer demand-->
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Need__c.label}" for="Need FC Call Back" />
+                                <apex:inputfield id="Channel" value="{!newCase.Need__c}" required="false" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Remarks__c.label}" for="Case Remarks" />
+                                <apex:inputfield id="Remarks" value="{!newCase.Remarks__c}" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel >Nature-Others</apex:outputlabel>
+                                <apex:inputfield id="natureothers" value="{!newCase.Nature_Others__c}" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputLabel >Unique ID</apex:outputLabel>
+                                <apex:inputField id="uniqueid" value="{!newCase.Unique_ID__c}" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputLabel >Call List ID</apex:outputLabel>
+                                <apex:inputField id="calllistid" value="{!newCase.Call_List_ID__c}" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel >First Name of Non-existing Customer</apex:outputlabel>
+                                <apex:inputfield id="firstname" value="{!newCase.First_Name_Of_Non_Existing_Customer__c}" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel >Last Name of Non-existing Customer</apex:outputlabel>
+                                <apex:inputfield id="LastName" value="{!newCase.Last_Name_of_Non_Existing_Customer__c}" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel >Contact Phone of Non-existing Customer</apex:outputlabel>
+                                <apex:inputfield id="phone" value="{!newCase.Contact_Email_of_Non_Existing_Customer__c}" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel >Contact Email of Non-existing Customer</apex:outputlabel>
+                                <apex:inputfield id="Email" value="{!newCase.Contact_Phone_of_Non_Existing_Customer__c}" />
+                            </apex:pageblocksectionitem>
+                        </apex:pageblockSection>
+
+                        <apex:pageblockSection title="Medical Classification Details" columns="1" rendered="{!showMedicalClassInfo}">
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Diagnosis__c.label}"/>
+                                <apex:inputfield id="Diagnosis" value="{!newCase.Diagnosis__c}" required="true" /><!-- Rancho_HC17_20210422 -->
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="Treatment/Admission Date"/>
+                                <apex:inputfield id="Date" value="{!newCase.Treatment_Date__c}" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Treatment_operation_plan__c.label}"/>
+                                <apex:inputfield id="Plan" value="{!newCase.Treatment_operation_plan__c}" required="true" /><!-- Rancho_HC17_20210422 -->
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="Quoted cost/Surgeon Fee"/>
+                                <!-- <apex:inputfield id="Amount" value="{!newCase.Amount__c}" onkeyup="value=value.replace(/[^1234567890-]+/g,'')"/> Rancho Test -->
+                                <apex:input id="Amount" value="{!quotedAmount}" type="number"/>
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem rendered="{!!panelAble}">
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Doctor__c.label}"/>
+                                <apex:inputfield id="Doctor" value="{!newCase.Doctor__c}" onchange="doctorOnChange(this.value)" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel >Edit Doctor information</apex:outputlabel>
+                                <!-- <input type="checkbox" value="{!isEdit}" onchange="editOnClick()" /> -->
+                                <apex:inputCheckbox id="isEdit" value="{!isEdit}" onchange="editOnClick()" />     
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.GOP_Physician_Name__c.label}"/>
+                                <apex:outputPanel id="DoctorPannel">
+                                <apex:inputfield rendered="{!enableEdit}" id="DoctorName" value="{!newCase.GOP_Physician_Name__c}" />
+                                <apex:inputfield rendered="{!!enableEdit}" html-disabled="true" id="DisableDoctorName" value="{!newCase.GOP_Physician_Name__c}" />
+                                </apex:outputPanel>
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="Physician Contact Number"/>
+                                <apex:outputPanel id="physicianPannel">
+                                <apex:inputfield rendered="{!enableEdit}" id="physicianContact" value="{!newCase.GOP_Physician_Contact_Number__c}" type="tel"/>
+                                <apex:inputfield rendered="{!!enableEdit}" html-disabled="true" id="DisablephysicianContact" value="{!newCase.GOP_Physician_Contact_Number__c}" />
+                                </apex:outputPanel>
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="Physician Email"/>
+                                <apex:inputfield id="phyEmail" onclick="emailClick()" onchange="emailChange()" value="{!newCase.Physician_Email__c}"/>
+                            </apex:pageblocksectionitem>
+                            <!-- <apex:pageblocksectionitem >
+                                <apex:outputlabel value="Panel Name"/> 
+                                <apex:selectList value="{!newCase.Panel__c}" id="selectedPanelName" disabled="{!panelAble}" style="height:23px;width: 230px" size="1" styleClass="bs form-field-style-select" >
+                                    <apex:selectOptions value="{!panelList}" />        
+                                </apex:selectList>
+                            </apex:pageblocksectionitem> --><!-- Rancho_HC17_20210422 -->
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel >Panel Doctor</apex:outputlabel>
+                                <apex:inputField id="isPanel" value="{!newCase.Is_Panel_Doctor__c}" onclick="panelOnClick()" /><!-- Rancho_HC17_20210422 -->
+                            </apex:pageblocksectionitem>
+                            <!-- Rancho_HC17_20210422 Start -->
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Product_Line__c.label}"/>
+                                <apex:inputfield id="ProductLine" value="{!newCase.Product_Line__c}" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Treatment_Location__c.label}"/>
+                                <apex:inputfield id="TreatmentLocation" value="{!newCase.Treatment_Location__c}" onchange="checkTreatmentLocation(this.value)"/>
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Treatment_Location_Remark__c.label}"/>
+                                <apex:inputfield id="TreatmentLocationRemark" value="{!newCase.Treatment_Location_Remark__c}" required="{!locationRemarkRquired}"/>
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Request_Bedtype__c.label}"/>
+                                <apex:inputfield id="RequestBedtype" value="{!newCase.Request_Bedtype__c}" />
+                            </apex:pageblocksectionitem>
+                            <!-- Rancho_HC17_20210422 End -->
+                        </apex:pageblockSection>
+
+                        <apex:pageblockSection title="CSR Decision" columns="1" rendered="{!showCSRDecision}">
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Priority.label}"/>
+                                <apex:inputfield id="Priority" value="{!newCase.Priority}" required="true" onchange="checkPriority(this.value)"/>
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.CS_Reason__c.label}"/>
+                                <apex:inputfield id="reason" value="{!newCase.CS_Reason__c}" required="{!reasonRequired}" onchange="checkCSRReason(this.value)"/><!-- Rancho_HC17_20210422 -->
+                            </apex:pageblocksectionitem>
+                            <!-- Rancho_HC17_20210422 -->
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.CSR_Reason_Others__c.label}"/>
+                                <apex:inputfield id="CSRReasonOthers" value="{!newCase.CSR_Reason_Others__c}" required="{!remarkRequired}"/>
+                            </apex:pageblocksectionitem>
+                        </apex:pageblockSection>
+                        
+                        <apex:pageblockSection title="Case Feedback" columns="1">
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Pulse_Survey_Category__c.label}" for="pulse survey caterory" />
+                                <apex:inputfield id="pulsesurvey" value="{!newCase.Pulse_Survey_Category__c}" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel >Pulse Survey Result</apex:outputlabel>
+                                <apex:inputfield id="Result" value="{!newCase.Result__c}" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Score__c.label}" for="Score" />
+                                <apex:inputfield id="Score" value="{!newCase.Score__c}" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.PsRemark__c.label}" for="PsRemark" />
+                                <apex:inputfield id="PsRemark" value="{!newCase.PsRemark__c}" />
+                            </apex:pageblocksectionitem>
+                        </apex:pageblockSection>
+                        
+                        <!-- BEGIN HKITSFDC-4 -->
+                        <apex:pageblockSection title="Complaint" columns="1" rendered="{!IF(newCase.Nature__c == 'Complaint',true,false)}">
+                        
+                        <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Complaint_Date__c.label}" for="Complaint Date" />
+                                <apex:inputfield id="ComplaintDate" value="{!newCase.Complaint_Date__c}" />
+                            </apex:pageBlockSectionItem>
+                            <!--<apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Complaint_Status__c.label}" for="Complaint Status" />
+                                <apex:inputfield id="ComplaintStatus" value="{!newCase.Complaint_Status__c}" />
+                            </apex:pageBlockSectionItem>-->
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Complaint_Level__c.label}" for="Complaint Level" />
+                                <apex:inputfield id="ComplaintLevel" value="{!newCase.Complaint_Level__c}" />
+                            </apex:pageBlockSectionItem>
+                            <!--<apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Complaint_Areas__c.label}" for="Complaint Areas" />
+                                <apex:inputfield id="ComplaintAreas" value="{!newCase.Complaint_Areas__c}" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Substantiated__c.label}" for="Substantiated" />
+                                <apex:inputfield id="Substantiated" value="{!newCase.Substantiated__c}" />
+                            </apex:pageBlockSectionItem>-->
+                            <!-- <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Complaint_Case_Number__c.label}" for="Complaint Case Number" />
+                                <apex:inputfield id="ComplaintCaseNumber" value="{!newCase.Complaint_Case_Number__c}" />
+                            </apex:pageBlockSectionItem>-->
+                          
+                             <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Complaint_Case_Handler__c.label}" for="Complaint Case Handler" />
+                                <apex:inputfield id="ComplaintCaseHandler" value="{!newCase.Complaint_Case_Handler__c}" />
+                            </apex:pageBlockSectionItem> 
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Note_to_CS__c.label}" for="Note to CS" />
+                                <apex:inputfield id="NotetoCS" value="{!newCase.Note_to_CS__c}" />
+                            </apex:pageBlockSectionItem>
+                        </apex:pageblockSection>
+                        <!-- END HKITSFDC-4 -->
+                        
+                        <!--<apex:pageblockSection title="Survey Type" columns="1">
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel >Survey Type</apex:outputlabel>
+                                <apex:inputfield id="Result" value="{!newCase.Survey_Type__c}" />
+                            </apex:pageblocksectionitem>
+                        </apex:pageblockSection>
+                         <apex:pageblockSection title="Customer Feedback" columns="1">
+                            <apex:inputField value="{!nps.in_gage__Answer_1__c}"/>
+                            <apex:inputField value="{!nps.in_gage__Answer_2__c}"/>
+                            <apex:inputField value="{!nps.in_gage__Feedback_Comment__c}"/>
+                            <apex:inputField value="{!nps.in_gage__Employee__c}"/>
+                        </apex:pageblockSection>-->
+                        <apex:pageblockSection title="Service Sales(S2S)" columns="1">
+                            <!--Added by Nicole-->
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Lead_Source__c.label}" for="CSS2SLeadSourse"/>
+                                <apex:inputfield id="CSS2SLeadSourse" value="{!newCase.Lead_Source__c}"  />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.S2S__c.label}" for="S2S" />
+                                <apex:inputfield id="S2S" value="{!newCase.S2S__c}" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel >Non-Acceptance Reason</apex:outputlabel>
+                                <apex:inputfield id="pulsesurvey" value="{!newCase.S2S_Non_Acceptance_Reason__c}" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel >Partner</apex:outputlabel>
+                                <apex:inputfield id="partner" value="{!newCase.Partner__c}" />
+                            </apex:pageblocksectionitem>
+
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.CS_S2S_Remark__c.label}" for="CS_S2S_Remark__c" />
+                                <apex:inputfield id="CSS2SRemark" value="{!newCase.CS_S2S_Remark__c}" />
+                            </apex:pageblocksectionitem>
+                            
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel >Name of TMR</apex:outputlabel>
+                                <apex:inputfield id="NameofTMR" value="{!newCase.TMR_Name__c}" />
+                            </apex:pageblocksectionitem>
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel >Already follow up by TMR</apex:outputlabel>
+                                <apex:inputCheckbox id="followbytmr" value="{!newCase.Follow_By_TMR__c}" />
+                            </apex:pageblocksectionitem>
+                        </apex:pageblockSection>
+
+                        <apex:pageblockSection title="Case Result" columns="1">
+                            <apex:pageblocksectionitem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.One_and_Done__c.label}" for="oneanddone" />
+                                <apex:inputfield id="oneanddone" value="{!newCase.One_and_Done__c}" onchange="setValue();" />
+                            </apex:pageblocksectionitem>
+                            <apex:outputpanel id="nonreasonPanel">
+                                <apex:pageblocksectionitem >
+                                    <apex:outputlabel >Non-One and Done Reason</apex:outputlabel>
+                                    <apex:inputfield id="nononeanddonereason" value="{!newCase.Non_One_And_Done_Reason__c}" />
+                                </apex:pageblocksectionitem>
+                            </apex:outputpanel>
+                        </apex:pageblocksection>
+                        <div class="bPageBlock brandSecondaryBrd secondaryPalette">
+
+                            <apex:actionFunction action="{!handleNext_Ind_PH}" name="handleNext_Ind_PH" namespace="individualPH" reRender="policytable" status="loader-icon" />
+                            <apex:actionFunction action="{!handlePrevious_Ind_PH}" name="handlePrevious_Ind_PH" namespace="individualPH" reRender="policytable" status="loader-icon" />
+                            <apex:actionFunction action="{!handleNext_Ind_PI}" name="handleNext_Ind_PI" namespace="individualPI" reRender="policyInsuredtable" status="loader-icon" />
+                            <apex:actionFunction action="{!handlePrevious_Ind_PI}" name="handlePrevious_Ind_PI" namespace="individualPI" reRender="policyInsuredtable" status="loader-icon" />
+                            <apex:actionFunction action="{!handleNext_Gp}" name="handleNext_Gp" namespace="group" reRender="groupPolicytable" status="loader-icon" />
+                            <apex:actionFunction action="{!handlePrevious_Gp}" name="handlePrevious_Gp" namespace="group" reRender="groupPolicytable" status="loader-icon" />
+
+                            <apex:actionStatus id="loader-icon">
+                                <apex:facet name="start">
+                                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                                        &nbsp;
+                                    </div>
+                                    <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                                        <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                                            <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                                            <span style="display: inline-block; padding: 10px 0px;">Please Wait...</span>
+                                        </div>
+                                    </div>
+                                </apex:facet>
+                            </apex:actionStatus>
+
+                            <apex:outputPanel id="policytable">
+                                <apex:pageBlock title="List as Policy Holder">
+                                    <apex:inputcheckbox >
+                                        <apex:actionsupport event="onclick" action="{!GetSelected}" onsubmit="checkAll(this)" rerender="Selected_PBS" />
+                                    </apex:inputcheckbox>
+                                    <apex:outputLabel styleClass="zen-deemphasize">Select all</apex:outputLabel>
+                                    <apex:pageBlockTable value="{!policys}" var="ph" first="{!StartIndex_Ind_PH}" rows="{!pageSize}">
+                                        <apex:column headerValue="Action" id="action">
+                                            <apex:inputcheckbox value="{!ph.selected}" id="checkedone" styleClass="bs col-sm-1" onclick="checkSameValue(this,'{!ph.policy.policyNumber}')" style="width:32px;!important"/>
+                                        </apex:column>
+                                        <apex:column headerValue="Policy No" style="width:65px;">
+                                            <apex:outputText value="{!ph.policy.policyNumber}"></apex:outputText>
+                                        </apex:column>
+                                        <apex:column headerValue="Product">
+                                            <apex:outputText value="">
+                                                <div class="onclick-pointer">{!ph.policy.planName}</div>
+                                            </apex:outputText>
+                                        </apex:column>
+                                        <apex:column headerValue="Status" style="width:130px">
+                                            <apex:outputText value="{!ph.policy.policyStatusDisplayName}"></apex:outputText>
+                                        </apex:column>
+                                        <apex:column headerValue="Person Insured">
+                                            <apex:repeat value="{!ph.policy.insuredList}" var="insured">
+                                                <apex:outputText value="">
+                                                    <div class="onclick-pointer">{!insured.fullName }</div>
+                                                </apex:outputText>
+                                            </apex:repeat>
+                                        </apex:column>
+                                        <apex:column headerValue="Source System" style="width:120px;"> 
+                                            <apex:outputText value="{!ph.policy.sourceSystem}"></apex:outputText>
+                                        </apex:column>
+                                    </apex:pageBlockTable>
+
+                                </apex:pageBlock>
+
+                                <div style="padding-top:10px;">
+                                    <apex:outputPanel rendered="{!If(TotalPage_Ind_PH>1 && HasPrevious_Ind_PH,true,false)}" style="cursor:pointer;color:blue;" styleClass="handle_page_active onclick-pointer" onclick="individualPH.handlePrevious_Ind_PH();">&lt;Previous Page</apex:outputPanel>
+                                    <apex:outputPanel rendered="{!!HasPrevious_Ind_PH}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>
+                                    <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                                    <apex:outputPanel rendered="{!If(TotalPage_Ind_PH>1 && HasNext_Ind_PH,true,false)}" style="cursor:pointer;color:blue;" styleClass="handle_page_active onclick-pointer" onclick="individualPH.handleNext_Ind_PH();">Next Page&gt;</apex:outputPanel>
+                                    <apex:outputPanel rendered="{!!HasNext_Ind_PH}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+
+                                </div>
+                            </apex:outputPanel>
+                        </div>
+
+                        <div>
+                            <apex:outputPanel id="policyInsuredtable">
+                                <apex:pageBlock title="List as Policy Insured">
+                                    <apex:inputcheckbox >
+                                        <apex:actionsupport event="onclick" action="{!getSelectedPI}" onsubmit="checkAllPI(this)" rerender="Selected_PBS" />
+                                    </apex:inputcheckbox>
+                                    <apex:outputLabel styleClass="zen-deemphasize">Select all</apex:outputLabel>
+                                    <apex:pageBlockTable value="{!persons}" var="pi" first="{!StartIndex_Ind_PI}" rows="{!pageSize}">
+                                        <apex:column headerValue="Action" id="action">
+                                            <apex:inputcheckbox value="{!pi.selected}" id="checkedone2" styleClass="bs col-sm-2" onclick="checkSameValue(this,'{!pi.policy.policyNumber}')" style="width:32px;!important"/>
+                                        </apex:column>
+                                        <apex:column headerValue="Policy No" style="width:65px;">
+                                            <apex:outputText value="">
+                                                <div class="onclick-pointer-pi">{!pi.policy.policyNumber}</div>
+                                            </apex:outputText>
+                                        </apex:column>
+                                        <apex:column headerValue="Product" >
+                                            <apex:outputText value="">
+                                                <div class="onclick-pointer-pi">{!pi.policy.planName}</div>
+                                            </apex:outputText>
+                                        </apex:column>
+                                         <apex:column headerValue="Status" style="width:130px">
+                                            <apex:outputText value="">
+                                                <div class="onclick-pointer-pi">{!pi.policy.policyStatusDisplayName}</div>
+                                            </apex:outputText>
+                                        </apex:column>
+                                        <apex:column headerValue="Person Insured">
+                                            <apex:outputText value="">
+                                                <div class="onclick-pointer-pi">{!pi.policy.holderName }</div>
+                                            </apex:outputText>
+                                        </apex:column>
+                                        <apex:column headerValue="Source System" style="width:120px;">
+                                            <apex:outputText value="">
+                                                <div class="onclick-pointer-pi">{!pi.policy.sourceSystem}</div>
+                                            </apex:outputText>
+                                        </apex:column>
+                                    </apex:pageBlockTable>
+
+                                </apex:pageBlock>
+
+                                <div style="padding-top:10px;">
+                                    <apex:outputPanel rendered="{!If(TotalPage_Ind_PI>1 && HasPrevious_Ind_PI,true,false)}" style="cursor:pointer;" styleClass="handle_page_active onclick-pointer" onclick="individualPI.handlePrevious_Ind_PI();">&lt;Previous Page</apex:outputPanel>
+                                    <apex:outputPanel rendered="{!!HasPrevious_Ind_PI}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>
+                                    <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                                    <apex:outputPanel rendered="{!If(TotalPage_Ind_PI>1 && HasNext_Ind_PI,true,false)}" style="cursor:pointer;" styleClass="handle_page_active onclick-pointer" onclick="individualPI.handleNext_Ind_PI();">Next Page&gt;</apex:outputPanel>
+                                    <apex:outputPanel rendered="{!!HasNext_Ind_PI}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+
+                                </div>
+                            </apex:outputPanel>
+                        </div>
+
+                        <div>
+                            <apex:outputPanel id="groupPolicytable">
+                                <apex:pageBlock title="Group Policy">
+                                    <apex:inputcheckbox >
+                                        <apex:actionsupport event="onclick" action="{!getSelectedGroup}" onsubmit="checkAllGroup(this)" rerender="Selected_PBS" />
+                                    </apex:inputcheckbox>
+                                    <apex:outputLabel styleClass="zen-deemphasize">Select all</apex:outputLabel>
+                                    <apex:pageBlockTable value="{!groups}" var="g" first="{!StartIndex_Gp}" rows="{!pageSize}">
+                                        <apex:column headerValue="Action" id="action">
+                                            <apex:inputcheckbox value="{!g.selected}" id="checkedone3" styleClass="bs col-sm-3" style="width:32px;!important"/>
+                                        </apex:column>
+                                        <apex:column headerValue="Policy No" style="width:65px">
+                                            <apex:outputText value="">
+                                                <div class="onclick-pointer-pi">{!g.person.policyNumber}</div>
+                                            </apex:outputText>
+                                        </apex:column>
+                                        <apex:column headerValue="Product">
+                                            <apex:outputText value="">
+                                                <div class="onclick-pointer-pi">{!g.person.planDescription}</div>
+                                            </apex:outputText>
+                                        </apex:column>
+                                        <apex:column headerValue="Status" style="width:130px">
+                                            <apex:outputText value="">
+                                                <div class="onclick-pointer-pi">{!g.person.memberStatusDisplay }</div>
+                                            </apex:outputText>
+                                        </apex:column>
+                                        <apex:column headerValue="Person Insured">
+                                            <apex:outputText value="">
+                                                <div class="onclick-pointer-pi">{!g.person.fullName }</div>
+                                            </apex:outputText>
+                                        </apex:column>
+                                        <apex:column headerValue="Source System" style="width:120px;">
+                                            <apex:outputText value="">
+                                                <div class="onclick-pointer-pi">{!g.person.sourceSystem}</div>
+                                            </apex:outputText>
+                                        </apex:column>
+                                    </apex:pageBlockTable>
+
+                                </apex:pageBlock>
+
+                                <div style="padding-top:10px;">
+                                    <apex:outputPanel rendered="{!If(TotalPage_gP>1 && HasPrevious_gP,true,false)}" style="cursor:pointer;" styleClass="handle_page_active onclick-pointer" onclick="group.handlePrevious_Gp();">&lt;Previous Page</apex:outputPanel>
+                                    <apex:outputPanel rendered="{!!HasPrevious_Gp}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>
+                                    <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                                    <apex:outputPanel rendered="{!If(TotalPage_Gp>1 && HasNext_Gp,true,false)}" style="cursor:pointer;" styleClass="handle_page_active onclick-pointer" onclick="group.handleNext_Gp();">Next Page&gt;</apex:outputPanel>
+                                    <apex:outputPanel rendered="{!!HasNext_Gp}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+
+                                </div>
+                            </apex:outputPanel>
+                        </div>
+
+                        <apex:inputhidden id="ckey" value="{!newCase.Chat_Key__c}" />
+                        <apex:inputhidden id="insertSuccess" value="{!insertSuccess}" />
+                    </apex:pageBlock>
+
+                </apex:form>
+            </apex:outputPanel>
+            <!-- add by Jack on 2022-08-29 for project: JOBR-150 retrieve UCID in Service Console -->
+            <apex:outputPanel id="confirmForm">
+                <div id="confirmPageOverlay" style="display:none;">
+                    <div id="confirmPageOverlayPagePop" class="bs">
+                            <apex:outputText ><span style="font-family: Arial,Helvetica,sans-serif;font-size:13px;" class="handle_page_inactive">There is no UCID for the case, are you sure to save it?</span></apex:outputText>
+                           <br/>
+                           <br/>
+                            <div class="bs col-md-12 col-xs-12" > <!-- style="font-size:20px;" -->
+                                <apex:form >
+                                    <input value="Yes" onclick="disableButton('confirm');" Class="bs btn btn-primary btn-block" style="font-family: Arial,Helvetica,sans-serif;" type="button"/>
+                                    <!-- <apex:commandButton value="Yes" onclick="disableButton('confirm');"  rerender="confirmForm" styleClass="bs btn btn-primary btn-block" style="font-family: Arial,Helvetica,sans-serif;"/> -->
+                                    <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                                    <input value="No" onclick="disableButton('cancel');" Class="bs btn btn-primary btn-block" style="font-family: Arial,Helvetica,sans-serif;" type="button"/>
+                                        <!-- <apex:commandButton value="No" onclick="disableButton('cancel');"  rerender="confirmForm" styleClass="bs btn btn-primary btn-block" style="font-family: Arial,Helvetica,sans-serif;" /> -->
+                                </apex:form>
+                            </div>
+                        <!-- </apex:outputPanel> -->
+                    </div>
+                </div>
+            </apex:outputPanel>
+        </div>
+    </div>
+    <script>
+        /***** start change by kit  *****/
+        
+        function checkAll(cb) {
+            if(cb.checked){
+                 $(".col-sm-1").each(function(){
+                    if(!$(this)[0].disabled){
+                        $(this).prop("checked",true);
+                        checkSameValue($(this)[0],$(this).parent().next().text());
+                    }
+                })
+            }
+            else{
+                 $(".col-sm-1").each(function(){
+                    $(this).prop("checked",false);
+                    checkSameValue($(this)[0],$(this).parent().next().text());
+                })
+            }
+        }
+  
+        function checkAllPI(cb) {
+            if(cb.checked){
+                 $(".col-sm-2").each(function(){
+                    if(!$(this).prop("disabled")){
+                        $(this).prop("checked",true);
+                        checkSameValue($(this)[0],$(this).parent().next().text());
+                    }
+                })
+            }
+            else{
+                 $(".col-sm-2").each(function(){
+                    $(this).prop("checked",false);
+                    checkSameValue($(this)[0],$(this).parent().next().text());
+                })
+            }
+        }
+        
+        function checkSameValue(element,policyNo){
+            policyNo = $.trim(policyNo);
+            //Ph
+            if(element.classList[1] === "col-sm-1"){
+                $(".col-sm-2").each(function(){
+                    var tid = $(this).parent().next().text();
+                    tid = $.trim(tid);
+                    if(tid === policyNo){
+                        if(element.checked){
+                            $(this).attr("disabled",true);
+                        }
+                        else{
+                            $(this).attr("disabled",false);
+                        }
+                    }
+                });
+            }
+            //Pi
+            if(element.classList[1] === "col-sm-2"){
+                $(".col-sm-1").each(function(index,e){
+                    var tid = $(this).parent().next().text();
+                    tid = $.trim(tid);
+                    if(tid === policyNo){
+                         if(element.checked){
+                            $(this).attr("disabled",true);
+                        }
+                        else{
+                            $(this).attr("disabled",false);
+                        }
+                    }
+                });
+            }
+        }
+        /***** end change by kit  *****/
+    
+        function checkAllGroup(cb) {
+            var inputElem = document.getElementsByClassName("bs col-sm-3");
+            for(var i = 0; i < inputElem.length; i++) {
+                if(inputElem[i].id.indexOf("checkedone3") != -1)
+                    inputElem[i].checked = cb.checked;
+            }
+        }
+        
+    </script>
+</apex:page>

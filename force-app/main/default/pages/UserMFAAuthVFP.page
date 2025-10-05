@@ -1,0 +1,457 @@
+<!--
+  @description       : 
+  @author            : Ardbert.Wang
+  @group             : 
+  @last modified on  : 12-04-2023
+  @last modified by  : Ardbert.Wang
+-->
+<apex:page docType="html-5.0" id="CustomerPortalTemplatePage" controller="UserMFAAuthVFPController" action="{!actionStart}" sidebar="false" showHeader="false" applyBodyTag="false" applyHtmlTag="false" standardStylesheets="false" cache="false">
+    <head>
+        <title>My MFA Auth</title>
+        <!-- <meta content="{!$Label.Login_Description}" name="description"/>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <link rel="alternate" href="https://www.mycigna.com.hk/?lang=zh" hreflang="zh"/>
+        <link rel="alternate" href="https://www.mycigna.com.hk/?lang=en" hreflang="en"/>
+        <link rel="alternate" href="https://www.mycigna.com.hk" hreflang="x-default"/> -->
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <!-- CR-58 performance tuning: preload resoruce 2022-03-01 Zane -->
+        <link rel="preload" href="{!$Resource.Cigna_Logo_png}" as="image"/>
+        <!-- CR-58 performance tuning: pre connect next page 2022-03-01 Zane -->
+        <link rel="preconnect" href="{!$Site.Prefix}/setup/secur/RemoteAccessAuthorizationPage.apexp"/>
+
+        <apex:include pageName="DDDemoJS"/>
+        
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-3.6.0.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-migrate-3.3.2.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap3.4.1.min.js')}"/>
+        <apex:include pageName="applinkJS"/>
+        <apex:include pageName="CignaUtilJS"/>
+
+        <style>
+            /* Rancho_HKITSFDC264_20250903 - add font face */
+            @font-face {
+                font-family: 'ValueSansRegular';
+                src: url("{!URLFOR($Resource.Cigna_Font, 'CIGNA/ValueSans/Web/ValueSans-Regular-Pro.ttf')}") format("opentype");
+            }
+            /* End */
+            
+            span[id$="cigna-error"] span div.message {
+                border: none;
+                background-color: #fff;
+                opacity: .9;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td img{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell div span{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell{
+                color:red;
+                /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+                font-family: "ValueSansRegular";
+            }
+            
+            span[id$="cigna-error"] .messageText::before{
+                content: "\f071\20";
+                font: normal normal normal 14px/1 FontAwesome;
+                font-size: inherit;
+                text-rendering: auto;
+                -webkit-font-smoothing: antialiased;
+                padding-right: 7px;
+            }
+
+            span[id$="cigna-popupError"] span div.message {
+                border: none;
+                background-color: #fff;
+                opacity: .9;
+            }
+            
+            span[id$="cigna-popupError"] span div.message table.messageTable tbody tr td img{
+                display: none;
+            }
+            
+            span[id$="cigna-popupError"] span div.message table.messageTable tbody tr td.messageCell div span{
+                display: none;
+            }
+            
+            span[id$="cigna-popupError"] span div.message table.messageTable tbody tr td.messageCell{
+                color:red;
+                /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+                font-family: "ValueSansRegular";
+            }
+            
+            span[id$="cigna-popupError"] .messageText::before{
+                content: "\f071\20";
+                font: normal normal normal 14px/1 FontAwesome;
+                font-size: inherit;
+                text-rendering: auto;
+                -webkit-font-smoothing: antialiased;
+                padding-right: 7px;
+            }
+
+            div#overlay {
+                display: none;
+                z-index: 10;
+                background: #767675;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                text-align: left;
+            }
+            
+            div#specialBox {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 150px auto 0px auto;
+                /* left: 35%; */
+                /* width: 30%; */
+                /* height: 40%; */
+                background: rgb(255, 253, 253);
+                color: #000;
+                padding:20px;
+                border-radius:5px;
+            }
+            
+            #closeOverlay {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                color: rgb(0, 0, 0);
+            }
+            
+            .verifyWay-Select option {
+                background: blanchedalmond;
+            }
+            .placeholderCSS::placeholder {
+                color: gray;
+                opacity: 1;
+            }
+        </style>
+
+        <script>
+            $(document).ready(function(){
+                if ({!verifyWay == 'Email'}) {
+                    $('[id$="smsWay"]').hide();
+                    $('[id$="emailWay"]').show();
+                }else{
+                    $('[id$="smsWay"]').show();
+                    $('[id$="emailWay"]').hide();
+                }
+                
+                if(Cigna.Util.isMobile()){
+                    $('[id$="specialBox"]').css("left","5%");
+                    $('[id$="specialBox"]').css("width","90%");
+                    // $('[id$="specialBox"]').css("height","50%");
+                }else{
+                    $('[id$="specialBox"]').css("left","34%");
+                    $('[id$="specialBox"]').css("width","32%");
+                    // $('[id$="specialBox"]').css("height","45%");
+                }
+            });
+            function disableBtn(targetBtn){
+                targetBtn.disabled=true;
+            }
+            // Rancho_PI145_20240306 - dim button after clicked once
+            function enableBtn(targetBtn){
+                console.log('enable button');
+                targetBtn.disabled=false;
+            }
+            function countdown(counter){
+                var hasMFAError = $('[id$="hasErrorHDN"]').val();
+                console.log('hasMFAError',hasMFAError);
+                var errorMFAMessage = $('[id$="errorMessageHDN"]').val();
+                console.log('errorMFAMessage',errorMFAMessage);
+                if(hasMFAError=='false'){
+                    var showLabel = counter.value;
+                    counter.disabled=true;
+                    var time = 60;
+                    var timer = setInterval(function() {
+                        if (time == -1) {
+                            clearInterval(timer)
+                            counter.disabled=false;
+                            counter.value=showLabel;
+                        } else {
+                            counter.value=showLabel+' '+'('+time+')';
+                            time--;
+                        }
+                    }, 1000)
+                }else{
+                    counter.disabled=false;
+                }
+            }
+            function selectVerifyWay(){
+                var verifyWay = $('[id$="selectedVerifyWayOption"]').val();
+                if (verifyWay == 'Email') {
+                    $('[id$="smsWay"]').hide();
+                    $('[id$="emailWay"]').show();
+                }else{
+                    $('[id$="smsWay"]').show();
+                    $('[id$="emailWay"]').hide();
+                }
+            }
+            function toggleOverlay(){
+                var overlay = document.getElementById('overlay');
+                var specialBox = document.getElementById('specialBox');
+                overlay.style.opacity = .95;
+                if(overlay.style.display == "block"){
+                    overlay.style.display = "none";
+                    specialBox.style.display = "none";
+                } else {
+                    overlay.style.display = "block";
+                    specialBox.style.display = "block";
+                }
+            }
+        </script>
+        <script type = "text/javascript" >
+            function preventBack(){
+                window.history.forward();
+            }
+            setTimeout("preventBack()", 0);
+            window.onunload=function(){null};
+        </script>
+    </head>
+
+    <!-- Start of the page template -->
+    <apex:composition template="{!IF(isCusPortal,'CustomerUnauthorizedPageTemplateNoCache','BrokerUnauthorizedPageTemplateNoCache')}">
+        <!-- Start of the main body -->
+        <apex:define name="body">
+            
+            <!-- Error Message Start-->
+            <apex:outputPanel id="errorPanel" >
+                <div class="col-xs-12 col-md-12">
+                    <apex:pageMessages id="cigna-error"/>
+                </div>
+            </apex:outputPanel>
+            <!-- Error Message End-->
+
+            <apex:outputPanel id="cannotLoginPanel"  rendered="{!cannotLogin}">
+                <div class="col-xs-12 col-md-12">
+                    <p>
+                        <!-- 20230919 - Owen - PI-122, add change the cant login error-->
+                        <h5><apex:outputText escape="false" value="{!transFieldSMT['Cannot_Login'][$Label.Header_Language_Code_Current]}"/> </h5>
+                        <!-- <h5>{!transFieldSMT['Cannot_Login'][$Label.Header_Language_Code_Current]}</h5> -->
+                    </p>
+                </div>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!!cannotLogin}">
+                <div class="col-xs-12 col-md-12">
+                    <!-- Step 1 Start {!displayStep1}-->
+                    <apex:outputPanel rendered="{!displayStep1}" layout="block" id="step1">
+                        <apex:actionFunction name="verifyWaySetups" action="{!verifyWaySetups}" oncomplete="toggleOverlay()" reRender="setupWay,popupErrorPanel,verifyTitle" status="loader-icon">
+                            <apex:param name="firstParam" assignTo="{!verifyWaySetup}" value=""/>
+                        </apex:actionFunction>
+                        <!-- <apex:actionFunction name="selectVerifyWay" action="{!selectVerifyWay}" reRender="step2,emailWay,smsWay" status="loader-icon" /> -->
+                        <div class="col-xs-12 col-md-12">
+                            <h3>{!$Label.MFA_Set_Auth}</h3>
+                        </div>
+                        <div class="col-xs-12 col-md-12">
+                            <p>{!$Label.MFA_Set_Auth_Reminder}</p>
+                        </div>
+
+                        <div class="col-xs-12 col-md-12">
+                                <div class="col-xs-9 col-md-9" style="padding:0 !important;">
+                                <p><h4>{!$Label.MFA_SMS_Authentication}</h4><br/>{!$Label.MFA_Send_Code_Reminder}</p>
+                            </div>
+                            <div class="col-xs-3 col-md-3" style="padding:0 !important;">
+                                <apex:outputPanel layout="block" rendered="{!!hasCompleteSMSFactor}">
+                                    <input class="btn btn-primary pull-right" onclick="verifyWaySetups('SMS')" value="{!$Label.MFA_Setup}" type="button" style="width:100%;"/>
+                                </apex:outputPanel>
+                                <apex:outputPanel layout="block" rendered="{!hasCompleteSMSFactor}">
+                                    <input class="btn btn-primary pull-right" value="√" type="button" disabled="true" style="width:100%;"/>
+                                </apex:outputPanel>
+                            </div>
+                        </div>
+
+                        <div class="col-xs-12 col-md-12">
+                            <div class="col-xs-9 col-md-9" style="padding:0 !important;">
+                                <p><h4>{!$Label.MFA_Email_Authentication}</h4><br/>{!$Label.MFA_Send_Email_Code_Reminder}</p>
+                            </div>
+                            <div class="col-xs-3 col-md-3" style="padding:0 !important;">
+                                <apex:outputPanel layout="block" rendered="{!!hasCompleteEmailFactor}">
+                                    <input class="btn btn-primary pull-right" onclick="verifyWaySetups('Email')" value="{!$Label.MFA_Setup}" type="button" style="width:100%;"/>
+                                </apex:outputPanel>
+                                <apex:outputPanel layout="block" rendered="{!hasCompleteEmailFactor}">
+                                    <input class="btn btn-primary pull-right" value="√" type="button" disabled="true" style="width:100%;"/>
+                                </apex:outputPanel>
+                            </div>
+                        </div>
+                        
+                        <div class="col-xs-12 col-md-12">
+                            <!-- Rancho_PI145_20240306 - dim button after clicked once -->
+                            <apex:outputPanel rendered="{!(hasCompleteEmailFactor || hasCompleteSMSFactor)}" layout="block">
+                                <apex:commandButton value="{!$Label.MFA_Complete}" id="completeButton" styleClass="bs btn btn-primary btn-block" action="{!completeEnroll}" onclick="disableBtn(this);" oncomplete="enableBtn(this);" status="loader-icon"/>
+                            </apex:outputPanel>
+                        </div> 
+                    </apex:outputPanel>
+                    <!-- Step 1 End -->
+
+                    <!-- Step 2 Start {!displayStep2}-->
+                    <apex:outputPanel rendered="{!displayStep2}" layout="block" id="step2">
+                        <apex:outputPanel rendered="{!hasEmailFactor&&hasSMSFactor}" layout="block">
+                            <div class="col-xs-12 col-md-12">
+                                <div class="col-xs-7 col-md-7" style="padding:0 !important;">
+                                    <h4>{!$Label.MFA_Verification_Method}</h4>
+                                </div>
+                                <div class="col-xs-5 col-md-5" style="padding:0 !important;">
+                                    <apex:selectList id="selectedVerifyWayOption" value="{!verifyWay}" onchange="selectVerifyWay()" size="1" multiselect="false" styleClass="bs btn btn-primary btn-block verifyWay-Select">
+                                        <apex:selectOptions value="{!items}" />
+                                    </apex:selectList>
+                                </div>
+                                <br/><br/><br/>
+                            </div>
+                        </apex:outputPanel>
+                        
+                        <div class="col-xs-12 col-md-12">
+                            <p><h5>
+                                <apex:outputText id="emailWay" value="{!$Label.MFA_Check_Email_Code}" escape="false" style="word-break:break-all">
+                                    <apex:param value="{!maskedEmail}"/>
+                                </apex:outputText>
+                                <apex:outputText id="smsWay" value="{!$Label.MFA_Check_Phone_Code}" escape="false" style="word-break:break-all">
+                                    <apex:param value="{!maskedContactNo}"/>
+                                </apex:outputText>
+                                <br/><br/>
+                            </h5></p>
+                        </div>
+            
+                        <div class="col-xs-12 col-md-12">
+                            <apex:actionFunction name="sendOTPCode" action="{!sendOTPCode}" oncomplete="countdown(this)" reRender="errorPanel" status="loader-icon"/>
+                            <div class="col-xs-7 col-md-7" style="padding:0 !important;">
+                                <apex:inputText value="{!verifyCode}" id="registration-code" html-placeholder="{!$Label.MFA_Code}" styleClass="form-control"/>
+                            </div>
+                            <div class="col-xs-5 col-md-5" style="padding:0 !important;">
+                                <input class="btn btn-primary pull-right" onclick="disableBtn(this);sendOTPCode()" value="{!$Label.MFA_Send_OTP_Btn}" type="button"/>
+                            </div>
+                            <br/><br/><br/>
+                            <div class="col-xs-12 col-md-12" style="padding:0 !important;">
+                                <apex:commandButton value="{!$Label.MFA_Verify_Btn}" id="verifyButton" styleClass="btn btn-primary btn-block" onclick="disableBtn(this)" action="{!verifyOTPCode}" oncomplete="verifyOtpCheck()" reRender="errorPanel,verifyButton" status="loader-icon"/>
+                            </div> 
+                        </div>
+                    </apex:outputPanel>
+                    <!-- Step 2 End -->
+                </div>
+
+                <!-- Login Reminder Start-->
+                <div class="col-xs-12 col-md-12" id="app-reminder" style="padding-top: 20px; padding-left: 30px; padding-right: 30px; font-size: 1.2em;display:block" >
+                    <div class="col-xs-12 col-md-12" style="background-color: rgba(0, 0, 0, 0.3);padding: 10px 10px 10px 10px;">{!$Label.Login_Reminder}</div>
+                </div>
+                <!-- Login Reminder End-->
+
+                <!-- Popup Start -->
+                <!-- <apex:outputPanel layout="block" id="step3"> -->
+                <div class="col-xs-12 col-md-12">
+                    <div id="overlay" style="display:none;">
+                        <div id="specialBox">
+                            <a href="#"><div id="closeOverlay" class="ci-hk-x" onclick="toggleOverlay();"></div></a>
+                            <apex:outputPanel id="verifyTitle">
+                                <div class="col-xs-12 col-md-12" style="padding-top:10px;">
+                                    <apex:outputPanel rendered="{!verifyWaySetup=='SMS'}">
+                                        <h3>{!$Label.MFA_SMS_Method}</h3>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!verifyWaySetup=='Email'}">
+                                        <h3>{!$Label.MFA_Email_Method}</h3>
+                                    </apex:outputPanel>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel id="setupWay">
+                                <apex:outputPanel rendered="{!verifyWaySetup=='SMS'}">
+                                    <div class="col-xs-12 col-md-12" style="padding-top:10px;">
+                                        <p>{!$Label.MFA_Activate_SMS_Reminder}</p>
+                                    </div>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!verifyWaySetup=='Email'}">
+                                    <div class="col-xs-12 col-md-12" style="padding-top:10px;">
+                                        <p>{!$Label.MFA_Activate_Email_Reminder}</p>
+                                    </div>
+                                </apex:outputPanel>
+                                <apex:outputPanel id="popupErrorPanel">
+                                    <apex:inputHidden id="hasErrorHDN" value="{!hasMFAError}" />
+                                    <apex:inputHidden id="errorMessageHDN" value="{!errorMFAMessage}" />
+                                    <div class="col-xs-12 col-md-12" style="padding:0 !important;">
+                                        <apex:pageMessages id="cigna-popupError" />
+                                    </div>
+                                </apex:outputPanel>
+                                <!-- <form id="mainForm" class="form-horizontal"> -->
+                                    <div class="col-xs-12 col-md-12 form-group" style="padding-top:10px;line-break:anywhere;">
+                                        <apex:actionFunction name="enrollFactor" action="{!enrollFactor}" oncomplete="countdown(this)" reRender="step1,showFactorPanel,popupErrorPanel" status="loader-icon"/>
+                                        <apex:outputPanel rendered="{!verifyWaySetup=='SMS'}">
+                                            <div class="col-xs-8 col-md-8 pull-left input-group" style="padding:0 !important;word-break:break-all;">
+                                                <!-- JOBR-335 Change 1. Add input field SMS and Email for user to setup factor -->
+                                                <apex:inputText id="input-country-code" style="width:22%;padding-left:0;height:auto;color:black;border-bottom-color: #36a0fe;" styleClass="form-control" value="{!inputCountryCode}" html-placeholder="{!$Label.Default_Country_Code}" />
+                                                <apex:outputText id="break-bar" style="width:10%;border:none;" styleClass="form-control" value=" - "/>
+                                                <apex:inputText id="input-contact-no" style="width:68%;padding-left:0;height:auto;color:black;border-bottom-color: #36a0fe;" styleClass="form-control" value="{!inputContactNo}" html-placeholder="{!$Label.Mobile_Number}" />
+                                                <!-- <output style="width:22%;border:none;padding-left:0;height:auto;" class="form-control">{!uList[0].contact_no_country_code__c}</output>
+                                                <output style="width:68%;border:none;padding-left:0;height:auto;" class="form-control">{!maskedContactNo}</output> -->
+                                            </div>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!verifyWaySetup=='Email'}">
+                                            <div class="col-xs-8 col-md-8 pull-left" style="padding:0 !important;word-break:break-all;">
+                                                <!-- JOBR-335 Change 1. Add input field SMS and Email for user to setup factor -->
+                                                <apex:inputText id="input-email" style="padding-left:0;height:auto;color:black;border-bottom-color: #36a0fe;" styleClass="form-control" value="{!inputEmail}" html-placeholder="{!$Label.site.email}" />
+                                                <!-- <output style="border:none;padding-left:0;height:auto;" class="form-control">{!maskedEmail}</output> -->
+                                            </div>
+                                        </apex:outputPanel>
+                                        <div class="col-xs-4 col-md-4">
+                                            <input id="SendOTPButton" class="btn btn-primary pull-right" onclick="disableBtn(this);enrollFactor()" value="{!$Label.MFA_Send_OTP_Btn}" type="button"/>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-xs-12 col-md-12 form-group">
+                                        <apex:outputPanel id="showFactorPanel">
+                                            <apex:outputPanel rendered="{!!showFactorMsg}">
+                                                <label for="inputOTP" class="col-xs-4 col-md-4 control-label" style="padding-left:0;">{!$Label.MFA_One_Time_Passcode}</label>
+                                                <div class="col-xs-8 col-md-8">
+                                                    <apex:inputText id="inputOTP" value="{!otpCode}" html-placeholder="{!$Label.MFA_Code}" styleClass="form-control,placeholderCSS" style="color:black;border-bottom-color: #36a0fe;"/>
+                                                </div>
+                                            </apex:outputPanel>
+                                            <apex:outputPanel rendered="{!showFactorMsg}">
+                                                <div class="col-xs-12 col-md-12">
+                                                    <p>{!factorMsg}</p>
+                                                </div>
+                                            </apex:outputPanel>
+                                        </apex:outputPanel>
+                                    </div>
+                                    <div class="col-xs-12 col-md-12 form-group">
+                                        <apex:actionFunction name="activateFactorFunc" action="{!activateFactor}" oncomplete="validateOtpCheck()" reRender="step1,MFAConfirmBtnPanel,popupErrorPanel" status="loader-icon"/>
+                                        <apex:outputPanel id="MFAConfirmBtnPanel">
+                                            <input id="MFAConfirmBtn" type="button" value="{!$Label.MFA_Confirm}" class="bs btn btn-primary btn-block" onclick="disableBtn(this);activateFactorFunc()" />
+                                        </apex:outputPanel>
+                                    </div>
+                                    <script>
+                                        function validateOtpCheck(){
+                                            var hasMFAError = $('[id$="hasErrorHDN"]').val();
+                                            console.log('hasMFAError',hasMFAError);
+                                            var errorMFAMessage = $('[id$="errorMessageHDN"]').val();
+                                            console.log('errorMFAMessage',errorMFAMessage);
+                                            if(hasMFAError=='false'){
+                                                toggleOverlay();
+                                            }
+                                            var MFAConfirmBtn = document.getElementById('MFAConfirmBtn');
+                                            verifyButton.style.disabled=false;
+                                        }
+
+                                        function verifyOtpCheck(){
+                                            var verifyButton = document.getElementById('verifyButton');
+                                            verifyButton.style.disabled=false;
+                                        }
+                                    </script>
+                                <!-- </form> -->
+                            </apex:outputPanel>
+                        </div>
+                    </div>
+                </div>
+                <!-- </apex:outputPanel> -->
+                <!-- Popup End -->
+            </apex:outputPanel>
+
+        </apex:define>
+        <!-- End of the main body -->
+    </apex:composition>
+    <!-- End of the page template -->
+</apex:page>

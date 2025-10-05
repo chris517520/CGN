@@ -1,0 +1,222 @@
+<apex:page docType="html-5.0" standardController="Case" sidebar="false" showHeader="true" title="Call List Assignment" extensions="CallListAssignmentCtrl">
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+        <apex:include pageName="CignaCommonCSS" />
+        <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    </head>
+    <style type="text/css">
+        .custPopup{
+            background-color: rgba(0, 0, 0, 0);
+            z-index: 9999;
+            left: 50%;
+            padding:10px;
+            position: absolute;
+            /* These are the 3 css properties you will need to change so the popup 
+            displays in the center of the screen. First set the width. Then set 
+            margin-left to negative half of what the width is. You can add 
+            the height property for a fixed size pop up if you want.*/
+            width: 500px;        
+            margin-left: -250px;
+            top:100px;
+        }
+        .popupBackground{
+            background-color:black;
+            opacity: 0.20;
+            filter: alpha(opacity = 20);
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 9998;        
+        }
+        
+        .customer-assignment{
+            padding:0;
+            width:98%;
+            float:left;
+        }
+    
+    </style>
+    <script>
+        $ = jQuery.noConflict();
+        function isAllCheck(){
+            var allCheck = $("input[id$='allCheck']").is(':checked');
+            console.log('allCheck >>' + allCheck);
+            if(allCheck){
+                $("input[id$='anyCheck']").prop("checked", true);
+            }
+            else{
+                $("input[id$='anyCheck']").prop("checked", false);
+            }
+        }
+        
+        function closeMPopup(){
+            ManuPopup.closeManuPopup();
+            console.log('closeManuPopup>> ');
+        }
+
+        function checkAll(cb){
+                var inputElem = document.getElementsByTagName("input");
+                for(var i=0; i<inputElem.length; i++){
+                    if(inputElem[i].id.indexOf("checkedone")!=-1)
+                    inputElem[i].checked = cb.checked;
+                }
+        }
+        
+        function updateSelectedMaun(){
+            ManuPopup.updateSelectedAfterMaun();
+            console.log('updateSelectedAfterMaun>> ');
+        }
+        
+        function closeAutoPopup(){
+            $(document.body).css({  
+                "overflow-y": "auto"  
+            });  
+            $("#autoPopup").hide();
+            return false;
+        }
+        
+        function showAutoPopup(){
+            $(document.body).css({  
+                "overflow-y": "hidden"  
+            });  
+            $("#autoPopup").show();
+            return false;
+        }
+        
+        function closeManuPopup(){
+            $(document.body).css({  
+                "overflow-y": "auto"  
+            });  
+            $("#manuPopup").hide();
+            return false;
+        }
+        
+        function showManuPopup(){
+            $(document.body).css({  
+                "overflow-y": "hidden"  
+            });  
+            $("#manuPopup").show();
+            return false;
+        }
+        
+        function updateSelectedAfterAuto(){
+            ManuPopup.updateSelectedAfterAuto();
+            window.top.location='/console';
+         }
+        
+        function updateSelectedAfterMaun(){
+            ManuPopup.updateSelectedAfterMaun();
+            window.top.location='/console';
+        }
+        
+    </script>
+
+    <apex:form id="contentForm"> 
+        <apex:actionFunction name="updateSelectedAfterMaun" action="{!updateSelectedAfterMaun}" namespace="ManuPopup" oncomplete="hideLoading()"  reRender="clablock"/>
+        <apex:actionFunction name="updateSelectedAfterAuto" action="{!updateSelectedAfterAuto}" namespace="ManuPopup" oncomplete="hideLoading()" reRender="clablock"/>
+        <apex:actionFunction name="closeManuPopup" action="{!closeManuPopup}" namespace="ManuPopup" oncomplete="hideLoading()" reRender="clablock"/>
+        <apex:pageBlock id="clablock" >
+            <apex:pageBlockButtons style="left: 1.3%;padding:0px;position: absolute;" location="top">
+                <apex:commandButton value="{!$Label.Assign_Owner_Automatically}" id="assignAuto" onclick="return showAutoPopup()" />
+                <apex:commandButton value="{!$Label.Assign_Owner_Manually}"  id="assignManu" onclick="return showManuPopup()"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockTable id="claBlockTable" value="{!caseWrappers}" var="ca"> 
+                <apex:column >
+                    <apex:facet name="header">
+                            <apex:inputCheckbox id="allCheck"  onclick="isAllCheck();" />      
+                    </apex:facet>                         
+                        <apex:inputCheckbox id="anyCheck"  value="{!ca.selected}" />
+
+                </apex:column>               
+                <apex:column headerValue="{!$Label.Assign_Case_Action}">
+                    <apex:outputLink id="editCase" value="{!URLFOR($Action.Case.Edit, ca.cwarpper.Id)}">{!$Label.Assign_Case_Edit} </apex:outputLink>&nbsp;
+                    <apex:outputLink id="deleteCase" value="{!URLFOR($Action.Case.Delete, ca.cwarpper.Id)}">{!$Label.Assign_Case_Del} </apex:outputLink>   
+                </apex:column>
+                <apex:column value="{!ca.cwarpper.Call_List_ID__c}" />
+                <apex:column value="{!ca.cwarpper.Unique_ID__c}" />
+                <apex:column headerValue="{!$ObjectType.Case.fields.CaseNumber.Label}">
+                <apex:outputLink title="{!ca.cwarpper.CaseNumber}" value="/{!ca.cwarpper.Id}" >{!ca.cwarpper.CaseNumber} </apex:outputLink>
+                </apex:column>
+                <apex:column value="{!ca.cwarpper.Account.Name}" />
+                <apex:column value="{!ca.cwarpper.Policy_Number__c}" />
+                <apex:column value="{!ca.cwarpper.Media__c}" />
+                <apex:column value="{!ca.cwarpper.Nature__c}" />
+                <apex:column value="{!ca.cwarpper.Status}" />    
+                <apex:column headerValue="{!$Label.Date_Time_Opened}">
+                    <apex:outputText value="{0,time,yyyy/MM/dd ahh:mm}">
+                        <apex:param value="{!ca.cwarpper.CreatedDate + (8/24)}" />
+                    </apex:outputText>
+                </apex:column>               
+                <apex:column value="{!ca.cwarpper.TAT_Indicator__c}" />
+                <apex:column headerValue="{!$Label.Assign_TAT_Due_Date}">
+                    <apex:outputText value="{0,time,yyyy/MM/dd ahh:mm}">
+                        <apex:param value="{!ca.cwarpper.TAT_Due_Date__c + (8/24)}" />
+                    </apex:outputText>
+                </apex:column>
+                <apex:column headerValue="{!$Label.Assign_Case_Owner}" value="{!ca.cwarpper.Owner.Name}" /> 
+            </apex:pageBlockTable>
+        </apex:pageBlock>
+        
+        <!-- //Popup Assign Owner Automatically Panel -->
+        <div id="autoPopup" style="display:none;" >
+            <apex:outputPanel id="autoPopup1" styleClass="popupBackground" layout="block"/>
+            <apex:outputPanel id="autoPopup2" styleClass="custPopup" layout="block" >
+                <apex:pageBlock >                    
+                    <c:UserMultiSelectComponent aLeftLabel="Available User" aRightLabel="Selected User" aInitialRightList="{!InitialList}"
+                    aCurrentRightList="{!CurrentList}" aSize="6" aWidth="100%" />
+                    <apex:pageBlockButtons location="bottom">
+                        <apex:commandButton value="{!$Label.Assign_Confirm}" id="autoConfirm" onclick="updateSelectedAfterAuto()" />
+                        <apex:commandButton value="{!$Label.Assign_Cancel}"  id="autoCancel" onclick="return closeAutoPopup()"/>
+                    </apex:pageBlockButtons>                
+                </apex:pageBlock>
+            </apex:outputPanel>
+        </div>
+        
+        <!-- //Popup Assign Owner Manually Panel -->
+        <div id="manuPopup" style="display:none;"  >
+            <apex:outputPanel styleClass="popupBackground" layout="block"/>
+            <apex:outputPanel styleClass="custPopup" layout="block">
+                <apex:pageBlock >
+                <div style="display: inline-block;">
+                    <apex:outputLabel for="assignOwner">Assignee</apex:outputLabel> 
+                    <apex:inputField label="assignee" id="assignOwner" value="{!caseOwner.OwnerId}" required="false" />
+                </div>
+                    
+                    <apex:pageBlockButtons location="bottom">
+                        <apex:commandButton value="{!$Label.Assign_Confirm}" id="manuConfirm" onclick="updateSelectedAfterMaun()" />
+                        <apex:commandButton value="{!$Label.Assign_Cancel}"  id="manuCancel" onclick="return closeManuPopup()"/>
+                    </apex:pageBlockButtons>                
+                </apex:pageBlock>
+            </apex:outputPanel>
+        </div>
+
+        <apex:outputPanel id="pagePanel" rendered="{!caseWrapperList.size > 0}">
+            <table style="width: 100%">  
+                <tr>  
+                    <td style="float: left;">  
+                        Page: <apex:outputText value=" {!PageNumber} of {! CEILING(ResultSize / pageSize) }"/>                        
+                    </td>  
+                    <td align="center">
+                        <apex:commandLink action="{! Previous }" value="« Previous" rendered="{! HasPrevious }"/>
+                        <apex:outputText style="color: #ccc;" value="« Previous" rendered="{! NOT(HasPrevious) }"/>
+                        &nbsp;&nbsp;  
+                        <apex:commandLink action="{! Next }" value="Next »" rendered="{! HasNext }"/>
+                        <apex:outputText style="color: #ccc;" value="Next »" rendered="{! NOT(HasNext) }"/>
+                    </td>  
+                    <td align="right">  
+                        Page Size:
+                        <apex:selectList value="{!pageSize}" size="1">  
+                            <apex:selectOptions value="{!pageSizeOptions}"/>
+                            <apex:actionSupport event="onchange" reRender="clablock,pagePanel" action="{!refreshPageSize}" />  
+                        </apex:selectList>  
+                    </td>  
+                </tr>  
+            </table> 
+        </apex:outputPanel>
+    </apex:form>
+</apex:page>

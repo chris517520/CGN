@@ -1,0 +1,372 @@
+<apex:page sidebar="false" Controller="BrkManageAccountSearchPageCtrl">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+        <apex:include pageName="CignaCommonCSS" />
+        <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <style>
+            .bs .table>tbody>tr>td,
+            .bs .table>tbody>tr>th {
+                border-top: 0px solid #ddd !important;
+            }
+            .bs .table>thead>tr>th, .bs .table>thead>tr>td {
+                border: 0px solid #ddd !important;
+            }
+            
+                        span[id$="cigna-error"] span div.message{
+                border: 2px solid red !important;
+                //background-color: #cc0000;
+                background-color: #fff;
+                //background-color: transparent;
+                opacity: .9;
+               
+            }
+            
+            .bs .grey-background {
+                background-color: rgb(242, 242, 242);
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td img{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell div span{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell{
+                //color: #fff;
+                //color: #F68621;
+                color:red;
+                /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+                font-family: "ValueSansRegular";
+            }
+            
+            span[id$="cigna-error"] .messageText::before{
+                content: "\f071\20";
+                font: normal normal normal 14px/1 FontAwesome;
+                font-size: inherit;
+                text-rendering: auto;
+                -webkit-font-smoothing: antialiased;
+                padding-right: 7px;
+            }
+                        
+        </style>
+        <script type="text/javascript">
+            function mobileTableCss(){                       
+                $('.listcontent').filter(":even").css('background-color','rgb(242, 242, 242)');
+            }
+
+            var resultIdGlo;
+            var typeGlo;
+            function getEncryptedCriteria(resultId,type){
+                resultIdGlo = resultId;
+                typeGlo = type;
+                console.log(resultIdGlo);
+                getEncryptedString();
+            }
+            function getEncryptedCriteriaCreateUser(type){
+                typeGlo = type;
+                getEncryptedString();
+            }
+            function goToPage(){
+                console.log('goToPage function')
+                var encryptedSearchCriteria = $('[id*="encryptedSearchCriteria"]').val();
+                console.log('resultIdGlo' + resultIdGlo+' encryptedSearchCriteria '+encryptedSearchCriteria);
+                if(typeGlo == '1'){
+                    Cigna.Util.navigateToVFP('ManageAccountDetailPageVFP?selectedUser='+resultIdGlo+'&'+'{!URLParamName}'+'='+ encryptedSearchCriteria, null, null, true)
+                }else if(typeGlo == '2'){
+                    Cigna.Util.navigateToVFP('ManageAccountDetailPageVFP?selectedUser='+resultIdGlo+'&'+'{!URLParamName}'+'='+ encryptedSearchCriteria,false,'',true)
+                }else if(typeGlo == '3'){
+                    Cigna.Util.navigateToVFP('ManageAccountDetailPageVFP'+'?'+'{!URLParamName}'+'='+ encryptedSearchCriteria, null, null, true)
+                }
+            }
+        </script>
+        
+    </head>
+    
+    <apex:define name="additionalLibraries">
+         <meta name="viewport" content="width=device-width, initial-scale=1" />
+         <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/Chart.min.js')}"></script>
+         <apex:stylesheet value="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+         <!-- CR-56_Link_20220214 -->
+         <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap3.4.1.css')}" />
+         <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+         <apex:include pageName="CignaUtilJS"/> 
+         <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}" />
+    </apex:define>
+    
+    <apex:define name="body">
+        <apex:form id="mainPage">
+            <!--<apex:pageMessages ></apex:pageMessages>-->
+            <div class="col-xs-12 col-md-12">
+                    <apex:pageMessages id="cigna-error"/>
+            </div>
+            <div class="bs">
+                <div id="filterTableInv" class="bs col-xs-12 form-horizontal">
+                    
+                    <div class="bs hidden-xs col-sm-12 col-xs-12" style="padding-bottom:20px;padding-top:40px;">
+                        <!--desktop action button-->
+                        
+                        <div class="bs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="getEncryptedCriteriaCreateUser('3');">
+                            {!$Label.Acc_Create_User}
+                        </div>
+                        
+                    </div>
+                
+                    <div class="bs col-sm-12 col-xs-12" style="padding-bottom:20px;padding-left:0px;padding-right:0px;">
+                        <div class="bs col-sm-6 col-xs-12" >
+                            <apex:selectList value="{!selectedSearchType}" size="1" styleClass="bs form-field-style-select cigna-fg-gray-dark" html-placeholder="852">
+                                <!--<apex:selectoption itemLabel="{!$Label.Select_Search_Type}" itemValue="" itemDisabled="true"></apex:selectoption>-->
+                                <apex:selectOptions value="{!SearchType}"></apex:selectOptions>
+                            </apex:selectList>
+                        </div>   
+                    
+                        <div class="bs col-sm-6 col-xs-12">
+                            <apex:inputText id="selectedSearchValue" style="font-size:1em; height:35px; width:95%;padding-left:14px;" styleClass="bs form-field-style cigna-fg-gray-dark" value="{!searchValue}"/><i class="ci-hk-search cigna-fg-orange-dark text-center onclick-pointer" onclick="searchAccount()" style="width:5%" aria-hidden="true"/>
+                        </div>
+                        
+                        <div class="bs col-sm-12 col-xs-12" style="display:none;">
+                            <input id="auto-submit-val" value=""/>
+                        </div>
+                       
+                    </div> 
+                    <apex:actionFunction action="{!searchAccount}" name="searchAccount" reRender="mainPage" oncomplete="mobileTableCss();"/>
+                    
+                </div>
+               
+                <div id="resultDiv" class="bs">
+                    <div id="resultDesktop">
+                        <apex:actionFunction action="{!handlePrevPage}" 
+                                     name="handlePrevPage" 
+                                     ReRender="searchResult"
+                                     status="loader-icon1" 
+                                     oncomplete="mobileTableCss();"/>
+                         
+                         <apex:actionFunction action="{!handleNextPage}" 
+                                     name="handleNextPage" 
+                                     ReRender="searchResult"
+                                     status="loader-icon1" 
+                                     oncomplete="mobileTableCss();"/> 
+                         <apex:actionFunction action="{!getEncryptedString}" name="getEncryptedString" reRender="encryptedSearchCriteria" oncomplete="goToPage();" status="loader-icon1"/>  
+                         <apex:inputHidden value="{!encryptedSearchCriteria}" id="encryptedSearchCriteria" />        
+                                 
+                         <div>
+                             <apex:outputPanel id="searchResult" >
+                             <apex:actionStatus id="loader-icon1">
+                                 <apex:facet name="start">
+                                     <apex:image value="/img/loading.gif" />
+                                 </apex:facet>
+                             </apex:actionStatus>
+                             
+                             <!--<table id="hd1" class="bs table table-striped" >
+                             
+                             <tbody class="hidden-xs visible-sm visible-md visible-lg col-sm-12">
+                                 <tr style="display:none" />
+                                       <tr >
+                                         <td style="{!IF(isSuperAdmin,'padding-left:28px','display:none')};">{!$Label.Acc_Company}</td>
+                                         <td style="{!IF(!isSuperAdmin,'padding-left:30px','')};">{!$Label.Acc_Name}</td>
+                                         <td>{!$Label.Acc_Agent_Code}</td>
+                                         <td>{!$Label.Acc_Email_Address}</td>
+                                         <td>{!$Label.Acc_Contact_Number}</td>
+                                         <td/>
+                                        </tr>
+                                     <apex:repeat id="userResult1" value="{!userResultList}" var="result">
+                                         <tr>
+                                             <th style="{!IF(isSuperAdmin,'padding-left:28px','display:none')};">{!result.Company_Name__c}</th>
+                                             <th style="{!IF(!isSuperAdmin,'padding-left:30px','')};">{!result.Name}</th>
+                                             <th>{!result.Agent_Code__c}</th>
+                                             <th>{!result.Email_Address__c}</th>
+                                             <th>{!result.Contact_No_Country_Code__c}{!result.Contact_No__c}</th>
+                                             <th style="{!IF(isSuperAdmin,'padding-right:20px','')};"><a class="action-btn " role="button" onclick="Cigna.Util.navigateToVFP('ManageAccountDetailPageVFP?selectedUser={!result.Id}', null, null, true)"><span class="fa fa-pencil" aria-hidden="true"></span></a></th>
+                                         </tr>
+                                     </apex:repeat>
+                                 </tbody>
+                             </table>-->
+                             <div class="hidden-xs" style="padding-top:40px;" >
+                                  <apex:outputPanel rendered="{!isSuperAdmin}" >
+                                            <div class="bs row " style="margin-left:0px;{!IF(searched, '', 'display:none;')};">
+                                                <div class="bs col-sm-2" style="padding-left:30px;">{!$Label.Acc_Company}</div>
+                                                <div class="bs col-sm-2" style="word-break: break-word;">{!$Label.Acc_Name}</div>
+                                                <div class="bs col-sm-2" >{!$Label.Acc_Agent_Code}</div>
+                                                <div class="bs col-sm-3" style='word-wrap:break-word;'>{!$Label.Acc_Email_Address}</div>
+                                                <div class="bs col-sm-2" >{!$Label.Acc_Contact_Number}</div>
+                                                <div class="bs col-sm-1" ></div>
+                                            </div>
+                                        
+                                            <apex:variable value="{!1}" var="rowNum" />
+                                            <apex:repeat value="{!userResultList}" var="result">
+                                                <div class="bs row listcontent onclick-pointer {!IF(MOD(rowNum,2)==1,'grey-background','')}" onclick="getEncryptedCriteria('{!result.Id}','1');" >
+                                                    <div class="bs col-sm-2 content-highlight" style="word-wrap:break-word;padding-left:30px;">
+                                                        {!result.Company_Name__c}
+                                                    </div>
+                                                    <div class="bs col-sm-2 content-highlight" >
+                                                        {!result.Name}
+                                                    </div>
+                                                    <div class="bs col-sm-2 content-highlight" style="padding-left:20px;">
+                                                        {!result.Agent_Code__c}
+                                                    </div>
+                                                    <div class="bs col-sm-3 content-highlight" style="word-wrap:break-word;padding-left:25px;">
+                                                        {!result.Email_Address__c}
+                                                    </div>
+                                                    <div class="bs col-sm-2 content-highlight" style="padding-left:28px;">
+                                                        {!result.Contact_No_Country_Code__c}{!result.Contact_No__c}
+                                                    </div>
+                                                    <div class="bs col-sm-1 content-highlight" style="text-align:right;padding-right:30px;">
+                                                        <a class="action-btn " role="button" onclick="getEncryptedCriteria('{!result.Id}','1');"><span class="ci-hk-pencil" aria-hidden="true"></span></a>
+                                                    </div>
+                                                </div>
+                                                <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                                            </apex:repeat>
+                                  </apex:outputPanel>
+                                  <apex:outputPanel rendered="{!!isSuperAdmin}" >
+                                            <div class="bs row " style="margin-left:0px;{!IF(searched, '', 'display:none;')};">
+                                                <div class="bs col-sm-3" style="word-break: break-word;padding-left:30px;">{!$Label.Acc_Name}</div>
+                                                <div class="bs col-sm-3" >{!$Label.Acc_Agent_Code}</div>
+                                                <div class="bs col-sm-3" style='word-wrap:break-word;'>{!$Label.Acc_Email_Address}</div>
+                                                <div class="bs col-sm-2" >{!$Label.Acc_Contact_Number}</div>
+                                                <div class="bs col-sm-1" ></div>
+                                            </div>
+                                        
+                                            <apex:variable value="{!1}" var="rowNumA" />
+                                            <apex:repeat value="{!userResultList}" var="result">
+                                                <div class="bs row listcontent onclick-pointer grey-background}" onclick="getEncryptedCriteria('{!result.Id}','1');" >
+                                                    <div class="bs col-sm-3 content-highlight" style="padding-left:30px;">
+                                                        {!result.Name}
+                                                    </div>
+                                                    <div class="bs col-sm-3 content-highlight" style="padding-left:20px;">
+                                                        {!result.Agent_Code__c}
+                                                    </div>
+                                                    <div class="bs col-sm-3 content-highlight" style="word-wrap:break-word;padding-left:25px;">
+                                                        {!result.Email_Address__c}
+                                                    </div>
+                                                    <div class="bs col-sm-2 content-highlight" style="padding-left:28px;">
+                                                        {!result.Contact_No_Country_Code__c}{!result.Contact_No__c}
+                                                    </div>
+                                                    <div class="bs col-sm-1 content-highlight" style="text-align:right;padding-right:30px;">
+                                                        <a class="action-btn " role="button" onclick="getEncryptedCriteria('{!result.Id}','1');"><span class="ci-hk-pencil" aria-hidden="true"></span></a>
+                                                    </div>
+                                                </div>
+                                                <apex:variable var="rowNumA" value="{!rowNumA + 1}" />
+                                            </apex:repeat>
+                                  </apex:outputPanel>
+                             </div>
+                             <div class="visible-xs hidden-sm hidden-lg hidden-md col-xs-12" style="padding :0px">
+                                 
+                                 <apex:repeat id="Result" value="{!userResultList}" var="result">
+                                
+                                    <div id="indivRow" class="bs row listcontent onclick-pointer" onclick="getEncryptedCriteria('{!result.Id}','2');">
+                                        <div class="bs table-row col-xs-12 col-sm-3" style="{!IF(isSuperAdmin,'','display:none')};">    
+                                            <div class="bs col-xs-5 table-cell content-label" >{!$Label.Acc_Company}</div>
+                                            <div class="bs col-xs-5 content-highlight table-cell" >
+                                                <apex:outputText value="{!result.Company_Name__c}"/>
+                                            </div>
+                                            <div class="bs col-xs-2 table-cell content-label" style="{!IF(isSuperAdmin,'','display:none')};text-align:right;"><a class="action-btn " role="button" ><span class="ci-hk-pencil" aria-hidden="true"></span></a></div>
+                                        </div>
+                                        
+                                        <div class="bs table-row col-xs-12 col-sm-3" style="{!IF(isSuperAdmin,'','display:none')};">    
+                                            <div class="bs col-xs-5 table-cell content-label" >{!$Label.Acc_Name}</div>
+                                            <div class="bs col-xs-7 content-highlight table-cell" >
+                                                <apex:outputText value="{!result.Name}"/>
+                                            </div>
+                                           </div>
+                                        
+                                        <div class="bs table-row col-xs-12 col-sm-3" style="{!IF(isSuperAdmin,'display:none','')};">    
+                                            <div class="bs col-xs-5 table-cell content-label" >{!$Label.Acc_Name}</div>
+                                            <div class="bs col-xs-5 content-highlight table-cell" >
+                                                <apex:outputText value="{!result.Name}"/>
+                                            </div>
+                                            <div class="bs col-xs-2 table-cell content-label" style="text-align:right;"><a class="action-btn " role="button" ><span class="ci-hk-pencil" aria-hidden="true"></span></a></div>
+                                        </div>
+                                        
+                                        <div class="bs table-row col-xs-12 col-sm-3">    
+                                            <div class="bs col-xs-5 table-cell content-label">{!$Label.Acc_Agent_Code}</div>
+                                            <div class="bs col-xs-7 content-highlight table-cell">
+                                                <apex:outputText value="{!result.Agent_Code__c}"/>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="bs table-row col-xs-12 col-sm-3" >    
+                                            <div class="bs col-xs-5 table-cell content-label">{!$Label.Acc_Email_Address}</div>
+                                            <div class="bs col-xs-7 content-highlight table-cell">
+                                                <apex:outputText value="{!result.Email_Address__c}"/>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="bs table-row col-xs-12 col-sm-3">    
+                                            <div class="bs col-xs-5 table-cell content-label">{!$Label.Acc_Contact_Number}</div>
+                                            <div class="bs col-xs-7 content-highlight table-cell">
+                                                <apex:outputText value="{!result.Contact_No_Country_Code__c}{!result.Contact_No__c}"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                
+                                </apex:repeat>
+                                <br/>
+                            </div>
+                            
+                            <apex:outputPanel rendered="{!noRecordFound}">
+                                <div class="bs col-sm-12 col-xs-12" style="text-align:center;padding-left:30px;">
+                                {!$Label.Acc_No_Result_Found}
+                                </div>
+                            </apex:outputPanel>
+                            <div class="bs" style="{!IF(searched, '', 'display:none;')}">
+                                <ul class="bs pager">
+                                    <li style="{!IF(totalPages>1,'','display:none')}" class="{!IF(!hasPrev, 'disabled', '')}" onclick="{!IF(hasPrev, 'handlePrevPage();','')}"><a href="#">{!$Label.Page_Previous}</a></li>
+                                    <li><apex:outputText value="{!$Label.Pol_Page}"><apex:param value="{!currentPage}" /></apex:outputText>&nbsp;
+                                        <apex:outputText value="{!$Label.Pol_of}"><apex:param value="{!totalPages}" /></apex:outputText>
+                                    </li>
+                                    <li style="{!IF(totalPages>1,'','display:none')}" class="{!IF(!hasNext, 'disabled', '')}" onclick="{!IF(hasNext, 'handleNextPage();', '')}"><a href="#">{!$Label.Page_Next}</a></li>
+                                </ul>
+                            </div>
+                            </apex:outputPanel>
+                         </div>
+                    </div>
+                    <br/>
+                    <br/>
+                    <br/>
+                    
+                </div>
+                
+                <!--mobile action button-->
+                <!--<div class="bs col-sm-12 col-xs-12" >
+                        
+                    <div id="mobile-app-padding" class="bs row" style="display: none; padding-bottom: 100px;">
+                        <div class="bs col-xs-12"></div>
+                    </div>
+                    <div id="action-bar" class="bs visible-xs cigna-floating-bottom-panel" style="left:0px;" >
+                        <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark onclick-pointer" onclick="Cigna.Util.navigateToVFP('ManageAccountDetailPageVFP', null, null, true)">
+                            <a class="action-btn cigna-fg-white" role="button"><span class="fa fa-pencil" aria-hidden="true"></span><br/><span id="firstbtnxstext">{!$Label.Acc_Create_User}</span></a>
+                        </div>
+                    </div>
+                    
+                </div>-->
+        
+             </div>
+            <script>
+               
+               if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+        
+                    /*$(document).ready(function(){
+                        var targetHeight = window.screen.height;
+                        var sfOneHeaderHeight = 44 + 20; //window.parent.document.getElementsByClassName('oneHeader')[0].offsetHeight;
+                        
+                        if($(window).width() > $(window).height()){
+                            targetHeight = window.screen.width;   
+                        }
+                        
+                        //$('body').css('height', (targetHeight  - (targetHeight * 0.09)) + 'px');
+                        $('body').css('height', (targetHeight - sfOneHeaderHeight) + 'px');
+                        $('body').bind('touchmove', function(e){$('#action-bar').css('opacity', '0');});
+                        $('body').bind('touchend', function(e){setTimeout(function(){$('#action-bar').css('opacity', '1');}, 700);});
+                        
+                    });
+                    
+                    $('#mobile-app-padding').css('display', 'block');*/
+                    
+                    $("a").attr("target","");
+                    
+                }
+             </script>
+        </apex:form>
+    </apex:define>
+</apex:page>

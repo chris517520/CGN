@@ -1,0 +1,60 @@
+<apex:page standardController="Task" extensions="ViewTaskVFPCtrl" showHeader="true" action="{!initAction}">
+<head>
+
+    <!-- Service Console integration API library -->
+    <script src="/support/console/44.0/integration.js"></script>
+
+    <script src="/support/api/26.0/interaction.js" type="text/javascript"></script>
+    <!-- Callback functions to handle tab events -->
+    <script>
+        var autoClickToDial = {!autoClickToDial};
+        if(autoClickToDial){
+                testDisableTabCloseTrueWithoutId();
+        }
+        let autoClicktoDialCallBack = function () {
+            if (!autoClickToDial) {
+                return null;
+            }
+
+            sendCTIMessage('/CLICK_TO_DIAL?DN=' + encodeURIComponent('{!Task.Term_Code__c}') + '&ID={!Task.Id}&ENTITY_NAME=Task&OBJECT_NAME=' + encodeURIComponent('null') + '&DISPLAY_NAME=' + encodeURIComponent('Task'));
+			      testDisableTabCloseFalseWithoutId();
+        }
+
+        // callback when DOM is ready
+        document.addEventListener("DOMContentLoaded", autoClicktoDialCallBack());
+            //document.onreadystatechange = testDisableTabCloseTrueWithoutId;
+            
+            //$(document).ready(function() {
+    //alert('disable tab close');
+            //})
+      
+      function displayResultsCallback(result){
+        // var resDiv = document.getElementById("eventResults");
+        // resDiv.innerHTML = JSON.stringify(result);
+        console.log(result);
+      }
+
+      // For use within a tab's sidebar (you don't need tab ID)
+
+      function testDisableTabCloseTrueWithoutId() {
+        sforce.console.disableTabClose(true, false, displayResultsCallback);
+		    console.log("the tab is locked");
+      }
+
+      function testDisableTabCloseFalseWithoutId() {
+        sforce.console.disableTabClose(false, false, displayResultsCallback);
+		    console.log("the tab is unlocked");
+      }
+
+      
+     
+    </script>
+    
+    <script type="text/javascript">
+    </script>
+  </head>
+  
+  <apex:define name="body">
+	<apex:detail title="false" inlineEdit="false"></apex:detail>
+	</apex:define>
+</apex:page>

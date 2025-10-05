@@ -1,0 +1,368 @@
+<apex:page Controller="MyClaimSubmitController" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+    </head>
+    <div class="bs">
+        
+        <script>
+            
+            function renderBenefitTypeNextBtn(){
+                console.log('********** renderBenefitTypeNextBtn');
+               var tmpStepNum;
+               if ({!isCustomer}){
+                   tmpStepNum = 4;
+               }
+               else if ({!!isCustomer}){
+                   tmpStepNum = 3;
+               }
+               
+               hideNextBtnIn(tmpStepNum);
+               $("div[id*='benefit_']").each(function(idx, elem){
+                     //if ($(elem).hasClass('fg-orange') && $(elem).is(':visible')){
+                     if ($(elem).hasClass('fg-orange')){
+                         displayNextBtnIn(tmpStepNum);
+                         return false;
+                     }
+               });
+            }
+        </script>
+        <!-- question start -->
+        <div class="content-question">
+            <apex:outputPanel rendered="{!isCustomer}">
+                {!$Label.Please_select_the_type_of_benefit_that_you_would_like_to_claim}
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!!isCustomer}">
+                {!$Label.Which_benefit_s_would_the_customer_like_to_claim_for}
+            </apex:outputPanel>
+        </div>
+        <apex:form >
+        <apex:actionFunction name="refreshQuestionPanel" rerender="questionPanel"/>
+        </apex:form>
+        <apex:outputPanel id="questionPanel">
+            <div class="content-choice-block">
+                <apex:form >
+                    <div id="benefit_1" class="bs content-multi-choice fg-grey" style="display: none;" onclick="showHIHPA_Flag();"> <!-- HI/HPA/HIF-->
+                        <div>
+                            <div style="float: left;">
+                                <i class="fa fa-dollar content-icon" aria-hidden="true"></i>
+                            </div>
+                            <div style="padding-left:50px; word-wrap: break-word;">
+                                <!-- Rancho_ReviseDescription_20210319 -->
+                                <apex:outputPanel id="dailyHospitalCashPanel">
+                                    <apex:outputPanel rendered="{!!isSME}">
+                                        {!$Label.Daily_Hospital_Cash_Allowance}
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!isSME}">
+                                        {!$Label.Hospital_Cash_Allowance_Hospital_Income_Support}
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                            </div>
+                        </div>
+                        <input type="hidden" name="param-str" value="{!$Label.Daily_Hospital_Cash_Allowance}" />
+                    </div>
+                    <div id="benefit_2" class="bs content-multi-choice fg-grey" style="display: none;" onclick="showHS_Flag();"> <!-- HS -->
+                        <div>
+                            <div style="float: left;">
+                                <i class="fa fa-hospital-o content-icon" aria-hidden="true"></i>
+                            </div>
+                            <div style="padding-left:50px; word-wrap: break-word;">
+                                {!$Label.Hospital_Treatment_Costs}
+                            </div>
+                        </div>
+                        <input type="hidden" name="param-str" value="{!$Label.Hospital_Treatment_Costs}" />
+                    </div>
+                    <div id="benefit_3" class="bs content-multi-choice fg-grey" style="display: none;" onclick="showOP_Flag_O();"> <!-- OP -->
+                        <div>
+                            <div style="float: left;">
+                                <i class="fa fa-medkit content-icon" aria-hidden="true"></i>
+                            </div>
+                            <div style="padding-left:50px; word-wrap: break-word;">
+                                {!$Label.Outpatient_Costs}
+                            </div>
+                        </div>
+                        <input type="hidden" name="param-str" value="{!$Label.Outpatient_Costs}" />
+                    </div>
+                    <div id="benefit_4" class="bs content-multi-choice fg-grey" style="display: none;" onclick="showMAT_Flag();"> <!-- MAT -->
+                        <div>
+                            <div style="float: left;">
+                                <i class="fa fa-heart content-icon" aria-hidden="true"></i>
+                            </div>
+                            <div style="padding-left:50px; word-wrap: break-word;">
+                                {!$Label.Maternity_Costs}
+                            </div>
+                        </div>
+                        <input type="hidden" name="param-str" value="{!$Label.Maternity_Costs}" />
+                    </div>
+                    <div id="benefit_5" class="bs content-multi-choice fg-grey" style="display: none;" onclick="showDIS_Flag_T();"> <!-- DIS -->
+                        <div>
+                            <div style="float: left;">
+                                <i class="fa fa-wheelchair content-icon" aria-hidden="true"></i>
+                            </div>
+                            <div style="padding-left:50px; word-wrap: break-word;">
+                                {!$Label.Temporary_or_Permanent_Disability}
+                            </div>
+                        </div>
+                        <input type="hidden" name="param-str" value="{!$Label.Temporary_or_Permanent_Disability}" />
+                    </div>
+                    <div id="benefit_6" class="bs content-multi-choice fg-grey" style="display: none;" onclick="showCI_Flag();"> <!-- CI -->
+                        <div>
+                            <div style="float: left;">
+                                <i class="fa fa-warning content-icon" aria-hidden="true"></i>
+                            </div>
+                            <div style="padding-left:50px; word-wrap: break-word;">
+                                {!$Label.Critical_illness}
+                            </div>
+                        </div>
+                        <input type="hidden" name="param-str" value="{!$Label.Critical_illness}" />
+                    </div>
+                    <div id="benefit_7" class="bs content-multi-choice fg-grey" style="display: none;" onclick="showDIS_Flag_W();"> <!-- DIS -->
+                        <div>
+                            <div style="float: left;">
+                                <i class="fa fa-h-square content-icon" aria-hidden="true"></i>
+                            </div>
+                            <div style="padding-left:50px; word-wrap: break-word;">
+                                {!$Label.Waiver_of_Premium}
+                            </div>
+                        </div>
+                        <input type="hidden" name="param-str" value="{!$Label.Waiver_of_Premium}" />
+                    </div>
+                    <!-- Added by minglei 2018.05.15 [add Wellness type to claim] start -->
+                    <div id="benefit_9" class="bs content-multi-choice fg-grey" style="display: none;" onclick="showWellness_Flag();"> <!-- WELLNESS -->
+                        <div>
+                            <div style="float: left;">
+                                <i class="fa fa-heartbeat content-icon" aria-hidden="true"></i>
+                            </div>
+                            <div style="padding-left:50px; word-wrap: break-word;">
+                                {!$Label.Wellness}
+                            </div>
+                        </div>
+                        <input type="hidden" name="param-str" value="{!$Label.Wellness}" />
+                    </div>
+                    <!-- Added by minglei 2018.05.15 [add Wellness type to claim] end -->
+                    
+                    <!-- next button -->
+                    <!-- mobile -->
+                    <div id="mobile-app-padding" class="bs row nextStepBtnPaddingIn3" style="display: none; padding-bottom: 100px;">
+                        <div class="bs col-xs-12"></div>
+                    </div>
+                    
+                    <div id="action-bar" class="bs action-bar hidden-sm hidden-md hidden-lg cigna-floating-bottom-panel {!IF(isCustomer, 'nextStepBtnIn4', 'nextStepBtnIn3')}" style="left:0px; display:none;" onclick="nextStep();">
+                        <div id="callAction1" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                            <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</a>
+                        </div>
+                    </div>
+                    
+                    <!-- web -->
+                    <div class="bs row hidden-xs {!IF(isCustomer, 'nextStepBtnIn4', 'nextStepBtnIn3')}" style="padding-top: 20px; padding-bottom: 20px; display:none;">
+                        <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3 "></div>
+                        <div id="callAction2" class="bs col-sm-6 col-md-6 col-xs-6 col-lg-6 onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn" onclick="nextStep();">
+                            {!$Label.Next}
+                        </div>
+                        <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3"></div>
+                    </div>
+                    
+                    
+                    <!-- load selected benefit type -->
+                    <apex:outputPanel rendered="{!if( (cList[0].policy__c != null && cList[0].policy__c != ''),'true','false')}">
+                        <apex:repeat value="{!wPolicyList_PI}" var="pItem" >
+                            <apex:outputPanel rendered="{!if( isLoadOldClaim && CONTAINS(cList[0].policy__c,pItem.policyNum) && pItem.policyNum!= null && pItem.benefitTypeListStr != null,'true','false')}">
+                                <script>
+                                    selectPolicyToShowBenefit('{!pItem.policyNum}', "{!pItem.benefitTypeListStr}");
+                                    renderBenefitTypeNextBtn();
+                                </script>
+                            </apex:outputPanel>
+                        </apex:repeat>   
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!if(cList[0].HIF__c || cList[0].HI__c || cList[0].HPA__c ,'true','false')}">
+                        <script>
+                            if($('#benefit_1').css('display') != 'none'){
+                                $( "#benefit_1" ).removeClass('fg-grey').addClass('fg-orange');
+                                oldClaimRecordBenefitType +='1';
+                                if(showHIF == 0)    showHIF = 1;
+                                if(showHI == 0)    showHI = 1;
+                                if(showHPA == 0)    showHPA = 1;
+                            }
+                        </script>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!if(cList[0].HS__c,'true','false')}">
+                        <script>
+                            if($('#benefit_2').css('display') != 'none'){
+                                $( "#benefit_2" ).removeClass('fg-grey').addClass('fg-orange');
+                                oldClaimRecordBenefitType +='2';
+                                if(showHS == 0)    showHS = 1;
+                            }
+                        </script>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!if( cList[0].OPF__c || cList[0].OP__c,'true','false')}">
+                        <script>
+                            if($('#benefit_3').css('display') != 'none'){
+                                $( "#benefit_3" ).removeClass('fg-grey').addClass('fg-orange');
+                                oldClaimRecordBenefitType +='3';
+                                if(showOPF == 0)    showOPF = 1;
+                                if(showOP == 0)    showOP = 1;
+                                
+                            }
+                        </script>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!if( cList[0].MAT__c,'true','false')}">
+                        <script>
+                            if($('#benefit_4').css('display') != 'none'){
+                                $( "#benefit_4" ).removeClass('fg-grey').addClass('fg-orange');
+                                oldClaimRecordBenefitType +='4';
+                                if(showMAT == 0)    showMAT = 1;
+                            }
+                        </script>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!if( cList[0].DIS__c && cList[0].Is_Selected_Temporary_or_Permanent_Dis__c,'true','false')}">
+                        <script>
+                            if($('#benefit_5').css('display') != 'none' ){
+                                $( "#benefit_5" ).removeClass('fg-grey').addClass('fg-orange');
+                                oldClaimRecordBenefitType +='5';
+                                if(showDIS == 0)    showDIS = 1;
+                                if(showDIS == 2)    showDIS = 3;
+                            }
+                        </script>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!if( cList[0].CI__c,'true','false')}">
+                        <script>
+                            if($('#benefit_6').css('display') != 'none'){
+                                $( "#benefit_6" ).removeClass('fg-grey').addClass('fg-orange');
+                                oldClaimRecordBenefitType +='6';
+                                if(showCI == 0)    showCI = 1;
+                            }
+                        </script>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!if( cList[0].DIS__c && cList[0].Is_Selected_Waiver_of_Premium__c,'true','false')}">
+                        <script>
+                            if($('#benefit_7').css('display') != 'none' ){
+                                $( "#benefit_7" ).removeClass('fg-grey').addClass('fg-orange');
+                                oldClaimRecordBenefitType +='7';
+                                if(showDIS ==1)    showDIS = 3;
+                                else if(showDIS == 0)    showDIS = 1;
+                            }
+                        </script>
+                    </apex:outputPanel>
+                    <!-- //Added by minglei 2018.05.15 [add Wellness type to claim] start -->
+                    <apex:outputPanel rendered="{!if( cList[0].WL__c,'true','false')}">            
+                        <script>
+                            if($('#benefit_9').css('display') != 'none' ){
+                                $( "#benefit_9" ).removeClass('fg-grey').addClass('fg-orange');
+                                oldClaimRecordBenefitType +='9';
+                                if(showWL ==1)    showWL = 3;
+                                else if(showWL == 0)    showWL = 1;
+                            }
+                        </script>
+                    </apex:outputPanel>
+                    <!-- //Added by minglei 2018.05.15 [add Wellness type to claim] end -->
+                    
+                    <apex:outputPanel id="benefit-type-render-next-button" rendered="{!if( (cList[0].policy__c != null && cList[0].policy__c != ''),'true','false')}">
+                        <script>
+                            console.log('********** renderBenefitTypeNextBtn in page');
+                            renderBenefitTypeNextBtn();
+                        </script>
+                    </apex:outputPanel>
+                    <script>
+                        function passQuestionDisplayLogic(){
+                            var newClaimRecordBenefitType = '';
+                            if($('#benefit_1').css('display') != 'none' && $( "#benefit_1" ).hasClass('fg-orange')){
+                                newClaimRecordBenefitType +='1';
+                            }
+                            if($('#benefit_2').css('display') != 'none' && $( "#benefit_2" ).hasClass('fg-orange')){
+                                newClaimRecordBenefitType +='2';
+                            }
+                            if($('#benefit_3').css('display') != 'none' && $( "#benefit_3" ).hasClass('fg-orange')){
+                                newClaimRecordBenefitType +='3';
+                            }
+                            if($('#benefit_4').css('display') != 'none' && $( "#benefit_4" ).hasClass('fg-orange')){
+                                newClaimRecordBenefitType +='4';
+                            }
+                            if($('#benefit_5').css('display') != 'none' && $( "#benefit_5" ).hasClass('fg-orange')){
+                                newClaimRecordBenefitType +='5';
+                            }
+                            if($('#benefit_6').css('display') != 'none' && $( "#benefit_6" ).hasClass('fg-orange')){
+                                newClaimRecordBenefitType +='6';
+                            }
+                            if($('#benefit_7').css('display') != 'none' && $( "#benefit_7" ).hasClass('fg-orange')){
+                                newClaimRecordBenefitType +='7';
+                            }
+                            //Added by minglei 2018.05.15 [add Wellness type to claim] start
+                            if($('#benefit_9').css('display') != 'none' && $( "#benefit_9" ).hasClass('fg-orange')){
+                                newClaimRecordBenefitType +='9';
+                            }
+                            //Added by minglei 2018.05.15 [add Wellness type to claim] end
+                            if(oldClaimRecordBenefitType != newClaimRecordBenefitType){
+                                // Zoe updated on 0405 for performance tuning
+                                if (oldClaimRecordBenefitType != null && oldClaimRecordBenefitType != ''){
+                                    isResetAndClearAllQuestionAnswer = true;
+                                    //isResetAdmissionDateAndDischargeDateFlag = true;
+                                    //isResetVisitDateFlag = true;
+                                    //isResetInfoFromOtherCompanyFlag = true;
+                                }
+                                console.log('*********isResetAndClearAllQuestionAnswer: '+isResetAndClearAllQuestionAnswer );
+                                questionDisplayLogic();
+                                oldClaimRecordBenefitType = newClaimRecordBenefitType;
+                                isResetAndClearAllQuestionAnswer = false;
+                            }
+                        }
+                    </script>
+                    <!-- select benefit type -->
+                    <apex:actionFunction action="{!SelectBenefitType}" name="selectBenefitTypeAtAction" status="loader-icon" reRender="hiddenValueEng_ClaimSelectBenefitTypeVFP, hiddenValueChi_ClaimSelectBenefitTypeVFP, extraQuestion_brk, extraQuestionNextBtn_brk, attSection_brk, attSectionNextBtn_brk, attSection_cus" oncomplete="passQuestionDisplayLogic(); next5Step(); "> 
+                        <apex:param name="benefitTypeStr" assignTo="{!benefitTypeStr}" value="" />
+                    </apex:actionFunction>
+                    
+                    <!-- end save record data -->
+                    <!-- if no benefit type is available, display "Others" -->
+                    <div id="benefit_8" class="bs content-display" style="display: none;" > <!-- MIS -->
+                        <apex:outputPanel rendered="{!isCustomer}" layout="inline">
+                            <div>
+                                <div style="float: left;">
+                                    <i class="fa fa-headphones content-icon" aria-hidden="true"></i>
+                                </div>
+                                <div style="padding-left:50px; word-wrap: break-word;">
+                                    {!$Label.Please_contact_Customer_Service_at_CS_phone_number_for_further_assistance}
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!!isCustomer}" layout="inline">
+                            <div>
+                                <div style="float: left;">
+                                    <i class="fa fa-headphones content-icon" aria-hidden="true"></i>
+                                </div>
+                                <div style="padding-left:50px; word-wrap: break-word;">
+                                    {!$Label.Please_contact_for_broker_hotline_2539_9210_further_assistance}
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                    </div>
+                    <script>
+                        
+                        function next5Step(){
+                            if ({!isCustomer}){
+                                console.log('to see next 5 steps customer');
+                                if ($('.content-step[data-step="5"]').length > 0) {
+                                    $('.content-step:visible').fadeOut(function(){
+                                        $('.content-step[data-step="5"]').fadeIn();
+                                    });
+                                }
+                            }
+                            if ({!!isCustomer}){
+                                console.log('to see next 5 steps broker');
+                                if ($('.content-step[data-step="4"]').length > 0) {
+                                    $('.content-step:visible').fadeOut(function(){
+                                        $('.content-step[data-step="4"]').fadeIn();
+                                    });
+                                }
+                            }
+                        }
+                        
+                    </script>
+                </apex:form>
+                
+            </div>
+        </apex:outputPanel>
+        
+        
+        
+        <!-- question end-->
+    </div>
+</apex:page>

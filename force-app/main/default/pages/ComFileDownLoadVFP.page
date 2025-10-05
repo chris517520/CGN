@@ -1,0 +1,60 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" title="Community File Download" controller="ComFileDownLoadCTRL" action="{!init}" >
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <apex:include pageName="CignaCommonCSS" />
+        <!-- CR-56_Link_20220214 -->
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-3.6.0.min.js')}"/>      
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />        
+            
+            <script>
+            $(document).ready(function(){
+            documentDetector();
+        });      
+        
+        function documentDetector(){
+            showLoading();
+            var isComplete = $('input[type="hidden"][id$="is-document-download-complete"]').val();
+            console.log('###isComplete='+isComplete );
+            if(isComplete=='false'){
+                console.log('###false');    
+                setTimeout(checkIsDocumentDownloadComplete, 3000);               
+            }else{
+                finishLoading();
+                console.log('###true');
+                redirectDownloadUrl();
+            }
+            
+        }
+        
+        function showLoading() {
+            $('#download-loader').fadeIn(100);
+            
+        }
+        
+        function finishLoading(){
+            $('#download-loader').fadeOut(100);
+            
+        }
+        </script>
+    </head>
+    
+    <div class="bs">
+        <!--added by connor-->
+        <div id="download-loader" class="bs col-xs-12 col-lg-12 loading-div" style="display: none;" >
+            <span class="loading-helper"></span>
+            <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+            <span class="sr-only">Loading...</span>
+        </div>
+        <!--added by connor-->
+        <apex:define name="body">
+            <apex:form >
+                <apex:actionFunction action="{!checkIsDocumentDownloadComplete}" name="checkIsDocumentDownloadComplete"  reRender="is-document-download-param-panel" oncomplete="documentDetector();" />
+                <apex:outputPanel id="is-document-download-param-panel" >
+                    <apex:inputHidden value="{!isDownloadComplete}" id="is-document-download-complete"/>
+                </apex:outputPanel>
+                
+                <apex:actionFunction action="{!redirectDownloadUrl}" name="redirectDownloadUrl" />
+            </apex:form>
+        </apex:define>
+    </div>
+</apex:page>

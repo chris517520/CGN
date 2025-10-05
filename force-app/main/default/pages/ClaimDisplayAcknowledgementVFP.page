@@ -1,0 +1,120 @@
+<apex:page Controller="MyClaimSubmitController" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+    <apex:form >
+        <apex:actionFunction name="refreshAck" status="loader-icon" action="{!refreshAckBrk}" rerender="ackPanel"/>
+    </apex:form>
+    
+    <apex:outputPanel id="ackPanel">
+        <script>
+            console.log('********** beginning of ackPanel');
+        </script>
+        <div class="col-xs-12 col-sm-12" style="text-align:center;">
+            <i class="fa fa-check-circle-o content-active" style="font-size:50px;" aria-hidden="true"></i>
+        </div>
+        <!-- 20210803 - minghua - CR48, add cList[0].OP__c -->
+        <div id="ack_Fast_Track_Group_With_DocuSign_Customer" class="col-xs-12 col-sm-12" style="padding-top:30px; {!if(isCustomer && cList.size>0 && (cList[0].OPF__c||cList[0].OP__c) && cList[0].Is_Fast_Track__c, '','display: none;')} text-align:center;">
+            <apex:outputText value="{!$Label.Ack_Fast_Track_Group_With_DocuSign_Customer}" escape="false" />  
+        </div>
+        <div id="ack_Fast_Track_Individual_With_DocuSign_Customer" class="col-xs-12 col-sm-12" style="padding-top:30px; {!if(isCustomer && cList.size>0 && cList[0].HIF__c && cList[0].Is_Fast_Track__c, '','display: none;')} text-align:center;">
+            <apex:outputText rendered="{!if(cList.size>0,true,false)}" value="{!$Label.Ack_Fast_Track_Individual_With_DocuSign_Customer}" escape="false" >
+                                <apex:param value="{!cList[0].Amount_Of_Sum_Insured__c }" />
+                            </apex:outputText>
+            <apex:outputText rendered="{!if(cList.size>0,false,true)}" value="{!$Label.Ack_Fast_Track_Individual_With_DocuSign_Customer}" escape="false" >
+                            </apex:outputText>
+        </div>
+        
+        <div id="ack_Non_Fast_Track_With_DocuSign_Customer_PI" class="col-xs-12 col-sm-12" style="padding-top:30px; text-align:center; display:none;">
+            <apex:outputText value="{!$Label.Ack_Non_Fast_Track_With_DocuSign_Customer}" escape="false" rendered="{!if(isCustomer && cList.size>0 && !cList[0].Is_Fast_Track__c, 'true','false')}" />  
+        </div>
+        <div id="ack_Non_Fast_Track_Without_DocuSign_Customer_PI" class="col-xs-12 col-sm-12" style="padding-top:30px;  text-align:center; display:none;">
+            <apex:outputText value="{!$Label.Ack_Non_Fast_Track_Without_DocuSign_Customer}" escape="false"  rendered="{!if(isCustomer && cList.size>0 && !cList[0].Is_Fast_Track__c, 'true','false')}"/>  
+        </div>
+        
+        <!--
+        <div id="ack_Non_Fast_Track_With_DocuSign_Customer_PI" class="col-xs-12 col-sm-12" style="padding-top:30px; text-align:center; display:none;">
+            <apex:outputText value="{!$Label.Ack_Non_Fast_Track_With_DocuSign_Customer}" escape="false" rendered="{!if(isCustomer && cList.size>0 && !cList[0].Is_Fast_Track__c && !cList[0].Is_Person_Insured_Claim__c, 'true','false')}" />  
+        </div>
+        <div id="ack_Non_Fast_Track_Without_DocuSign_Customer_PI" class="col-xs-12 col-sm-12" style="padding-top:30px;  text-align:center; display:none;">
+            <apex:outputText value="{!$Label.Ack_Non_Fast_Track_Without_DocuSign_Customer}" escape="false"  rendered="{!if(isCustomer && cList.size>0 && !cList[0].Is_Fast_Track__c && !cList[0].Is_Person_Insured_Claim__c, 'true','false')}"/>  
+        </div>
+        <!--
+        <div id="ack_Non_Fast_Track_Without_DocuSign_Customer" class="col-xs-12 col-sm-12" style="padding-top:30px; {!if(isCustomer && cList.size>0 && !cList[0].Is_Fast_Track__c && cList[0].Is_Person_Insured_Claim__c, '','display: none;')} text-align:center;">
+            <apex:outputText value="{!$Label.Ack_Non_Fast_Track_Without_DocuSign_Customer}" escape="false" />  
+        </div>
+        -->
+        
+        
+        <!--
+        <div id="ack_Non_Fast_Track_With_DocuSign_Customer" class="col-xs-12 col-sm-12" style="padding-top:30px; {!if(isCustomer && cList.size>0 && !cList[0].Is_Fast_Track__c && cList[0].Is_Contain_Individual_Policy__c && !cList[0].Is_Person_Insured_Claim__c && cList[0].Is_Chosen_Sign_On_Screen__c, '','display: none;')} text-align:center;">
+            <apex:outputText value="{!$Label.Ack_Non_Fast_Track_With_DocuSign_Customer}" escape="false" />  
+        </div>
+        <div id="ack_Non_Fast_Track_Without_DocuSign_Customer" class="col-xs-12 col-sm-12" style="padding-top:30px; {!if(isCustomer && cList.size>0 && !cList[0].Is_Fast_Track__c && !(cList[0].Is_Contain_Individual_Policy__c && !cList[0].Is_Person_Insured_Claim__c && cList[0].Is_Chosen_Sign_On_Screen__c), '','display: none;')} text-align:center;">
+            <apex:outputText value="{!$Label.Ack_Non_Fast_Track_Without_DocuSign_Customer}" escape="false" />  
+        </div>
+        -->
+        <!--
+        <div id="ack_Fast_Track_Group_With_DocuSign_Broker" class="col-xs-12 col-sm-12" style="padding-top:30px; display: none; text-align:center;">
+            <apex:outputText value="{!$Label.Ack_Fast_Track_Group_With_DocuSign_Broker}" escape="false" />  
+        </div>
+        // Confirmed no group for broker
+        -->
+        
+        <div id="ack_Fast_Track_Individual_Without_DocuSign_Broker" class="col-xs-12 col-sm-12" style="padding-top:30px; {!if(!isCustomer && cList.size>0 && localIsFastTrack, '','display: none;')} text-align:center;"> <!--  && cList[0].Is_Fast_Track__c  -->
+            <apex:outputText rendered="{!if(cList.size>0,true,false)}" value="{!$Label.Ack_Fast_Track_Individual_Without_DocuSign_Broker}" escape="false" >
+                <apex:param value="{!cList[0].Amount_Of_Sum_Insured__c }" />
+            </apex:outputText>
+            <apex:outputText rendered="{!if(cList.size>0,false,true)}" value="{!$Label.Ack_Fast_Track_Individual_Without_DocuSign_Broker}" escape="false" />            
+        </div>
+        <div id="ack_Fast_Track_Individual_With_DocuSign_Broker" class="col-xs-12 col-sm-12" style="padding-top:30px; {!if(!isCustomer && cList.size>0 && localIsFastTrack, '','display: none;')} text-align:center;"> <!--  && cList[0].Is_Fast_Track__c --> 
+            <apex:outputText rendered="{!if(cList.size>0,true,false)}" value="{!$Label.Ack_Fast_Track_Individual_With_DocuSign_Broker}" escape="false" >
+                <apex:param value="{!cList[0].Amount_Of_Sum_Insured__c }" />
+            </apex:outputText>
+            <apex:outputText rendered="{!if(cList.size>0,false,true)}" value="{!$Label.Ack_Fast_Track_Individual_With_DocuSign_Broker}" escape="false" />            
+        </div>
+        <div id="ack_Non_Fast_Track_With_DocuSign_Broker" class="col-xs-12 col-sm-12" style="padding-top:30px; {!if(!isCustomer && cList.size>0 && !localIsFastTrack, '','display: none;')} text-align:center;">
+            <apex:outputText value="{!$Label.Ack_Non_Fast_Track_With_DocuSign_Broker}" escape="false" />  
+        </div>
+        <div id="ack_Non_Fast_Track_Without_DocuSign_Broker" class="col-xs-12 col-sm-12" style="padding-top:30px; {!if(!isCustomer && cList.size>0 && !localIsFastTrack, '','display: none;')} text-align:center;">
+            <apex:outputText value="{!$Label.Ack_Non_Fast_Track_Without_DocuSign_Broker}" escape="false" />  
+        </div>
+        
+        
+        <script>
+            console.log('******* reload acknowledgement message {!isCustomer} , {!cList.size} , {!cList[0].HIF__c} , {!cList[0].Is_Fast_Track__c}, {!localIsFastTrack}');
+            if(onScreenSign){
+                console.log('reload onScreenSign');
+                chooseSignOnScreen();
+            }
+            if(emailSign){
+                console.log('reload emailSign');
+                chooseEsignature();
+            }
+        
+        </script>
+        
+    </apex:outputPanel>
+    
+    
+    <!-- next button -->
+    <div class="bs col-xs-12">
+        <!-- mobile -->
+        <div id="action-bar" class="bs action-bar hidden-sm hidden-md hidden-lg cigna-floating-bottom-panel nextStepBtnIn10" style="left:0px; display:none;" onclick="Cigna.Util.navigateToVFP('MyClaimSubmitVFP');">
+            <div id="callAction1" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-clip-offcial" aria-hidden="true"></span><br/>{!$Label.MAKE_ANOTHER_CLAIM}</a>
+            </div>
+        </div>
+        
+        <!-- web -->
+        <div class="bs row hidden-xs nextStepBtnIn10" style="padding-top: 20px; padding-bottom: 20px; display:none;">
+            <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3 "></div>
+            <div id="callAction2" class="bs col-sm-6 col-md-6 col-xs-6 col-lg-6 onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn" onclick="Cigna.Util.navigateToVFP('MyClaimSubmitVFP');">
+                {!$Label.MAKE_ANOTHER_CLAIM}
+            </div>
+            <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3"></div>
+        </div>
+    </div>
+    
+    <script>
+        displayNextBtnIn(10);
+    </script>
+    
+</apex:page>

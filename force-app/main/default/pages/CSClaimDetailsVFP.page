@@ -1,0 +1,328 @@
+<apex:page docType="html-5.0" id="CSClaimDetails" showHeader="false" title="Claim Details" extensions="CSClaimDetailsController" standardController="Attachment">
+
+    <head>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+      <apex:include pageName="CignaCommonCSS" />
+      <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+      <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" /> 
+      <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+      <style> 
+            .header {
+                background-color: #000 !important; 
+                color: black;
+                padding-left: 30px;
+                border-radius: 5px;
+            }
+            <!-- change by kit -->
+            .bPageBlock{
+                border-top: 4px solid #1797c0;
+            }    
+
+      </style>
+
+      <script> 
+            $(document).ready(function(){
+                ClaimDetailsAF.getClaimDetails();
+            });
+            //Connor CR-47 start
+            function showLoading() {
+              $('#download-loader').fadeIn(100);
+            }
+
+            function finishLoading(){
+              $('#download-loader').fadeOut(100);
+            }
+            //Connor CR-47 end
+     </script>
+     </head>
+    <body>
+        <!-- Start of the main body -->
+        <apex:define name="body">
+        <div>
+            <div style="padding-left:30px !important; padding-right:30px !important;">
+
+                <apex:form >
+
+                <!-- Added by Connor CR-47 start --> 
+                <apex:actionFunction action="{!toggleDocState}" 
+                name="toggleDocState"  
+                reRender="corDocTable"
+                oncomplete="finishLoading();"
+                namespace="ClaimDetailsAF">
+                <apex:param assignTo="{!attKeyVisibility}" value="" name="attKeyVisibility"/>
+                <apex:param assignTo="{!docNameVisibility}" value="" name="docNameVisibility"/>
+              </apex:actionFunction>
+              <!-- Added by Connor CR-47 end --> 
+
+
+                <apex:actionFunction action="{!getClaimDetails}" 
+                                     name="getClaimDetails" 
+                                     reRender="ClaimDetailsApex"
+                                     status="loader-icon"
+                                     oncomplete="ClaimDetailsAF.getClaimHistroyList()"
+                                     namespace="ClaimDetailsAF" /> 
+                <!-- add by kit -->
+                <apex:actionFunction action="{!getClaimHistroyList}" 
+                                     name="getClaimHistroyList" 
+                                     reRender="claimHistroyPanel"
+                                     status="loader-icon"
+                                     namespace="ClaimDetailsAF" />                  
+                    
+                <apex:actionStatus id="loader-icon">
+                    <apex:facet name="start">
+                        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                             &nbsp;
+                         </div>
+                        <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                            <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                                <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                                <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                            </div>
+                         </div>
+                    </apex:facet>
+                </apex:actionStatus>
+                                       
+                <apex:outputPanel id="ClaimDetailsApex">
+                    <!-- isGroup detail start-->
+                    <apex:outputPanel layout="none" rendered="{!isGroup}">
+                          <apex:pageBlock title="Claim Details">
+                              <div>
+                                  <h6 style="font-weight:bold; font-size:14px;">{!IF(claimSourceType == 'Portal',currentClaim.Name,targetClaim.claimNumber)}</h6>
+                              </div>
+                              <apex:pageBlockSection columns="2">
+                                  <!-- Claim Number -->
+                                     <apex:outputText value="{!IF(claimSourceType == 'Portal',currentClaim.Name,targetClaim.claimNumber)}" label="{!$Label.Pol_Claim_No}" rendered="{!(hasType && fields2['Claims No'][policyType])||(claimSourceType == 'Portal')}"/>                                              
+                                  
+                                  <!-- Member Name -->
+                                
+                                     <apex:outputText value="{!IF(claimSourceType == 'Portal',currentClaim.Person_Insured_Name__c,targetClaim.policyInsuredName)}" label="{!$Label.Pol_Member_Name}" rendered="{!(hasType && fields2['Member Name'][policyType])||(claimSourceType == 'Portal')}"/>    
+                                  <!-- Member Cert Number -->                
+                                     <apex:outputText value="{!targetClaim.certNumber}" label="{!$Label.Pol_Member_Cert_No}" rendered="{!(hasType && fields2['Member Cert. No'][policyType])||(claimSourceType == 'Portal')}"/>
+                                                  
+                                  <!-- Claim Type -->                
+                                     <apex:outputText value="{!IF(claimSourceType == 'Portal',currentClaim.Claim_Type__c,targetClaim.claimTypeDisplay)}" label="{!$Label.Pol_Claim_Type}" rendered="{!(hasType && fields2['Claim type'][policyType])||(claimSourceType == 'Portal')}"/>
+                                                  
+                                  <!-- Benefit Type -->                
+                                     <apex:outputText value="{!IF(claimSourceType == 'Portal',currentClaim.Type_of_benefit_to_claim__c,targetClaim.benefitTypeDisplay)}" label="{!$Label.Pol_Benefit_Type}" rendered="{!(hasType && fields2['Benefit Type'][policyType])||(claimSourceType == 'Portal')}"/>
+                                   
+                                   <!-- Benefit Item -->
+                                     <apex:outputText value="{!targetClaim.benefitItemDescription}" label="{!$Label.Pol_Benefit_Item}" rendered="{!(hasType && fields2['Benefit Item'][policyType])||(claimSourceType == 'Portal')}"/>
+                                   
+                                   <!-- Claim Period From -->
+                                       <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false" label="{!$Label.Pol_Claim_Period_From}" rendered="{!(hasType && fields2['Admission Date'][policyType])||(claimSourceType == 'Portal')}">
+                                         <apex:Param value="{!targetClaim.consultationDateInDate}"/>
+                                      </apex:OutputText>
+                                          
+                                   <!-- Claim Period To -->      
+                                       <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false" label="{!$Label.Pol_Claim_Period_To}" rendered="{!(hasType && fields2['Discharge Date'][policyType])||(claimSourceType == 'Portal')}">
+                                          <apex:Param value="{!targetClaim.dischargeDateInDate}"/>
+                                       </apex:OutputText>
+                                  
+                                   <!-- Incurred Amount -->
+                                      <apex:outputText value="{!IF(targetClaim.incurredAmount == null ,'',targetClaim.currencySymbol)} {0, Number,###,##0.00}" label="{!$Label.Pol_Incurred_Amount}" rendered="{!(hasType && fields2['Incurred Amount'][policyType])||(claimSourceType == 'Portal')}">
+                                         <apex:param value="{!targetClaim.incurredAmount}"/>
+                                      </apex:outputText>
+                                   
+                                    <!-- Paid Amount -->       
+                                      <apex:outputText value="{!IF(targetClaim.paidAmount == null ,'',targetClaim.currencySymbol)} {0, Number,###,##0.00}" label="{!$Label.Pol_Paid_Amount}" rendered="{!(hasType && fields2['Paid Amount'][policyType])||(claimSourceType == 'Portal')}">
+                                         <apex:param value="{!targetClaim.paidAmount}"/>
+                                      </apex:outputText>
+                                   
+                                    <!-- Payment Date -->
+                                      <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false" label="{!$Label.Pol_Payment_Date}" rendered="{!(hasType && fields2['Payment Date'][policyType])||(claimSourceType == 'Portal')}">
+                                         <apex:Param value="{!targetClaim.paymentDateInDate}" />
+                                      </apex:OutputText>
+                                         
+                                    <!-- Payment Method -->    
+                                         <apex:outputText value="{!targetClaim.paymentMethodDescription}" label="{!$Label.Pol_Payment_Method}" rendered="{!(hasType && fields2['Payment Method'][policyType])||(claimSourceType == 'Portal')}"/>
+                                          
+                                    <!-- Claims Status -->           
+                                      <apex:outputText value="{!IF(claimSourceType == 'Portal',currentClaim.Status__c,targetClaim.claimStatusDescription)}" label="{!$Label.Pol_Claim_Status}" rendered="{!(hasType && fields2['Claims Status'][policyType])||(claimSourceType == 'Portal')}"/>
+                                   
+                                    <!-- Branch -->       
+                                      <apex:outputText value="{!targetClaim.branchDesc}" label="{!$Label.Pol_Branch}" rendered="{!(hasType && fields2['Branch'][policyType])||(claimSourceType == 'Portal')}"/>
+                                </apex:pageBlockSection>
+                        </apex:pageBlock>                             
+                    </apex:outputPanel>  
+                    <!-- isGroup detail end-->
+                  
+                    <!----Claim Details for Non Group Start---->
+                    <apex:outputPanel layout="none" rendered="{!!isGroup}">
+
+                    <!-- New Table (Two-Column) -->
+                        <apex:pageBlock title="Claim Details">
+                            <div>
+                                <h6 style="font-weight:bold; font-size:14px;">{!IF(claimSourceType == 'Portal',currentClaim.Name,targetClaim.claimNumber)}</h6>
+                            </div>
+                            <apex:pageBlockSection columns="2">
+                                <!-- ClaimNumber -->
+                                <apex:outputText value="{!IF(claimSourceType == 'Portal',currentClaim.Name,targetClaim.claimNumber)}" label="{!$Label.Pol_Claim_No}"  rendered="{!(hasType && fields2['Claims No'][policyType])||(claimSourceType == 'Portal')}"/>                                      
+                                <!-- Received Date -->
+                                <apex:outputText value="{0,date,yyyy/MM/dd}" escape="false" label=" {!$Label.Pol_Received_Date}" rendered="{!(hasType && fields2['Received Date'][policyType])||(claimSourceType == 'Portal')}">
+                                    <apex:Param value="{!IF(claimSourceType == 'Portal',currentClaim.Submission_Date__c,targetClaim.submitDateInDate)}"/>
+                                </apex:outputText>                                         
+                                <!-- Claim_Period_From -->
+                                <apex:outputText value="{0,date,yyyy/MM/dd}" escape="false" label="{!$Label.Pol_Claim_Period_From}" rendered="{!(hasType && fields2['Admission Date'][policyType])||(claimSourceType == 'Portal')}">
+                                    <apex:Param value="{!targetClaim.consultationDateInDate}"/>
+                                </apex:outputText>
+                             
+                                <!-- Claim_Period_To -->                                     
+                                <apex:outputText value="{0,date,yyyy/MM/dd}" escape="false" label="{!$Label.Pol_Claim_Period_To}" rendered="{!(hasType && fields2['Discharge Date'][policyType])||(claimSourceType == 'Portal')}">
+                                    <apex:Param value="{!targetClaim.dischargeDateInDate}"/>
+                                </apex:outputText>                                         
+                               
+                                <!-- personInsured -->
+                                 <apex:outputText value="{!IF(claimSourceType == 'Portal', currentClaim.Person_Insured_Name__c,targetClaim.policyInsuredName)}" label="{!$Label.Pol_Person_Insured}" rendered="{!(hasType && fields2['Person Insured'][policyType])||(claimSourceType == 'Portal')}"/>                
+                               
+                                <!-- Claim Status -->
+                                <apex:outputText value="{!IF(claimSourceType == 'Portal',currentClaim.Status__c,targetClaim.claimStatusDescription)}" label="{!$Label.Pol_Claim_Status}" rendered="{!(hasType && fields2['Claims Status'][policyType])||(claimSourceType == 'Portal')}"/>                                         
+                               
+                                <!-- Payment_Method -->
+                                <apex:outputText value="{!targetClaim.paymentMethodDescription}" label="{!$Label.Pol_Payment_Method}" rendered="{!(hasType && fields2['Payment Method'][policyType])||(claimSourceType == 'Portal')}"/>                                          
+                              
+                                <!-- Sum Insured / Benefit Amount -->
+                                <apex:outputText value="{!IF(targetClaim.sumInsured == null,'',targetClaim.CurrencySymbol)} {0, Number,###,##0.00}" label="{!$Label.Pol_Sum_Insured_Benefit_Amount}" rendered="{!isPaidClaim||claimSourceType == 'Portal'}">
+                                    <apex:param value="{!targetClaim.sumInsured}"/>
+                                </apex:outputText>
+                              
+                                <!-- Payment Currency -->
+                                <apex:outputText value="{!targetClaim.paymentCurrencyDescription} " label="{!$Label.Pol_Payment_Currency}" rendered="{!isPaidClaim||claimSourceType == 'Portal'}"/>
+                              
+                                <!-- Paid Amount -->
+                                <apex:outputText value="{!IF(targetClaim.paidAmount == null,'',targetClaim.currencySymbol)} {0, Number,###,##0.00}" label="{!$Label.Pol_Paid_Amount}" rendered="{!isPaidClaim||(claimSourceType == 'Portal')}">
+                                    <apex:param value="{!targetClaim.paidAmount}"/>
+                                </apex:outputText>                                           
+                              
+                                <!-- Remarks -->
+                                <apex:outputText value="{!targetClaim.remarks} {!IF(ISBLANK(TRIM(targetClaim.rejectReason)),'','(Reject Reason)'+TRIM(targetClaim.rejectReason))}" label="{!$Label.Pol_Remarks}" rendered="{!(hasType && fields2['Remarks'][policyType])||(claimSourceType == 'Portal')}"/>                                       
+                             
+                                <!-- Health Guard Remarks -->
+                                <apex:outputText value="{!targetClaim.hgRemarks}" label="{!$Label.Pol_Health_Guard_Remarks}" rendered="{!(hasType && fields2['HG Remarks'][policyType] && isPaidClaim && showHGList)||(claimSourceType == 'Portal')}"/>                                        
+                            </apex:pageBlockSection>                                    
+                        </apex:pageBlock>               
+                    </apex:outputPanel>
+                    
+                    <!-- add by kit -->
+                    <apex:outputPanel layout="block" id="claimHistroyPanel">
+                        <apex:pageBlock title="{!$Label.CP_Claims_Histories_Portal}">
+                            <apex:pageBlockTable value="{!chList}" var="c" border="1" rendered="{!chList != null}">
+                                <apex:column headerValue="{!$Label.Policy_Number}">
+                                    <apex:outputText value="{!c.cc.Policy__c}"></apex:outputText>
+                                </apex:column>
+                                <apex:column headerValue="{!$Label.Person_Insured}">
+                                    <apex:outputText value="{!c.cc.Person_Insured_Name__c}"></apex:outputText>
+                                </apex:column>
+                                <apex:column headerValue="{!$Label.Submission_Date}">
+                                    <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                        <apex:param value="{!c.cc.Submission_Date__c}"/>
+                                    </apex:outputText>
+                                </apex:column>
+                                <apex:column headerValue="{!$Label.Claim_From}">
+                                    <apex:outputLink value="{!URLFOR($Action.Attachment.Download,c.claimForm.Id)}"  rendered="{!c.claimForm != null}">{!c.claimForm.Name}</apex:outputLink><br/>
+                                </apex:column>
+                                <apex:column headerValue="{!$Label.Claim_Attachments}">
+                                    <apex:repeat value="{!c.aList}" var="a">
+                                        <apex:outputLink value="{!URLFOR($Action.Attachment.Download,a.Id)}">{!a.Name}</apex:outputLink><br/>
+                                    </apex:repeat>
+                                </apex:column>
+                            </apex:pageBlockTable>    
+                        </apex:pageBlock>
+                    </apex:outputPanel>
+                    
+                    <!--table start-->    
+                    <apex:outputPanel layout="block" id="hgResult" rendered="{!!isGroup && showHGList && isPaidClaim}">
+                        <apex:pageBlock >
+                            <apex:pageBlockTable value="{!hgMap[hgPage]}" var="c" border="1">
+                                <apex:variable value="{!1}" var="rowNum" />
+                                <apex:column headerValue="{!$Label.Pol_Benefit}" value="{!c.benefitName}"/>
+                                
+                                <apex:column >
+                                    <apex:facet name="header">{!$Label.Pol_Maximum_Amount}</apex:facet>
+                                    <apex:outputText value="{!IF(c.benefitLevel == null,'',targetClaim.currencySymbol)} {0, Number,###,##0.00}">
+                                        <apex:param value="{!c.benefitLevel}"/>
+                                    </apex:outputText>
+                                </apex:column>
+                    
+                                <apex:column >
+                                    <apex:facet name="header">{!$Label.Pol_Incurred_Amount}</apex:facet>
+                                    <apex:outputText value="{!IF(c.amountBilled == null,'',targetClaim.billingCurrencySymbol)} {0, Number,###,##0.00}">
+                                        <apex:param value="{!c.amountBilled}"/>
+                                    </apex:outputText>
+                                </apex:column>
+                                 
+                                <apex:column headerValue="{!$Label.Pol_Day_Class}" value="{!c.dayClass}"/>
+                                 
+                                <apex:column >
+                                    <apex:facet name="header">{!$Label.Pol_Paid_Amount}</apex:facet>
+                                    <apex:outputText value="{!IF(c.amountPayable == null,'',targetClaim.currencySymbol)} {0, Number,###,##0.00}">
+                                        <apex:param value="{!c.amountPayable}"/>
+                                    </apex:outputText>
+                                </apex:column>
+                                 
+                                <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                                 
+                                 <apex:pageBlock >                 
+                                    <apex:commandButton value="« Previous" action="{!hgPrevPage}" rendered="{!If(hgTotalPage != null && hgTotalPage>1 && hghasPrev,true,false)}"/>
+                                    
+                                    <apex:outputText value="{!$Label.Page_0_of_1}" >
+                                        <apex:param value="{!hgPage}" />
+                                        <apex:param value="{!hgTotalPage}" />
+                                    </apex:outputText>
+                                            
+                                    <apex:commandButton value="Next »" action="{!hgPrevPage}" rendered="{!If(hgTotalPage !=null && hgTotalPage>1 && hghasNext,true,false)}"/>                                
+                                </apex:pageBlock>                                        
+                            </apex:pageBlockTable>                  
+                        </apex:pageBlock>                         
+                    </apex:outputPanel> 
+                    <!--table end-->                    
+                     <!-- Claim corresponednces document -->
+                    <!-- efulfillment enhanced added start-->
+                    <apex:outputPanel id="policyCorDoc" rendered="{!claimDocList.size>0}">
+                        <apex:pageBlock title="{!$Label.efulfillment_claim_correspondences}"> 
+                            <apex:pageblockTable id="corDocTable" value="{!claimDocList}" var="myList" >                        
+                                <apex:column headerValue="Document Name" >
+                                    <apex:commandLink action="{!getDoc2}" target="_blank">
+                                        {!myList.Description}
+                                        <apex:param assignTo="{!targetAttachmentKey}" id="targetAttachmentKey" name="targetAttachmentKey" value="{!myList.attachmentKey}" />
+                                    </apex:commandLink>
+                                </apex:column>
+                                <apex:column headerValue="Date">
+                                    {!myList.createdDateStrDisp}
+                                </apex:column>
+                                <!--Connor CR-47 Hide/Unhide docs start-->
+                                <apex:column headerValue="Action">
+                                    <button style="margin-left: 15px;" type="button" onclick="showLoading();ClaimDetailsAF.toggleDocState('{!myList.attachmentKey}','{!myList.Description}')">{!If(myList.status =='Y','Hide','Show')}</button>
+                                </apex:column>
+                                <apex:column headerValue="Doc Hidden Date" style="padding: 5px 2px 4px 5px;">
+                                    {!myList.hiddenDateStr}
+                                </apex:column>
+                                <apex:column headerValue="Doc Hidden By" style="padding: 5px 2px 4px 5px;">
+                                    {!myList.hiddenBy}
+                                </apex:column>
+                                <!--Connor CR-47 Hide/Unhide docs end-->                                    
+                            </apex:pageblockTable>
+                        </apex:pageBlock>
+                    </apex:outputPanel>
+                    <!-- efulfillment enhanced added end-->
+                    
+                </apex:outputPanel>                            
+            
+            </apex:form>
+            <!--Connor CR-47 start-->
+            <div id="download-loader" style="display:none;"> 
+              <div style="position:fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+              </div>
+              <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                  <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                  <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                </div>
+              </div>
+            </div>
+            <!--Connor CR-47 end-->   
+            </div>
+        </div>
+        </apex:define>
+        <!-- End of the main body -->
+    </body>
+</apex:page>

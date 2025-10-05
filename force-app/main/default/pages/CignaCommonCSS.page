@@ -1,0 +1,804 @@
+<apex:page >
+    <style type="text/css">
+        /* Rancho_HKITSFDC264_20250903 - add font face */
+        @font-face {
+            font-family: 'ValueSerifBold';
+            src: url("{!URLFOR($Resource.Cigna_Font, 'CIGNA/ValueSerif/Web/ValueSerif-Bold-Pro.woff')}") format("woff");
+        }
+
+        @font-face {
+            font-family: 'ValueSansBold';
+            src: url("{!URLFOR($Resource.Cigna_Font, 'CIGNA/ValueSans/Web/ValueSans-Bold-Pro.ttf')}") format("opentype");
+        }
+        
+        @font-face {
+            font-family: 'ValueSansRegular';
+            src: url("{!URLFOR($Resource.Cigna_Font, 'CIGNA/ValueSans/Web/ValueSans-Regular-Pro.ttf')}") format("opentype");
+        }
+        /* End */
+
+        .bs, .bs.btn {
+            /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+            font-family: 'ValueSansRegular', "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+            font-style: normal;
+            font-weight: 400;
+            font-size: 16px;
+
+        }
+        
+        .cigna-bg-grey-light {
+            background-color: #D9D9D6 !important;
+        }
+        .cigna-bg-orange-light {
+            background-color: #F1B434 !important;
+        }
+        .cigna-bg-orange-medium {
+            /*CR-56_Link_20220214, updated by minghua, Jquery update*/
+            background-color: #F68621 !important;
+            background: #F68621 !important;
+        }
+        .cigna-bg-orange-dark {
+            /*CR-56_Link_20220214, updated by minghua, Jquery update*/
+            background-color: #E35205 !important;
+            background: #E35205 !important;
+        }
+        .cigna-bg-blue-light {
+            background-color: #00A9E0 !important;
+        }
+        .cigna-bg-blue-medium {
+            background-color: #188CCC !important;
+        }
+        .cigna-bg-blue-dark {
+            background-color: #004986 !important;
+        }
+        .cigna-bg-green-light {
+            background-color: #C4D600 !important;
+        }
+        .cigna-bg-green-medium {
+            background-color: #39B54A !important;
+        }
+        .cigna-bg-green-dark {
+            background-color: #007A3E !important;
+        }
+        .cigna-bg-white {
+            background-color: #fff !important;
+        }
+        .cigna-bg-gray-1 {
+            background-color: #D9D9D6 !important;
+        }
+        .cigna-bg-gray-2 {
+            background-color: #D0D0CE !important;
+        }
+        .cigna-bg-gray-3 {
+            background-color: #C8C9C7 !important;
+        }
+        .cigna-bg-gray-dark {
+            background-color: #58595B !important;
+        }
+        
+        .cigna-fg-orange-light {
+            color: #F1B434 !important;
+        }
+        .cigna-fg-orange-medium {
+            color: #F68621 !important;
+        }
+        .cigna-fg-orange-dark {
+            color: #E35205 !important;
+        }
+        .cigna-fg-blue-light {
+            color: #00A9E0 !important;
+        }
+        .cigna-fg-blue-medium {
+            color: #188CCC !important;
+        }
+        .cigna-fg-blue-dark {
+            color: #004986 !important;
+        }
+        /* Rancho_HKITSFDC264_20250903 - update font */
+        .cigna-fg-navy-blue {
+            color: #110081 !important;
+        }
+        .cigna-fg-green-light {
+            color: #C4D600 !important;
+        }
+        .cigna-fg-green-medium {
+            color: #39B54A !important;
+        }
+        .cigna-fg-green-dark {
+            color: #007A3E !important;
+        }
+        .cigna-fg-white {
+            color: #fff !important;
+        }
+        .cigna-fg-gray-dark {
+            color: #58595B !important;
+        }
+        .cigna-fg-red-alert {
+            color: #F80000 !important;
+        }
+        
+        .bs .cigna-progress-bar {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 5px;
+        }
+        .bs .cigna-progress-bar-inner{
+            display: table-row;
+        }
+        .bs .cigna-progress-bar-inner > div {
+            display: table-cell;
+            border-bottom: 2px solid #D9D9D6;
+            color: #D9D9D6;
+            /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+            /* text-transform: uppercase; */
+            font-family: "ValueSansRegular", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+            font-style: normal;
+            font-weight: 400;
+            text-align: center;
+            vertical-align: middle;
+            padding: 5px 0 5px 0;
+        }
+        .bs .cigna-progress-bar {
+            counter-reset: step;
+        }
+        .bs .cigna-progress-bar-inner > div::before {
+            counter-increment: step;
+            content: counter(step) ". ";
+        }
+        .bs .cigna-progress-bar-inner > div.active {
+            border-bottom: 2px solid #004986;
+            color: #004986;
+        }
+        .borderless td, .borderless th {
+            border: 0 !important;
+        }
+        
+        .bs .cigna-action-btn-group {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: separate;
+            position: relative;
+            vertical-align: middle;
+            min-height: 50px;
+        }
+        .bs .cigna-action-btn-group > .action-btn {
+            display: table-cell;
+            width: 1%;
+            position: relative;
+            padding: 6px 12px;
+            margin-bottom: 0;
+            font-size: 1.1em;
+            font-weight: 400;
+            line-height: 1.42857143;
+            text-align: center;
+            vertical-align: middle;
+            cursor: pointer;
+            //text-transform: uppercase;
+            /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+            font-family: "ValueSansRegular", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+            font-style: normal;
+            font-weight: 500;
+            text-decoration: none;
+            word-wrap: break-word;
+            white-space: normal;
+             background: #E35205;
+        }
+        
+        .bs .cigna-floating-bottom-panel { 
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            margin-left: 0px !important;
+        }
+        
+        .bs .no-border-input {
+            padding: 0;
+            border: none;
+            background: none;
+        }
+        
+        .bs .loading-helper {
+            display: inline-block;
+            height: 100%;
+            vertical-align: middle;
+        }
+        
+        .bs .loading-div {
+            // position: {!IF($Site.Name == $Setup.Portal_Settings__c.Customer_Portal_Site_Name__c, 'fixed', 'absolute')};
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            font-size: 1em;
+            color: #39B54A;
+            z-index: 999;
+            background: white;
+            opacity: 0.5;
+            vertical-align: middle;
+            text-align: center;
+            {!IF($Site.Name == $Setup.Portal_Settings__c.Customer_Portal_Site_Name__c, '', 'top:0;')}
+        }
+        
+        .bs .spinner-icon {
+            vertical-align: middle;
+        }
+        
+        /*desktop button with border-radius*/
+        .bs .desktop-action-btn{
+            padding:15px;
+            text-align:center;
+            border-radius:10px;
+        }
+        
+        /* Content Placeholder */
+        @-webkit-keyframes placeholderColorChange {
+            from { background-color: #f6f6f6; }
+            to { background-color: #D9D9D6; }
+        }
+        @-moz-keyframes placeholderColorChange {
+            from { background-color: #f6f6f6; }
+            to { background-color: #D9D9D6; }
+        }
+        @-ms-keyframes placeholderColorChange {
+            from { background-color: #f6f6f6; }
+            to { background-color: #D9D9D6; }
+        }
+        @-o-keyframes placeholderColorChange {
+            from { background-color: #f6f6f6; }
+            to { background-color: #D9D9D6; }
+        }
+        @keyframes placeholderColorChange {
+            from { background-color: #f6f6f6; }
+            to { background-color: #D9D9D6; }
+        }
+        .bs .content-placeholder-wrapper {
+            background: #fff;
+            padding: 12px;
+
+            margin: 0 auto;
+        }
+
+        .bs .content-placeholder-masker {
+            background: #fff;
+        }
+
+        .bs .content-placeholder-line {
+            border-radius: 3px;
+            background-color: #f6f6f6;
+            min-height: 8px;
+            margin-bottom: 10px;
+            animation-name: placeholderColorChange;
+            animation-duration: 1.2s;
+            animation-iteration-count: infinite;
+            animation-direction: alternate;
+        }
+        .bs .normal-line {
+            width: 60%;
+        }
+        .bs .short-line {
+            width: 20%;
+        }
+        .bs .full-line {
+            width: 100%;
+        }
+        
+        .bs input[type="checkbox"].cigna-question-checkbox {
+            display: none;
+        }
+        .bs input[type="checkbox"].cigna-question-checkbox ~ label {
+            cursor: pointer;
+        }
+        .bs input[type="checkbox"].cigna-question-checkbox + label:before {
+            font: normal normal normal 14px/1 FontAwesome;
+            display: inline-block;
+            content: "\f058";
+            height: 20px;
+            margin: 0 .25em 0 0;
+            padding: 0;
+            vertical-align: top;
+            width: 20px;
+            color: #C8C9C7;
+            font-size: 1.2em;
+        }
+        .bs input[type="checkbox"].cigna-question-checkbox:checked + label:before {
+            color: #39B54A;
+            font: normal normal normal 14px/1 FontAwesome;
+            content: "\f058";
+            font-size: 1.2em;
+        }
+        .bs input[type="checkbox"].cigna-question-checkbox:checked + label:before {
+            font-weight: bold;
+        }
+        .bs input[type="radio"].cigna-question-radio {
+            display: none;
+        }
+        .bs input[type="radio"].cigna-question-radio ~ label {
+            cursor: pointer;
+        }
+        .bs input[type="radio"].cigna-question-radio + label:before {
+            font: normal normal normal 14px/1 FontAwesome;
+            content: "\f058";
+            display: inline-block;
+            height: 20px;
+            margin: 0 .25em 0 0;
+            padding: 0;
+            vertical-align: top;
+            width: 20px;
+            color: #C8C9C7;
+            font-size: 1.2em;
+        }
+        .bs input[type="radio"].cigna-question-radio:checked + label:before {
+            color: #39B54A;
+            font: normal normal normal 14px/1 FontAwesome;
+            content: "\f058";
+            font-size: 1.2em;
+        }
+        .bs input[type="radio"].cigna-question-radio:checked + label:before {
+            font-weight: bold;
+        }
+        
+        
+        /*header of key visual*/
+         .header-bar {
+            color: #FFF;
+            background-color: #D9D9D6;
+            /* Rancho_HKITSFDC264_20250903 - update font */
+            /* font-size: 1.25em; */
+            font-size: 48px;
+            font-family: ValueSerifBold !important;
+            text-align: center;
+            height:150px;
+            position: relative;
+            margin-top:0;
+          }
+        
+        /*tab header*/
+           .bs .bar-tab-container {
+                border-bottom:4px solid #00A9E0;
+                background-color:#004986;
+                color:#fff;
+                /* Rancho_HKITSFDC264_20250903 - update font */
+                /* text-transform: uppercase; */
+                width:100%;
+            } 
+            
+            .bs .active-bar-tab{
+                background-color:#00A9E0;
+                color:#fff; text-align:center;
+                padding:15px !important;
+                /* Rancho_HKITSFDC264_20250903 - update font */
+                /* font-size:12px; */
+                font-size: 18px;
+                width:33%;
+            }
+            
+            .bs .inactive-bar-tab{
+                text-align:center;
+                color:#fff;
+                padding:15px !important;
+                /* Rancho_HKITSFDC264_20250903 - update font */
+                /* font-size:12px; */
+                font-size: 18px;
+                width:33%;
+            }
+            
+            
+         /*desktop list content header*/
+         
+         .bs .listcontent-header{
+                line-height: 1.5;
+                margin-right: 0 !important; 
+                margin-left: 0 !important;
+                padding:20px 0px 20px 0px;
+            }
+            
+         /*content highlight*/ 
+         
+         .bs .content-highlight {
+                font-weight: bold !important;
+           }
+           
+           
+         
+         
+      @media (max-width: 768px){
+      
+      /*list content table*/
+          .bs .listcontent {
+                line-height: 1.5;
+                margin-right: 0px !important; 
+                margin-left: 0px !important;
+                padding:20px 0px 20px 0px; 
+                width:100%;
+                display: table;
+                table-layout: fixed; 
+            }
+          
+          .table-row{
+              display: table-row;
+          }
+          
+          .table-cell{
+              display: table-cell;
+              word-wrap: break-word;
+              white-space: normal;
+          }
+          
+          
+
+
+      }
+      
+      @media(min-width: 768px){
+      
+      /*list content table*/
+       .bs .listcontent {
+                line-height: 1.5;
+                margin-right: 0px !important; 
+                margin-left: 0px !important;
+                padding:20px 0px 20px 0px; 
+                display: block;
+            }
+      
+      .table-row{
+          display: table-row;
+      }
+      
+      .table-cell{
+          display: table-cell;
+          word-wrap: break-word;
+          white-space: normal;
+      }
+
+    /*msg box style*/
+    .ConfirmBox {
+        display: none;
+        position: absolute;
+        z-index: 11;
+        width: 30%;
+        height: 30%;
+        background: #f2f2f2;
+        color: #000;
+        top: 30%;
+        left: 35%;
+        padding:20px;
+        border-radius:5px;
+    }
+    /*required attachment alert*/
+    .AttConfirmBox {
+        display: none;
+        position: absolute;
+        z-index: 11;
+        width: 50%;
+        height: 250px;
+        background: #FFF;
+        color: #000;
+        top: 30%;
+        left: 25%;
+        padding:5% 10px 0px 10px;
+        border-radius:5px;
+        display: table-cell;
+        vertical-align: middle;
+        text-align: center;
+    }
+    
+  }
+      
+      
+      @media 
+        only screen and (max-width: 760px),
+        (min-device-width: 768px) and (max-device-width: 1024px)  {
+            .ConfirmBox {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 150px auto 0px auto;
+                width: 80%;
+                height: 180px;
+                background: #FFF;
+                color: #000;
+                left: 10%;
+                top: 10%;
+                padding:20px;
+                border-radius:5px;
+                
+            }
+            /*required attachment alert*/
+             .AttConfirmBox {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 150px auto 0px auto;
+                width: 80%;
+                height: 250px;
+                background: #FFF;
+                color: #000;
+                left: 10%;
+                top: 10%;
+                padding:10% 10px 0px 10px;
+                border-radius:5px;
+                vertical-align: middle;
+                text-align: center;
+            }
+        }
+      
+      
+      
+      
+      
+      
+      
+    /*msg box style*/
+         .overlay {
+                display: none;
+                z-index: 10;
+                background: #D9D9D6;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                text-align: center;
+            }  
+           
+            
+        .alertmsg {
+                color:#58595B;
+                font-size:1em;
+                /*width: 100%;*/
+                height: 80%;
+            }
+            
+
+        .oksign {
+               font-size:24px;
+               color: green;
+          }
+          
+        .cancelsign {
+               font-size:24px;
+               color: red;
+          }
+          
+        
+        /*policy change form css*/ 
+        .form-note{
+            padding:10px;
+            background-color:#f2f2f2;
+        
+        }
+        
+        .form-field{
+            color:58595B;
+            padding-top:10px !important;
+            padding-bottom:10px !important;
+        }
+        
+         .form-field-style{
+              border:0px;
+              border-bottom:1px solid #58595B;
+              width: 100%;
+              box-shadow: none !important;
+              border-radius: 0px;
+              color: #58595B;
+              height: 34px;
+              outline: none;
+              -webkit-box-shadow: none;
+              -moz-box-shadow: none;
+              box-shadow: none;
+              padding: 6px 12px;
+              line-height: 1.42857143 !important;
+              background: transparent;
+              /* Rancho_HKITSFDC264_20250903 - update font */
+              font-family: "ValueSansRegular";
+          }
+          
+          .form-field-style-select {
+              border:0px;
+              border-bottom:1px solid #58595B;
+              background: url('{!$Resource.select_arrow_style}') no-repeat 98% 50% !important;
+              background-size: 7px 7px !important;
+              padding-right:20px;
+              padding-left:12px;
+              -moz-appearance: none; 
+              -webkit-appearance: none; 
+              appearance: none;
+              width: 100%;
+              border-radius: 0px;
+              height:34px !important;
+          }
+          
+          select.form-field-style-select::-ms-expand {
+              display: none;
+          }
+          
+          .form-field-style-textarea{
+              border:1px solid #58595B;
+              background: transparent;
+              width: 100%;
+              box-shadow: none !important;
+              border-radius: 0px;
+              color: #58595B;
+              height:50px;
+          
+          }
+    
+         .dateFormat{
+              display:none;
+          }
+          
+        form .error {
+            color: red;
+            /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+            font-family: "ValueSansRegular", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+            font-style: normal;
+            font-weight: 400;
+            font-size: 14px;
+        }
+        
+        
+        @media (min-width: 768px) {
+            .header-bar {   
+                margin-top: 50px;
+            }
+        }
+        
+        .onclick-pointer{
+            cursor: pointer;
+            
+        }
+
+        .select-list-style{
+            min-height:34px;
+            background: #ffffff !important;
+        }
+
+    /* Begin Cigna jquery datepicker css */
+        /* Replace the prev / next month arrow */
+        .ui-datepicker-prev::before {
+            font: normal normal normal 14px/1 FontAwesome;
+            content : "\f053"
+        }
+        
+        .ui-datepicker-next::before {
+            font: normal normal normal 14px/1 FontAwesome;
+            content : "\f054"
+        }
+        
+        .ui-icon-circle-triangle-w {
+            display: none !important;
+        }
+        
+        .ui-icon-circle-triangle-e {
+            display: none !important;
+        }
+        
+        /* Remove bg color of cell*/
+        .ui-state-default {
+            background-color: white !important;
+            border-width: 0px !important;
+        }
+
+        /* Replace the bg color of selected date */
+        .ui-state-active {
+            background-color: #F26222 !important;
+            border: 1px solid #F26222 !important;
+        }
+
+        /* Replace color of today */
+        .ui-datepicker-today a {
+            color: #F6861F !important;
+            cursor:pointer;            
+        }
+
+        /* Replace the height of the title bar */
+        .ui-datepicker-title {
+            line-height: 1em !important;
+        }
+        
+        /* Align font usage */
+        .ui-datepicker {
+            /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+            font-family: "ValueSansRegular", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+        }
+        
+        .ui-datepicker td {
+            /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+            font-family: "ValueSansRegular", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+        }
+        
+        .ui-widget button {
+            /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+            font-family: "ValueSansRegular", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+        }
+        
+        .ui-datepicker-buttonpane {
+            /*background-color: #004986 !important;*/
+        }
+        
+        /* hide today button */
+        .ui-datepicker-current {
+            display: none;
+        }
+        
+        /* Remove hover background of prev and next month*/
+        .ui-state-hover {
+            border: 0px !important;
+            cursor:pointer;
+        }
+        
+        .ui-datepicker-calendar td a {
+            text-align: center;
+            cursor:pointer;
+        }
+        
+        .ui-datepicker-calendar td span {
+            text-align: center;
+        }
+
+        /* Make full screen date picker for XS layout */
+        @media (max-width: 767px) {
+            /* Make it full screen */
+            .ui-datepicker {
+                position: absolute;
+                width: 99% !important;
+                height: 99% !important;
+                top: 0 !important;
+                left: 0 !important;
+                z-index: 1031 !important;
+                /*padding-top: 30px !important;*/
+            }
+            
+            /* Enlarge fonts */
+            .ui-datepicker-title {
+                font-size: 30px;
+            }
+            
+            .ui-datepicker-calendar th span {
+                font-size: 30px;
+            }
+            
+            .ui-datepicker-calendar td a {
+                font-size: 30px;
+            }
+            
+            .ui-datepicker-calendar td span {
+                font-size: 30px;
+            }
+            
+            .ui-datepicker-prev::before {
+                font-size: 30px;
+            }
+            
+            .ui-datepicker-next::before {
+                font-size: 30px;
+            }
+            
+            .ui-datepicker-close {
+                color: #0083CB !important;
+                font-size: 20px !important;
+            }
+        }
+    /* End Cigna jquery datepicker css */
+        /*CR-56_Link_20220214, updated by minghua*/
+        .ui-tooltip {
+            background: black !important;
+            max-width: 250px !important;
+            width: 250px; 
+            min-width: 100px;
+            color: white !important;
+            z-index: 1070;
+            display: block;
+            text-align: center !important;
+            font-size: 12px !important;
+            border-radius: 5px !important;
+            /* Rancho_HKITSFDC264_20250903 - update font */
+            font-family: "ValueSansRegular" !important;
+        }
+    </style>
+
+</apex:page>

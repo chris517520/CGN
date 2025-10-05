@@ -1,0 +1,136 @@
+<apex:page docType="html-5.0" standardController="Campaign" extensions="TMManageCallListCtrl">
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <apex:includeScript value="/support/console/33.0/integration.js"/>
+    <apex:form >
+        <apex:actionStatus id="loader-icon">
+            <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                     &nbsp;
+                 </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                    </div>
+                 </div>
+            </apex:facet>
+        </apex:actionStatus>
+        
+        <apex:outputPanel id="ManageCallList" rendered="{! hasPermission }">
+            <apex:pageBlock id="OtherButton" mode="maindetail">
+                <apex:pageBlockSection columns="2" >
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel >{!$Label.TM_Total_No_Of_Oppty}</apex:outputLabel>
+                        <apex:outputLabel >{!totalOppty}</apex:outputLabel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel >{!$Label.TM_Total_No_Of_Unassigned_Oppty}</apex:outputLabel>
+                        <apex:outputLabel >{!remainingOppty}</apex:outputLabel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                <apex:pageBlockSection columns="2">
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel >{!$Label.TM_Total_No_Of_Assigned_Oppty}</apex:outputLabel>
+                        <apex:outputPanel >
+                            {! totalOppty - remainingOppty} &nbsp;
+                            <input type="button" class="btn" value="{!$Label.TM_Assigned_Oppty_Check}" onclick="openCheckAssign('{!campaignId}');" /> 
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel >{!$Label.TM_Oppty_Assignment}</apex:outputLabel>
+                        <input type="button" class="btn" value="{!$Label.TM_Oppty_Manual_Assign}" onclick="openManualAssign('{!campaignId}');" /> 
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>                
+                <apex:pageBlockSection columns="2">
+                    <apex:pageBlockSectionItem rendered="{! isAutoDialingCampaign}" >
+                    <!--
+                        <apex:outputLabel for="passToAspectBtn">{!$Label.TM_AutoDialing}</apex:outputLabel>
+                        <input type="button" class="btn" value="{!$Label.TM_Pass_To_Aspect}" onclick="passToAspect();" />  
+                        -->                      
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{! !isAutoDialingCampaign}">
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel ></apex:outputLabel>
+                        <input type="button" class="btn" value="{!$Label.TM_Oppty_Batch_Assign}" onclick="openBatchAssign('{!campaignId}');" /> 
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                <!--
+                <apex:pageBlockSection columns="2" id="pnlPassToAspect">
+                    <apex:pageBlockSectionItem  >     
+                    <apex:outputText value="" ></apex:outputText>   
+                    <apex:outputText value="{!$Label.TM_Passed_To_Aspect}" style="color:red;" rendered="{!passedToAspect}"></apex:outputText>
+                                                   
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                
+                
+                <apex:actionFunction name="passToAspect" action="{!passToAspect}" reRender="pnlPassToAspect" />
+            -->
+                <script>
+                
+                    function openCheckAssign(campaignId){
+                        sforce.console.getEnclosingPrimaryTabId(function(result) {
+                            var primaryTabId = result.id;
+                            sforce.console.openSubtab(primaryTabId , '/apex/TMCheckAssignedOpptyVFP?campaignId='+campaignId, true, 'Check Assigned Opportunities', null, null, 'A');
+                        });
+                    }
+                    
+                    function openManualAssign(campaignId){
+                        sforce.console.getEnclosingPrimaryTabId(function(result) {
+                            var primaryTabId = result.id;
+                            sforce.console.openSubtab(primaryTabId , '/apex/TMManualAssignOpptyVFP?campaignId='+campaignId, true, 'Manual Assign Opportunity', null, null, 'A');
+                        });
+                    }
+                    
+                    function openBatchAssign(campaignId){
+                        sforce.console.getEnclosingPrimaryTabId(function(result) {
+                            var primaryTabId = result.id;
+                            sforce.console.openSubtab(primaryTabId , '/apex/TMBatchAssignOpptyVFP?campaignId='+campaignId, true, 'Batch Assign Opportunity', null, null, 'A');
+                        });
+                    }
+                    /*
+                    function openCheckAssign(campaignId){
+                        if(campaignId != null && campaignId != ''){
+                            if (sforce.console.isInConsole()) {
+                              var rnd = Math.floor(Math.random() * 1000000000000); 
+                              sforce.console.openPrimaryTab(null, '/apex/TMCheckAssignedOpptyVFP?campaignId='+campaignId, true, 'Check Assigned Opportunities', null, 'Check Assigned Opportunities');                                
+                              sforce.console.setCustomConsoleComponentVisible(false);                                
+                            } else {
+                                window.open('/apex/TMCheckAssignedOpptyVFP?campaignId='+campaignId, '_blank');
+                            }
+                        }
+                    }
+                    function openManualAssign(campaignId){
+                        if(campaignId != null && campaignId != ''){
+                            if (sforce.console.isInConsole()) {
+                              var rnd = Math.floor(Math.random() * 1000000000000); 
+                              sforce.console.openPrimaryTab(null, '/apex/TMManualAssignOpptyVFP?campaignId='+campaignId, true, 'Manual Assign Opportunity', null, 'Manual Assign Opportunity');                                
+                              sforce.console.setCustomConsoleComponentVisible(false);                                
+                            } else {
+                                window.open('/apex/TMManualAssignOpptyVFP?campaignId='+campaignId, '_blank');
+                            }
+                        }
+                    }
+                    function openBatchAssign(campaignId){
+                        if(campaignId != null && campaignId != ''){
+                            if (sforce.console.isInConsole()) {
+                              var rnd = Math.floor(Math.random() * 1000000000000); 
+                              sforce.console.openPrimaryTab(null, '/apex/TMBatchAssignOpptyVFP?campaignId='+campaignId, true, 'Batch Assign Opportunity', null, 'Batch Assign Opportunity');                                
+                              sforce.console.setCustomConsoleComponentVisible(false);                                
+                            } else {
+                                window.open('/apex/TMBatchAssignOpptyVFP?campaignId='+campaignId, '_blank');
+                            }
+                        }
+                    }
+                    */
+                </script>
+            </apex:pageBlock>
+        
+        </apex:outputPanel>
+    </apex:form>
+    
+</apex:page>

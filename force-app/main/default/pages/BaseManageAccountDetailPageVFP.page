@@ -1,0 +1,910 @@
+<apex:page sidebar="false" Controller="BrkManageAccountPageCtrl">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <apex:include pageName="CignaCommonCSS" />
+        <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <style>
+            .section-bar {
+                color: #FFF;
+                background-color: #B5B5B5;
+                font-size: 18px;
+                height:30px;
+                text-align:left;
+            }
+            
+            .tooltip {
+                position: relative;
+                display: inline-block;
+            }
+            
+            .tooltip .tooltiptext {
+                visibility: hidden;
+                width: 120px;
+                background-color: black;
+                color: #fff;
+                text-align: center;
+                border-radius: 6px;
+                padding: 5px 0;
+            
+                position: relative;
+                z-index: 99;
+            }
+            
+            .tooltip:hover .tooltiptext {
+                visibility: visible;
+            }
+            
+            .tooltip-inner {
+                /* Change the tooltip width here */
+                max-width: 250px !important;
+                /* If max-width does not work, try using width instead */
+                width: 250px; 
+                min-width: 100px;
+            }
+            
+            .helptext-icon {
+                background:none !important;
+                border-top:none !important;
+                border-right:none !important;
+                border-left:none !important;
+                border-radius:0px !important;
+                border-color:#58595B !important;
+                //color: #E35205 !important;
+                //font-size:14px !important;
+            }
+
+            .bs .form-control  {
+                border-top: 0 !important;
+                border-left: 0 !important;
+                border-right: 0 !important;
+                border-bottom: 1px solid #58595B !important;
+                background: transparent;
+                width: 100%;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                font-size:17px !important;
+                
+            }
+            
+            .form-Radio-style{
+                //border:0px;
+                width: 100%;
+                box-shadow: none !important;
+                border-radius: 0px;
+                color: #58595B;
+                height: 30px;
+                outline: none;
+                -webkit-box-shadow: none;
+                -moz-box-shadow: none;
+                box-shadow: none;
+                //padding: 10px 10px 10px 10px;
+                line-height: 1.42857143 !important;
+                background: transparent;
+            }
+
+            .bs .cigna-action-btns-group {
+                display: table;
+                table-layout: fixed;
+                border-collapse: separate;
+                position: relative;
+                vertical-align: middle;
+                min-height: 50px;
+                text-align:center;
+            }
+
+            /* Rancho_HKITSFDC264_20250903 - update font */
+            .bs .radio label {
+                font-family: "ValueSansRegular" !important;
+            }
+            
+            span[id$="cigna-message"] span div.message{
+                border:2px solid green;
+                background-color: #fff;
+                opacity: .9;
+                margin-bottom:10px;
+                margin-top:10px;
+                margin-left:0px;
+                width:100%;
+            }
+            
+            span[id$="cigna-message"] span div.message table.messageTable tbody tr td img{
+                display: none;
+            }
+            
+            span[id$="cigna-message"] span div.message table.messageTable tbody tr td.messageCell div span{
+                display: none;
+            }
+            
+            span[id$="cigna-message"] span div.message table.messageTable tbody tr td.messageCell{
+                //color: #fff;
+                //color: #F68621;
+                color:green;
+                /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+                font-family: "ValueSansRegular";
+            }
+            
+            span[id$="cigna-message"] .messageText::before{
+                content: "\f071\20";
+                font: normal normal normal 14px/1 FontAwesome;
+                font-size: inherit;
+                text-rendering: auto;
+                -webkit-font-smoothing: antialiased;
+                //padding-right: 7px;
+            }
+            
+            span[id$="cigna-error"] span div.message{
+                border:2px solid red;
+                background-color: #fff;
+                opacity: .9;
+                margin-bottom:10px;
+                margin-top:10px;
+                margin-left:0px;
+                width:100%;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td img{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell div span{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell{
+                //color: #fff;
+                //color: #F68621;
+                color:red;
+                /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+                font-family: "ValueSansRegular";
+            }
+            
+            span[id$="cigna-error"] .messageText::before{
+                content: "\f071\20";
+                font: normal normal normal 14px/1 FontAwesome;
+                font-size: inherit;
+                text-rendering: auto;
+                -webkit-font-smoothing: antialiased;
+                //padding-right: 7px;
+            }
+        </style>
+
+        <script>
+            $(document).ready(function(){       
+                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal) {
+                    $('#action-bar').css('position', 'absolute');
+                    //$('#mobile-app-padding').css('display', 'block');
+                    $("div[id*='mobile-app-padding']").css('display', 'block');
+                }
+            })
+        </script>
+    </head>
+    <body>
+        <apex:define name="additionalLibraries">
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/Chart.min.js')}"></script>
+            <apex:stylesheet value="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+            <!-- CR-56_Link_20220214 -->
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap3.4.1.css')}" />
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+            <apex:include pageName="CignaUtilJS"/>
+            <!-- CR-56_Link_20220214 -->
+            <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+            <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+            <apex:outputPanel rendered="{!userLanguage == 'zh_TW'}" layout="none">
+                <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+            </apex:outputPanel>
+            <apex:include pageName="CignaUtilJS"/>
+            <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+        </apex:define>
+
+        <apex:define name="body">
+            <apex:form id="mainPage">
+                <apex:actionFunction action="{!getCompanyList}" name="getCompanyList" onComplete="checkFederationIDApex()" reRender="mainPage"/> 
+                <script>
+                    function isValidPhone() {
+                        var patt = /^[0-9]{1,12}$/i;
+                        var phone = $("input[id*='mandatory-Field-Phone']").val();
+                        if(patt.exec(phone)==null){
+                            return false;
+                        }
+                        
+                        var len = phone.toString().length;
+                        var countryCode = $("input[id*='Country-Code']").val();
+                        if((countryCode=='852' || countryCode=='' ) && len!=8){
+                            return false;
+                        }
+                        if(countryCode=='86' && len!=11){
+                            return false;
+                        }
+                        
+                        return true;
+                    }
+                    function validateEmail(){
+                        var email = $("input[id*='mandatory-Field-Email']").val();
+                        if(email ==null || email ==''){
+                            return true;
+                        }else{
+                            return isValidEmail(email);
+                        }
+                        return true;
+                    }
+                    function validateSupportEmail(){
+                        var supportE = $("input[id*='supportemail']").val();
+                        if(supportE ==null || supportE ==''){
+                            return true;
+                        }else{
+                            return isValidEmail(supportE);
+                        }
+                        return true;
+                    }
+                    function validateFederationEmail(){
+                        var fedEmail = $("input[id*='federationEmail']").val();
+                        if(fedEmail ==null || fedEmail ==''){
+                            return true;
+                        }else{
+                            return isValidEmail(fedEmail);
+                        }
+                        return true;
+                    }
+                    function validateEmail2(){
+                        var isInvalidEmail = $("input[id*='isInvalidEmail']").val();
+                        if(isInvalidEmail=='Yes'){
+                            return false;
+                        } 
+                        return true;
+                    }
+                    function validateExistedEmail(){
+                        var isExistedEmail = $("input[id*='isExistedEmail']").val();
+                        if(isExistedEmail=='Yes'){
+                            return false;
+                        } 
+                        return true;
+                    }
+                    function validateExistedAgentCode(){
+                        var isExistedAgentCode = $("input[id*='isExistedAgentCode']").val();
+                        if(isExistedAgentCode=='Yes'){
+                            return false;
+                        } 
+                        return true;
+                    }
+                    //added by Connor CR-47
+                    function validateExistedSubAgentCode(){
+                        var isExistedSubAgentCode = $("input[id*='isExistedSubAgentCode']").val();
+                        if(isExistedSubAgentCode=='Yes'){
+                            return false;
+                        } 
+                        return true;
+                    }
+        
+                    // Rancho_PI83_20221110 - allow broker super admin to change broker admin role
+                    // function validatetoChangedAdminRole(){
+                    //       var toChangedAdminRole = $("input[id*='toChangedAdminRole']").val();
+                    //       if(toChangedAdminRole=='Yes'){
+                    //           return false;
+                    //       } 
+                    //       return true;
+                    // }
+                    
+                    // function validatechangetoeAdminRole(){
+                    //       var changetoeAdminRole = $("input[id*='changetoeAdminRole']").val();
+                    //       if(changetoeAdminRole=='Yes'){
+                    //           return false;
+                    //       } 
+                    //       return true;
+                    // }
+                    function validatetoChangedTeamLeader(){
+                        var toChangedTeamLeader = $("input[id*='toChangedTeamLeader']").val();
+                        if(toChangedTeamLeader=='Yes'){
+                            return false;
+                        } 
+                        return true;
+                    }
+                    function validateisExistedAltruistAdmin(){
+                        var isExistedAltruistAdmin = $("input[id*='isExistedAltruistAdmin']").val();
+                        if(isExistedAltruistAdmin=='Yes'){
+                            return false;
+                        } 
+                        return true;
+                    }
+                    /*function validateExistedTeamLeader(){
+                        var isExistedTeam = $("input[id*='isExistedTeam']").val();
+                        if(isExistedTeam=='Yes'){
+                            return false;
+                        } 
+                        return true;
+                    }*/
+                    function isEmptyReportTo(){
+                        var selectedRole= ''
+                        var isSuperAdmin = "{!isSuperAdmin}";
+                        if(isSuperAdmin){
+                            selectedRole=$("select[id*='roleAdmin']").val();
+                        } else{
+                            selectedRole=$("select[id*='role']").val();
+                        }
+                        
+                        if(selectedRole=='Cigna Broker User'){
+                            var selectedreportTo = $("select[id*='reportTo']").val();
+                            if(selectedreportTo =='' || selectedreportTo ==null){
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+                    function validateAgentCodeLength(){
+                        var agentCode = $("input[id*='mandatory-Field-Agent-Code']").val();
+                        if(agentCode.length > 10){
+                        return false;
+                        }
+                        return true;
+                    }
+                    //added by Connor CR-47
+                    function validateSubAgentCodeLength(){
+                        var subAgentCode = $("input[id*='sub-Agent-Code']").val();
+                        if(subAgentCode){  //not empty
+                        if(subAgentCode.indexOf(";") != -1 ){ // multiple codes
+                            var codeArr = subAgentCode.split(";");
+                            for (var i = codeArr.length - 1; i >= 0; i--) {
+                                if(codeArr[i].length > 10){
+                                    return false;  
+                                }
+                            }
+                        }else{  //single code
+                            if(subAgentCode.length > 10){
+                                return false;
+                            }
+                        }
+                        }else{  //empty 
+                            return true;
+                        }
+                        return true;
+                    }
+                    function validateLastNameLength(){
+                        var lastName = $("input[id*='mandatory-Field-Last-Name']").val();
+                        if(lastName.length > 100){
+                            return false;
+                        }
+                        return true;
+                    }
+                    function validateFirstNameLength(){
+                        var firstName = $("input[id*='mandatory-Field-First-Name']").val();
+                        if(firstName.length > 100){
+                            return false;
+                        }
+                        return true;
+                    }
+                    function validateEmailLength(){
+                        var email = $("input[id*='mandatory-Field-Email']").val();
+                        if(email.length > 100){
+                            return false;
+                        }
+                        return true;
+                    }
+                    function validateSupportEmailLength(){
+                        var supportemail = $("input[id*='supportemail']").val();
+                        if(supportemail.length > 100){
+                            return false;
+                        }
+                        return true;
+                    }
+                    function validateFederationEmailLength(){
+                        var fedEmail = $("input[id*='federationEmail']").val();
+                        if(fedEmail.length > 100){
+                            return false;
+                        }
+                        return true;
+                    }
+                    function validateCountryCodeLength(){
+                        var countryCode = $("input[id*='Country-Code']").val();
+                        if(countryCode.length > 5){
+                            return false;
+                        }
+                        return true;
+                    }
+                </script>
+                <div class="bs container">
+                    <apex:outputPanel rendered="{!!hasError}">
+                        <div class="col-xs-12 col-sm-12">
+                            <apex:pageMessages id="cigna-message"/>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!hasError}">
+                        <div class="col-xs-12 col-sm-12">
+                            <apex:pageMessages id="cigna-error"/>
+                        </div>
+                    </apex:outputPanel>
+                    <div class="bs cigna-fg-orange-medium onclick-pointer" onclick="Cigna.Util.navigateToVFP('ManageAccountSearchPageVFP{!IF(encryptedSearchCriteria!='','?'+URLParamName+'='+encryptedSearchCriteria,'')}',false,'',true)" ><!--JR1840 -->
+                        <p><a id="product-back-btn"  class="bs cigna-fg-orange-medium"><i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a></p>
+                    </div>
+                    <div  style="padding-bottom:30px;"/>
+                    <div class="bs col-sm-12 col-xs-12 hidden-xs" style="{!IF(!createUser,'','display:none')}; padding-bottom:40px;">
+                        <!--desktop action button-->
+                        <div class="bs hidden-xs col-sm-offset-3 col-sm-3" style="padding-right:5px;">
+                            <div class="bs col-sm-12 cigna-fg-white cigna-bg-orange-dark desktop-action-btn {!IF(isActive,'onclick-pointer','')}" onclick="if({!!isActive}){return false;}resetPassword()" >
+                                {!$Label.Acc_Reset_Password}
+                            </div>
+                        </div>
+                        <div class="bs hidden-xs col-sm-3" style="padding-right:5px;{!IF(isActive,'','display:none')};" >
+                            <div class="bs col-sm-12 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="deactivate()" >
+                                {!$Label.Acc_Deactivate}
+                            </div>
+                        </div>
+                        <div class="bs hidden-xs col-sm-3" style="padding-right:5px;{!IF(!isActive,'','display:none')};" >
+                            <div class="bs col-sm-12 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="activate()" >
+                                {!$Label.Acc_Activate}
+                            </div>
+                        </div>
+                        <div class="bs hidden-xs col-sm-3" style="padding-right:5px;">
+                            <div class="bs col-sm-12 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="unlockUserApex()">
+                                {!$Label.MFA_Unlock_User}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <form>
+                        <div class="bs form-group col-sm-12 col-xs-12" style="padding-bottom:20px;">
+                            <h4>{!$Label.Acc_User_Detail}</h4>
+                        </div>
+                        <apex:outputPanel layout="block" styleClass="bs form-group col-sm-6 col-xs-12" rendered="{!IF(isSuperAdmin&&createUser,true,false)}">
+                            {!$Label.Acc_Company}
+                        </apex:outputPanel>
+                        <apex:outputPanel layout="block" styleClass="bs form-group col-sm-6 col-xs-12" rendered="{!IF(isSuperAdmin&&createUser,true,false)}">
+                            <apex:selectList value="{!companyCode}" styleClass="bs form-field-style-select cigna-fg-gray-dark"  size="1" id="mandatory-Field-Company" onchange="checkFederationIDApex();" >
+                                <apex:selectOptions value="{!CompanyList}" />
+                                <apex:inputHidden value="{!companyCode}" id="selected-company-code"/>
+                            </apex:selectList>
+                        </apex:outputPanel>
+                        
+                        <div class="bs form-group col-sm-6 col-xs-12">
+                            {!$Label.Acc_Agent_Code}
+                        </div>
+                        <div class="bs form-group col-sm-6 col-xs-12">
+                            <!-- Rancho_PI83_20221110 - broker super admin able to edit agent code -->
+                            <apex:inputText styleClass="bs form-field-style" value="{!agentCode}" disabled="{!!(isSuperAdmin || (!isSuperAdmin && createUser))}" id="mandatory-Field-Agent-Code"/>
+                        </div>
+                        
+                        <!--added by Connor CR-47 start-->
+                        <apex:outputPanel layout="block" styleClass="bs form-group col-sm-6 col-xs-12" rendered="{!subAgentCodeShow}">
+                            {!$Label.Sub_Agent_Code}
+                        </apex:outputPanel>
+                        <apex:outputPanel layout="block" styleClass="bs form-group col-sm-6 col-xs-12" rendered="{!subAgentCodeShow}">
+                            <apex:inputText styleClass="bs form-field-style" id="sub-Agent-Code" value="{!subAgentCode}" />
+                        </apex:outputPanel>
+                        <!--added by Connor CR-47 end-->
+                        
+                        <apex:outputPanel layout="block" styleClass="bs form-group col-sm-6 col-xs-12" rendered="{!showFederationID}" >
+                            {!$Label.Acc_Federation_ID}
+                        </apex:outputPanel>
+                        <apex:outputPanel layout="block" styleClass="bs form-group col-sm-6 col-xs-12" rendered="{!showFederationID}" >
+                            <apex:inputText styleClass="bs form-field-style" value="{!federationID}" id="federationEmail" />
+                        </apex:outputPanel>
+
+                        <div class="bs form-group col-sm-6 col-xs-12">
+                            {!$Label.Acc_First_Name}
+                        </div>
+                        <div class="bs form-group col-sm-6 col-xs-12">
+                            <apex:inputText styleClass="bs form-field-style" value="{!user.FirstName}" Id="mandatory-Field-First-Name"/>
+                        </div>
+                        
+                        <div class="bs form-group col-sm-6 col-xs-12">
+                            {!$Label.Acc_Last_Name}
+                        </div>
+                        <div class="bs form-group col-sm-6 col-xs-12">
+                            <apex:inputText styleClass="bs form-field-style" value="{!user.LastName}" id="mandatory-Field-Last-Name"/>
+                        </div>
+                        
+                        <div class="bs form-group col-sm-6 col-xs-12">
+                            {!$Label.Acc_Contact_Number}
+                        </div>
+                        <div class="bs form-group col-sm-2 col-xs-4">
+                            <apex:inputText id="Country-Code" value="{!countryCode}" styleClass="bs form-control" html-placeholder="852" />
+                        </div>
+                        <div class="bs form-group col-sm-4 col-xs-8">
+                            <apex:inputText id="mandatory-Field-Phone" value="{!mobileNumber}" styleClass="bs form-field-style" />
+                        </div>
+                        
+                        <div class="bs form-group col-sm-6 col-xs-12">
+                            {!$Label.Acc_Notification_Channel}
+                        </div>
+                        <div class="bs form-group radio col-sm-6 col-xs-12" style="padding-left:35px;">
+                            <apex:selectRadio value="{!selectedNotificationChannel}" styleClass="bs form-Radio-style"  >
+                                <apex:selectOptions value="{!NotificationChannelList}" />
+                            </apex:selectRadio>
+                        </div>
+                        
+                        <div class="bs form-group col-sm-6 col-xs-12">
+                            {!$Label.Acc_Email_Address}
+                        </div>
+                        <div class="bs form-group col-sm-6 col-xs-12">
+                            <apex:inputText styleClass="bs form-field-style" value="{!emailAddress}" id="mandatory-Field-Email"/>
+                        </div>
+                        
+                        <div class="bs form-group col-sm-6 col-xs-12" style="height:50px;">
+                            {!$Label.Acc_Support_Email_Address}<br/>
+                            <apex:outputText style="font-size:12px;" value="{!$Label.Acc_Notification_Channel_Note}"/>
+                        </div>
+                        <div class="bs form-group col-sm-6 col-xs-12" style="height:50px;">
+                            <apex:inputText styleClass="bs form-field-style" value="{!supportEmailAddress}" id="supportemail" />
+                        </div>
+                        
+                        <!--Display Language-->
+                        <div class="bs form-group col-sm-6 col-xs-12" style="height:50px;">
+                            {!$Label.Acc_Language}
+                        </div>
+                        <div class="bs form-group col-sm-6 col-xs-12" style="height:50px;">
+                            <apex:selectList value="{!displayLanguage}" size="1" styleClass="bs form-field-style-select cigna-fg-gray-dark" id="mandatory-Field-language">
+                                <apex:selectOptions value="{!LanguageList}" />
+                            </apex:selectList>
+                        </div>
+                        
+                        <div class="bs form-group col-sm-6 col-xs-12">
+                            {!$Label.Acc_GI_License}
+                        </div>
+                        <div class="bs form-group radio col-sm-6 col-xs-12" style="padding-left:35px;">
+                            <apex:selectRadio value="{!GILicense }" styleClass="bs form-Radio-style"  >
+                                <apex:selectOptions value="{!LicenseRadio}" />
+                            </apex:selectRadio>
+                        </div>
+                        
+                        <div class="bs form-group col-sm-6 col-xs-12">
+                            {!$Label.Acc_Life_License}
+                        </div>
+                        <div class="bs form-group radio col-sm-6 col-xs-12" style="padding-left:35px;">
+                            <apex:selectRadio value="{!LifeLicense}"  styleClass="bs form-Radio-style">
+                                <apex:selectOptions value="{!LicenseRadio}" />
+                            </apex:selectRadio>
+                        </div>
+                        
+                        <div class="bs form-group col-sm-6 col-xs-12">
+                            {!$Label.Acc_Role}
+                        </div>
+                        <div class="bs form-group col-sm-6 col-xs-12" style="{!IF(isSuperAdmin,'display:none','')}">
+                            <apex:selectList value="{!selectedRoleAdmin}" size="1" styleClass="bs form-field-style-select cigna-fg-gray-dark" id="mandatory-Field-role"> <!-- disabled="{!If(isSuperAdmin,true,false)}"-->
+                                <apex:selectOptions value="{!Role}" />
+                                <apex:actionSupport event="onchange" action="{!updateReportTo}" reRender="TeamLeaderPanel" />
+                            </apex:selectList>
+                        </div>
+                        
+                        <div class="bs form-group col-sm-6 col-xs-12" style="{!IF(isSuperAdmin,'','display:none')}">
+                            <apex:selectList value="{!selectedRoleSuper}" size="1" styleClass="bs form-field-style-select cigna-fg-gray-dark" id="mandatory-Field-roleAdmin"> <!-- disabled="{!If(isSuperAdmin,true,false)}"-->
+                                <apex:selectOptions value="{!RoleAdmin}" />
+                                <apex:actionSupport event="onchange" action="{!updateReportTo}" reRender="TeamLeaderPanel" />
+                            </apex:selectList>
+                        </div>
+                        
+                        <apex:outputPanel id="TeamLeaderPanel">
+                            <div style="{!IF(!displayReportTo,'display:none','')}">
+                                <div class="bs form-group col-sm-6 col-xs-12">
+                                    {!$Label.Acc_Report_To}
+                                </div>
+                                <div class="bs form-group col-sm-6 col-xs-12">
+                                    <apex:selectList value="{!selectedTeamLeader}" size="1" styleClass="bs form-field-style-select cigna-fg-gray-dark" id="mandatory-Field-reportTo" >
+                                        <apex:selectOptions value="{!teamLaeder}"></apex:selectOptions>
+                                    </apex:selectList>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+
+                        <div style="display:none">
+                            <apex:inputText id="isInvalidEmail" value="{!isInvalidEmail}"/>
+                            <apex:inputText id="isExistedEmail" value="{!isExistedEmail}" />
+                            <!--<apex:inputText id="isExistedTeam" value="{!isExistedTeam}" />-->
+                            <apex:inputText id="isExistedAgentCode" value="{!isExistedAgentCode}" />
+                            <apex:inputText id="isExistedSubAgentCode" value="{!isExistedSubAgentCode}" /><!--CR-47--> 
+                            <!-- Rancho_PI83_20221110 - comment unnecessary code -->
+                            <!-- <apex:inputText id="toChangedAdminRole" value="{!toChangedAdminRole}" />
+                            <apex:inputText id="changetoeAdminRole" value="{!changetoeAdminRole}" /> -->
+                            <apex:inputText id="toChangedTeamLeader" value="{!toChangedTeamLeader}" />
+                            <apex:inputText id="isExistedAltruistAdmin" value="{!isExistedAltruistAdmin}" />
+                            <apex:inputText id="iscreateUser" value="{!createUser}" />
+                        </div>
+                    </form>
+                    
+                    <apex:outputPanel rendered="{!!createUser}">
+                        <!-- Okta MFA Authentication -->
+                        <div class="bs form-group col-sm-6 col-xs-12">
+                            {!$Label.MFA_SMS_Authentication}
+                        </div>
+                        <div class="bs form-group col-sm-6 col-xs-12">
+                            <div class="col-sm-6 col-xs-6">
+                                <input class="btn btn-primary pull-right" value="{!IF(hasSMSFactor,'√',$Label.MFA_Setup)}" disabled="true" type="button" style="width:70%;background-color: #e35205;"/>
+                            </div>
+                            <div class="col-sm-6 col-xs-6">
+                                <apex:outputPanel rendered="{!hasSMSFactor}">
+                                    <input class="btn btn-primary pull-right" value="{!$Label.MFA_Reset}" type="button" style="width:70%;background-color: #e35205;" onclick="resetWaySetup('SMS')"/>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!!hasSMSFactor}">
+                                    <input class="btn btn-primary pull-right" value="{!$Label.MFA_Reset}" type="button" style="width:70%;background-color: #e35205;" disabled="true"/>
+                                </apex:outputPanel>
+                            </div>
+                        </div>
+                        <div class="bs form-group col-sm-6 col-xs-12">
+                            {!$Label.MFA_Email_Authentication}
+                        </div>
+                        <div class="bs form-group col-sm-6 col-xs-12">
+                            <div class="col-sm-6 col-xs-6">
+                                <input class="btn btn-primary pull-right" value="{!IF(hasEmailFactor,'√',$Label.MFA_Setup)}" disabled="true" type="button" style="width:70%;background-color: #e35205;"/>
+                            </div>
+                            <div class="col-sm-6 col-xs-6">
+                                <apex:outputPanel rendered="{!hasEmailFactor}">
+                                    <input class="btn btn-primary pull-right" value="{!$Label.MFA_Reset}" type="button" style="width:70%;background-color: #e35205;" onclick="resetWaySetup('Email')"/>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!!hasEmailFactor}">
+                                    <input class="btn btn-primary pull-right" value="{!$Label.MFA_Reset}" type="button" style="width:70%;background-color: #e35205;" disabled="true"/>
+                                </apex:outputPanel>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    
+
+                    <!--Update Page Buttons-->
+                    <div class="bs col-sm-12 col-xs-12" style="{!IF(!createUser,'','display:none')}">
+                        <div style="padding:20px;"></div>
+                        <!--desktop action button-->
+                        <div class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" 
+                            onclick="javascript:document.getElementsByTagName('body')[0].scrollTop=0;validateRulesApex()" >
+                            {!$Label.Update_Information}
+                        </div>
+                    </div>
+                    <!--Register Page Buttons-->
+                    <div class="bs col-sm-12 col-xs-12" style="{!IF(!createUser,'display:none','')}">
+                        <div style="padding:20px;"></div>
+                        <!--desktop action button-->
+                        <div class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="javascript:document.getElementsByTagName('body')[0].scrollTop=0;validateRulesApex()">
+                            {!$Label.Acc_Create_User}
+                        </div>
+                    </div>
+                </div>
+                <apex:actionFunction action="{!updateUserInfo}" name="updateInfoApex" reRender="mainPage" status="loader-icon" oncomplete="updateContactApex();"/>
+                <apex:actionFunction action="{!updateContact}" name="updateContactApex" reRender="mainPage" status="loader-icon"/>
+                <apex:actionFunction action="{!deactivateAccount}" name="deactivate" reRender="mainPage,brkMobileBtn" status="loader-icon"/>
+                <apex:actionFunction action="{!activateAccount}" name="activate" reRender="mainPage,brkMobileBtn" status="loader-icon"/>
+                <apex:actionFunction action="{!resetPassword}" name="resetPassword" reRender="mainPage" status="loader-icon"/>
+                <apex:actionFunction action="{!enactiveAccountOwner}" name="enactiveAccountOwnerApex" reRender="mainPage" oncomplete="createuserApex()" status="loader-icon"/>
+                <apex:actionFunction action="{!createuser}" name="createuserApex" reRender="mainPage"  oncomplete="deactiveAccountOwnerApex()" status="loader-icon"/>
+                <apex:actionFunction action="{!deactiveAccountOwner}" name="deactiveAccountOwnerApex" reRender="mainPage" oncomplete="forgotPasswordApex()" status="loader-icon"/>
+                <apex:actionFunction action="{!forgotPassword}" name="forgotPasswordApex" reRender="mainPage" status="loader-icon"/>
+                <apex:actionFunction action="{!updateReportTo}" name="updateReportTo" reRender="TeamLeaderPanel" />
+                <!--<apex:actionFunction action="{!isExistedEmail}" name="isExistedEmailapex" oncomplete="updatefunction()" reRender="mainPage"/>
+                <apex:actionFunction action="{!isExistedAgentCode}" name="isExistedAgentCodeapex" oncomplete="isExistedEmailapex()" reRender="mainPage"/>-->
+                <apex:actionFunction action="{!validateRules}" name="validateRulesApex" oncomplete="updatefunction()" reRender="mainPage" status="loader-icon"/>
+                <apex:actionFunction action="{!checkFederationID}" name="checkFederationIDApex" reRender="mainPage" status="loader-icon"/>
+                <!-- OKTA MFA -->
+                <apex:actionFunction action="{!unlockUser}" name="unlockUserApex" reRender="mainPage" status="loader-icon"/>
+                <apex:actionFunction action="{!resetWaySetup}" name="resetWaySetup" reRender="mainPage" status="loader-icon">
+                    <apex:param name="firstParam" assignTo="{!verifyWay}" value=""/>
+                </apex:actionFunction>
+                <script>
+                    function update() {
+                        updateInfoApex();
+                    }
+                </script>
+                <script>
+                    if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                        $("a").attr("target","");
+                    }
+                </script>
+            </apex:form>
+            <script>
+                function setFocusOnLoad() {}  
+                
+                getCompanyList();
+        
+                function updatefunction(){
+                    var iscreateUser = $("input[id*='iscreateUser']").val();
+                    console.log('iscreateUser',iscreateUser);
+                    if(validateForm_mainPage()){
+                        if(iscreateUser=='true'){
+                            
+                            enactiveAccountOwnerApex();
+                        } else {
+                            update();
+                        }
+                    }
+                    
+                }
+                
+                function validateForm_mainPage(){
+                
+                    jQuery.validator.addMethod("isInvalidPhone", function(value, element) {
+                        return isValidPhone();
+                    }, "{!$Label.Error_Message_Contact_Number_Not_Valid}");
+                    
+                    jQuery.validator.addMethod("isInvalidEmail", function(value, element) {
+                        return validateEmail();
+                    }, "{!$Label.Error_Message_Email_Not_Valid}");
+                    
+                    jQuery.validator.addMethod("isInvalidEmail2", function(value, element) {
+                        return validateEmail2();
+                    }, "{!$Label.Error_Message_Email_Not_Valid}");
+                    
+                    jQuery.validator.addMethod("isExistedAgentCode", function(value, element) {
+                        return validateExistedAgentCode();
+                    }, "{!$Label.Error_Message_Agent_Code_in_Use}");
+
+                    //added by Connor CR-47
+                    jQuery.validator.addMethod("isExistedSubAgentCode", function(value, element) {
+                        return validateExistedSubAgentCode();
+                    }, "{!$Label.Error_Message_Sub_Agent_Code_in_Use}");
+                    
+                    
+                    jQuery.validator.addMethod("isExistedEmail", function(value, element) {
+                        return validateExistedEmail();
+                    }, "{!$Label.Error_Message_Email_In_Use}");
+                    
+                    jQuery.validator.addMethod("isInvalidSupportEmail", function(value, element) {
+                        return validateSupportEmail();
+                    }, "{!$Label.Error_Message_Email_Not_Valid}");
+                    
+                    jQuery.validator.addMethod("isInvalidFederationEmail", function(value, element) {
+                        return validateFederationEmail();
+                    }, "{!$Label.Error_Message_Email_Not_Valid}");
+                    
+                    //jQuery.validator.addMethod("isExistedTeam", function(value, element) {
+                    //    return validateExistedTeamLeader();
+                    //}, "{!$Label.Error_Message_Team_Leader_of_this_company_is_existed}");
+                    // Rancho_PI83_20221110 - allow broker super admin to change broker admin role
+                    // jQuery.validator.addMethod("toChangedAdminRole", function(value, element) {
+                    //     return validatetoChangedAdminRole();
+                    // }, "{!$Label.Error_Message_Change_of_Broker_Admin_role_is_not_allowed}");
+                    
+                    // jQuery.validator.addMethod("changetoeAdminRole", function(value, element) {
+                    //     return validatechangetoeAdminRole();
+                    // }, "{!$Label.Error_Message_Change_Role_to_Broker_Admin_is_not_allowed}");
+                    
+                    jQuery.validator.addMethod("toChangedTeamLeader", function(value, element) {
+                        return validatetoChangedTeamLeader();
+                    }, "{!$Label.Error_Message_This_Team_Leader_has_subordinates}");
+                    
+                    jQuery.validator.addMethod("isExistedAltruistAdmin", function(value, element) {
+                        return validateisExistedAltruistAdmin();
+                    }, "{!$Label.Error_Message_Altruist_broker_admin_is_existed}");
+                    
+                    jQuery.validator.addMethod("isEmptyReportTo", function(value, element) {
+                        return isEmptyReportTo();
+                    }, "{!$Label.Error_Message_This_Field_is_Required}");
+                    
+                    jQuery.validator.addMethod("validateAgentCodeLength", function(value, element) {
+                        return validateAgentCodeLength();
+                    }, "{!$Label.Error_Message_10_characters}");
+
+                    //added by Connor CR-47
+                    jQuery.validator.addMethod("validateSubAgentCodeLength", function(value, element) {
+                        return validateSubAgentCodeLength();
+                    }, "{!$Label.Error_Message_10_characters}");
+                    
+                    jQuery.validator.addMethod("validateFirstNameLength", function(value, element) {
+                        return validateFirstNameLength();
+                    }, "{!$Label.Error_Message_100_characters}");
+                    
+                    jQuery.validator.addMethod("validateLastNameLength", function(value, element) {
+                        return validateLastNameLength();
+                    }, "{!$Label.Error_Message_100_characters}");
+                    
+                    jQuery.validator.addMethod("validateEmailLength", function(value, element) {
+                        return validateEmailLength();
+                    }, "{!$Label.Error_Message_100_characters}");
+                    
+                    jQuery.validator.addMethod("validateSupportEmailLength", function(value, element) {
+                        return validateSupportEmailLength();
+                    }, "{!$Label.Error_Message_100_characters}");
+                    
+                    jQuery.validator.addMethod("validateFederationEmailLength", function(value, element) {
+                        return validateFederationEmailLength();
+                    }, "{!$Label.Error_Message_100_characters}");
+                    
+                    jQuery.validator.addMethod("validateCountryCodeLength", function(value, element) {
+                        return validateCountryCodeLength();
+                    }, "{!$Label.Error_Message_5_characters}");
+                    
+                    $("form[id*='mainPage']").validate({
+                        errorPlacement: function(label, element) {
+                            label.addClass('errorDiv');
+                            label.insertAfter(element);
+                        },
+                            wrapper: 'div'
+                    });
+
+                    
+                    $("form[id*='mainPage'] input[id*='mandatory-Field']").each(function(idx, elem){
+                                            $(elem).rules("add", {
+                                                required: true
+                                            });
+                    });
+                    
+                    $("form[id*='mainPage'] input[id*='mandatory-Field-Agent-Code']").each(function(idx, elem){
+                                            $(elem).rules("add", {
+                                                isExistedAgentCode: true,
+                                                validateAgentCodeLength: true
+                                            });
+                    });
+
+                    //added by Connor CR-47
+                    $("form[id*='mainPage'] input[id*='sub-Agent-Code']").each(function(idx, elem){
+                                            $(elem).rules("add", {
+                                                isExistedSubAgentCode: true,
+                                                validateSubAgentCodeLength: true
+                                            });
+                    });
+
+                    
+                    $("form[id*='mainPage'] input[id*='mandatory-Field-Email']").each(function(idx, elem){
+                                            $(elem).rules("add", {
+                                                isInvalidEmail: true,
+                                                isInvalidEmail2: true,
+                                                isExistedEmail: true,
+                                                validateEmailLength: true
+                                            });
+                    });
+                    
+                    $("form[id*='mainPage'] input[id*='mandatory-Field-Phone']").each(function(idx, elem){
+                                            $(elem).rules("add", {
+                                                isInvalidPhone: true
+                                            });
+                    });
+                    
+                    $("form[id*='mainPage'] input[id*='mandatory-Field-First-Name']").each(function(idx, elem){
+                                            $(elem).rules("add", {
+                                                validateFirstNameLength: true
+                                            });
+                    });
+                    
+                    $("form[id*='mainPage'] input[id*='mandatory-Field-Last-Name']").each(function(idx, elem){
+                                            $(elem).rules("add", {
+                                                validateLastNameLength: true
+                                            });
+                    });
+                    
+                    $("form[id*='mainPage'] input[id*='Country-Code']").each(function(idx, elem){
+                                            $(elem).rules("add", {
+                                                validateCountryCodeLength: true
+                                            });
+                    });
+                    
+                    $("form[id*='mainPage'] input[id*='supportemail']").each(function(idx, elem){
+                                            $(elem).rules("add", {
+                                                isInvalidSupportEmail: true,
+                                                validateSupportEmailLength: true
+                                            });
+                    });
+                    
+                    $("form[id*='mainPage'] input[id*='federationEmail']").each(function(idx, elem){
+                                            $(elem).rules("add", {
+                                                isInvalidFederationEmail: true,
+                                                validateFederationEmailLength: true
+                                            });
+                    });
+                    
+                    $("form[id*='mainPage'] select[id*='mandatory-Field']").each(function(idx, elem){
+                                            $(elem).rules("add", {
+                                                required: true
+                                            });
+                    });
+                    
+                    //$("form[id*='mainPage'] select[id*='role']").each(function(idx, elem){
+                    //                      $(elem).rules("add", {
+                    //                           isExistedTeam: true,
+                    //                      });
+                    //});
+                    
+                    $("form[id*='mainPage'] select[id*='role']").each(function(idx, elem){
+                                            $(elem).rules("add", {
+                                                // Rancho_PI83_20221110 - allow broker super admin to change broker admin role
+                                                // toChangedAdminRole: true,
+                                                // changetoeAdminRole: true,
+                                                toChangedTeamLeader: true,
+                                                isExistedAltruistAdmin: true
+                                            });
+                    });
+                    
+                    $("form[id*='mainPage'] select[id*='reportTo']").each(function(idx, elem){
+                                            $(elem).rules("add", {
+                                                isEmptyReportTo: true
+                                            });
+                    });
+                    
+                    return $("form[id*='mainPage']").validate().form();
+                }            
+            </script>
+        </apex:define>
+    </body>
+</apex:page>

@@ -1,0 +1,79 @@
+<apex:page controller="BDGroupPolicySearchCtrl" sidebar="false" tabStyle="Group_Policies__tab" lightningStylesheets="true">
+    <style>
+        body select, body select[size='0'], body select[size='1'], .slds-scope select, .slds-scope select[size='0'], .slds-scope select[size='1']{
+            height:31.2px;
+        }
+    </style>
+    <apex:form id="theForm">
+        <apex:actionFunction name="previous" namespace="BDGroupPolicySearch" action="{!prevPage}" status="loader-icon" reRender="GroupPolicyListPageBlock"/>
+        <apex:actionFunction name="next" namespace="BDGroupPolicySearch" action="{!nextPage}" status="loader-icon" reRender="GroupPolicyListPageBlock"/>
+        <apex:actionStatus id="loader-icon">
+           <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                     &nbsp;
+                 </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Please Wait...</span>
+                    </div>
+                 </div>
+            </apex:facet>
+        </apex:actionStatus>
+    
+        <apex:pageBlock id="GroupPolicyListPageBlock" title="Group Policy List">
+            <apex:pageBlockSection columns="1">
+                <apex:pageblockSectionItem >
+                    <apex:outputPanel >
+                        <apex:selectList value="{!selectedSearchType}" size="1">
+                            <apex:selectoption itemLabel="{!$Label.Select_Search_Type}" itemValue="" itemDisabled="true"></apex:selectoption>
+                            <apex:selectOptions value="{!searchType}"></apex:selectOptions>
+                        </apex:selectList>
+                        <apex:outputLabel >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</apex:outputLabel>
+                        <apex:inputText value="{!searchValue}" />
+                        <apex:outputLabel >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</apex:outputLabel>
+                        <apex:commandButton value="Search" action="{!search}" status="loader-icon" reRender="policyListTable,messages"/>
+                    </apex:outputPanel>
+                </apex:pageblockSectionItem>
+                <apex:pageblockSectionItem >                    
+                     <apex:pageMessages id="messages"></apex:pageMessages>
+                </apex:pageblockSectionItem>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection columns="1" id="policyListTable">
+                <apex:pageBlockTable value="{!policyList}" var="wrapper" first="{!startIndex}" rows="{!pageSize}" rowClasses="onclick-pointer"  rendered="{!showPolicyList}">                 
+                    <apex:column headerValue="{!$Label.Pol_Plan_Type}" onclick="goToDetailPage('{!wrapper.policyNumber}')" style="cursor:pointer;">{!wrapper.planType}</apex:column>
+                    <apex:column headerValue="{!$Label.Pol_Policy_Holder}" onclick="goToDetailPage('{!wrapper.policyNumber}')">{!wrapper.policyHolderName }</apex:column>
+                    <apex:column headerValue="{!$Label.Pol_Coverage_Period_From}" onclick="goToDetailPage('{!wrapper.policyNumber}')">
+                        <apex:outputText value="{0, date, yyyy/MM/dd}">
+                            <apex:param value="{!wrapper.coveragePeriodFrom }"/>
+                        </apex:outputText>
+                    </apex:column>
+                    <apex:column headerValue="{!$Label.Pol_Coverage_Period_To}" onclick="goToDetailPage('{!wrapper.policyNumber}')">
+                        <apex:outputText value="{0, date, yyyy/MM/dd}">
+                            <apex:param value="{!wrapper.coveragePeriodTo }"/>
+                        </apex:outputText>
+                    </apex:column>
+                    <apex:column headerValue="{!$Label.Pol_Policy_Number}" onclick="goToDetailPage('{!wrapper.policyNumber}')">{!wrapper.policyNumber}</apex:column>
+                    <apex:column headerValue="{!$Label.Pol_Status}" onclick="goToDetailPage('{!wrapper.policyNumber}')">{!wrapper.policyStatus}</apex:column>
+                    
+                    <apex:facet name="footer">
+                        <div style="text-align:right;{!IF(policyList.size=0, 'display:none;', '')}">
+                            <span> Page {!currentPage} of {!totalPage} &nbsp;</span>                            
+                            <span><a href="javascript:void(0);" onclick="BDGroupPolicySearch.previous()">&lt;&lt; Previous Page </a></span>    
+                            <span> &nbsp; | &nbsp;</span>                        
+                            <span><a href="javascript:void(0);" onclick="BDGroupPolicySearch.next()">Next Page &gt;&gt;</a></span>
+                        </div>
+                    </apex:facet>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+            
+        </apex:pageBlock>
+        <script>
+            function goToDetailPage(policyNumber){
+                var url = "/apex/BDGroupPolicyDetailsVFP?policyNumber=" + policyNumber + "&policyType=Group";
+                //window.open(url);
+                sforce.one.navigateToURL(url);
+            }
+        </script>
+    </apex:form>
+</apex:page>

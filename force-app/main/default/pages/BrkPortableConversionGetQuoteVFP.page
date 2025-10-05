@@ -1,0 +1,479 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="true" title="e-Sales" controller="PortableGetQuoteCtrl">
+    <head>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <apex:include pageName="CignaBrokerCommonCSS" />
+        <apex:include pageName="CignaCommonCSS" />
+        <style type="text/css">
+            .header-bar {
+                color: #FFF;
+                font-size: 1.25em;
+                text-align: center;
+                height: 150px;
+                position: relative;
+            }
+            @media (min-width: 768px) {
+                .header-bar {
+                    background-image: url({!$Resource.LaptopCard})!important;
+                    background-size: cover;
+                    background-position-y: 70%;
+                }
+            }
+            @media (max-width: 767px) {
+                .header-bar {
+                    background-image: url({!$Resource.LaptopCard})!important;
+                    background-size: cover;
+                    background-position-y: 40%;
+                }
+            }
+             
+            .cigna-floating-bottom-panel-testing { 
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                margin-left: 0px !important;
+            }
+            
+             
+             
+             @media (max-width: 767px) {
+                 .carousel-div {
+                     overflow: scroll;
+                    }
+             }
+             
+             .mainwrapper {
+                 width: 100vw;
+                 height: 100vh;
+                 overflow-y: scroll;
+                 -webkit-overflow-scrolling: touch;
+             }
+                    
+        </style>
+       
+    </head>
+
+        <!--common css, bootstrap, jquery libraries-->
+        <apex:define name="additionalLibraries">
+            <apex:stylesheet value="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+            <!-- CR-56_Link_20220214 -->
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap3.4.1.css')}" />
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+            
+            <!-- Bootstrap Core CSS -->
+            <!-- CR-56_Link_20220214 -->
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-3.6.0.min.js')}"/>
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-migrate-3.3.2.js')}"/>
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap3.4.1.min.js')}"/>
+            <apex:include pageName="CignaUtilJS"/> 
+        </apex:define>
+
+        <!-- Start of the main body -->
+        <apex:define name="body">
+            <div class="bs" style="width:100%">
+                <div id="maincontent" class="carousel-div">
+                    <apex:actionStatus id="loader-icon">
+                        <apex:facet name="start">
+                            <div class="bs col-xs-12 col-lg-12 loading-div" style="padding: 0px;">
+                            <span class="loading-helper"></span>
+                            <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                            <span class="sr-only">Loading...</span>
+                            </div>
+                        </apex:facet>
+                    </apex:actionStatus>
+                    <div class="header-bar">
+                        <p style="position: relative; top: 45%; text-align:center;text-transform: uppercase;">
+                                {!$Label.Product_Deck}
+                        </p>
+                    </div>
+                    <div class="bs container-fluid" style="padding-left:20px !important;padding-right:20px !important;" >
+                        <!--Please include your page here-->
+                        <apex:include pageName="BasePortableConversionGetQuoteBrkVFP"/>
+                    </div>
+                </div>
+                <div id="cigna-quote-summary-desktop" class="bs visible-xs cigna-floating-bottom-panel">
+                
+                <div id="resultDivApp" class="bs cigna-quote-summary">
+                <apex:outputPanel id="resultPanelApp">
+
+                    <!-- Start of header -->
+                    <div>
+                        <h4 id="quote" class="bs col-xs-4" style="text-transform: uppercase;">{!$Label.Quotation}</h4>
+                        <apex:outputPanel rendered="{!!isCustomerPortal}">
+                            <h5 class="bs col-xs-4" style="text-align:right;" >
+                              <a class="bs cigna-fg-orange-medium onclick-pointer" id="quote-save-btn" style="text-decoration: none;" onClick="ServerQuote.saveQuote();"> 
+                              <i aria-hidden="true" class="ci-hk-briefcase"></i>{!$Label.Save}
+                              </a>
+                            </h5>
+                        </apex:outputPanel>
+                        <div id='phone'>
+                          <apex:outputPanel rendered="{!showSummary}" layout="none">
+                              <h5 class="bs col-xs-4" style="text-align:right;float:right;"><a class="bs cigna-fg-orange-medium onclick-pointer dropup" onclick="preventDefault(event);Cigna.Quote.changetoDetail(); return false;" style="text-decoration: none;">{!$Label.Details} <span class="caret"></span> </a></h5>
+                          </apex:outputPanel>
+      
+                          <apex:outputPanel rendered="{!showDetail}" layout="none">
+                              <h5 class="bs col-xs-4" style="text-align:right;float:right;"><a class="bs cigna-fg-orange-medium onclick-pointer" onclick="preventDefault(event);Cigna.Quote.changetoSummary(); return false;" style="text-decoration: none;">{!$Label.Summary} <span class="caret"></span> </a></h5>
+                          </apex:outputPanel>
+                        </div>
+                        <br/>
+                    </div>
+                    <!-- End of header -->
+                    
+                    <div class="bs row cigna-quote-amount" style="padding-bottom: 5px; border-bottom: 1px solid #bbb;padding-top: 25px;">
+                        <div class="bs col-xs-12">
+                            <div class="bs row" >
+                                <div class="col-xs-4">&nbsp;</div>
+                                <div class="col-xs-4" style="text-align: right;">{!$Label.Monthly_HKD}</div>
+                                <div class="col-xs-4" style="text-align: right;">{!$Label.Yearly_HKD}</div>
+                            </div>
+                            
+                            <div class="bs row">
+                                <div class="col-xs-4">{!$Label.Discounted}</div>
+                                <div class="col-xs-4" style="text-align: right;">
+                                    <span id="cigna-quote-amount-month">
+                                        <apex:outputText id="amountPerMonth" value="{!IF(BLANKVALUE(amountPerMonth, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(amountPerMonth, 0) > 0, 'cigna-fg-green-medium', '')}">
+                                            <apex:param value="{!amountPerMonth}" />
+                                        </apex:outputText>
+                                    </span>
+                                </div>
+                                <div class="col-xs-4" style="text-align: right;">
+                                    <span id="cigna-quote-amount-annum">
+                                        <apex:outputText id="amountPerAnnum" value="{!IF(BLANKVALUE(amountPerAnnum, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(amountPerAnnum, 0) > 0, 'cigna-fg-green-medium ', '')}">
+                                            <apex:param value="{!amountPerAnnum}" />
+                                        </apex:outputText>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="bs row">
+                                <div class="col-xs-4">{!$Label.Original}</div>
+                                <div class="col-xs-4" style="text-align: right;">
+                                    <span id="cigna-original-amount-month">
+                                        <apex:outputText id="OriginalMonthlyQuote" value="{!IF(BLANKVALUE(OriginalMonthlyQuote, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(OriginalMonthlyQuote, 0) > 0, 'cigna-fg-green-medium cigna-original-amount', '')}">
+                                            <apex:param value="{!OriginalMonthlyQuote}" />
+                                        </apex:outputText>
+                                    </span>
+                                </div>
+                                <div class="col-xs-4" style="text-align: right;">
+                                    <span id="cigna-original-amount-annum">
+                                        <apex:outputText id="OriginalAnnualQuote" value="{!IF(BLANKVALUE(OriginalAnnualQuote, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(OriginalAnnualQuote, 0) > 0, 'cigna-fg-green-medium cigna-original-amount', '')}">
+                                            <apex:param value="{!OriginalAnnualQuote}" />
+                                        </apex:outputText>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!--Nicole_20200602_Levy II Start-->
+                            <div class="bs row" style="padding-top:10px;" >
+                                <div class="bs col-xs-12">
+                                    <a class="bs onclick-pointer" href="#" style="border-bottom:1px solid;font-size:12px;" onclick="toggleOverlayLevy();">{!transField['Information_on_levy'][$Label.Header_Language_Code_Current]}</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!--start of show summary quote -->
+                    <apex:outputPanel rendered="{!showSummary}" id="showSummaryPanel">
+                        <div class="bs row cigna-quote-amount">
+                            <div class="bs col-xs-4">
+                                <span>{!$ObjectType.Product__c.Fields.Name__c.Label}</span>
+                            </div>
+                            <div class="bs col-xs-8 text-right">
+                                <span>{!selectedProductInfo.Name__c}</span>
+                            </div>
+                        </div>
+                        <div class="bs row cigna-quote-amount">
+                            <div class="bs col-xs-4">
+                                <span>{!$Label.Insured_Person}</span>
+                            </div>
+                            <div class="bs col-xs-8 text-right">
+                                <span>
+                                    <!--apex:outputPanel>{!$Label.Adult} x 0</apex:outputPanel-->
+                                    <apex:outputPanel >{!$Label.Adult} x {!Adultnumber}</apex:outputPanel>
+                                </span>
+                                <apex:outputPanel >, {!$Label.Kid} x 
+                                    <span id="cigna-quote-summary-child">{!Childnumber}</span>
+                                </apex:outputPanel>
+                                <!--apex:outputPanel>, {!$Label.Kid} x 
+                                    <span id="cigna-quote-summary-child">0</span>
+                                </apex:outputPanel-->
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <!--end of show summary quote -->
+                    
+                    <!--start of show detail quote -->
+                    <apex:outputPanel rendered="{!showDetail}" id="showDetailPanel">
+                        <div style="{!IF(totalPlanSize > 7,'height:200px; overflow:auto;','')}" id="showDetailDiv">
+                            <div class="bs row cigna-quote-amount">
+                                <div class="bs col-xs-12 text-left">
+                                    <span>{!selectedProductInfo.Name__c}</span>
+                                </div>
+                            </div>
+                            <br/>
+                            <div class="bs row cigna-quote-amount" style="padding-bottom: 5px; border-bottom: 1px solid #bbb;">
+                                <div class="bs col-xs-12">
+                                    <div class="bs row" >
+                                        <div class="col-xs-6">&nbsp;</div>
+                                        <div class="col-xs-3" style="text-align:right;">{!$Label.Monthly_HKD}</div>
+                                        <div class="col-xs-3" style="text-align:right;">{!$Label.Yearly_HKD}</div>
+                                    </div>
+                                    <apex:outputPanel rendered="{!!ISBLANK(paramPersonName)}">
+                                        <div class="bs row">
+                                            <div class="col-xs-6">{!paramPersonName}</div>
+                                            <apex:outputPanel >
+                                                <div class="col-xs-3" style="text-align: right;">
+                                                    <span id="cigna-quote-amount-month">
+                                                        <apex:outputText id="monthlyAdultAmount" value="{!IF(BLANKVALUE(monthlyAdultAmount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(monthlyAdultAmount, 0) > 0, 'cigna-fg-green-medium', '')}">
+                                                            <apex:param value="{!monthlyAdultAmount}"/>
+                                                        </apex:outputText>
+                                                    </span>
+                                                </div>
+                                                <div class="col-xs-3" style="text-align: right;">
+                                                    <span id="cigna-quote-amount-annum">
+                                                        <apex:outputText id="yearlyAdultAmount" value="{!IF(BLANKVALUE(yearlyAdultAmount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(yearlyAdultAmount, 0) > 0, 'cigna-fg-green-medium ', '')}">
+                                                            <apex:param value="{!yearlyAdultAmount}" />
+                                                        </apex:outputText>
+                                                    </span>
+                                                </div>
+                                            </apex:outputPanel>
+                                        </div>
+                                        <apex:outputPanel rendered="{!isPlanDifferentOption == 'true' && hasRiderA1}">
+                                            <apex:repeat value="{!riderQuoteListA1}" var="r">  
+                                                <div class="bs row" >                                              
+                                                    <div class="col-xs-6" style="padding-left:30px;">{!r.name}</div>
+                                                    <div class="col-xs-3" style="text-align:right;">
+                                                        <span id="cigna-original-amount-month">
+                                                            <apex:outputText value="{!IF(BLANKVALUE(r.monthlyAmount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(r.monthlyAmount, 0) > 0, 'cigna-fg-green-medium cigna-original-amount', '')}"><apex:param value="{!r.monthlyAmount}" /></apex:outputText>
+                                                        </span>
+                                                    </div>
+                                                    <div class="col-xs-3" style="text-align:right;">
+                                                        <span id="cigna-original-amount-annum">
+                                                            <apex:outputText value="{!IF(BLANKVALUE(r.annualAmount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(r.annualAmount, 0) > 0, 'cigna-fg-green-medium cigna-original-amount', '')}"><apex:param value="{!r.annualAmount}" /></apex:outputText>
+                                                        </span>
+                                                    </div>
+                                                </div>                                               
+                                            </apex:repeat>        
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!!ISBLANK(paramPersonName2)}">
+                                        <div class="bs row">
+                                            <div class="col-xs-6">{!paramPersonName2}</div>
+                                            <apex:outputPanel >
+                                                <div class="col-xs-3" style="text-align: right;">
+                                                    <span id="cigna-quote-amount-month">
+                                                        <apex:outputText id="monthlyAdult2Amount" value="{!IF(BLANKVALUE(monthlyAdult2Amount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(monthlyAdult2Amount, 0) > 0, 'cigna-fg-green-medium', '')}">
+                                                            <apex:param value="{!monthlyAdult2Amount}"/>
+                                                        </apex:outputText>
+                                                    </span>
+                                                </div>
+                                                <div class="col-xs-3" style="text-align: right;">
+                                                    <span id="cigna-quote-amount-annum">
+                                                        <apex:outputText id="yearlyAdult2Amount" value="{!IF(BLANKVALUE(yearlyAdult2Amount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(yearlyAdult2Amount, 0) > 0, 'cigna-fg-green-medium ', '')}">
+                                                            <apex:param value="{!yearlyAdult2Amount}" />
+                                                        </apex:outputText>
+                                                    </span>
+                                                </div>
+                                            </apex:outputPanel>
+                                        </div>
+                                        <apex:outputPanel rendered="{!isPlanDifferentOption == 'true' && hasRiderA2}">
+                                            <apex:repeat value="{!riderQuoteListA2}" var="r">  
+                                                <div class="bs row" >                                              
+                                                    <div class="col-xs-6" style="padding-left:30px;">{!r.name}</div>
+                                                    <div class="col-xs-3" style="text-align:right;">
+                                                        <span id="cigna-original-amount-month">
+                                                            <apex:outputText value="{!IF(BLANKVALUE(r.monthlyAmount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(r.monthlyAmount, 0) > 0, 'cigna-fg-green-medium cigna-original-amount', '')}"><apex:param value="{!r.monthlyAmount}" /></apex:outputText>
+                                                        </span>
+                                                    </div>
+                                                    <div class="col-xs-3" style="text-align:right;">
+                                                        <span id="cigna-original-amount-annum">
+                                                            <apex:outputText value="{!IF(BLANKVALUE(r.annualAmount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(r.annualAmount, 0) > 0, 'cigna-fg-green-medium cigna-original-amount', '')}"><apex:param value="{!r.annualAmount}" /></apex:outputText>
+                                                        </span>
+                                                    </div>
+                                                </div>                                               
+                                            </apex:repeat>        
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!!ISBLANK(paramPersonName3)}">
+                                        <div class="bs row">
+                                            <div class="col-xs-4">{!paramPersonName3}</div>
+                                            <apex:outputPanel >
+                                                <div class="col-xs-3" style="text-align: right;">
+                                                    <span id="cigna-quote-amount-month">
+                                                        <apex:outputText id="monthlyC1Amount" value="{!IF(BLANKVALUE(monthlyC1Amount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(monthlyC1Amount, 0) > 0, 'cigna-fg-green-medium', '')}">
+                                                            <apex:param value="{!monthlyC1Amount}"/>
+                                                        </apex:outputText>
+                                                    </span>
+                                                </div>
+                                                <div class="col-xs-3" style="text-align: right;">
+                                                    <span id="cigna-quote-amount-annum">
+                                                        <apex:outputText id="yearlyC1Amount" value="{!IF(BLANKVALUE(yearlyC1Amount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(yearlyC1Amount, 0) > 0, 'cigna-fg-green-medium ', '')}">
+                                                            <apex:param value="{!yearlyC1Amount}" />
+                                                        </apex:outputText>
+                                                    </span>
+                                                </div>
+                                            </apex:outputPanel>
+                                        </div>
+                                        <apex:outputPanel rendered="{!isPlanDifferentOption == 'true' && hasRiderC1}">
+                                            <apex:repeat value="{!riderQuoteListC1}" var="r">  
+                                                <div class="bs row" >                                              
+                                                    <div class="col-xs-6" style="padding-left:30px;">{!r.name}</div>
+                                                    <div class="col-xs-3" style="text-align:right;">
+                                                        <span id="cigna-original-amount-month">
+                                                            <apex:outputText value="{!IF(BLANKVALUE(r.monthlyAmount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(r.monthlyAmount, 0) > 0, 'cigna-fg-green-medium cigna-original-amount', '')}"><apex:param value="{!r.monthlyAmount}" /></apex:outputText>
+                                                        </span>
+                                                    </div>
+                                                    <div class="col-xs-3" style="text-align:right;">
+                                                        <span id="cigna-original-amount-annum">
+                                                            <apex:outputText value="{!IF(BLANKVALUE(r.annualAmount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(r.annualAmount, 0) > 0, 'cigna-fg-green-medium cigna-original-amount', '')}"><apex:param value="{!r.annualAmount}" /></apex:outputText>
+                                                        </span>
+                                                    </div>
+                                                </div>                                               
+                                            </apex:repeat>        
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!!ISBLANK(paramPersonName4)}">
+                                        <div class="bs row">
+                                            <div class="col-xs-6">{!paramPersonName4}</div>
+                                            <apex:outputPanel >
+                                                <div class="col-xs-3" style="text-align: right;">
+                                                    <span id="cigna-quote-amount-month">
+                                                        <apex:outputText id="monthlyC2Amount" value="{!IF(BLANKVALUE(monthlyC2Amount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(monthlyC2Amount, 0) > 0, 'cigna-fg-green-medium', '')}">
+                                                            <apex:param value="{!monthlyC2Amount}"/>
+                                                        </apex:outputText>
+                                                    </span>
+                                                </div>
+                                                <div class="col-xs-3" style="text-align: right;">
+                                                    <span id="cigna-quote-amount-annum">
+                                                        <apex:outputText id="yearlyC2Amount" value="{!IF(BLANKVALUE(yearlyC2Amount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(yearlyC2Amount, 0) > 0, 'cigna-fg-green-medium ', '')}">
+                                                            <apex:param value="{!yearlyC2Amount}" />
+                                                        </apex:outputText>
+                                                    </span>
+                                                </div>
+                                            </apex:outputPanel>
+                                        </div>
+                                        <apex:outputPanel rendered="{!isPlanDifferentOption == 'true' && hasRiderC2}">
+                                            <apex:repeat value="{!riderQuoteListC2}" var="r">  
+                                                <div class="bs row" >                                              
+                                                    <div class="col-xs-6" style="padding-left:30px;">{!r.name}</div>
+                                                    <div class="col-xs-3" style="text-align:right;">
+                                                        <span id="cigna-original-amount-month">
+                                                            <apex:outputText value="{!IF(BLANKVALUE(r.monthlyAmount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(r.monthlyAmount, 0) > 0, 'cigna-fg-green-medium cigna-original-amount', '')}"><apex:param value="{!r.monthlyAmount}" /></apex:outputText>
+                                                        </span>
+                                                    </div>
+                                                    <div class="col-xs-3" style="text-align:right;">
+                                                        <span id="cigna-original-amount-annum">
+                                                            <apex:outputText value="{!IF(BLANKVALUE(r.annualAmount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(r.annualAmount, 0) > 0, 'cigna-fg-green-medium cigna-original-amount', '')}"><apex:param value="{!r.annualAmount}" /></apex:outputText>
+                                                        </span>
+                                                    </div>
+                                                </div>                                               
+                                            </apex:repeat>        
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!!ISBLANK(paramPersonName5)}">
+                                        <div class="bs row">
+                                            <div class="col-xs-6">{!paramPersonName5}</div>
+                                            <apex:outputPanel >
+                                                <div class="col-xs-3" style="text-align: right;">
+                                                    <span id="cigna-quote-amount-month">
+                                                        <apex:outputText id="monthlyC3Amount" value="{!IF(BLANKVALUE(monthlyC3Amount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(monthlyC3Amount, 0) > 0, 'cigna-fg-green-medium', '')}">
+                                                            <apex:param value="{!monthlyC3Amount}"/>
+                                                        </apex:outputText>
+                                                    </span>
+                                                </div>
+                                                <div class="col-xs-3" style="text-align: right;">
+                                                    <span id="cigna-quote-amount-annum">
+                                                        <apex:outputText id="yearlyC3Amount" value="{!IF(BLANKVALUE(yearlyC3Amount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(yearlyC3Amount, 0) > 0, 'cigna-fg-green-medium ', '')}">
+                                                            <apex:param value="{!yearlyC3Amount}" />
+                                                        </apex:outputText>
+                                                    </span>
+                                                </div>
+                                            </apex:outputPanel>
+                                        </div>
+                                        <apex:outputPanel rendered="{!isPlanDifferentOption == 'true' && hasRiderC3}">
+                                            <apex:repeat value="{!riderQuoteListC3}" var="r">  
+                                                <div class="bs row" >                                              
+                                                    <div class="col-xs-6" style="padding-left:30px;">{!r.name}</div>
+                                                    <div class="col-xs-3" style="text-align:right;">
+                                                        <span id="cigna-original-amount-month">
+                                                            <apex:outputText value="{!IF(BLANKVALUE(r.monthlyAmount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(r.monthlyAmount, 0) > 0, 'cigna-fg-green-medium cigna-original-amount', '')}"><apex:param value="{!r.monthlyAmount}" /></apex:outputText>
+                                                        </span>
+                                                    </div>
+                                                    <div class="col-xs-3" style="text-align:right;">
+                                                        <span id="cigna-original-amount-annum">
+                                                            <apex:outputText value="{!IF(BLANKVALUE(r.annualAmount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(r.annualAmount, 0) > 0, 'cigna-fg-green-medium cigna-original-amount', '')}"><apex:param value="{!r.annualAmount}" /></apex:outputText>
+                                                        </span>
+                                                    </div>
+                                                </div>                                               
+                                            </apex:repeat>        
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!!(isPlanDifferentOption == 'true')}">
+                                        <apex:repeat value="{!riderQuoteList}" var="r">
+                                            <div class="bs row" >
+                                                <div class="col-xs-6">{!r.name}</div>
+                                                <div class="col-xs-3" style="text-align:right;">
+                                                    <span id="cigna-original-amount-month">
+                                                        <apex:outputText value="{!IF(BLANKVALUE(r.monthlyAmount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(r.monthlyAmount, 0) > 0, 'cigna-fg-green-medium cigna-original-amount', '')}"><apex:param value="{!r.monthlyAmount}" /></apex:outputText>
+                                                    </span>
+                                                </div>
+                                                <div class="col-xs-3" style="text-align:right;">
+                                                    <span id="cigna-original-amount-annum">
+                                                        <apex:outputText value="{!IF(BLANKVALUE(r.annualAmount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(r.annualAmount, 0) > 0, 'cigna-fg-green-medium cigna-original-amount', '')}"><apex:param value="{!r.annualAmount}" /></apex:outputText>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <br/>
+                                        </apex:repeat>
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <!--end of show detail quote -->
+                </apex:outputPanel>  
+                </div>
+                
+                    <div class="bs hidden-xs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                        <apex:outputText >
+                            <a class="action-btn cigna-fg-white" role="button" onclick="Cigna.Quote.sendEmailQuote();return false;">{!$Label.Email_Quote}</a>
+                        </apex:outputText>
+                        <apex:outputText rendered="{!isEnableBuyNow}">
+                            <a href="#" class="action-btn cigna-fg-white" role="button" onclick="Cigna.Quote.buyNow(); return false;">{!$Label.Buy_Now}</a>
+                        </apex:outputText>
+                    </div>
+                    <apex:outputPanel >
+                        <div class="bs visible-xs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                            <apex:outputText >
+                                <a class="action-btn cigna-fg-white" role="button" onclick="Cigna.Quote.contactMe();return false;">
+                                    <span class="ci-hk-phone" aria-hidden="true"></span>
+                                    <br/>{!$Label.Contact_Me}
+                                </a>
+                            </apex:outputText>
+                            <apex:outputText rendered="{!isEnableBuyNow}">
+                                <a href="#" class="action-btn cigna-fg-white" role="button" onclick="Cigna.Quote.buyNow(); return false;">
+                                    <span class="ci-hk-creditcard" aria-hidden="true"></span>
+                                    <br/>{!$Label.Buy_Now}
+                                </a>
+                            </apex:outputText>
+                        </div>
+                    </apex:outputPanel>
+                </div>
+            </div>
+            <script>
+                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal() && $(window).width() < 768 ) {
+                    $('html').css('position', 'fixed').css('overflow', 'hidden').css('width', '100%').css('height', '100%');
+                    $('body').css('position', 'fixed').css('overflow', 'hidden').css('width', '100%').css('height', '100%');
+                    $('#maincontent').addClass('mainwrapper');
+                 
+                }
+             
+                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal() && $(window).width() >= 768) {
+
+                    $('html').css('position', 'fixed').css('overflow', 'hidden').css('width', '100%').css('height', '100%');
+                    $('body').css('position', 'fixed').css('overflow-y', 'scroll').css('overflow-x', 'hidden').css('width', '100%').css('height', '100%');
+                }
+        </script>
+        </apex:define>
+        <!-- End of the main body -->
+</apex:page>

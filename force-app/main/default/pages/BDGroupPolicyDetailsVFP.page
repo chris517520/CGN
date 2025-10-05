@@ -1,0 +1,505 @@
+<apex:page sidebar="false" controller="BDGroupPolicyDetailsCtrl"  title="BD Group Policy Detail" tabStyle="Group_Policies__tab" lightningStylesheets="true" >
+    <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.SLDS, 'styles/salesforce-lightning-design-system.min.css')}" />
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    <style>
+        //.activeTab {background-color: #236FBD;font-size:12px; color:white;background-image:none}
+        //.inactiveTab { background-color: lightgrey;font-size:12px; color:black;background-image:none}
+        .background { background-color: white; font-size:12px; color:black}
+        .headerWrap {word-break:break-all; width:50px;}
+        //.tab-header{ font-weight:bold; }
+
+        .block-header{
+            margin:10px 0 10px 0;
+            background:rgb(243, 242, 242);
+            border:1px solid transparent;
+            
+        }
+        
+        
+        html{
+            line-height: 1;
+            background-color:white ;
+        }
+        
+        .slds-form-element__static{
+            min-height:calc(1.25rem + 2px);
+        }
+        
+        .forcePageBlockItem{
+            margin:0 50px 0 0;
+        }
+        
+        body .bPageBlock, .slds-scope .bPageBlock{
+            border: 0;
+            box-shadow : 0 0 0 0 rgba(0,0,0,0);
+        }
+        
+        body .bPageBlock.apexDefaultPageBlock, body .bPageBlock.bDetailBlock, body .bPageBlock.bEditBlock, .slds-scope .bPageBlock.apexDefaultPageBlock, .slds-scope .bPageBlock.bDetailBlock, .slds-scope .bPageBlock.bEditBlock{
+            padding:1rem 0 1rem 0;
+        }
+        
+        body select, body select[size='0'], body select[size='1'], .slds-scope select, .slds-scope select[size='0'], .slds-scope select[size='1']{
+            height:31.2px;
+        }
+    </style>
+    <script>
+
+        function scrollToEnd(){
+            var h = $(document).height()-$(window).height();
+            $(document).scrollTop(h);
+        }
+
+        function changeSection(section){
+            var icons = document.getElementsByTagName('i');
+            for(var i=0;i<icons.length;i++){
+                icons[i].setAttribute("class","ci-hk-arrow-28");
+            }
+            
+            var icon = $(section).find('i');
+            if(icon.hasClass("ci-hk-arrow-29")){
+                console.log($(section));
+                icon.removeClass("ci-hk-arrow-29").addClass("ci-hk-arrow-28");
+            }else if(icon.hasClass("ci-hk-arrow-28")){
+                icon.removeClass("ci-hk-arrow-28").addClass("ci-hk-arrow-29");
+            }
+        }
+
+        $(document).ready(function() {
+            GroupPolicyDetailSearch.getGroupPolicyDetail();
+            $("#policyInformationDiv").show();
+            $("#memberListDiv").hide();
+            $("#benefitScheduledDiv").hide();
+
+            //CR-56_Link_20220214
+            $(".tab-header").on("click",function(event) {
+                console.log(this.id);
+
+                if(this.id == 'tab-default-1__PolicyInformationTab'){
+                    GroupPolicyDetailSearch.getGroupPolicyDetail();
+                    $("#memberListDiv").hide();
+                    $("#benefitScheduledDiv").hide();
+                    $("#policyInformationDiv").show();
+                } else if (this.id =='tab-default-2__MemberListTab'){
+                    //MemberListSearch.getMemberList();
+                    $("#memberListDiv").show();
+                    $("#policyInformationDiv").hide();
+                    $("#benefitScheduledDiv").hide();
+                } else if (this.id == 'tab-default-3__BenefitScheduleTab'){
+                    BenefitListSearch.getBenefitList();
+                    $("#benefitScheduledDiv").show();
+                    $("#memberListDiv").hide();
+                    $("#policyInformationDiv").hide();
+                }
+            });
+        });
+        
+        
+
+    </script>
+
+    <apex:form id="GroupPolicyDetailsFrm" >
+        <apex:actionFunction name="getGroupPolicyDetail" namespace="GroupPolicyDetailSearch" action="{!getGroupPolicyDetail}" status="loader-icon" reRender="groupPolicyDetailPageBlock" />
+        <apex:actionFunction action="{!retriveIndividualPolicy}" name="retriveIndividualPolicy" status="loader-icon" reRender="individualPolicyInfoPanel" oncomplete="scrollToEnd()">
+            <apex:param name="rowIndex" assignTo="{!selectedRowIndex}" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction name="previous" namespace="MemberListSearch" action="{!prevPage}" status="loader-icon" reRender="memberListPageBlock"/>
+        <apex:actionFunction name="next" namespace="MemberListSearch" action="{!nextPage}" status="loader-icon" reRender="memberListPageBlock"/>
+        <apex:actionFunction name="getMemberList" namespace="MemberListSearch" action="{!getMemberList}" status="loader-icon" reRender="memberListPageBlock"/>
+        <apex:actionFunction name="pPrevious" namespace="IndividualPolicyInfoSearch" action="{!pPrevPage}" status="loader-icon" rerender="individualPolicyInfoPanel"/>
+        <apex:actionFunction name="pNext" namespace="IndividualPolicyInfoSearch" action="{!pNextPage}" status="loader-icon" rerender="individualPolicyInfoPanel"/>
+        <apex:actionFunction name="getBenefitList" namespace="BenefitListSearch" action="{!getBenefitList}" status="loader-icon" reRender="benefitListPageBlock"/>
+        <apex:actionFunction name="getBenefitPlanBrkDwnList" namespace="BenefitPlanBrkDwnListSearch" action="{!getBenefitPlanBrkDwnList}" status="loader-icon" reRender="brkDwnListPanel">
+            <apex:param name="planNumberParam" assignTo="{!selectedPlanNumber}" value="" />
+            <!--<apex:param name="showFlagParam" assignTo="{!selectedShowBrkDwnListFlag }" value="" />-->
+        </apex:actionFunction>
+
+        <apex:actionStatus id="loader-icon">
+           <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                     &nbsp;
+                 </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Please Wait...</span>
+                    </div>
+                 </div>
+            </apex:facet>
+        </apex:actionStatus>
+
+        <script>
+        function selectTab(component){
+        var activeTab = $(component).attr("id");
+        
+        $(".gTab").removeClass("slds-active");
+        $("#"+activeTab).parent().addClass("slds-active");
+        
+        $(".gScope").each(function(){
+            var clsName = $(this).attr("class");
+            if(clsName.indexOf("slds-show") != -1){
+                $(this).removeClass("slds-show");
+                $(this).addClass("slds-hide");
+            }
+        });
+        var arr = activeTab.split("__");
+        var scopeId = arr[0];
+        $("#"+scopeId).removeClass("slds-hide");
+        $("#"+scopeId).addClass("slds-show");
+    
+        }
+        </script>
+        
+        <div class="slds-tabs_default">
+            <ul class="slds-tabs_default__nav" role="tablist">
+            <li class="slds-tabs_default__item slds-active gTab tab-header" title="Item One" role="presentation"><a class="slds-tabs_default__link tab-header" href="javascript:void(0);" onclick="selectTab(this);" role="tab" tabindex="0" aria-selected="true" aria-controls="tab-default-1" id="tab-default-1__PolicyInformationTab">Policy Information</a></li>
+            <li class="slds-tabs_default__item gTab tab-header" title="Item Two" role="presentation"><a class="slds-tabs_default__link tab-header" href="javascript:void(0);" onclick="selectTab(this);"  role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-2" id="tab-default-2__MemberListTab">Member List</a></li>
+            <li class="slds-tabs_default__item gTab tab-header" title="Item Three" role="presentation"><a class="slds-tabs_default__link tab-header" href="javascript:void(0);" onclick="selectTab(this);"  role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-3" id="tab-default-3__BenefitScheduleTab">Benefit Schedule</a></li>
+            </ul>
+            <div id="tab-default-1" class="slds-tabs_default__content slds-show gScope" role="tabpanel" aria-labelledby="tab-default-1__item"></div>
+            <div id="tab-default-2" class="slds-tabs_default__content slds-hide gScope" role="tabpanel" aria-labelledby="tab-default-2__item"></div>
+            <div id="tab-default-3" class="slds-tabs_default__content slds-hide gScope" role="tabpanel" aria-labelledby="tab-default-3__item"></div>
+        </div> 
+        
+        <div id="policyInformationDiv" style="overflow-x:auto;">
+        
+               
+            
+               <apex:outputPanel id="groupPolicyDetailPageBlock">
+                <div class="block-header">
+                    <h2 class="header-title-container" style="padding-bottom:5px;padding-top:5px;">
+                        <span class="slds-text-heading--small slds-truncate " style="padding-left:10px;">
+                            Policy Information
+                        </span>
+                    </h2>
+                </div>
+                <div class="slds-grid full forcePageBlockSectionRow">
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                      <span class="slds-form-element__label">{!$Label.Pol_Policy_No}</span>
+                      <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.policyNumber}</span>
+                      </div>
+                    </div>
+                    </div>
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                        <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                          <span class="slds-form-element__label">{!$Label.Pol_Plan_Type}</span>
+                          <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                            <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.planName}</span>
+                          </div>
+                        </div>
+                    </div>
+                </div> 
+                <div class="slds-grid full forcePageBlockSectionRow">
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                      <span class="slds-form-element__label">{!$Label.Pol_Policy_Holder}</span>
+                      <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.holder.fullName}</span>
+                      </div>
+                    </div>
+                    </div>
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                        <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                          <span class="slds-form-element__label">{!$Label.Pol_Policy_Status}</span>
+                          <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                            <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.policyStatusDisplayName}</span>
+                          </div>
+                        </div>
+                    </div>
+                </div>  
+                <div class="slds-grid full forcePageBlockSectionRow">
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                      <span class="slds-form-element__label">{!$Label.Pol_Policy_Period}</span>
+                      <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">
+                            <apex:outputText >
+                                <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                    <apex:Param value="{!policy.effDateInDate}"/>
+                                </apex:OutputText>
+                                <apex:outputText >&nbsp;&nbsp;{!$Label.Pol_to}&nbsp;&nbsp;</apex:outputText>
+                                <!--
+                                <apex:outputLabel styleClass="labelCol vfLabelColTextWrap" style="padding-left:10px;">{!$Label.Pol_to}</apex:outputLabel>
+                                -->
+                                <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                    <apex:Param value="{!policy.termDateInDate}"/>
+                                </apex:OutputText>
+                            </apex:outputText>
+                        </span>
+                      </div>
+                    </div>
+                    </div>
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                        <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                          <span class="slds-form-element__label">{!$Label.Pol_No_of_Employees}</span>
+                          <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                            <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.numberofEmployees}</span>
+                          </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-grid full forcePageBlockSectionRow">
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                      <span class="slds-form-element__label">{!$Label.Pol_No_of_Spouse}</span>
+                      <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.numberofSpouse}</span>
+                      </div>
+                    </div>
+                    </div>
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                        <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                          <span class="slds-form-element__label">{!$Label.Pol_No_of_Children}</span>
+                          <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                            <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.numberofChildren}</span>
+                          </div>
+                        </div>
+                    </div>
+                </div>  
+                <div class="slds-grid full forcePageBlockSectionRow">
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                      <span class="slds-form-element__label">{!$Label.Pol_Currency}</span>
+                      <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.currencyCodeDesc}</span>
+                      </div>
+                    </div>
+                    </div>
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                        <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                          <span class="slds-form-element__label">{!$Label.Pol_Payment_Mode}</span>
+                          <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                            <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.paymentMode}</span>
+                          </div>
+                        </div>
+                    </div>
+                </div>  
+                
+                <div class="block-header">
+                    <h2 class="header-title-container" style="padding-bottom:5px;padding-top:5px;">
+                        <span class="slds-text-heading--small slds-truncate " style="padding-left:10px;">
+                            Broker Information
+                        </span>
+                    </h2>
+                </div>
+                <div class="slds-grid full forcePageBlockSectionRow">
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                      <span class="slds-form-element__label">{!$Label.Pol_Broker_Name}</span>
+                      <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.broker.organization.fullname}</span>
+                      </div>
+                    </div>
+                    </div>
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                        <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                          <span class="slds-form-element__label">{!$Label.Pol_Broker_Contact_Person}</span>
+                          <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                            <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.broker.fullname}</span>
+                          </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-grid full forcePageBlockSectionRow">
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                      <span class="slds-form-element__label">{!$Label.Pol_Broker_Contact_No}</span>
+                      <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.broker.businessPhoneNo}</span>
+                      </div>
+                    </div>
+                    </div>
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                        <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                          <span class="slds-form-element__label">{!$Label.Pol_Broker_Code}</span>
+                          <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                            <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.broker.organization.orgCode}</span>
+                          </div>
+                        </div>
+                    </div>
+                </div>
+                </apex:outputPanel>
+        </div>
+
+        <div id="memberListDiv">
+            <apex:pageBlock id="memberListPageBlock" mode="maindetail">
+                <apex:pageBlockSection columns="1" >
+                    <apex:pageblockSectionItem >
+                        <apex:outputpanel >
+                            <apex:selectList value="{!selectedSearchType}" size="1">
+                                <apex:selectoption itemLabel="{!$Label.Select_Search_Type}" itemValue="" itemDisabled="true"></apex:selectoption>
+                                <apex:selectOptions value="{!searchType}"></apex:selectOptions>
+                            </apex:selectList>
+                            <apex:outputLabel >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</apex:outputLabel>
+                            <apex:inputText value="{!searchValue}" />
+                            <apex:outputLabel >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</apex:outputLabel>
+                            <apex:commandButton value="Search" action="{!search}" status="loader-icon" reRender="memberListPageBlock,memberListMessage"/>
+                        </apex:outputpanel>
+                    </apex:pageblockSectionItem>
+                    <apex:pageblockSectionItem >
+                        <apex:pageMessages id="memberListMessage"></apex:pageMessages>
+                    </apex:pageblockSectionItem>
+                </apex:pageBlockSection>
+
+                <apex:pageblockSection id="memberListPageBlock" columns="1">
+                    <apex:pageBlockTable style="table-layout:auto;"  value="{!memberWrapperList}" var="m" first="{!startIndex}" rows="{!pageSize}" rowClasses="onclick-pointer" rendered="{!showMemberListTable}">
+                        <apex:column headerValue="{!$Label.Pol_Member_Cert_No} ">{!m.person.certificateNo} </apex:column>
+                        <apex:column headerValue="{!$Label.Pol_Member_Name} ">{!m.person.fullName}</apex:column>
+                        <apex:column headerValue="{!$Label.Pol_Relation}">{!m.person.insurableInterestReason}</apex:column>
+                        <apex:column headerValue="{!$Label.Pol_Plan}">{!m.person.planNumber}</apex:column>
+                        <apex:column headerValue="{!$Label.Pol_Effective_Date}">
+                             <apex:outputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                 <apex:param value="{!m.person.CertificateEffDateInDate}"/>
+                             </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="{!$Label.Pol_Member_Status} ">{!m.person.memberStatusDesc}</apex:column>
+                        <apex:column headerValue="{!$Label.Pol_Benefit_Type} ">{!m.person.GroupMedicalBenefitStr}</apex:column>
+                        <apex:column headerValue="{!$Label.Pol_Life_Sum_Assured}">
+                            <apex:outputText value="{!IF(m.person.lifeSumAssuredInNumber == null ,'',policy.currencySymbol)} {0, Number,###,##0.00}" escape="false">
+                                 <apex:param value="{!m.person.lifeSumAssuredInNumber}"/>
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="{!$Label.Pol_TPD_Sum_Assured}">
+                            <apex:outputText value="{!IF(m.person.TPDSumAssuredInNumber == null ,'',policy.currencySymbol)} {0, Number,###,##0.00}" escape="false">
+                                 <apex:param value="{!m.person.TPDSumAssuredInNumber}"/>
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="{!$Label.Pol_AD_D_Sum_Assured} ">
+                            <apex:outputText value="{!IF(m.person.addSumAssuredInNumber == null ,'',policy.currencySymbol)} {0, Number,###,##0.00}" escape="false">
+                                 <apex:param value="{!m.person.addSumAssuredInNumber}"/>
+                             </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="{!$Label.Pol_LTD_Sum_Assured} ">
+                            <apex:outputText value="{!IF(m.person.LTDSumAssuredInNumber == null ,'',policy.currencySymbol)} {0, Number,###,##0.00}" escape="false">
+                                 <apex:param value="{!m.person.LTDSumAssuredInNumber}"/>
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="{!$Label.Pol_CIB_Sum_Assured}">
+                            <apex:outputText value="{!IF(m.person.CIBSumAssuredInNumber ==null ,'',policy.currencySymbol)} {0, Number,###,##0.00}" escape="false">
+                                 <apex:param value="{!m.person.CIBSumAssuredInNumber}"/>
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="" style="cursor:pointer;width:50px;word-wrap:break-word;word-break:break-all;text-align:center;" onclick="retriveIndividualPolicy('{!m.rowIndex}');changeSection(this);">
+                            <i aria-hidden="true" id='expand-arrow' class="ci-hk-arrow-28 expand-arrow"></i>
+                        </apex:column>
+                        <apex:facet name="footer">
+                            <div style="text-align:right;{!IF(memberWrapperList.size=0, 'display:none;', '')}">
+                                <span> Page {!currentPage} of {!totalPage} &nbsp;</span>
+                                <span><a href="javascript:void(0);" onclick="MemberListSearch.previous()">&lt;&lt; Previous Page </a></span>
+                                <span> &nbsp; | &nbsp;</span>
+                                <span><a href="javascript:void(0);" onclick="MemberListSearch.next()">Next Page &gt;&gt;</a></span>
+                            </div>
+                        </apex:facet>
+                    </apex:pageBlockTable>
+                </apex:pageblockSection>
+                <br/>
+                <div Style="width:98%;margin:0 auto;">
+                    <apex:outputPanel id="individualPolicyInfoPanel"  style="{!IF(showInP,'','display:none')}">
+                        <apex:pageBlockSection columns="1" title="{!selectedMember.person.fullName}'s individual policy(ies):" >
+                            <apex:pageBlockSectionItem dataStyle="text-align:right;" >
+                                <apex:commandButton value="Initiate Individual Opportunity" action="{!initiateIndividualOpportunity}"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockTable value="{!selectedMember.policyList}" var="p" first="{!pStartIndex}" rows="{!pageSize}">
+                                <apex:column headerValue="{!$Label.Pol_Product_Name} ">{!p.policy.marketingName}</apex:column>
+                                <apex:column headerValue="{!$Label.Person_Insured} ">{!p.personInsured }</apex:column>
+                                <apex:column headerValue="{!$Label.Pol_Effective_Date}">
+                                    <apex:outputText value="{0, date, yyyy/MM/dd}"><apex:param value="{!p.policy.effDateInDate}"/></apex:outputText>
+                                </apex:column>
+                                <apex:column headerValue="{!$Label.Pol_Policy_Number}">{!p.policy.policyNumber}</apex:column>
+                                <apex:column headerValue="{!$Label.Pol_Status}">{!p.policy.policyStatus}</apex:column>
+                                <apex:facet name="footer">
+                                    <div style="text-align:right;{!IF(selectedMember.policyList.size=0, 'display:none;', '')}">
+                                        <span> Page {!pCurrentPage} of {!pTotalPage} &nbsp;</span>
+                                        <span><a href="javascript:void(0);" onclick="IndividualPolicyInfoSearch.pPrevious()">&lt;&lt; Previous Page </a></span>
+                                        <span> &nbsp; | &nbsp;</span>
+                                        <span><a href="javascript:void(0);" onclick="IndividualPolicyInfoSearch.pNext()">Next Page &gt;&gt;</a></span>
+                                    </div>
+                                </apex:facet>
+                            </apex:pageBlockTable>
+                        </apex:pageBlockSection>
+                    </apex:outputPanel>
+                </div>
+                <script> twistSection(document.getElementById('{!$Component.memberListPageBlock.individualPolicyInfoPanel}').getElementsByTagName('img')[0]) </script>
+            </apex:pageBlock>
+        </div>
+
+        <!-- benefit scheduled -->
+        <div id="benefitScheduledDiv">
+            <apex:pageBlock mode="maindetail" id="benefitListPageBlock" >
+                <apex:pageBlockSection columns="1" >
+                    <apex:pageBlockSectionItem dataStyle="text-align:left;">
+                       <apex:outputPanel >
+                             <apex:outputLabel style="font-weight:bold;" >{!$Label.Pol_Benefit_Currency}</apex:outputLabel>
+                             <apex:outputLabel >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</apex:outputLabel>
+                             <apex:outputLabel >HKD (Hong Kong Dollar)</apex:outputLabel>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                <apex:repeat value="{!benefitWrapperList}" var="b">
+                    <apex:pageBlock id="planNumberPageBlock" mode="maindetail" >
+                        <apex:pageBlockSection id="planNumberSection" title="PLAN {!b.planNumber}"  collapsible="true"  columns="1"  >
+                           <apex:outputPanel id="brkDwnListPanel" >
+                            <apex:repeat value="{!b.planList}" var="plan" >
+                                <!--<apex:pageBlockSection title="{!plan.planName}" collapsible="true" columns="1"  >-->
+                                <apex:pageBlockSectionItem dataStyle="font-weight:bold;text-align:left;padding-top:5px;"  >
+                                    <apex:outputLabel >{!plan.planName}</apex:outputLabel>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageblockSectionItem dataStyle="padding-top:0px;">
+                                    <apex:outputPanel >
+                                        <apex:repeat value="{!plan.planBrkdwnList}" var="brkdwn">
+                                            <apex:pageBlockSection columns="1" >
+                                                <apex:pageBlockSectionItem dataStyle="background-color:rgb(242, 242, 242);" >
+                                                    <apex:outputLabel >{!brkdwn.planItemDesc}</apex:outputLabel>
+                                                </apex:pageBlockSectionItem>
+                                            </apex:pageBlockSection>
+                                            <apex:outputPanel >
+                                                <apex:pageBlockSection columns="1" >
+                                                    <apex:repeat value="{!brkdwn.planItemBrkdwnList}" var="itemBrkDwn">
+                                                        <apex:pageBlockSectionItem >
+                                                            <apex:outputLabel >{!itemBrkDwn.benefitDetailItemDesc}</apex:outputLabel>
+                                                            <apex:outputLabel >{!itemBrkDwn.benefitLevelDesc}</apex:outputLabel>
+                                                        </apex:pageBlockSectionItem>
+                                                    </apex:repeat>
+                                                </apex:pageBlockSection>
+                                            </apex:outputPanel>
+                                        </apex:repeat>
+                                    </apex:outputPanel>
+                                </apex:pageblockSectionItem>
+                                <!--  </apex:pageBlockSection> -->
+                            </apex:repeat>
+                          </apex:outputPanel>
+                        </apex:pageBlockSection>
+                        <script> twistSection(document.getElementById('{!$Component.planNumberPageBlock.planNumberSection}').getElementsByTagName('img')[0]); 
+                            function twistSection(twisty, sectionId) {  
+                                //alert('init');     
+                                var parentDiv = twisty;
+                                while (parentDiv.tagName != 'DIV') { parentDiv = parentDiv.parentNode; }
+                                var headerId = sectionId || (parentDiv.id.split('_'))[1];
+                                var div = parentDiv.nextSibling;
+                                var elemWasOn = false;            
+                                if (div.style.display != 'none'){
+                                    div.style.display = 'none';
+                                    twisty.className ='showListButton';
+                                    twisty.alt = twisty.title = 'Show Section - '+twisty.name;
+                                    elemWasOn = true;
+                                    //alert('none='+twisty.title);  
+                                }else{
+                                    div.style.display = 'block';
+                                    twisty.className ='hideListButton';
+                                    twisty.alt = twisty.title = 'Hide Section - '+twisty.name;
+                                    elemWasOn = false;                                                                    
+                                    var sectionTitle =  twisty.name;
+                                    var planNumber = sectionTitle.replace('PLAN ','');                                    
+                                    //alert('block, name='+twisty.name+',planNumber='+planNumber );
+                                    BenefitPlanBrkDwnListSearch.getBenefitPlanBrkDwnList(planNumber); 
+                                 }
+                               }
+                        </script>
+                    </apex:pageBlock>
+                </apex:repeat>
+            </apex:pageBlock>
+        </div>
+    </apex:form>
+</apex:page>

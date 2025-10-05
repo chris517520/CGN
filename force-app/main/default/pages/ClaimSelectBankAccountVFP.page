@@ -1,0 +1,610 @@
+<apex:page Controller="MyClaimSubmitController" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+    <head>
+      <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+    </head>
+    
+    <div>
+        <!-- customer -->
+        <apex:outputPanel rendered="{!isCustomer}">
+        
+            <apex:outputPanel id="selectBankAccountCusHeaderPanel">
+                <div class="content-question">
+                    <apex:outputPanel rendered="{!!includeGSClaim}">
+                        {!$Label.Please_select_the_account_information_that_you_would_like_the_claim_payment_goes}
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!includeGSClaim && employeeMember!=null && employeeMember.SSN==userSsn}">
+                        {!transField['PleaseSelectBankAccount'][$Label.Header_Language_Code_Current]}
+                    </apex:outputPanel>
+                </div>
+            </apex:outputPanel>
+            
+            <div style="padding: 20px;">
+                <apex:outputPanel id="selectBankAccountForCusVFPPanel">
+                    <div id="avaliableAccOpt" class="bs row" data-role="skip"  style="{!if(cList[0].Is_Contain_Individual_Policy__c || includeGSClaim,'','display:none;')}">
+                        <apex:form >
+                            
+                            <apex:outputPanel rendered="{!!includeGSClaim}">
+                                <!-- select bank account -->
+                                <apex:variable value="{!0}" var="rowNumCusAcc"/>
+                                <apex:repeat value="{!bankAccInfoList}" var="bankAccInfoItem">
+                                
+                                    <div id="cusAcc{!rowNumCusAcc}" onclick="skipOneStep_accountInfo();"  class="bs row listcontent_no-grey content-choice fg-grey" >
+                                        <!-- mobile -->
+                                        <div style="float: left; width: 100%;">
+                                            <div class="bs col-xs-6 visible-xs">{!$Label.Bank}</div>
+                                            <div class="bs col-xs-6 visible-xs content-highlight">{!bankAccInfoItem['bankName']}</div>
+                                        </div>
+                                        <div style="float: left; width: 100%;">
+                                            <div class="bs col-xs-6 visible-xs">{!$Label.Account_Holder}</div>
+                                            <div class="bs col-xs-6 visible-xs content-highlight">{!bankAccInfoItem['acctHolderName']}</div>
+                                        </div>
+                                        <div style="float: left; width: 100%;">
+                                            <div class="bs col-xs-6 visible-xs">{!$Label.Account_No}</div>
+                                            <div class="bs col-xs-6 visible-xs content-highlight" style="word-break: break-word;">{!bankAccInfoItem['accountNumber']}</div>
+                                        </div>
+                                        
+                                        <!-- web -->
+                                        <div class="bs hidden-xs">
+                                            <div class="bs col-sm-4 content-highlight">{!bankAccInfoItem['bankName']}</div>
+                                            <div class="bs col-sm-4 content-highlight">{!bankAccInfoItem['acctHolderName']}</div>
+                                            <div class="bs col-sm-4 content-highlight">{!bankAccInfoItem['accountNumber']}</div>
+                                        </div>
+                                        <!-- hidden field -->
+                                        <input type="hidden" name="param-str" value="{!bankAccInfoItem['json']}" />
+                                    </div>
+                                    <script>
+                                        /**
+                                        var str1 = '{!cList[0].Bank_Account_Information__c}';
+                                        var str2 = '{!bankAccInfoItem['json']}';
+                                        
+                                        if( str1.includes(str2) ){
+                                            $( "#cusAcc{!rowNumCusAcc}" ).removeClass('fg-grey').addClass('fg-orange');
+                                        }
+                                        */
+                                        
+                                        var savedValue = JSON.parse('{!cList[0].Bank_Account_Information__c}');
+                                        var wsValue = JSON.parse('{!bankAccInfoItem['json']}');
+                                        
+                                        console.log('****** savedValue.accountNumber: ' + savedValue.accountNumber);
+                                        console.log('****** wsValue.accountNumber: ' + wsValue.accountNumber);
+                                        
+                                        if (savedValue.accountNumber == wsValue.accountNumber){
+                                            $( "#cusAcc{!rowNumCusAcc}" ).removeClass('fg-grey').addClass('fg-orange');
+                                        }
+                                    </script>
+                                    <apex:variable var="rowNumCusAcc" value="{!rowNumCusAcc + 1}"/>
+                                    
+                                </apex:repeat>
+                                
+                                <!-- end save record data -->
+                                <!-- line break -->    
+                                <div style="border-bottom: 1px solid #000000;"></div>
+                                <div id="otherBankAcc" class="bs row listcontent_no-grey content-choice {!if((cList[0].Bank_Account_Information__c == null || cList[0].Bank_Account_Information__c == '') && isLoadOldClaim , 'fg-orange','fg-grey')}" style="{!if(cList[0].Is_Contain_Individual_Policy__c,'','display:none;')}" onclick="skipOneStep_accountInfoOther(); "> 
+                                    <div class="bs col-xs-12 col-sm-12">{!$Label.Other_Bank_Account}</div>
+                                    <!-- hidden field -->
+                                    <input type="hidden" name="param-str" value=" " />
+                                </div>                            
+                                <!-- save record data -->
+                                
+                                <apex:inputHidden value="{!cList[0].Bank_Account_Information__c}" id="hiddenValue_bankAccInfoCus"/>
+                            </apex:outputPanel>
+                            
+                            <!--Nicole_20200224_GS Claim Start-->
+                            <input type="hidden" id="include-GS-Claim" value="{!includeGSClaim}" />
+                            <input type="hidden" id="is-login-User-Employee" value="{!isLoginUserEmployee}" />
+                            <apex:outputPanel rendered="{!includeGSClaim}">
+                                <div id="bank-account-gs" class="bs row listcontent_no-grey {!IF(bankAccInfoForGS==null || bankAccInfoForGS=='','','content-choice')} {!if((cList[0].Bank_Account_Information__c != null && cList[0].Bank_Account_Information__c != '') && isLoadOldClaim , 'fg-orange','fg-grey')}" 
+                                     style="{!IF(employeeMember.SSN!=userSsn,'display:none;','')}" >
+                                        <div style="float: left; width: 100%;">
+                                            <div class="bs col-xs-12 col-sm-12" style="font-weight:bold;">
+                                                <apex:outputText value="{!transField['CurBankAcc'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~CurBankAcc~"), true,false)}" />
+                                            </div>
+                                        </div>
+                                        <apex:outputPanel rendered="{!IF(employeeMember!=null && employeeMember.region=='TW','true','false')}">
+                                            <div style="float: left; width: 100%;">
+                                                <div class="bs col-xs-6 col-sm-4" style="font-weight:bold;">
+                                                    <apex:outputText value="{!transField['SwiftCode'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~SwiftCode~"), true,false)}" />
+                                                </div>
+                                                <div class="bs col-xs-6 col-sm-8 content-highlight">
+                                                    <apex:outputText value="{!bankAccInfoForGS.swiftCode}" rendered="{!IF(bankAccInfoForGS!=null, true,false)}" />
+                                                    <apex:outputText value="{!transField['Not_Available'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~Not_Available~") && bankAccInfoForGS==null, true,false)}" />
+                                                </div>
+                                            </div>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!IF(employeeMember!=null && employeeMember.region=='TW','false','true')}">
+                                            <div style="float: left; width: 100%;">
+                                                <div class="bs col-xs-6 col-sm-4" style="font-weight:bold;">
+                                                    <apex:outputText value="{!transField['BankCode'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~BankCode~"), true,false)}" />
+                                                </div>
+                                                <div class="bs col-xs-6 col-sm-8 content-highlight">
+                                                    <apex:outputText value="{!bankAccInfoForGS.bankCode}" rendered="{!IF(bankAccInfoForGS!=null, true,false)}" />
+                                                    <apex:outputText value="{!transField['Not_Available'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~Not_Available~") && bankAccInfoForGS==null, true,false)}" />
+                                                </div>
+                                            </div>
+                                        </apex:outputPanel>
+                                        <div style="float: left; width: 100%;">
+                                            <div class="bs col-xs-6 col-sm-4" style="font-weight:bold;">
+                                                <apex:outputText value="{!transField['BankAccNum'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~BankAccNum~"), true,false)}" />                                           
+                                            </div>
+                                            <div class="bs col-xs-6 col-sm-8 content-highlight" style="word-break: break-word;">
+                                                <apex:outputText value="{!bankAccInfoForGS.accountNumber}" rendered="{!IF(bankAccInfoForGS!=null, true,false)}" />
+                                                <apex:outputText value="{!transField['Not_Available'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~Not_Available~") && bankAccInfoForGS==null, true,false)}" />                                            
+                                            </div>
+                                        </div>       
+                                        <!-- hidden field -->
+                                        <input type="hidden" name="param-str" value="{!bankAccInfoForGSJSon}" />                                                                                                                                                                                         
+                               </div>
+                               
+                               <!-- line break -->    
+                                <div style="border-bottom: 1px solid #000000;"></div>
+                                
+                                <div id="otherBankAcc" class="bs row listcontent_no-grey content-choice {!if((cList[0].Bank_Account_Information__c == null || cList[0].Bank_Account_Information__c == '') && isLoadOldClaim , 'fg-orange','fg-grey')}" > 
+                                    <div class="bs col-xs-12 col-sm-12">{!$Label.Other_Bank_Account}</div>
+                                    <!-- hidden field -->
+                                    <input type="hidden" name="param-str" value=" " />
+                                </div>                               
+                                <!-- save record data -->
+                                
+                                <apex:inputHidden value="{!cList[0].Bank_Account_Information__c}" id="hiddenValue_bankAccInfoCus_GS"/>
+                                
+                               <script> 
+                                   if ($('#otherBankAcc').hasClass('fg-orange') || $('#bank-account-gs').hasClass('fg-orange')){
+                                        displayNextBtnIn(5);
+                                   }                                                       
+                               </script>                              
+                               
+                               <!--Reminder-->
+                               <apex:outputPanel rendered="{!IF(employeeMember!=null && employeeMember.SSN!=userSsn && employeeMember.region=='HK' && bankAccInfoForGS!=null,'true','false')}">
+                                   <div class="bs col-xs-12 form-note">
+                                       <apex:outputText value="{!transField['BankAccountReminderHK'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, '~BankAccountReminderHK~'), true,false)}">
+                                           <apex:param value="{!employeeMember.FirstName+IF(employeeMember.FirstName!=null && employeeMember.LastName!=null,' ','')+employeeMember.LastName+IF($Label.Header_Language_Code_Current=='en_US',belongCha,'')}" />
+                                       </apex:outputText>  
+                                   </div>
+                               </apex:outputPanel>
+                               
+                               <apex:outputPanel rendered="{!IF(employeeMember!=null && employeeMember.SSN!=userSsn && employeeMember.region=='HK'  && bankAccInfoForGS==null,'true','false')}">
+                                   <div class="bs col-xs-12 form-note">
+                                       <apex:outputText value="{!transField['BankAccountReminderHK_Nu'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, '~BankAccountReminderHK_Nu~'), true,false)}">
+                                           <apex:param value="{!employeeMember.FirstName+IF(employeeMember.FirstName!=null && employeeMember.LastName!=null,' ','')+employeeMember.LastName}" />
+                                       </apex:outputText>&nbsp;
+                                       <apex:outputText value="{!transField['BankAccountReminderHK_Nu1'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, '~BankAccountReminderHK_Nu1~'), true,false)}">
+                                           <apex:param value="{!employeeMember.FirstName+IF(employeeMember.FirstName!=null && employeeMember.LastName!=null,' ','')+employeeMember.LastName}" />
+                                       </apex:outputText>
+                                   </div>
+                               </apex:outputPanel>
+                               
+                               <apex:outputPanel rendered="{!IF(employeeMember!=null && employeeMember.SSN!=userSsn && employeeMember.region=='TW' && bankAccInfoForGS!=null,'true','false')}">
+                                   <div class="bs col-xs-12 form-note">
+                                       <apex:outputText value="{!transField['BankAccountReminderTW'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, '~BankAccountReminderTW~'), true,false)}">
+                                           <apex:param value="{!employeeMember.FirstName+IF(employeeMember.FirstName!=null && employeeMember.LastName!=null,' ','')+employeeMember.LastName+IF($Label.Header_Language_Code_Current=='en_US',belongCha,'')}" />
+                                       </apex:outputText>  
+                                   </div>
+                               </apex:outputPanel>
+                               
+                               <apex:outputPanel rendered="{!IF(employeeMember!=null && employeeMember.SSN!=userSsn && employeeMember.region=='TW'  && bankAccInfoForGS==null,'true','false')}">
+                                   <div class="bs col-xs-12 form-note">
+                                       <apex:outputText value="{!transField['BankAccountReminderTW_Nu'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, '~BankAccountReminderTW_Nu~'), true,false)}" escape="false">
+                                           <apex:param value="{!employeeMember.FirstName+IF(employeeMember.FirstName!=null && employeeMember.LastName!=null,' ','')+employeeMember.LastName}" />
+                                       </apex:outputText>&nbsp; 
+                                       <apex:outputText value="{!transField['BankAccountReminderTW_Nu1'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, '~BankAccountReminderTW_Nu1~'), true,false)}" escape="false">
+                                           <apex:param value="{!employeeMember.FirstName+IF(employeeMember.FirstName!=null && employeeMember.LastName!=null,' ','')+employeeMember.LastName}" />
+                                       </apex:outputText>
+                                   </div>
+                               </apex:outputPanel>
+                               
+                               <!--Label-->
+                               <apex:outputPanel rendered="{!IF(policyOptions.size>1 && employeeMember!=null && employeeMember.SSN==userSsn,true,false)}">
+                                   <div class="bs col-xs-12 content-question fg-grey-bold" style="padding:20px;">
+                                         <apex:outputText value="{!transField['Multiple_Policy_Em_Reminder'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~Multiple_Policy_Em_Reminder~"), true,false)}" />                   
+                                   </div>
+                               </apex:outputPanel>
+                               <apex:outputPanel rendered="{!IF(policyOptions.size>1 && employeeMember!=null && employeeMember.SSN!=userSsn,true,false)}">
+                                   <div class="bs col-xs-12 content-question fg-grey-bold" style="padding:20px;">
+                                         <apex:outputText value="{!transField['Multiple_Policy_De_Reminder'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~Multiple_Policy_De_Reminder~"), true,false)}" />                   
+                                   </div>
+                               </apex:outputPanel>
+                                                             
+                                <apex:outputPanel rendered="{!IF(employeeMember!=null && employeeMember.SSN!=userSsn && bankAccInfoForGS==null,'true','false')}">
+                                    <script>
+                                        if({!isCustomer}){
+                                            hideNextBtnIn(5);
+                                        }
+                                    </script>
+                                </apex:outputPanel>   
+                                
+                                <apex:outputPanel rendered="{!IF(employeeMember!=null && employeeMember.SSN!=userSsn && bankAccInfoForGS!=null,'true','false')}">
+                                    <script>
+                                        if({!isCustomer}){
+                                            displayNextBtnIn(5);
+                                        }
+                                    </script>
+                                </apex:outputPanel>
+                                
+                                <apex:outputPanel rendered="{!IF(includeGSClaim && employeeMember!=null && employeeMember.SSN!=userSsn,'true','false')}">
+                                    <script>
+                                        $('#otherBankAcc').hide();
+                                    </script>
+                                </apex:outputPanel>                                                          
+                            
+                            </apex:outputPanel>
+                            <!--Nicole_20200224_GS Claim End-->
+                                                                                                                                                                                                    
+                            <apex:actionFunction name="SaveRecordCusBankAccInfoAtAction" status="loader-icon" action="{!dummyAction}" reRender="hiddenValue_bankAccInfoCus" oncomplete="nextFifthStepsCus();" />
+                            <script>
+                                /** working **/
+                                function saveRecordCusBankAccInfo(){
+                                    SaveRecordCusBankAccInfoAtAction();
+                                }
+                                
+                                function nextFifthStepsCus(){
+                                    if(skipSteps == 0){
+                                        if ($('.content-step[data-step="6"]').length > 0) {
+                                            $('.content-step:visible').fadeOut(function(){
+                                                $('.content-step[data-step="6"]').fadeIn(function(){
+                                                    
+                                                });
+                                            });
+                                        }
+                                        NextStepsAtAction();
+                                    }
+                                    
+                                    if(skipSteps == 1){
+                                        if ($('.content-step[data-step="7"]').length > 0) {
+                                            $('.content-step:visible').fadeOut(function(){
+                                                $('.content-step[data-step="7"]').fadeIn(function(){
+                                                    
+                                                });
+                                            });
+                                        }
+                                        NextStepsToSevenAtAction();
+                                    }
+                                    //alert('nextFifthStepsCus go NextStepsAtAction');    
+                                    //NextStepsAtAction();
+                                    
+                                    isPass = false;
+                                    
+                                }
+                            </script>
+                        </apex:form>
+                        
+                        
+                    </div>
+                   
+                    <div id="grpPolicy_Cus" class="bs row listcontent_no-grey form-note" style="{!if(!cList[0].Is_Contain_Individual_Policy__c && cList[0].Is_Contain_Group_Policy__c && !includeGSClaim,'','display:none;')}">
+                        <div style="padding-left: 15px; padding-right: 15px;">
+                            <div style="float: left;">
+                                <i class="ci-hk-document" aria-hidden="true"></i>
+                            </div>
+                            <div style="padding-left:50px; word-wrap: break-word;">
+                                {!$Label.Any_claims_payment_shall_be_made_to_the_bank_account_provided_by_your_HR_or_a_ch}
+                            </div>
+                        </div>
+                        <!--
+                        <div class="bs col-xs-12 col-sm-1 policy-title">
+                            <i class="ci-hk-document" aria-hidden="true"></i>
+                        </div>
+                        <div class="bs col-xs-12 col-sm-11">
+                            <div class="claim-detail">
+                            </div>
+                            <div class="claim-detail">
+                                <div>{!$Label.Any_claims_payment_shall_be_made_to_the_bank_account_provided_by_your_HR_or_a_ch}</div>
+                            </div>
+                            <div class="claim-detail">
+                            </div>
+                        </div>
+                        -->
+                    </div>
+                    <!-- next button -->
+                    <!-- mobile -->
+                    <div id="action-bar" class="bs hidden-sm hidden-md hidden-lg cigna-floating-bottom-panel nextStepBtnIn5" style="left:0px; {!if(!cList[0].Is_Contain_Individual_Policy__c && cList[0].Is_Contain_Group_Policy__c && !includeGSClaim,'','display:none;')}" onclick="nextStepForSelectBankAccount();">
+                        <div id="callAction1" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                            <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</a>
+                        </div>
+                    </div>
+                    
+                    <!-- web -->
+                    <div class="bs row hidden-xs nextStepBtnIn5" style="padding-top: 20px; padding-bottom: 20px; {!if(!cList[0].Is_Contain_Individual_Policy__c && cList[0].Is_Contain_Group_Policy__c && !includeGSClaim,'','display:none;')}">
+                        <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3 "></div>
+                        <div id="callAction2" class="bs col-sm-6 col-md-6 col-xs-6 col-lg-6 onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn" onclick="nextStepForSelectBankAccount();">
+                            {!$Label.Next}
+                        </div>
+                        <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3"></div>
+                    </div>
+           
+                </apex:outputPanel>
+                
+            </div>
+            
+            <script>
+                function nextStepForSelectBankAccount(){
+                    /**
+                    if({!!cList[0].Is_Contain_Individual_Policy__c && cList[0].Is_Contain_Group_Policy__c}){
+                        console.log('@@@@@ group page');
+                        skipOneStep_accountInfo();
+                    }
+                    else if ({!cList[0].Bank_Account_Information__c == null || cList[0].Bank_Account_Information__c == ''}){
+                        console.log('@@@@@ selected other bank account');
+                        skipOneStep_accountInfoOther();
+                    }
+                    else{
+                        console.log('@@@@@ selected existing bank account');
+                        skipOneStep_accountInfo();
+                    }
+                    
+                    $("div[id*='cusAcc']").each(function(idx, elem){
+                        if ($(elem).hasClass('fg-orange')){
+                            console.log('@@@@@ selected existing bank account');
+                            skipOneStep_accountInfo();
+                        }
+                    });
+                    */
+                    
+                    //Nicole_20200317_GS Claim
+                    var includeGSClaim = $('input[type="hidden"][id$="include-GS-Claim"]').val();
+                    var isLoginUserEmployee = $('input[type="hidden"][id$="is-login-User-Employee"]').val();
+                    console.log('includeGSClaim :'+includeGSClaim);
+                    console.log('isLoginUserEmployee :'+isLoginUserEmployee );
+                    
+                    if (({!cList[0].Is_Contain_Individual_Policy__c} || includeGSClaim=='true' ) && $('#otherBankAcc').hasClass('fg-orange')){
+                        console.log('@@@@@ will not skip one step');
+                        skipOneStep_accountInfoOther();
+                    }
+                    else{
+                        console.log('@@@@@ will skip one step');
+                        skipOneStep_accountInfo();
+                    }
+                    
+                    nextStep();
+                }
+                
+                $("div[id*='cusAcc']").each(function(idx, elem){
+                    if ($(elem).hasClass('fg-orange')){
+                        displayNextBtnIn(5);
+                    }
+                });
+                
+                if ($('#otherBankAcc').hasClass('fg-orange')){
+                    displayNextBtnIn(5);
+                }
+            </script>
+            
+        </apex:outputPanel>
+        
+        <!-- broker -->
+        <apex:form >
+            <apex:actionFunction name="refreshBrkBankAccountPanel" rerender="selectBankAccountForBrkVFPPanel, selectBankAccountForBrkNoDDAVFPPanel, selectBankAccountForBrkHasDDAVFPPanel" />
+        </apex:form>
+        <apex:outputPanel rendered="{!!isCustomer}" layout="inline" id="selectBankAccountForBrkVFPPanel">
+            <input id="isBrkHasDDAInputHidden" type="hidden" value="{!isBrkCustomerHasDDA}" />
+            <!--
+            <apex:outputPanel rendered="{!!isBrkCustomerHasDDA}" id="selectBankAccountForBrkNoDDAVFPPanel">
+                <div class="bs row content-display form-note" >
+                    
+                    <div style="padding-left: 15px;padding-right: 15px;">
+                        <div style="float: left;">
+                            <i class="ci-hk-document" aria-hidden="true"></i>
+                        </div>
+                        <div style="padding-left:50px; word-wrap: break-word;">
+                            {!$Label.Any_claim_payment_shall_be_issued_as_cheque_and_send_to_the_client}
+                        </div>
+                    </div>
+                -  
+                    
+                    <div class="bs col-xs-12 col-sm-1 policy-title">
+                        <i class="ci-hk-document" aria-hidden="true"></i>
+                    </div>
+                    <div class="bs col-xs-12 col-sm-11">
+                        <div class="claim-detail">
+                        </div>
+                        <div class="claim-detail">
+                            <div>{!$Label.Any_claim_payment_shall_be_issued_as_cheque_and_send_to_the_client}</div>
+                        </div>
+                        <div class="claim-detail">
+                        </div>
+                    </div>
+                                 
+                </div>
+            
+                
+            </apex:outputPanel>
+            -->
+            <apex:outputPanel id="selectBankAccountForBrkHasDDAVFPPanel">
+                <apex:form >
+                <div class="content-question">
+                    {!$Label.Please_select_the_account_information_that_you_would_like_the_claim_payment_goes}
+                </div>
+                <div style="padding: 20px;">
+                    <!-- broker - for display bank account -->
+                    <!-- new layout display bank account record -->
+                    <apex:outputPanel rendered="{!isBrkCustomerHasDDA}">
+                        <div class="bs row listcontent-header hidden-xs">
+                            <div class="bs col-sm-4">{!$Label.Bank}</div>
+                            <div class="bs col-sm-4">{!$Label.Account_Holder}</div>
+                            <div class="bs col-sm-4">{!$Label.Account_No}</div>
+                        </div>
+                    </apex:outputPanel>
+                    
+                    <apex:variable value="{!0}" var="rowNumBrkAcc"/>
+                    <apex:repeat value="{!bankAccInfoList}" var="bankAccInfoItem">
+                        <div id="brkAcc{!rowNumBrkAcc}" onclick="skipOneStep_accountInfo();" class="bs row listcontent_no-grey content-choice fg-grey"  >
+                            <!-- mobile -->
+                            <div style="float: left; width: 100%;">
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Bank}</div>
+                                <div class="bs col-xs-6 visible-xs content-highlight">{!bankAccInfoItem['bankName']}</div>
+                            </div>
+                            <div style="float: left; width: 100%;">
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Account_Holder}</div>
+                                <div class="bs col-xs-6 visible-xs content-highlight">{!bankAccInfoItem['acctHolderName']}</div>
+                            </div>
+                            <div style="float: left; width: 100%;">
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Account_No}</div>
+                                <div class="bs col-xs-6 visible-xs content-highlight" style="word-break: break-word;" >{!bankAccInfoItem['accountNumber']}</div>
+                            </div>
+                            
+                            <!-- web -->
+                            <div class="bs hidden-xs">
+                                <div class="bs col-sm-4 content-highlight">{!bankAccInfoItem['bankName']}</div>
+                                <div class="bs col-sm-4 content-highlight">{!bankAccInfoItem['acctHolderName']}</div>
+                                <div class="bs col-sm-4 content-highlight">{!bankAccInfoItem['accountNumber']}</div>
+                            </div>
+                            <!-- hidden field -->
+                            <input type="hidden" name="param-str" value="{!bankAccInfoItem['json']}" />
+                        </div>
+                        
+                        <script>
+                            /**
+                            var str1 = '{!cList[0].Bank_Account_Information__c}';
+                            str1 = str1.replace(' ', '');
+                            var str2 = '{!bankAccInfoItem['json']}';
+                            str2 = str2.replace(' ', '');
+                            console.log('****** str1: ' + str1);
+                            console.log('****** str2: ' + str2);
+                            
+                            if( str1.includes(str2) ){
+                                $( "#brkAcc{!rowNumBrkAcc}" ).removeClass('fg-grey').addClass('fg-orange');
+                            }
+                            */
+                            
+                            var savedValue = JSON.parse('{!cList[0].Bank_Account_Information__c}');
+                            var wsValue = JSON.parse('{!bankAccInfoItem['json']}');
+                            
+                            console.log('****** savedValue.accountNumber: ' + savedValue.accountNumber);
+                            console.log('****** wsValue.accountNumber: ' + wsValue.accountNumber);
+                            
+                            if (savedValue.accountNumber == wsValue.accountNumber){
+                                $( "#brkAcc{!rowNumBrkAcc}" ).removeClass('fg-grey').addClass('fg-orange');
+                                displayNextBtnIn(4);
+                            }
+                        </script>
+                        <apex:variable var="rowNumBrkAcc" value="{!rowNumBrkAcc + 1}"/>
+                    </apex:repeat>
+
+                    <!-- line break -->    
+                    <div style="border-bottom: 1px solid #000000;"></div>
+                    <div id="otherBankAcc" class="bs row listcontent_no-grey content-choice {!if((cList[0].Bank_Account_Information__c == null || cList[0].Bank_Account_Information__c == '') && isLoadOldClaim , 'fg-orange','fg-grey')}" onclick="skipOneStep_accountInfoOther(); "> 
+                        <div class="bs col-xs-12 col-sm-12">{!$Label.Other_Bank_Account}</div>
+                    </div>
+                    
+                    <!-- save record data -->
+                    <apex:inputHidden value="{!cList[0].Bank_Account_Information__c}" id="hiddenValue_bankAccInfoBrk"/>
+
+                    <apex:actionFunction name="SaveRecordBrkBankAccInfoAtAction" status="loader-icon" action="{!dummyAction}" reRender="hiddenValue_bankAccInfoBrk" oncomplete="nextFifthStepsBrk();" />
+                    <script>
+                        /** working **/
+                        function saveRecordBrkBankAccInfo(){
+                            SaveRecordBrkBankAccInfoAtAction();
+                        }
+
+                        function nextFifthStepsBrk(){
+                            if(skipSteps == 0){
+                                // changed 6 to 5, see if it works -- Zoe
+                                /*
+                                if ($('.content-step[data-step="5"]').length > 0) {
+                                    if (isBrokerIOSSF1()) {    
+                                        $('.brk-sf1-content-step:visible').hide();
+                                    }
+                                    $('.content-step:visible').fadeOut(function(){
+                                        $('.content-step[data-step="5"]').fadeIn(function(){
+                                            if (isBrokerIOSSF1()) {
+                                                $('.brk-sf1-content-step[data-step="5"]').show();
+                                            }
+                                        });
+                                    });
+                                }
+                                */
+                                if ($('.content-step[data-step="40"]').length > 0) {
+                                    if (isBrokerIOSSF1()) {    
+                                        $('.brk-sf1-content-step:visible').hide();
+                                    }
+                                    $('.content-step:visible').fadeOut(function(){
+                                        $('.content-step[data-step="40"]').fadeIn(function(){
+                                            if (isBrokerIOSSF1()) {
+                                                $('.brk-sf1-content-step[data-step="40"]').show();
+                                            }
+                                        });
+                                    });
+                                }
+
+                                NextStepsTo40AtAction();
+                            }
+
+                            if(skipSteps == 1){
+                                if ($('.content-step[data-step="5"]').length > 0) {
+                                    if (isBrokerIOSSF1()) {    
+                                        $('.brk-sf1-content-step:visible').hide();
+                                    }
+                                    $('.content-step:visible').fadeOut(function(){
+                                        $('.content-step[data-step="5"]').fadeIn(function(){
+                                            if (isBrokerIOSSF1()) {
+                                                $('.brk-sf1-content-step[data-step="5"]').show();
+                                            }
+                                        });
+                                    });
+                                }
+
+                                NextStepsAtAction();
+
+                            }
+
+                            isPass = false;
+                        }
+                            
+                        
+                    </script>
+                    <!-- end save record data -->
+                </div>
+                </apex:form>
+                
+            </apex:outputPanel>
+            
+            <!-- next button -->
+            <!-- mobile -->
+            <div id="action-bar" class="bs action-bar hidden-sm hidden-md hidden-lg cigna-floating-bottom-panel nextStepBtnIn4" style="left:0px; display:none;" onclick="nextStepForSelectBankAccount();"> <!-- {!IF(!isBrkCustomerHasDDA, '', 'display:none;')} -->
+                <div id="callAction1" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                    <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</a>
+                </div>
+            </div>
+            <!-- web -->
+            <div class="bs row hidden-xs nextStepBtnIn4" style="padding-top: 20px; padding-bottom: 20px; display:none;">
+                <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3 "></div>
+                <div id="callAction2" class="bs col-sm-6 col-md-6 col-xs-6 col-lg-6 onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn" onclick="nextStepForSelectBankAccount();">
+                    {!$Label.Next}
+                </div>
+                <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3"></div>
+            </div>
+            
+            <script>
+
+                function nextStepForSelectBankAccount(){
+
+                    if ($('#otherBankAcc').hasClass('fg-orange')){
+                            console.log('@@@@@ will not skip one step');
+                            skipOneStep_accountInfoOther();
+                        }else{
+                            console.log('@@@@@ will skip one step');
+                            skipOneStep_accountInfo();
+                        }
+                        
+                    nextStep();
+                }
+                            
+                $("div[id*='brkAcc']").each(function(idx, elem){
+                    if ($(elem).hasClass('fg-orange')){
+                        displayNextBtnIn(4);
+                    }
+                });
+                
+                if ($('#otherBankAcc').hasClass('fg-orange')){
+                    displayNextBtnIn(4);
+                }
+            //20190624 - David Zhang - Align Claim Payment flow with CP
+            /*
+                   if ({!!isBrkCustomerHasDDA}){
+                       displayNextBtnIn(4);
+                   }
+            */
+            </script>
+            
+        </apex:outputPanel>
+    </div>
+</apex:page>

@@ -1,0 +1,1001 @@
+<apex:page controller="DDASignatureFormVFPCtrl" showHeader="false" sidebar="false" docType="html-5.0">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    </head>
+    <style>
+        /** pop up dialog style **/
+        
+        .bs input[type="checkbox"].cigna-question-checkbox-single {
+            display: none;
+        }
+        
+        .bs input[type="checkbox"].cigna-question-checkbox-single ~ label {
+            cursor: pointer;
+        }
+        .bs input[type="checkbox"].cigna-question-checkbox-single + label:before {
+            font: normal normal normal 14px/1 FontAwesome;
+            display: inline-block;
+            content: "\f058";
+            height: 20px;
+            margin: 0 .25em 0 0;
+            padding: 0;
+            vertical-align: top;
+            width: 20px;
+            color: #C8C9C7;
+            font-size: 1.2em;
+        }
+        
+        .bs input[type="checkbox"].cigna-question-checkbox-single:checked + label:before {
+            color: #39B54A;
+            font: normal normal normal 14px/1 FontAwesome;
+            content: "\f058";
+            font-size: 1.2em;
+        }
+        
+        .bs input[type="checkbox"].cigna-question-checkbox-single:checked + label:before {
+            font-weight: bold;
+        }
+        
+        div#overlay, div#overlayPIC{
+            display: none;
+            z-index: 10;
+            background: #D9D9D6;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0px;
+            left: 0px;
+            text-align: left;
+        }
+        
+        div#cancleDDAOverlay{
+            display: none;
+            z-index: 10;
+            background: #D9D9D6;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0px;
+            left: 0px;
+            text-align: center;
+        }
+
+        div#specialBox, div#specialBoxPIC{
+            display: none;
+            position: absolute;
+            z-index: 11;
+            margin: 150px auto 0px auto;
+            width: 80%;
+            height: 50%;
+            background: #FFF;
+            color: #000;
+            left: 10%;
+            padding:20px;
+            border-radius:5px;
+        }
+        
+        
+        @media screen and (max-width: 768px) {
+            div#cancleDDASpecialBox{
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 200px auto 0px auto;
+                width: 90%;
+                height: 230px;
+                background: #FFF;
+                color: #000;
+                left: 5%;
+                padding:20px;
+                border-radius:5px;
+            }
+        }
+        
+        @media screen and (min-width: 768px) {
+            div#cancleDDASpecialBox{
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 200px auto 0px auto;
+                width: 60%;
+                height: 200px;
+                background: #FFF;
+                color: #000;
+                left: 20%;
+                padding:20px;
+                border-radius:5px;
+            }
+        }
+
+        #closeOverlay, #closeOverlayPIC, #cancleDDAOverlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        
+        #tccontent, #cancleDDAContent {
+            padding:5px;
+            color:#000;
+            font-size:12px;
+            width: 100%;
+            height: 90%;
+            overflow-y:auto;
+        } 
+        
+        #PICcontent {
+            padding:5px;
+            color:#000;
+            font-size:12px;
+            width: 100%;
+            height: 85%;
+            overflow-y:auto;
+        } 
+        
+        .fontWeightNormal label{
+            font-weight: normal;
+        }
+        /** end pop up dialog style **/
+
+        /** signature style **/
+        .signature-pad {
+            width: 95%;
+            height: 300px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            margin-bottom: 30px;
+        }
+        
+        .signature-pad-body {
+            width: 100%;
+            height: 300px;
+        }
+        
+        .signature-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .signature-pad-footer {
+            width: 100%;
+            height: 40px;
+        }
+        /** end signature style **/
+        
+        .loading-spinner{
+                top: 50%;
+                display: none;
+                position: absolute;
+                z-index: 11;
+            }
+            
+        .loading-label {
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .bs .form-field-style-select:disabled {
+            background: none !important;
+            border-color: #bdb6d6 !important;
+            color: #bdb6b6 !important;
+        }
+
+        .bs .form-field-style:disabled {
+            background: none !important;
+            border-color: #bdb6d6 !important;
+            color: #bdb6b6 !important;
+        }
+        .input-text-deactive {
+            background: none !important;
+            border-color: #bdb6d6 !important;
+            color: #bdb6b6 !important;
+        }
+      /*  .error{
+            border: 2px solid;
+            border-color: #FF2020;
+        }*/
+    </style>
+    <apex:define name="additionalLibraries">
+         <!--additional css, bootstrap, jquery,js libraries-->
+         <!-- CR-56_Link_20220214 -->
+		 <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+         <apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+         </apex:outputPanel>
+         <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+         
+    </apex:define> 
+         
+    <apex:form id="ddaForm">
+        <apex:inputHidden id="backUrl" value="{!backUrl}" /> 
+        <apex:inputHidden id="policyNumber" value="{!policyNumber}" /> 
+        <apex:inputHidden id="multipleCard" value="{!multipleCard}" /> 
+        <apex:inputHidden id="isLoginUserEmployeeId" value="{!isLoginUserEmployee}" />
+        <apex:inputHidden id="userSsn" value="{!userSsn}" />
+        <!--<apex:inputHidden id="thisYear" value="{!thisYear}"/> Nicole_20200103_SPS-352-->
+        <apex:inputHidden id="locationName" value="{!locationName}"/>
+        <apex:outputPanel id="hiddenVarPanel">
+            <apex:inputHidden id="fileUploadedStatus" value="{!fileUploadedStatus}"/>
+            <apex:inputHidden id="operationName" />
+        </apex:outputPanel>
+        <apex:actionFunction action="{!queryFileUploadStatus}" name="queryFileUploadStatus" reRender="hiddenVarPanel"/>
+
+        <!-- <apex:actionFunction action="{!submitEsignature}" name="submitEsignature" reRender="false" oncomplete="saveAttachmentAsPDF()">
+            <apex:param name="imgDataParam1" assignTo="{!eSignature}" value=""/>
+        </apex:actionFunction>
+
+        <apex:actionFunction action="{!cancleSignature}" name="cancleSignature" reRender="false" oncomplete="saveAttachmentAsPDF()"/>
+        
+        <apex:actionFunction action="{!updateDDACreditCard}" name="updateDDACreditCard" reRender="false" oncomplete="saveAttachmentAsPDF()"/>
+        
+        <apex:actionFunction action="{!saveAttachmentAsPDF}" name="saveAttachmentAsPDF" reRender="false" oncomplete="checkUploadFileStatus()"/> -->
+
+        <apex:actionFunction action="{!submitEsignature}" name="submitEsignature" reRender="false" oncomplete="saveAttachmentAsPDF()">
+            <apex:param name="imgDataParam1" assignTo="{!eSignature}" value=""/>
+        </apex:actionFunction>
+        
+        <apex:actionFunction action="{!cancleSignature}" name="cancleSignature" reRender="false" oncomplete="saveAttachmentAsPDFReload()"/>
+        
+        <apex:actionFunction action="{!updateDDACreditCard}" name="updateDDACreditCard" reRender="false" oncomplete="saveAttachmentAsPDFReload()"/>
+        
+        <apex:actionFunction action="{!saveAttachmentAsPDF}" name="saveAttachmentAsPDF" reRender="ddaForm" oncomplete="finishLoading();"/>
+        <apex:actionFunction action="{!saveAttachmentAsPDF}" name="saveAttachmentAsPDFReload" reRender="false" oncomplete="setTimeout(function (){window.location.reload()}, 500);"/>
+        
+        <apex:actionFunction action="{!onWhatAppActionDone}" name="onWhatAppActionDone" reRender="ddaForm" />
+        
+        <!--Nicole_Bypass Login_20201005-->
+        <apex:pageMessages id="errorMessage" />
+        <apex:outputPanel rendered="{!isCustomerSiteGuestUser && !isTokenValid}">
+            <div id="token-invalid-message" class="bs row" style="padding-top:50px;font-size:20px;text-align:center;">
+                <apex:outputText value="{!transField['WhatApp_Invalid_Token'][$Label.Header_Language_Code_Current]}" rendered="{!contains(transKey, '~WhatApp_Invalid_Token~')}"/>
+            </div>
+        </apex:outputPanel>
+        
+        <!--Nicole_Bypass Login_20201005-->
+        <apex:outputPanel rendered="{!isCustomerSiteGuestUser && isWhatAppActionDone}">
+            <div class="bs col-sm-12 col-xs-12 cigna-fg-green-medium cigna-bg-white" style="padding-top:50px;font-size:20px;text-align:center;">
+                <apex:outputText value="{!transField['WhatApp_DDA_Update_Success'][$Label.Header_Language_Code_Current]}" rendered="{!contains(transKey, '~WhatApp_DDA_Update_Success~')}"/>
+            </div>
+        </apex:outputPanel>
+        
+        <apex:outputPanel rendered="{!!isCustomerSiteGuestUser || (isCustomerSiteGuestUser && isTokenValid && !isWhatAppActionDone)}"> <!--Nicole_Bypass Login_20201005-->
+        <!--</apex:form>-->
+        <div class="tab-content DDAFormLayer col-xs-12 col-sm-12">
+        <div class='col-sm-1 hidden-xs'></div>
+        <div class='col-sm-10 col-xs-12' style='padding: 0px;margin: 0px 0px 10px 0px;text-align: center;max-width: 1500px;'>
+
+        <div style='padding: 0px;margin: 0px;text-align: center;'>
+            <div class="bs col-sm-12 col-xs-12" style="margin-top:10px;text-align:left"  >
+                <div class="bs col-sm-12 col-xs-12" style="margin-top:10px;text-align:left;{!IF(isCustomerSiteGuestUser,'display: none;','')}" >
+                    <p class= 'bs '>
+                        <apex:outputPanel layout="inline"  styleClass="bs pull-left">
+                        <a id="ddaback-btn" class="bs cigna-fg-orange-medium onclick-pointer" onclick="goBack();"><i class="ci-hk-arrow-29" aria-hidden="true"></i>{!$Label.Back}</a>
+                        </apex:outputPanel>
+                    </p>
+                </div>
+                <div class="bs col-sm-12 col-xs-12" style="margin-top:10px;text-align:left"  >
+                    <div class="bs btn  cigna-fg-white cigna-bg-orange-medium onclick-pointer" style="display:inline; float: right;" id="cancleDDABtn" onclick="cancleDDAToggleOverlay();" role="button">
+                        <apex:outputText value="{!transField['cacelDDABtnText'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~cacelDDABtnText~"), true,false)}" />
+                        
+                    </div>
+                    <div style="display:inline; float: right;">&nbsp;&nbsp;&nbsp;</div>
+                    <!--col-sm-2 col-xs-5 -->
+                    <div class="bs btn  cigna-fg-white cigna-bg-orange-medium onclick-pointer" style="display:inline; float: right; " id="updateDDABtn" onclick="releaseUpdateInput();" role="button">
+                        <apex:outputText value="{!transField['updateDDABtnText'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~updateDDABtnText~"), true,false)}" />
+                    </div>
+                </div>
+            <div class="bs col-xs-12 col-sm-12" style="font-weight: bold;font-family: sans-serif;margin-top:20px;text-align: center;">
+                <apex:outputText value="{!transField['DDAFormTitle'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~DDAFormTitle~"), true,false)}" />
+            </div>
+            <div class="bs col-sm-6 col-xs-12 col-sm-offset-3" id="notSignDDAReminder" style="margin-top:50px; margin-bottom: 50px; text-align: left; display:none;" >
+                <apex:outputText value="{!transField['noSignDDAReminderTextFront'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~noSignDDAReminderTextFront~"), true,false)}" />&nbsp; ### <apex:outputText value="{!EmployeeName}"/>&nbsp;
+                <apex:outputText value="{!transField['noSignDDAReminderTextBack'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~noSignDDAReminderTextBack~"), true,false)}" />
+                <apex:outputText value="{!transField['noSignDDAReminderFront'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~noSignDDAReminderFront~"), true,false)}" />&nbsp; ### <apex:outputText value="{!EmployeeName}"/>&nbsp;
+                <apex:outputText value="{!transField['noSignDDAReminderBack'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~noSignDDAReminderBack~"), true,false)}" />
+            </div>
+
+            <!-- <div class="bs col-sm-12 col-xs-12" style="margin-top:30px;text-align: left;font-weight: 550"  id="previousTitle">
+                <apex:outputText value="{!transField['signReminderText'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~signReminderText~"), true,false)}" />
+            </div> -->
+
+            <div id="keynoteBeforeSignText" class="bs col-sm-12 col-xs-12" style="margin-top:20px;text-align: left;">
+                <apex:outputText value="{!transField['keynoteBeforeSignText1'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~keynoteBeforeSignText1~"), true,false)}" />
+                <apex:outputText value="{!transField['keynoteBeforeSignText2'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~keynoteBeforeSignText2~"), true,false)}" />
+            </div>
+
+            <div id="beforeSignSmgText1" class="bs col-sm-12 col-xs-12" style="text-align: left;margin-top: 10px;">
+                <apex:outputText value="{!transField['beforeSignSmgText1'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~beforeSignSmgText1~"), true,false)}" />
+            </div>
+
+            <div id="beforeSignSmgText2" class="bs col-sm-12 col-xs-12" style="text-align: left;margin-top: 10px;">
+                <apex:outputText value="{!transField['beforeSignSmgText2'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~beforeSignSmgText2~"), true,false)}" />
+            </div>
+
+            <!-- Rancho_JOBR149_20220815 - update wording -->
+            <div id="beforeSignSmgText3" class="bs col-sm-12 col-xs-12" style="text-align: left;margin-top: 10px;">
+                <apex:outputText value="{!transField['beforeSignSmgText3'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~beforeSignSmgText3~"), true,false)}" />
+            </div>
+
+            <div class="bs col-sm-12 col-xs-12" style="cursor:default;margin-top:10px;font-weight: bold;font-family: sans-serif;text-align: center;margin: 60px 0 30px 0;" id="creditCardTitle">
+                <apex:outputText value="{!transField['creditCardTitle'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~creditCardTitle~"), true,false)}" />
+            </div>
+
+            <div id="creditCardDiv">
+<!--                 <apex:form >
+ -->                    <div class="bs col-sm-12 col-xs-12" style="margin-top:10px; font-size: 12px"  >
+                        <apex:outputPanel layout="block" >
+                            <div class="bs col-sm-3">
+                                <p>
+                                    <label class="text-uppercase">{!$Label.Card_Holder_Name}</label>
+                                </p>
+                            </div>
+                            <div class="bs col-sm-3">
+                                <apex:input type="text" id="cardHolderName" styleClass="bs form-field-style cigna-validation answer-validation sign-info-input" value="{!cardHolderName}" html-placeholder="" />
+                            </div>
+                        </apex:outputPanel>
+                        <!--styleClass="bs form-group"-->
+                        <apex:outputPanel layout="block" >
+                            <div class="bs col-sm-3">
+                                <p>
+                                    <apex:outputLabel value="{!transField['hkidCardNoBtnText'][$Label.Header_Language_Code_Current]}" for="HKIDCard-PassportNo" rendered="{!IF(contains(transKey, "~hkidCardNoBtnText~"), true,false)}" />
+                                </p>
+                            </div>
+                            <div class="bs col-sm-3">
+                                <apex:inputText id="HKIDCard-PassportNo" styleClass="bs form-field-style cigna-validation answer-validation sign-info-input" value="{!cardHolderHKID}" html-placeholder=""/>
+                            </div>
+                        </apex:outputPanel>
+                    </div>
+                    <div class="bs col-sm-12 col-xs-12" style='margin-top:10px; font-size: 12px'  >
+                        <apex:outputPanel layout="block" >
+                            <div class="bs col-sm-3">
+                                <p>
+                                    <apex:outputLabel value="{!transField['nameOfCardBankText'][$Label.Header_Language_Code_Current]}" for="nameOfCardBank" rendered="{!IF(contains(transKey, "~nameOfCardBankText~"), true,false)}" />
+                                </p>
+                            </div>
+                            <div class="bs col-sm-3">
+                                <apex:inputText id="nameOfCardBank" styleClass="bs form-field-style cigna-validation answer-validation sign-info-input" value="{!cardBankName}" html-placeholder=""/>
+                            </div>
+                        </apex:outputPanel>
+                        <!--styleClass="bs form-group"-->
+                        <apex:outputPanel layout="block" >
+                            <div class="bs col-sm-3">
+                                <p>
+                                    <apex:outputLabel value="{!transField['countryOfCardIssuingBankBtnText'][$Label.Header_Language_Code_Current]}" for="CountryOfCardBank" rendered="{!IF(contains(transKey, "~countryOfCardIssuingBankBtnText~"), true,false)}"/>
+                                </p>
+                            </div>
+                            <div class="bs col-sm-3">
+                                <apex:selectList id="CountryOfCardBank" styleClass="bs form-field-style-select cigna-validation answer-validation sign-info-select" size="1" value="{!bankLocation}"
+                                onchange="getLocationName()">
+                                    <apex:selectOptions value="{!CountryList}"/>
+                                </apex:selectList>
+                            </div>
+                        </apex:outputPanel>
+                    </div>
+                    <div class="bs col-sm-12 col-xs-12" style='margin-top:10px; font-size: 12px'  >
+                        <apex:outputPanel layout="block" >
+                            <div class="bs col-sm-3">
+                                <p>
+
+                                    <apex:image url="{!URLFOR($Resource.visa_png, 'visa.png')}" height="45px"/>
+                                    <apex:image url="{!URLFOR($Resource.mastercard_png, 'mastercard.png')}" height="45px"/> 
+                                </p>
+                                <p>
+                                    <label class="text-uppercase">
+                                        <apex:outputText value="{!transField['CreditCardNumber'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~CreditCardNumber~"), true,false)}" />
+                                    </label>
+                                </p>
+                            </div>
+                            <div class="bs col-sm-3">
+                                <apex:input type="text" id="creditCardNumber" styleClass="bs form-field-style cigna-validation answer-validation sign-info-input" value="{!cardNumber}"   html-maxlength="19"/>
+                            </div>
+                        </apex:outputPanel>
+                        <!--styleClass="bs form-group"-->
+                        <apex:outputPanel layout="block" >
+                            <div class="bs col-sm-3">
+                                <p>
+                                    <label class="text-uppercase">
+                                        <apex:outputText value="{!transField['cardExpiryDateBtnText'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~cardExpiryDateBtnText~"), true,false)}" />
+                                    </label>
+                                </p>
+                            </div>
+                            <div class="bs col-sm-3">
+                                <apex:input type="text" id="cardExpiryDate" 
+                                    styleClass="bs form-field-style cigna-validation answer-validation sign-info-input" 
+                                    value="{!cardExpiryDate}"  html-placeholder="MM / YY" html-maxlength="5"/>
+                            </div>
+                        </apex:outputPanel>
+                    </div>
+                    
+                    <!--</apex:form>-->
+            </div>
+
+            <div id="updateSubmitDiv" style="text-align: center; margin: 15px;display:none;">
+                <div class="bs btn cigna-fg-white cigna-bg-orange-medium onclick-pointer hidden-xs col-sm-4 col-sm-offset-4" style="display:inline;" id="updateSubmitDDABtn" onclick="updateDDA();" role="button">
+                        {!$Label.Submit}
+                </div>
+                
+                <div class="bs cigna-floating-bottom-panel visible-xs">
+                    <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                        <div onclick="updateDDA();" class="action-btn cigna-fg-white text-center onclick-pointer" role="button">
+                            <span class="ci-hk-document-send" aria-hidden="true" style="padding-right:10px;"/>
+                            <br/>
+                            {!$Label.Submit}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bs col-sm-12 col-xs-12 " style='margin:50px 0px 50px 30px;text-align: left; display: none' id="cancleDDAOverlayWrapper">
+                <apex:outputPanel id="cancleDDA-Panel">       
+                <!-- Start cancle DDA Box -->
+                <div id="cancleDDAOverlay" style="display:none;">
+                    <div id="cancleDDASpecialBox">
+                        
+                        <h4>
+                            <apex:outputText value="{!transField['cancelDDAConfirmTitle'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~cancelDDAConfirmTitle~"), true,false)}" />
+                        </h4>
+                        <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                        <div id="cancleDDAContent">
+                            <div>
+                                <apex:outputText value="{!transField['cancelDDAContentText'][$Label.Header_Language_Code_Current]}" escape="false" rendered="{!IF(contains(transKey, "~cancelDDAContentText~"), true,false)}" />
+                            </div>
+                            <div style="margin-top: 5px">
+                                <apex:outputText value="{!transField['cancelDDAQuestionText'][$Label.Header_Language_Code_Current]}" escape="false" rendered="{!IF(contains(transKey, "~cancelDDAQuestionText~"), true,false)}" />
+                            </div>
+                            <div class="col-sm-3 col-xs-2"></div>
+                            <div class="bs col-sm-3 col-xs-4 cigna-fg-white onclick-pointer" style="float: center; margin-top: 30px" id="ConfirmBtn" onclick="confirmDDAToggleOverlay();" role="button">
+                                <i class="glyphicon glyphicon-ok-sign oksign onclick-pointer"></i>
+                            </div>
+                            <div class="bs col-sm-3 col-xs-4 cigna-fg-white onclick-pointer" style="float: center; margin: 30px 0px 0px 10px" id="cancleConfirmBtn" onclick="cancleDDAToggleOverlay();" role="button">
+                                <i class="glyphicon glyphicon-remove-sign cancelsign onclick-pointer"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- End cancle DDA Box -->
+                </apex:outputPanel>
+            </div>
+            <div class="bs col-sm-12 col-xs-12" style='margin-top: 40px; font-size: 12px'  id="declareId">
+                <div class="bs col-sm-12">
+                    <apex:outputText value="{!transField['afterSignReminderText'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~afterSignReminderText~"), true,false)}" />
+                </div>
+                <div class="bs col-sm-12">
+                    <apex:outputText value="{!transField['informationDeclareText'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~informationDeclareText~"), true,false)}" />
+                </div>
+            </div>
+            <!--start of loading-->
+            <div id="overlay-loading" class="overlay" style="background: rgba(217,217,214, 0.5); display: none">
+                <div id="att-loading" class="bs col-xs-offset-3 col-xs-6 text-center loading-spinner">
+                    <img class="bs" src="{!URLFOR($Resource.Spinners, 'slds_spinner.gif')}" width="70px" />
+                    <div class="loading-label">
+                        {!$Label.uploading}
+                    </div>
+                </div>
+            </div> 
+            <!--end of loading-->
+            
+            <div class="bs col-sm-12 col-xs-12 " style='margin:20px;text-align: left;' id = "signaturePanelId" >
+                <apex:outputPanel id="TandC-Panel">       
+                <!-- Start T&C Box -->
+                <div id="overlay" style="display:none;">
+                    <div id="specialBox">
+                        <a href="javascript:void(0);" class="onclick-pointer" ><div id="closeOverlay" class="glyphicon glyphicon-remove" onclick="toggleOverlay();"></div></a>
+                        <h4>{!$Label.Terms_And_Conditions}</h4>
+                        <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                        <div id="tccontent">
+                            <apex:outputText value="{!transField['DDATermsAndConditions1'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~DDATermsAndConditions1~"), true,false)}" escape="false"/>
+                            <apex:outputText value="{!transField['DDATermsAndConditions2'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~DDATermsAndConditions2~"), true,false)}" escape="false"/>
+                        </div>
+                    </div>
+                </div>
+                <!-- End T&C Box -->
+                </apex:outputPanel> 
+
+                <!-- Start PIC Box -->
+                <div id="overlayPIC" style="display:none;">
+                    <div id="specialBoxPIC">
+                        <a href="javascript:void(0);" class="onclick-pointer" ><div id="closeOverlayPIC" class="glyphicon glyphicon-remove" onclick="toggleOverlayPIC();"></div></a>
+                        <h4>{!$Label.Personal_Information_Collection_Statement}</h4>
+                        <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                        <div id="PICcontent">
+                            <apex:outputText value="test pic" escape="false"/>
+                        </div>
+                    </div>
+                </div>
+                <!-- End PIC Box -->
+                
+                <!-- Error Message Start -->
+                <div id="errEmptySignature" class="bs alert alert-danger" role="alert" style="display:none;">
+                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                    {!$Label.e_signature_empty_err_msg}
+                </div>
+                <div id="errNotAcceptTNC" class="bs alert alert-danger" role="alert" style="display:none;">
+                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                    {!$Label.e_signature_tc_err_msg}
+                </div>
+                    <apex:outputPanel id="eSignaturePanel">            
+                        <apex:outputPanel >
+                            <c:eSignatureCompWithoutEmail emailAddress="" 
+                                                      displayPICS="false"
+                                                      displayTC="true"
+                                                      isBroker="false"
+                                                      PICSLink="{!picLink}" 
+                                                      signNow="false"
+                                                      cardholderSignText="{!transField['cardholderSignText'][$Label.Header_Language_Code_Current]}"
+                                                      signAuthorizeText="{!transField['signAuthorizeText'][$Label.Header_Language_Code_Current]}"
+                                                      signSameReminderText="{!transField['signSameReminderText'][$Label.Header_Language_Code_Current]}"
+                                                      esginatureTandCIAccept="{!transField['esginatureTandCIAccept'][$Label.Header_Language_Code_Current]}"
+                                                      termsAndConditions="{!transField['termsAndConditions'][$Label.Header_Language_Code_Current]}"
+                                                      esginatureTandCAnd="{!transField['esginatureTandCAnd'][$Label.Header_Language_Code_Current]}"
+                                                      personalInformationCollectionStatemen="{!transField['personalInformationCollectionStatemen'][$Label.Header_Language_Code_Current]}"
+                                                      esginatureClickHere="{!transField['esginatureClickHere'][$Label.Header_Language_Code_Current]}"
+                                                      
+                                                      />
+                        </apex:outputPanel>
+
+                            <script>
+
+                                $(document).ready(function(){                          
+
+                                    //$('#esignature-email-div').hide();
+                                    //$('#esignature-border-div').hide();
+                                   //$('#sendEmailBtnXs').hide();
+
+                                    if ({!isLoginUserEmployee}) {
+                                        console.log("is Employee..");
+                                        
+                                        // $('#esignature-sign-div ').addClass("bs col-xs-12 col-sm-10 form-horizontal").removeClass("bs col-xs-12 col-sm-6 form-horizontal");
+                                        if ({!isRequiredSignDDA}) {
+                                            $('#cancleDDABtn').hide();
+                                            $('#updateDDABtn').hide();
+                                            $('#updateSubmitDDABtn').hide();
+                                        } else {
+                                            $('#declareId').hide();
+                                            $('#signaturePanelId').hide();
+
+                                            //$('.sign-info-input').attr("disabled", true);
+                                            //$('.sign-info-input').attr("readonly", true);
+                                            $('.sign-info-select').attr("disabled", true);
+                                            //CR-56_Link_20220214
+                                            $('.sign-info-input').on("focus",function(evt){$(this).trigger("blur");}).addClass('input-text-deactive'); //Add_Nicole_20190906_IOS Can't display disabled apex:input                                       
+                                        }
+                                        
+
+                                    } else {
+                                        
+                                        $('#declareId').hide();
+                                        $('#signaturePanelId').hide();
+
+                                        if ({!isRequiredSignDDA}) {
+                                            $('#notSignDDAReminder').show();                                            
+                                            $('#cancleDDABtn').hide();
+                                            $('#updateDDABtn').hide();
+                                            $('#previousTitle').hide();
+                                            $('#creditCardTitle').hide();
+                                            $('#creditCardDiv').hide();
+                                            $('#keynoteBeforeSignText').hide();
+                                            $('#beforeSignSmgText1').hide();
+                                            $('#beforeSignSmgText2').hide();
+
+                                            $('#updateSubmitDDABtn').hide();
+                                        } else {
+                                            $('#declareId').hide();
+                                            $('#signaturePanelId').hide();
+
+                                            //$('.sign-info-input').attr("disabled", true);
+                                            //$('.sign-info-input').attr("readonly", true);
+                                            $('.sign-info-select').attr("disabled", true);
+                                            //CR-56_Link_20220214
+                                            $('.sign-info-input').on("focus",function(evt){$(this).trigger("blur");}).addClass('input-text-deactive'); //Add_Nicole_20190906_IOS Can't display disabled apex:input
+                                        }
+
+                                    }
+
+                                    //20190930 Raistlin - encryption credit card number
+                                    var cardNumber = '{!cardNumber}';
+                                    if(null != cardNumber && '' != cardNumber) {
+                                        var cardNumberFill = cardNumber;
+                                        cardNumberFill = cardNumberFill.replace(/(.{1}).*(.{1})/, "$1*** **** **** ***$2");
+                                        $("input[id*='creditCardNumber']").val(cardNumberFill);
+                                    }
+                                    
+                                });
+
+                                /** pop up dialog**/
+                                function toggleOverlay(){
+                                    var overlay = document.getElementById('overlay');
+                                    var specialBox = document.getElementById('specialBox');
+                                    overlay.style.opacity = .95;
+                                    if(overlay.style.display == "block"){
+                                        overlay.style.display = "none";
+                                        specialBox.style.display = "none";
+                                    } else {
+                                        overlay.style.display = "block";
+                                        specialBox.style.display = "block";
+                                    }
+                                }
+                                
+                                
+                                
+                                function toggleOverlayPIC(){
+                                    var overlay = document.getElementById('overlayPIC');
+                                    var specialBox = document.getElementById('specialBoxPIC');
+                                    overlay.style.opacity = .95;
+                                    
+                                    if(overlay.style.display == "block"){
+                                        overlay.style.display = "none";
+                                        specialBox.style.display = "none";
+                                    } else {
+                                        overlay.style.display = "block";
+                                        specialBox.style.display = "block";
+                                    }
+                                }
+                                
+                                function cancleDDAToggleOverlay(){
+                                    
+                                    console.log("cancleDDAToggleOverlay starts...");
+                                    var overlayWrapper = document.getElementById('cancleDDAOverlayWrapper');
+                                    var overlay = document.getElementById('cancleDDAOverlay');
+                                    var specialBox = document.getElementById('cancleDDASpecialBox');
+                                    console.log("cancleDDAToggleOverlay get elements ends...");
+
+                                    overlay.style.opacity = .95;
+                                    if(overlay.style.display == "block"){
+                                        overlayWrapper.style.display = "none";
+                                        overlay.style.display = "none";
+                                        specialBox.style.display = "none";
+                                    } else {
+                                        overlayWrapper.style.display = "block";
+                                        overlay.style.display = "block";
+                                        specialBox.style.display = "block";
+                                    }
+                                }
+
+                                /*Loading*/
+                                function showLoading() {
+                                    console.log('showLoading...');
+                                    $('#att-loading').fadeIn(100);
+                                    $('#overlay-loading').fadeIn(100);
+                                }
+
+                                function finishLoading() {
+                                    console.log('finishLoading...');
+                                    $('#att-loading').fadeOut(100);
+                                    $('#overlay-loading').fadeOut(100);
+                                }
+
+                                function updateDDA(){
+
+                                    
+                                    console.log("updateDDA starts...");
+                                    $("input[id*='operationName']").val('update');
+                                    if(!validateForm()){
+                                        return;
+                                    }
+
+                                    var cardNumber = $("input[id*='creditCardNumber']").val();
+                                    if(cardNumber.indexOf('*') >= 0) {
+                                        //no change update
+                                        cardNumber = '{!cardNumber}';
+                                    }
+                                    $("input[id*='creditCardNumber']").val(cardNumber.replace(/\s+/g,"").replace(/-/g,""));
+
+                                    showLoading();
+                                    updateDDACreditCard();
+                                    //setTimeout (function (){window.location.reload()}, 1000);
+                                    console.log("updateDDA ends...");
+                                    
+                                    //Nicole_20200106_SPS-352
+                                    $('#updateSubmitDiv').hide();
+                                }
+
+                                function releaseUpdateInput() {
+                                    //$('.sign-info-input').attr("readonly", false);
+                                    //$('.sign-info-input').attr("disabled", false);
+                                    $('.sign-info-select').attr("disabled", false);
+                                    //CR-56_Link_20220214
+                                    $('.sign-info-input').off('focus').removeClass('input-text-deactive'); //Add_Nicole_20190906_IOS Can't display disabled apex:input
+
+                                    $("input[id*='creditCardNumber']").on('focus', function(){
+                                        if($("input[id*='creditCardNumber']").val().indexOf('*') >= 0) {
+                                            var cardNumberFormat = '{!cardNumber}';
+                                            cardNumberFormat = cardNumberFormat.replace(/(.{4})/g, "$1 ");
+                                            cardNumberFormat = cardNumberFormat.substring(0, cardNumberFormat.length -1);
+                                            $("input[id*='creditCardNumber']").val(cardNumberFormat);
+                                        }
+                                    });
+                                    
+                                    //Nicole_20200106_SPS-352
+                                    $('#updateSubmitDiv').show();  
+                                }
+
+                                function confirmDDAToggleOverlay(){
+                                    showLoading();
+                                    $("input[id*='operationName']").val('cancle');
+                                    cancleDDAToggleOverlay();
+                                    
+                                    var cardNumber = $("input[id*='creditCardNumber']").val();
+                                    if(cardNumber.indexOf('*') >= 0) {
+                                        //no change update
+                                        cardNumber = '{!cardNumber}';
+                                    }
+                                    $("input[id*='creditCardNumber']").val(cardNumber.replace(/\s+/g,"").replace(/-/g,""));
+                                    
+                                    cancleSignature();
+                                    //setTimeout (function (){window.location.reload()}, 1000);
+                                    
+                                }
+                                /** override component function **/ 
+                                /** Submit button */
+                                Cigna.ESignatureComp.forceResizeCanvas();
+                                
+                                function nextWithoutSign(){
+                                    // chooseSignOnScreen();
+                                    console.log('to see nextWithoutSign');
+                                    //$("#errNotValidEmail").hide();
+                                    
+                                    if($('#esignature-sign-div #esignature-pics').is(':checked') == false){
+                                        $("#errNotAcceptTNC").show();
+                                        return;
+                                    } else {
+                                        $("#errNotAcceptTNC").hide();
+                                    }
+                                    
+                                    if(Cigna.ESignatureComp.isEmptyCanvas(1)){
+                                        $("#errEmptySignature").show();
+                                        return;
+                                    } else {
+                                        $("#errEmptySignature").hide();
+                                    }
+                                    console.log('to see pass to SubmitClaimRequestAtAction');
+                                    
+                                    // Zoe updated on 0406 for performance tuning, get info to generate pdf, oncomplete call submit 
+                                    getPHPersonBasic();
+                                    //SubmitClaimRequestAtAction();
+                               }
+                                function validateForm() {
+                                    return $("form[id*='ddaForm']").validate().form();
+                                }
+
+                                function checkHKID(value){
+                                    //only allow english character and numbers
+                                    console.log('checkHKID value'+value);
+                                    if(/^([0-9a-zA-Z]{1,20}$)\b$/.test(value)) {
+                                        return true;
+                                    }
+                                    return false;
+                                }
+                                function checkCreditCardNumber(value) {
+                                    if($("input[id*='creditCardNumber']").hasClass("input-text-deactive")) {
+                                        return true;
+                                    }
+
+                                    console.log('checkCreditCardNumber value' + value);
+                                    //remove blank & strigula
+                                    var validateValue = value.replace(/\s+/g,"").replace(/-/g,"");
+                                    //luhnCheck
+                                    if(!luhnCheck(validateValue)) {
+                                        return false;
+                                    }
+                                    //check length
+                                    var lengthReg = /\d{16}/;
+                                    if(!lengthReg.test(validateValue)) {
+                                        return false;
+                                    }
+                                    //check visa and masterCard
+                                    var visaReg = /^4[0-9]{15}$/;
+                                    var masterReg = /^5[1-5][0-9]{14}|222[1-9][0-9]{12}|22[3-9][0-9]{13}|2[3-6][0-9]{14}|27[01][0-9]{13}|2720[0-9]{12}$/;
+                                    if(!visaReg.test(validateValue) && !masterReg.test(validateValue)) {
+                                        return false;
+                                    }
+                                    return true;
+                                }
+                                function luhnCheck(cardNum){
+                                    var numericDashRegex = /^[\d\-\s]+$/
+                                    if (!numericDashRegex.test(cardNum)) {
+                                        return false;
+                                    }
+                                    // The Luhn Algorithm. It's so pretty.
+                                    var nCheck = 0, nDigit = 0, bEven = false;
+                                    var strippedField = cardNum.replace(/\D/g, "");
+                                    for (var n = strippedField.length - 1; n >= 0; n--) {
+                                        var cDigit = strippedField.charAt(n);
+                                        nDigit = parseInt(cDigit, 10);
+                                        if (bEven) {
+                                            if ((nDigit *= 2) > 9) nDigit -= 9;
+                                        }
+                                        nCheck += nDigit;
+                                        bEven = !bEven;
+
+                                    }
+                                    return (nCheck % 10) === 0;
+                                }
+                                function checkCreditCardExpiryDate(value){
+                                    console.log('checkCreditCardExpiryDate value'+value);
+                                    if(/\d{2}\/\d{2}/.test(value)) {
+
+                                        var month = value.split('/')[0];
+                                        var year = value.split('/')[1];
+
+                                        if (month > 12 || month < 1){
+                                            return false;  
+                                        }
+                                        //check month and year cannot before today date
+                                        var currentDate = new Date();
+                                        var currentMonth = currentDate.getMonth() + 1;
+                                        var currentYear = currentDate.getFullYear().toString().substr(2, 2);
+                                        var compareStr = currentYear + PrefixInteger(currentMonth, 2);
+                                        if(parseFloat(year + month) >= parseFloat(compareStr)) {
+                                            return true;
+                                        }
+                                    }
+                                    return false;
+                                }
+                                function PrefixInteger(num, length) {
+                                 return (Array(length).join('0') + num).slice(-length);
+                                }
+
+                                Cigna.ESignatureComp.saveSignature = function(){
+                                    
+                                    console.log('to see saveSignature ');
+                                    // chooseSignOnScreen();
+                                    $("input[id*='operationName']").val('signature');
+                                    //$("#errNotValidEmail").hide();
+                                    $("#errEmptySignature").hide();
+                                    $("#errNotAcceptTNC").hide();
+
+                                    if(!validateForm()){
+                                        return;
+                                    }
+
+                                    if($('#esignature-sign-div #esignature-pics').is(':checked') == false){
+                                        $("#errNotAcceptTNC").show();
+                                        return;
+                                    } else {
+                                        $("#errNotAcceptTNC").hide();
+                                    }
+
+                                    if(Cigna.ESignatureComp.isEmptyCanvas(1)){
+                                        $("#errEmptySignature").show();
+                                        return;
+                                    } else {
+                                        $("#errEmptySignature").hide();
+                                    }
+
+                                    var cardNumber = $("input[id*='creditCardNumber']").val();
+                                    $("input[id*='creditCardNumber']").val(cardNumber.replace(/\s+/g,"").replace(/-/g,""));
+
+                                    showLoading();
+                                    submitEsignature(Cigna.ESignatureComp.getSignatureImage());
+                                    /**status value: 0 - uploading, 1 - upload success, 2 - upload failed*/
+                                    //var status = ;
+                                    ///setInterval(queryFileUploadStatus,1000);
+                                        
+                                    
+                                }
+                                
+                                function checkUploadFileStatus() {
+                                    
+                                    // setTimeout(function (){queryFileUploadStatus()}, 2000);
+                                    // var status= $("input[id*='fileUploadedStatus']").val()
+                                    // console.log('status:' + status);
+                                    // if (status == '0') {
+                                    //     console.log('queryFileUploadStatus...');
+                                    //     setTimeout(function (){checkUploadFileStatus()}, 2000);
+                                    //     console.log('status:' + status);
+                                    // } else if (status == '1') {
+                                    //     var operName = $("input[id*='operationName']").val();
+                                    //     if (operName == 'signature') {
+                                    //         var urlParam = "MyPolicyVFP?submit=true&policyNumber=" + $("input[id*='policyNumber']").val() + "&multipleCard={!multipleCard}&imgName={!imgName}&front={!front}&back={!back}";
+                                    //         Cigna.Util.navigateToVFP(urlParam, null, null, true); 
+                                    //     } else if (operName == 'update' || operName == 'cancle'){
+                                    //         setTimeout(function (){window.location.reload()}, 600);
+                                    //     }
+                                          
+                                    // } else if (status == '2') {
+                                    //     finishLoading();
+                                    //     alert('ERROR: Uploading failed, please resubmit');
+                                    //     //window.location.reload();
+                                    // }
+
+                                    saveAttachmentAsPDF();
+                                    
+                                    if({!isCustomerSiteGuestUser}){
+                                        onWhatAppActionDone();
+                                    }else{
+                                        var operName = $("input[id*='operationName']").val();
+                                        if (operName == 'signature') {                                      
+                                            var urlParam = "MyPolicyVFP?submit=true&policyNumber=" + $("input[id*='policyNumber']").val() + "&multipleCard={!multipleCard}&imgName={!imgName}&front={!front}&back={!back}";
+                                            Cigna.Util.navigateToVFP(urlParam, null, null, true);
+                                        } else if (operName == 'update' || operName == 'cancle'){
+                                            setTimeout(function (){window.location.reload()}, 500);
+                                        }
+                                    }
+                                }
+                                
+                                function goBack(){
+                                    var backUrlVar = $("input[id*='backUrl']").val()
+                                    console.log('backUrl:' + backUrlVar);
+                                    if (backUrlVar == 'PolicyDetailsPageVFP') {
+                                        Cigna.Util.navigateToVFP("PolicyDetailsPageVFP?policyNumber={!JSINHTMLENCODE(policyNumber)}&policyType={!JSINHTMLENCODE(policyType)}&SHA256Key={!SHA256Key}", null, null, true);    
+                                    } else {
+                                        if ($("input[id*='multipleCard']").val() == 'true') {
+                                            Cigna.Util.navigateToVFP("MyPolicyVFP?policyNumber=" + $("input[id*='policyNumber']").val() + "&multipleCard=true", null, null, true);    
+                                        } else {
+                                            Cigna.Util.navigateToVFP("MyPolicyVFP?policyNumber=" + $("input[id*='policyNumber']").val(), null, null, true);   
+                                        }
+                                    }
+                                }
+
+                                $("form[id$='ddaForm']").validate({
+                                    ignore: ':hidden:not(.cigna-validation)'
+                                 
+                                });
+
+                                function getLocationName() {
+                                    var locationName = $("[id$='CountryOfCardBank']").find(":selected").text();
+                                    console.log(locationName);
+                                    $("[id$='locationName']").val(locationName);
+                                }
+                                            
+                            </script>
+                    
+                    </apex:outputPanel>        
+<!--                 </apex:form>
+ -->                
+            </div>   
+            <div class="bs col-sm-12 col-xs-12 " style='margin:20px 0px 50px 30px;'>
+                <apex:outputText value="{!transField['signDDACopyright'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~signDDACopyright~"), true,false)}" />
+            </div>      
+        </div>              
+     </div>
+ </div>
+<div class='col-sm-3 hidden-xs'></div>
+</div>
+
+   <apex:outputPanel id="validationRulePanel">
+        <script>
+            
+           jQuery.extend(jQuery.validator.messages, {
+               required: "{!$Label.ESales_Required_Field_Error_Message}"
+           });
+
+            jQuery.validator.addMethod("checkHKID", function(value, element) {
+                   return checkHKID(value);
+            }, "{!$Label.ESales_Invalid_value}"); 
+            jQuery.validator.addMethod("checkCreditCardNumber", function(value, element) {
+                   return checkCreditCardNumber(value);
+            }, "{!transField['creditCardNumberErrorMsg'][$Label.Header_Language_Code_Current]}"); 
+
+            jQuery.validator.addMethod("checkCreditCardExpiryDate", function(value, element) {
+                   return checkCreditCardExpiryDate(value);
+            }, "{!$Label.ESales_Invalid_value}"); 
+
+
+            $("input[id*='HKIDCard-PassportNo']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    checkHKID:true
+                });
+            });
+            $("input[id*='creditCardNumber']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    checkCreditCardNumber:true
+                });
+            });
+            $("input[id*='cardExpiryDate']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    checkCreditCardExpiryDate:true
+                });
+            });
+            $(".answer-validation").each(function(idx, elem){
+                $(elem).rules("add", {
+                    required:true
+                });
+            });
+
+
+        </script>
+    </apex:outputPanel>
+    </apex:outputPanel>
+</apex:form>
+</apex:page>

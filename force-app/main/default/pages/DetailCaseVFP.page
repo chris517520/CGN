@@ -1,0 +1,469 @@
+<apex:page cache="false" standardcontroller="Case" extensions="CreateCaseController">
+
+    <apex:includescript value="{!URLFOR($Resource.jQuery_1_8_2_JS)}" />
+    <script type='text/javascript' src='/canvas/sdk/js/publisher.js' />
+    <apex:includeScript value="/support/console/40.0/integration.js"/>
+    
+    
+    <apex:remoteObjects >
+        <apex:remoteObjectModel name="Case" fields="Id,Chat_Key__c,Subject,Origin"/>
+    </apex:remoteObjects>
+          
+    
+    <script>
+        $j = jQuery.noConflict();
+
+        function isSalesforce1() {
+            if( (typeof sforce != 'undefined') && (sforce != null) )
+                return true;
+            return false;
+        }
+
+        function backToRecord(hasError) {
+            if (hasError) {
+                $j('#divCreateCase .btn').button('reset');
+                return;
+            }
+
+            if (isSalesforce1()) {
+                Sfdc.canvas.publisher.publish({name: "publisher.close", payload:{ refresh:"true"}});
+            } else {
+               window.top.location='/console';
+            }
+        }
+        
+    </script>
+
+    <div id="divCaseDetail" class="bs container-fluid">
+        <div class="bs col-xs-12">
+
+            <apex:outputpanel id="casePanel" >
+                <apex:form id="CaseForm">
+
+                    <apex:pageblock >
+                        <apex:pageblockbuttons location="top">
+
+                            <apex:commandbutton styleclass="bs btn btn-primary pull-left"
+                                                action="{!onEdit}"
+                                                value="Edit"
+                                                oncomplete="backToRecord({!hasError});"
+                                                rerender="casePanel"
+                                                immediate="false"
+                                                html-data-loading-text="Loading..." />
+                            <apex:commandbutton styleclass="bs btn btn-primary pull-left"
+                                                action="{!ondelete}"
+                                                value="delete"
+                                                oncomplete="backToRecord({!hasError});"
+                                                rerender="casePanel"
+                                                immediate="false"
+                                                html-data-loading-text="Loading..." />                    
+                            <apex:commandbutton styleclass="bs btn btn-primary pull-left"
+                                                action="{!onCancel}"
+                                                value="close"                                               
+                                                rerender="casePanel"
+                                                immediate="false" />
+                            <apex:commandbutton styleclass="bs btn btn-primary pull-left"
+                                                action="{!onCloseCase}"
+                                                value="close case"
+                                                oncomplete="backToRecord({!hasError});"
+                                                rerender="casePanel"
+                                                immediate="false"
+                                                html-data-loading-text="Loading..." />
+                        </apex:pageblockbuttons>
+                        <apex:pagemessages />
+                        <apex:pageBlockSection columns="2">  
+                        
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >Case Owner</apex:outputLabel>
+                                <apex:outputField id="Status" value="{!detailCase.Ownerid}" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >Unique ID</apex:outputLabel>
+                                <apex:inputField id="uniqueid" value="{!detailCase.Unique_ID__c}" />
+                            </apex:pageBlockSectionItem>                           
+                             <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Title</apex:outputlabel>
+                                <apex:inputfield id="Type" value="{!detailCase.Title__c}" required="true"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >Call List ID</apex:outputLabel>
+                                <apex:inputField id="calllistid" value="{!detailCase.Call_List_ID__c}" />
+                            </apex:pageBlockSectionItem>
+                             <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Account Name</apex:outputlabel>
+                                <apex:inputfield id="account" value="{!detailCase.accountid}" required="true"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Source</apex:outputlabel>
+                                <apex:inputfield id="Type" value="{!detailCase.sourceid}" required="true"/>                              
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Contact Name</apex:outputlabel>
+                                <apex:inputfield id="ContactName" value="{!detailCase.contactid}" required="true"/>
+                            </apex:pageBlockSectionItem>  
+                             <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Nature__c.label}" for="Nature" />
+                                <apex:inputfield id="Nature" value="{!detailCase.Nature__c}" required="true"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >First Name of Non-existing Customer</apex:outputlabel>
+                                <apex:inputfield id="firstname" value="{!detailCase.First_Name_Of_Non_Existing_Customer__c}" />
+                            </apex:pageBlockSectionItem>                                                
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Nature-Others</apex:outputlabel>
+                                <apex:inputfield id="natureothers" value="{!detailCase.Nature_Others__c}" />
+                            </apex:pageBlockSectionItem>
+                             <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Last Name of Non-existing Customer</apex:outputlabel>
+                                <apex:inputfield id="LastName" value="{!detailCase.Last_Name_of_Non_Existing_Customer__c}" />
+                            </apex:pageBlockSectionItem>                                                                                                           
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Media__c.label}" for="Media" />
+                                <apex:inputfield id="Media" value="{!detailCase.Media__c}" />
+                            </apex:pageBlockSectionItem>
+                             <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Contact Phone of Non-existing Customer</apex:outputlabel>
+                                <apex:inputfield id="phone" value="{!detailCase.Contact_Email_of_Non_Existing_Customer__c}" />
+                            </apex:pageBlockSectionItem>                                                                                                                                                                                        
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Channel__c.label}" for="Channel" />
+                                <apex:inputfield id="Channel" value="{!detailCase.Channel__c}" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Contact Email of Non-existing Customer</apex:outputlabel>
+                                <apex:inputfield id="Email" value="{!detailCase.Contact_Phone_of_Non_Existing_Customer__c}" />
+                            </apex:pageBlockSectionItem>      
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Category__c.label}" for="Category"/>
+                                <apex:inputfield id="Category" value="{!detailCase.Category__c}" required="true" />
+                            </apex:pageBlockSectionItem>    
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.status.label}" for="Status" />
+                                <apex:inputfield id="Channel" value="{!detailCase.status}" required="true"/>
+                            </apex:pageBlockSectionItem>  
+                             <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Type__c.label}" for="Type" />
+                                <apex:inputfield id="Type" value="{!detailCase.Type__c}" required="true"/>
+                            </apex:pageBlockSectionItem>                                                                                
+                              <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Remarks__c.label}" for="Case Remarks" />
+                                <apex:inputfield id="Remarks" value="{!detailCase.Remarks__c}" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Sub_Type__c.label}" for="SubType" />
+                                <apex:inputfield id="SubType" value="{!detailCase.Sub_Type__c}" required="true"/>
+                            </apex:pageBlockSectionItem>    
+                        </apex:pageBlockSection>                       
+
+                        <apex:pageBlockSection title="Case Feedback" columns="2">
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Pulse_Survey_Category__c.label}" for="pulse survey caterory" />
+                                <apex:inputfield id="pulsesurvey" value="{!detailCase.Pulse_Survey_Category__c}" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Score__c.label}" for="Score" />
+                                <apex:inputfield id="Score" value="{!detailCase.Score__c}" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Pulse Survey Result</apex:outputlabel>
+                                <apex:inputfield id="Result" value="{!detailCase.Result__c}" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.PsRemark__c.label}" for="PsRemark" />
+                                <apex:inputfield id="PsRemark" value="{!detailCase.PsRemark__c}" />
+                            </apex:pageBlockSectionItem>
+                        </apex:pageBlockSection>                           
+                   
+                        <apex:pageBlockSection title="Service to Sales(S2S)" columns="2">                                                  
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.S2S__c.label}" for="S2S" />
+                                <apex:inputfield id="S2S" value="{!detailCase.S2S__c}" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Already follow up by TMR</apex:outputlabel>
+                                <apex:inputCheckbox id="followbytmr" value="{!detailCase.Follow_By_TMR__c}" />
+                            </apex:pageBlockSectionItem>
+                             <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Non-Acceptance Reason</apex:outputlabel>
+                                <apex:inputfield id="pulsesurvey" value="{!detailCase.S2S_Non_Acceptance_Reason__c}" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Name of TMR</apex:outputlabel>
+                                <apex:inputfield id="NameofTMR" value="{!detailCase.TMR_Name__c}" />
+                            </apex:pageBlockSectionItem>
+                           
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.CS_S2S_Remark__c.label}" for="CS_S2S_Remark__c" />
+                                <apex:inputfield id="CSS2SRemark" value="{!detailCase.CS_S2S_Remark__c}" />
+                            </apex:pageBlockSectionItem>
+                        </apex:pageBlockSection>
+                            
+                        <apex:pageBlockSection title="Case Result" columns="2">                                                                                
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.One_and_Done__c.label}" for="oneanddone" />
+                                <apex:inputfield id="oneanddone" value="{!detailCase.One_and_Done__c}" />
+                            </apex:pageBlockSectionItem>  
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Non-One and Done Reason</apex:outputlabel>
+                                <apex:inputfield id="pulsesurvey" value="{!detailCase.Non_One_And_Done_Reason__c}" />
+                            </apex:pageBlockSectionItem>                                                      
+                        </apex:pageBlockSection>
+                        
+                    </apex:pageBlock>
+                   
+                </apex:form>
+            </apex:outputPanel>
+           
+            <!-- case comment-->
+            <div class="bPageBlock brandSecondaryBrd secondaryPalette">
+                <div class="pbHeader">
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tbody>
+                            <tr>
+                                <td class="pbTitle">
+                                    <img src="/img/s.gif" alt="" width="1" height="1" class="minWidth" title=""/>
+                                    <img src="/img/s.gif" alt="" class="relatedListIcon" title=""/>
+                                    <h3 id="5000k000005xq6S_RelatedCommentsList_title">Case Comments</h3>
+                                </td>
+                                <td class="pbButton">
+                                    <input value=" New " class="btn" name="newComment" onclick="navigateToUrl('/00a/e?parent_id=5000k000005xq6S&amp;retURL=%2F5000k000005xq6S',null,'newComment');" title="New Case Comments" type="button" />
+                                </td>
+                                <td class="pbHelp">
+                                    <span class="help" title="Case Comments Help (New Window)">
+                                        <a href="javascript:openPopupFocusEscapePounds(%27https://help.salesforce.com/apex/htdoor?loc=help&amp;target=case_comments.htm&amp;section=Cases&amp;language=en_US&amp;release=210.14&amp;instance=CS57%27, %27Help%27, 1024, 768, %27width=1024,height=768,resizable=yes,toolbar=yes,status=yes,scrollbars=yes,menubar=yes,directories=no,location=yes,dependant=no%27, false, false);" class="linkCol">
+                                        <span class="linkSpan">Case Comments Help</span>
+                                        <img src="/img/s.gif" alt="Case Comments Help (New Window)" class="helpIcon" title="Case Comments Help (New Window)"/></a>
+                                     </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pbBody" id="5000k000005xq6S_RelatedCommentsList_body">
+                    <table class="list" border="0" cellspacing="0" cellpadding="0">
+                        <tbody>
+                            <tr class="headerRow">
+                                <th scope="col" class="noRowsHeader">No records to display</th>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pbFooter secondaryPalette">
+                    <div class="bg">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- live chat transcript-->
+            <div class="listRelatedObject liveChatTranscriptBlock">
+                <div class="bPageBlock brandSecondaryBrd secondaryPalette">
+                    <div class="pbHeader">
+                        <table border="0" cellpadding="0" cellspacing="0">
+                            <tbody>
+                                <tr>
+                                <td class="pbTitle">
+                                <img src="/img/s.gif" alt="" width="1" height="1" class="minWidth" title="" />
+                                <img src="/img/s.gif" alt="" class="relatedListIcon" title=""/>
+                                <h3 id="5000k000005xq6S_RelatedLiveChatTranscriptList_title">Live Chat Transcripts</h3>
+                                </td>
+                                <td class="pbButton">&nbsp;</td><td class="pbHelp">&nbsp;</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pbBody" id="5000k000005xq6S_RelatedLiveChatTranscriptList_body">
+                        <table class="list" border="0" cellspacing="0" cellpadding="0">
+                            <tbody><tr class="headerRow"><th scope="col" class="noRowsHeader">No records to display</th></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pbFooter secondaryPalette">
+                        <div class="bg">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!--open active -->
+            <div class="listRelatedObject taskBlock">
+                <div class="bPageBlock brandSecondaryBrd secondaryPalette">
+                    <div class="pbHeader">
+                        <table border="0" cellpadding="0" cellspacing="0">
+                            <tbody>
+                                <tr>
+                                    <td class="pbTitle">
+                                    <img src="/img/s.gif" alt="" width="1" height="1" class="minWidth" title=""/>
+                                    <img src="/img/s.gif" alt="" class="relatedListIcon" title=""/><h3 id="5000k000005xq6S_RelatedActivityList_title">Open Activities</h3></td><td class="pbButton">
+                                    <input value="New Task" class="btn" name="task" onclick="navigateToUrl('/00T/e?what_id=5000k000005xq6S&amp;retURL=%2F5000k000005xq6S','RELATED_LIST','task');" title="New Task" type="button"/> 
+                                    <input value="New Event" class="btn" name="event" onclick="navigateToUrl('/00U/e?what_id=5000k000005xq6S&amp;retURL=%2F5000k000005xq6S','RELATED_LIST','event');" title="New Event" type="button"/>
+                                    </td>
+                                    <td class="pbHelp">
+                                        <span class="help" title="Open Activities Help (New Window)">
+                                            <a href="javascript:openPopupFocusEscapePounds(%27https://help.salesforce.com/apex/htdoor?loc=help&amp;target=activities_view.htm&amp;section=Activities&amp;language=en_US&amp;release=210.14&amp;instance=CS57%27, %27Help%27, 1024, 768, %27width=1024,height=768,resizable=yes,toolbar=yes,status=yes,scrollbars=yes,menubar=yes,directories=no,location=yes,dependant=no%27, false, false);" class="linkCol"><span class="linkSpan">Open Activities Help</span> 
+                                            <img src="/img/s.gif" alt="Open Activities Help (New Window)" class="helpIcon" title="Open Activities Help (New Window)"/></a>
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pbBody" id="5000k000005xq6S_RelatedActivityList_body">
+                        <table class="list" border="0" cellspacing="0" cellpadding="0">
+                            <tbody>
+                                <tr class="headerRow"><th scope="col" class="noRowsHeader">No records to display</th></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pbFooter secondaryPalette"><div class="bg"></div></div>
+                </div>
+            </div>
+            
+            <!-- active history-->
+            <div class="listRelatedObject taskBlock">
+                <div class="bPageBlock brandSecondaryBrd secondaryPalette">
+                <div class="pbHeader">
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tbody>
+                            <tr>
+                                <td class="pbTitle">
+                                    <img src="/img/s.gif" alt="" width="1" height="1" class="minWidth" title=""/>
+                                    <img src="/img/s.gif" alt="" class="relatedListIcon" title=""/>
+                                    <h3 id="5000k000005xq6S_RelatedHistoryList_title">Activity History</h3></td><td class="pbButton">
+                                    <input value="Log a Call" class="btn" name="new" onclick="navigateToUrl('/00T/e?title=Call&amp;what_id=5000k000005xq6S&amp;followup=1&amp;tsk5=Call&amp;retURL=%2F5000k000005xq6S','RELATED_LIST','new');" title="Log a Call" type="button"/> 
+                                    <input value="Mail Merge" class="btn" name="mm" onclick="navigateToUrl('/mail/mmchoose.jsp?id=5000k000005xq6S&amp;1=00001904&amp;retURL=%2F5000k000005xq6S','RELATED_LIST','mm');" title="Mail Merge" type="button"/>
+                                    </td><td class="pbHelp">
+                                    <span class="help" title="Activity History Help (New Window)"><a href="javascript:openPopupFocusEscapePounds(%27https://help.salesforce.com/apex/htdoor?loc=help&amp;target=activities_view.htm&amp;section=Activities&amp;language=en_US&amp;release=210.14&amp;instance=CS57%27, %27Help%27, 1024, 768, %27width=1024,height=768,resizable=yes,toolbar=yes,status=yes,scrollbars=yes,menubar=yes,directories=no,location=yes,dependant=no%27, false, false);" class="linkCol"><span class="linkSpan">Activity History Help</span>
+                                     <img src="/img/s.gif" alt="Activity History Help (New Window)" class="helpIcon" title="Activity History Help (New Window)"/></a>
+                                     </span>
+                                 </td>
+                             </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pbBody" id="5000k000005xq6S_RelatedHistoryList_body">
+                    <table class="list" border="0" cellspacing="0" cellpadding="0">
+                        <tbody>
+                            <tr class="headerRow"><th scope="col" class="noRowsHeader">No records to display</th>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pbFooter secondaryPalette"><div class="bg"></div></div>
+            </div>
+        </div>
+            
+        <!-- attachment-->
+        <div class="noStandardTab">
+            <div class="bPageBlock brandSecondaryBrd secondaryPalette">
+                <div class="pbHeader">
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tbody>
+                            <tr>
+                                <td class="pbTitle">
+                                    <img src="/img/s.gif" alt="" width="1" height="1" class="minWidth" title=""/>
+                                    <img src="/img/s.gif" alt="" class="relatedListIcon" title=""/>
+                                    <h3 id="5000k000005xq6S_RelatedAttachmentList_title">Attachments</h3></td><td class="pbButton">
+                                    <input value="Attach File" class="btn" name="attachFile" onclick="navigateToUrl('/p/attach/NoteAttach?pid=5000k000005xq6S&amp;parentname=00001904&amp;retURL=%2F5000k000005xq6S',null,'attachFile');" title="Attach File" type="button"/>&nbsp;</td>
+                                    <td class="pbHelp"><span class="help" title="Attachments Help (New Window)"><a href="javascript:openPopupFocusEscapePounds(%27https://help.salesforce.com/apex/htdoor?loc=help&amp;target=notes_add.htm&amp;section=Notes_Attachments&amp;language=en_US&amp;release=210.14&amp;instance=CS57%27, %27Help%27, 1024, 768, %27width=1024,height=768,resizable=yes,toolbar=yes,status=yes,scrollbars=yes,menubar=yes,directories=no,location=yes,dependant=no%27, false, false);" class="linkCol"><span class="linkSpan">Attachments Help</span> 
+                                    <img src="/img/s.gif" alt="Attachments Help (New Window)" class="helpIcon" title="Attachments Help (New Window)"/></a></span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pbBody" id="5000k000005xq6S_RelatedAttachmentList_body">
+                    <table class="list" border="0" cellspacing="0" cellpadding="0">
+                        <tbody>
+                            <tr class="headerRow"><th scope="col" class="noRowsHeader">No records to display</th>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pbFooter secondaryPalette"><div class="bg"></div></div>
+            </div>
+        </div>
+        
+        <!-- case history-->
+        <div class="noStandardTab">
+            <div class="bPageBlock brandSecondaryBrd secondaryPalette">
+                <div class="pbHeader">
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tbody>
+                            <tr>
+                                <td class="pbTitle">
+                                    <img src="/img/s.gif" alt="" width="1" height="1" class="minWidth" title=""/>
+                                    <img src="/img/s.gif" alt="" class="relatedListIcon" title=""/>
+                                    <h3 id="5000k000005xq6S_RelatedEntityHistoryList_title">Case History</h3></td>
+                                    <td class="pbButton">&nbsp;</td><td class="pbHelp">
+                                    <span class="help" title="Case History Help (New Window)">
+                                    <a href="javascript:openPopupFocusEscapePounds(%27https://help.salesforce.com/apex/htdoor?loc=help&amp;target=case_history.htm&amp;section=Cases&amp;language=en_US&amp;release=210.14&amp;instance=CS57%27, %27Help%27, 1024, 768, %27width=1024,height=768,resizable=yes,toolbar=yes,status=yes,scrollbars=yes,menubar=yes,directories=no,location=yes,dependant=no%27, false, false);" class="linkCol"><span class="linkSpan">Case History Help</span>
+                                    <img src="/img/s.gif" alt="Case History Help (New Window)" class="helpIcon" title="Case History Help (New Window)"/></a></span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pbBody" id="5000k000005xq6S_RelatedEntityHistoryList_body">
+                    <table class="list" border="0" cellspacing="0" cellpadding="0">
+                        <tbody>
+                            <tr class="headerRow">
+                                <th scope="col" class=" zen-deemphasize">Date</th>
+                                <th scope="col" class=" zen-deemphasize">User</th>
+                                <th scope="col" class=" zen-deemphasize">Action</th>
+                            </tr>
+                            <!-- ListRow -->
+                            <tr class="dataRow even last first" onblur="if (window.hiOff){hiOff(this);}" onfocus="if (window.hiOn){hiOn(this);}" onmouseout="if (window.hiOff){hiOff(this);}" onmouseover="if (window.hiOn){hiOn(this);}">
+                            <th scope="row" class=" dataCell  ">2017-11-28 PM5:42</th>
+                            <td class=" dataCell  "><a href="/0050k000000j0br">jay Luo</a></td>
+                            <td class=" dataCell  ">Created.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pbFooter secondaryPalette"><div class="bg"></div></div>
+            </div>
+        </div>
+            
+        <!-- new case -->
+        <div class="listRelatedObject caseBlock">
+            <div class="bPageBlock brandSecondaryBrd secondaryPalette">
+                <div class="pbHeader">
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tbody>
+                            <tr>
+                                <td class="pbTitle">
+                                    <img src="/img/s.gif" alt="" width="1" height="1" class="minWidth" title=""/>
+                                    <img src="/img/s.gif" alt="" class="relatedListIcon" title=""/>
+                                    <h3 id="5000k000005xq6S_00N0k000000ybxv_title">Cases</h3></td><td class="pbButton">
+                                    <input value="New Case" class="btn" name="new00N0k000000ybxv" onclick="navigateToUrl('/500/e?CF00N0k000000ybxv=00001904&amp;CF00N0k000000ybxv_lkid=5000k000005xq6S&amp;retURL=%2F5000k000005xq6S','RELATED_LIST','new00N0k000000ybxv');" title="New Case" type="button"/>
+                                    </td>
+                                    <td class="pbHelp"><span class="help" title="Cases Help (New Window)"><a href="javascript:openPopupFocusEscapePounds(%27https://help.salesforce.com/apex/htdoor?loc=help&amp;target=co_relatedlist.htm&amp;section=CustomObjects&amp;language=en_US&amp;release=210.14&amp;instance=CS57%27, %27Help%27, 1024, 768, %27width=1024,height=768,resizable=yes,toolbar=yes,status=yes,scrollbars=yes,menubar=yes,directories=no,location=yes,dependant=no%27, false, false);" class="linkCol"><span class="linkSpan">Cases Help</span> 
+                                    <img src="/img/s.gif" alt="Cases Help (New Window)" class="helpIcon" title="Cases Help (New Window)"/></a></span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pbBody" id="5000k000005xq6S_00N0k000000ybxv_body">
+                    <table class="list" border="0" cellspacing="0" cellpadding="0">
+                        <tbody>
+                            <tr class="headerRow"><th scope="col" class="noRowsHeader">No records to display</th>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pbFooter secondaryPalette">
+                <div class="bg"></div></div>
+            </div>
+        </div>
+        
+        <div class="backToTop"><a href="#skiplink" title="Back To Top">
+        <img src="/img/upToTop_caret.gif" alt="Back to Top" width="8" height="8" title="Back to Top"/>Back To Top</a></div>
+        
+        </div>
+    </div>
+
+</apex:page>

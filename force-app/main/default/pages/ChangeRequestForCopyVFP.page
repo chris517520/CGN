@@ -1,0 +1,350 @@
+<apex:page standardController="Policy_Change_Request__c" extensions="ManagePolicyChangeCRTL" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+    <style>
+        .form-toggle-tab {
+            padding: 10px;
+            border-bottom: 1px solid #f2f2f2;
+            font-weight: bold;
+        }
+        
+        .form-content {
+            padding: 10px;
+        }
+        
+        .hidden-input-field{
+                height:0px; 
+                width:0px; 
+                border:0px !important;
+                webkit-appearance: none;
+        }
+            
+        /***override salesforce datepicker css*/
+        .dateInput {
+            white-space: normal !important;
+        }
+    </style>
+    
+    <script>
+
+
+    </script>
+    
+    <div class="bs">
+        <div class="bs container">
+            <apex:form id="request-copy-document">
+                <div class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light">
+                    {!$Label.Request_Document_Copy_of}
+                </div>
+                    <div class="bs col-sm-12 col-xs-12 form-content">   
+                        <div class="bs row form-field">
+                            <div class="bs col-xs-12 col-sm-12" style="padding-left:0px;"><div class="bs col-xs-1 col-sm-1"><apex:inputField id="DuplicatePolicy" value="{!Request.Duplicate_Policy__c}" onclick="toCheckCertify()"/></div><div class="bs col-xs-9 col-sm-9">{!$ObjectType.Policy_Change_Request__c.fields.Duplicate_Policy__c.Label}</div></div>
+                        </div>
+                        <div class="bs row form-field" id="check-certify-panel" style="padding:15px; display:none;">
+                            <div class="bs col-xs-12 col-sm-12 form-note">
+                                <input type="radio" id="certify-lost-yes"  class="bs cigna-question-radio" />
+                                <label for="certify-lost-yes"  style="cursor: default !important;">{!$Label.Request_Copy_Statement}</label> 
+                            </div>
+                       </div>
+                        <div class="bs row form-field">
+                            <div class="bs col-xs-12 col-sm-12" style="padding-left:0px;"><div class="bs col-xs-1 col-sm-1"><apex:inputField id="CopyMedicalDoc" value="{!Request.Copy_for_the_Policy_Medical_Documents__c}" onclick="toSelectDocCopy()"/></div><div class="bs col-xs-9 col-sm-9">{!$ObjectType.Policy_Change_Request__c.fields.Copy_for_the_Policy_Medical_Documents__c.Label}</div></div>
+                        </div>
+                        
+                        <div id="errSelectMedicalCopy" class="alert alert-danger" role="alert" style="display:none;">
+                            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                              {!$Label.Request_Copy_Doc_Form_ErrMsg}
+                        </div>
+
+                        <div id="select-doc-copy-panel" style="display:none;">
+                            <div class="bs row form-field">
+                                <div class="bs col-xs-12 col-sm-4">
+                                    <div class="bs col-xs-1 col-sm-1"><apex:inputField id="Check-Medical-Report" value="{!Request.Medical_report__c}"/></div>
+                                    <div class="bs col-xs-9 col-sm-9">{!$ObjectType.Policy_Change_Request__c.fields.Medical_report__c.Label}</div>
+                                </div>
+                                <div id="Medical-Report-Panel" style="display:none; padding-left:15px;">
+                                    <div class="bs col-xs-12 col-sm-3">{!$ObjectType.Policy_Change_Request__c.fields.Medical_Report_Date_of_Examination__c.Label}</div>
+                                    <div class="bs col-xs-12 col-sm-5"><!--<apex:inputField id="Input-Date-Medical-Report" styleclass="form-field-style" style="width:100%;" value="{!Request.Medical_Report_Date_of_Examination__c}" />-->
+                                        <input type="text" id="Input-Date-Medical-Report-date-format" class="form-field-style"
+                                               disabled="true" data-date-yyyy-mm-dd="{!Request.Medical_Report_Date_of_Examination__c}" data-altField-id="medReportExamDate-datepicker-hidden" onchange="CheckDate(this.value,'Required-Check-Medical-Report-Date')"/>
+                                        <apex:inputHidden id="medReportExamDate-datepicker-hidden" value="{!medReportExamDateTimestamp}" />
+                                    </div>
+                                    <div class="bs col-xs-12 col-sm-offset-7 col-sm-5" style="padding-left:5px;">
+                                        <apex:input id="Required-Check-Medical-Report-Date" StyleClass="hidden-input-field" onfocus="hiddenonblur(this)"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bs row form-field">
+                                <div class="bs col-xs-12 col-sm-4">
+                                    <div class="bs col-xs-1 col-sm-1"><apex:inputField id="Check-Att-Phy" value="{!Request.Attending_Physician_Statement__c}"/></div>
+                                    <div class="bs col-xs-9 col-sm-9">{!$ObjectType.Policy_Change_Request__c.fields.Attending_Physician_Statement__c.Label}</div>
+                                </div>
+                                <div id="Att-Phy-Panel" style="display:none; padding-left:15px;">
+                                    <div class="bs col-xs-12 col-sm-3">{!$ObjectType.Policy_Change_Request__c.fields.Attending_Physician_Date_of_Examination__c.Label}</div>
+                                    <div class="bs col-xs-12 col-sm-5"><!--<apex:inputField id="Input-Date-Att-Phy" styleclass="form-field-style" style="width:100%;" value="{!Request.Attending_Physician_Date_of_Examination__c}"/>-->
+                                        <input type="text" id="Input-Date-Att-Phy-date-format" class="form-field-style"
+                                               disabled="true" data-date-yyyy-mm-dd="{!Request.Attending_Physician_Date_of_Examination__c}" data-altField-id="phyStatement-datepicker-hidden" onchange="CheckDate(this.value,'Required-Check-Att-Phy-Date')"/>
+                                        <apex:inputHidden id="phyStatement-datepicker-hidden" value="{!phyStatementDateTimestamp}" />
+                                    </div>
+                                    <div class="bs col-xs-12 col-sm-offset-7 col-sm-5" style="padding-left:5px;">
+                                        <apex:input id="Required-Check-Att-Phy-Date" StyleClass="hidden-input-field" onfocus="hiddenonblur(this)"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bs row form-field">
+                                <div class="bs col-xs-12 col-sm-4">
+                                    <div class="bs col-xs-1 col-sm-1"><apex:inputField id="Check-Other-Copy-Doc" value="{!Request.Others_Document__c}"/></div>
+                                    <div class="bs col-xs-9 col-sm-9">{!$ObjectType.Policy_Change_Request__c.fields.Others_Document__c.Label}&nbsp;&nbsp;</div>
+                                </div>
+                                <div id="Input-Other-Copy-Panel" style="display:none; padding-left:15px;">
+                                    <div class="bs col-xs-12 col-sm-8"><apex:inputField id="Input-Other-Copy-Doc" styleclass="form-field-style-textarea" html-placeholder="{!$Label.Please_specify}" value="{!Request.Others__c}"/></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bs row form-field">
+                            <div id = "select-delivery" >
+                                <div class="bs col-xs-12 col-sm-6">{!$ObjectType.Policy_Change_Request__c.fields.Delivery_Instruction__c.Label}</div>
+                                <div class="bs col-xs-12 col-sm-6"><apex:inputField id="select-delivery-option"  styleClass="form-field-style-select" value="{!Request.Delivery_Instruction__c}"/></div>
+                            </div>
+                            <div class="bs col-xs-12 col-sm-12" id = "select-delivery-option-text" style="display:none; font-weight: bold;">{!$ObjectType.Policy_Change_Request__c.fields.Delivery_Instruction__c.Label} : {!$Label.By_Surface_Mail_to_Policy_Address}</div>
+                        </div>
+                        <div class="bs row form-field">
+                            <div class="bs col-xs-12 col-sm-12 form-note">
+                                <apex:outputText escape="false" value="{!$Label.Request_Copy_Doc_Form_Note}">
+                                    <apex:param value="{!entityNameForNote}"/>
+                                </apex:outputText>
+                            </div>
+                        
+                        </div>
+                    </div>
+                <apex:actionFunction name="SavePolicyChange" action="{!SavePolicyChange}" status="loader-icon" rerender="false" oncomplete="refreshAttlist()"/>
+                <apex:actionFunction name="SaveAndQuit" action="{!SavePolicyChange}" status="loader-icon" oncomplete="Cigna.Util.navigateToVFP('PolicyChangeVFP');" rerender="false"/>
+                <apex:actionFunction name="skipAttSavePolicyChange" action="{!SavePolicyChange}" rerender="false" status="loader-icon" oncomplete="submitPolicyChange();"/>
+            </apex:form>
+        </div>
+    </div>
+    
+    
+    
+    
+    <script>
+    /*Document Ready*/
+    function RealtimeValidation(){
+        $("form[id*='request-copy-document']").validate(); 
+            
+        jQuery.validator.addMethod("noExceedToday", function(value, element) {
+            var curDate = new Date();
+            var inputDate = new Date(value);
+            curDate.setDate(curDate.getDate());
+            if (inputDate < curDate){
+                return true;
+            }
+            return false;
+        }, "{!$Label.Error_Message_Input_Date_Should_Not_Exceed_Today}");
+        
+        
+        if($("[id$='Check-Medical-Report']").prop('checked') == true){
+            $("input[id*='Required-Check-Medical-Report-Date']").rules("add", {
+                noExceedToday: true
+            });
+        }else{
+            $("input[id*='Required-Check-Medical-Report-Date']").rules("remove", "noExceedToday");
+        }
+        
+        if($("[id$='Check-Att-Phy']").prop('checked') == true){ 
+            $("input[id*='Required-Check-Att-Phy-Date']").rules("add", {
+                noExceedToday: true
+            });
+        }else{
+            $("input[id*='Required-Check-Att-Phy-Date']").rules("remove", "noExceedToday");
+        }
+    }
+
+    </script>    
+    
+    
+    <script>
+        var RequestForCopy = RequestForCopy || {};
+        RequestForCopy.Validate = function(){
+        
+        function formValidation(){
+            $("form[id*='request-copy-document']").validate();
+            
+            
+            /*jQuery.validator.addMethod("noExceedToday", function(value, element) {
+                var curDate = new Date();
+                var inputDate = new Date(value);
+                curDate.setDate(curDate.getDate());
+                if (inputDate < curDate){
+                    return true;
+                }
+                return false;
+            }, "{!$Label.Error_Message_Input_Date_Should_Not_Exceed_Today}");*/
+            
+            
+            if($("[id$='Check-Medical-Report']").prop('checked') == true){
+                $("input[id*='Required-Check-Medical-Report-Date']").rules("add", {
+                    required: true,
+                    //noExceedToday: true
+                });
+            }else{
+                $("input[id*='Required-Check-Medical-Report-Date']").rules("remove", "required");
+                //$("input[id*='Required-Check-Medical-Report-Date']").rules("remove", "noExceedToday");
+            }
+            
+            if($("[id$='Check-Att-Phy']").prop('checked') == true){ 
+                $("input[id*='Required-Check-Att-Phy-Date']").rules("add", {
+                    required: true,
+                    //noExceedToday: true
+                });
+    
+            }else{
+                $("input[id*='Required-Check-Att-Phy-Date']").rules("remove", "required");
+                //$("input[id*='Required-Check-Att-Phy-Date']").rules("remove", "noExceedToday");
+            }
+            
+            if($("[id$='Check-Other-Copy-Doc']").prop('checked') == true){
+                $("textarea[id*='Input-Other-Copy-Doc']").rules("add", {
+                    required: true
+                });
+            }else{
+                $("textarea[id*='Input-Other-Copy-Doc']").rules("remove", "required");
+            }
+            
+            $("select[id*='select-delivery-option']").rules("add", {
+                required: true
+            });      
+        
+        }
+        
+        return {
+                formValidation : formValidation
+            }
+        }();
+        
+        //RequestForCopy.Validate.formValidation();
+
+
+        initDatePicker();
+        
+        CheckDate($('#Input-Date-Medical-Report-date-format').val(),'Required-Check-Medical-Report-Date');
+        CheckDate($('#Input-Date-Att-Phy-date-format').val(),'Required-Check-Att-Phy-Date');
+    
+        checkOtherRequired();
+        checkAttPhyRequired();
+        checkMedicalRequired();
+        
+        
+
+        //CR-56_Link_20220214
+        $("[id$='Check-Other-Copy-Doc']").on("click",function() {
+            $("#Input-Other-Copy-Panel").toggle();
+            checkOtherRequired();
+        });
+        
+        $("[id$='Check-Medical-Report']").on("click",function() {
+            $("#Medical-Report-Panel").toggle();
+            checkMedicalRequired();
+        });
+        
+        $("[id$='Check-Att-Phy']").on("click",function() {
+            $("#Att-Phy-Panel").toggle();
+            checkAttPhyRequired();
+        });
+        
+        if('{!isHasBroker}' == 'false'){
+            $("[id$='select-delivery-option']").val("By Surface Mail to Policy Address");
+            $("[id$='select-delivery']").hide();
+            $("[id$='select-delivery-option-text']").show();
+        }
+
+        toCheckCertify();
+        toSelectDocCopy();
+
+           
+        function toCheckCertify(){
+            if($("[id$='DuplicatePolicy']").prop('checked') == true){
+                $('#certify-lost-yes').prop('checked', true);
+                $('#check-certify-panel').show();
+            }else{
+                $('#certify-lost-yes').prop('checked', false);
+                $('#check-certify-panel').hide();
+            }
+        }
+        
+        function toSelectDocCopy(){
+        
+            if($("[id$='CopyMedicalDoc']").prop('checked') == true){
+                $('#select-doc-copy-panel').show();
+            }else{
+                $('#select-doc-copy-panel').hide();
+            }
+        
+        }
+        
+        
+        
+        function initDatePicker(){
+            Cigna.DatepickerUtil.init("input[id*='-date-format']");
+        }
+        
+
+
+        
+        /*Check Attending Physician Statement Required*/
+        function checkMedicalRequired(){
+            if($("[id$='Check-Medical-Report']").prop('checked') == true){
+                $("#Medical-Report-Panel").show();
+                //RequestForCopy.Validate.formValidation();
+                RealtimeValidation();
+            }else{
+                $("#Input-Date-Medical-Report-date-format").val('');
+                $("input[id*='Required-Check-Medical-Report-Date']").val('');
+                //RequestForCopy.Validate.formValidation();
+                RealtimeValidation();
+            }
+        }
+        
+        /*Check Attending Physician Statement Required*/
+        function checkAttPhyRequired(){
+        
+            if($("[id$='Check-Att-Phy']").prop('checked') == true){
+                $("#Att-Phy-Panel").show();
+                //RequestForCopy.Validate.formValidation();
+                RealtimeValidation();               
+            }else{
+                $("#Input-Date-Att-Phy-date-format").val('');
+                $("input[id*='Required-Check-Att-Phy-Date']").val('');
+                //RequestForCopy.Validate.formValidation();
+                RealtimeValidation();
+            }
+        
+        }
+        
+        /*Check Other Doc Required*/
+        function checkOtherRequired(){
+            if($("[id$='Check-Other-Copy-Doc']").prop('checked') == true){
+                $("#Input-Other-Copy-Panel").show();
+                //RequestForCopy.Validate.formValidation();
+                RealtimeValidation();
+            }else{
+                $("textarea[id*='Input-Other-Copy-Doc']").val('');
+                //RequestForCopy.Validate.formValidation();
+                RealtimeValidation();
+            }
+        }
+        //CR-56_Link_20220214
+        function CheckDate(input, hiddenInput){
+             $("input[id*='"+ hiddenInput +"']").val(input);
+             $("input[id*='"+ hiddenInput +"']").trigger("focus");
+             $("input[id*='"+ hiddenInput +"']").trigger("blur");
+        }
+        
+        function hiddenonblur(input){
+            var InputId = input.id;
+            $("input[id*='" + InputId + "']").trigger("blur");
+        }
+        
+        
+        
+        
+    </script>
+</apex:page>

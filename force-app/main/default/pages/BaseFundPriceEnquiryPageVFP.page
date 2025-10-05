@@ -1,0 +1,179 @@
+<apex:page Controller="FundPriceEnquiryCtrl" sidebar="false" showHeader="false">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <style>
+            .bs .link-label {
+                color: blue;
+                text-decoration: underline;
+                cursor: pointer;
+            }
+            
+            .bs .bold-font {
+                font-weight: bold;
+            }
+
+            .bs .table-content{
+                padding: 3px;
+            }
+            
+            .bs .table-content-xs {
+                padding: 3px;
+                //margin-left: -15px;
+                margin-right: -15px;
+                margin-left: -20px;
+            }
+            
+            .bs .table-content-panel{
+                padding: 20px 25px;
+            }
+
+            .bs .table-content-title{
+                font-size: 1.2em;
+            }
+            
+            .bs .font-bold{
+                font-weight: bold;
+            }
+
+            @media (min-width: 768px){
+                .bs .tab-pane{
+                    padding: 70px 60px 0px 60px;
+                
+                }
+
+                .bs .table-header {
+                    padding: 10px;
+                }
+
+                .bs .table-content {
+                    padding: 10px;
+                }
+                
+                .bs .table-content-panel{
+                    
+                }
+                
+                .bs .font-bold{
+                    font-weight: normal;
+                }
+                
+                .bs .decimal-column {
+                    text-align: right;
+                }
+            }
+            
+        </style>
+        <apex:include pageName="CignaCommonCSS" />
+        <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+    </head>
+    <div class="bs">
+        <apex:form id="fundFrm">
+            <apex:pagemessages ></apex:pagemessages>
+            <apex:actionFunction name="initFundList" action="{!initFundList}" reRender="FundInfo"/>
+            <br/>
+            <apex:outputPanel id="FundInfo">
+                
+                <div class="bs col-sm-12 col-xs-12">
+                    <div class="bs hidden-xs row table-header" style="background-color:#EBEBEB;font-weight: bold;">
+                        <div class="bs col-sm-8">{!$Label.Fund_Name}</div>
+                        <div class="bs col-sm-2" style="margin-left: -18px;">{!$Label.Fund_Valuation_Date}</div>
+                        <div class="bs col-sm-2" style="margin-left: 10px;">{!$Label.Fund_Unit_Price}</div>
+                    </div>
+                    <apex:variable value="{!1}" var="rowNum" />
+                    <apex:repeat value="{!fundList}" var="f">
+                        <div class="bs row table-content table-content-panel {!IF(MOD(rowNum,2)==1,'','cigna-bg-grey-light')} onclick-pointer" onclick="Cigna.Util.navigateToVFP('FundPriceEnquiryDetailVFP?selectedFundName={!f.FundName}&selectedFundCode={!f.FundCode}&selectedUnitValue={!f.unitValue}&selectedValuationDate={!YEAR(f.ValuationDate)}-{!MONTH(f.ValuationDate)}-{!DAY(f.ValuationDate)}')">
+                            <!--<div class="bs hidden-xs col-sm-8 link-label"  style="text-align: left;"  >-->
+                            <div class="bs hidden-xs col-sm-8"  style="text-align: left;"  >
+                                {!f.FundName}
+                            </div>
+                            <div class="bs visible-xs col-xs-12 row table-content table-content-title" >
+                                <div class="col-xs-10 bold-font" style="margin-left: -5px;">
+                                    {!f.FundName}
+                                </div>
+                                <div class="col-xs-2 bold-font">
+                                    <i class="fa fa-angle-right" aria-hidden="true" style="font-size: 1.2em;float:right;color: #134688;margin-right: -40px;"></i>
+                                </div>
+                            </div>
+                            <div class="bs col-sm-2 col-xs-12 table-content-xs">
+                                <div class="bs visible-xs col-xs-8">{!$Label.Fund_Valuation_Date}</div>
+                                <div class="bs col-sm-12 col-xs-4 font-bold">
+                                    <apex:OutputText value="{0,date,yyyy/MM/dd}">
+                                        <apex:Param value="{!f.ValuationDate}"/>
+                                    </apex:OutputText>
+                                </div>
+                            </div>
+                            <div class="bs col-sm-2 col-xs-12 table-content-xs">
+                                <div class="bs visible-xs col-xs-8">{!$Label.Fund_Unit_Price}</div>
+                                <div class="bs col-sm-12 col-xs-4 font-bold decimal-column">
+                                    <apex:outputText value="{0,number,#,##0.00}">
+                                        <apex:param value="{!f.UnitValue}"/>
+                                    </apex:outputText>
+                                </div>
+                            </div>
+                        </div>
+                        <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                    </apex:repeat>
+                </div>
+                
+                <!--
+                <div class="hidden-xs">
+                    <div class="bs row table-header" style="background-color:#EBEBEB;font-weight: bold;">
+                        <div class="bs col-sm-8">{!$Label.Fund_Name}</div>
+                        <div class="bs col-sm-2">{!$Label.Fund_Valuation_Date}</div>
+                        <div class="bs col-sm-2">{!$Label.Fund_Unit_Price}</div>
+                    </div>
+                    <apex:repeat value="{!fundList}" var="f">
+                        <div class="bs row table-content">
+                            <div class="bs col-sm-8 link-label" onclick="Cigna.Util.navigateToVFP('FundPriceEnquiryDetailVFP?selectedFundName={!f.FundName}&selectedFundCode={!f.FundCode}&selectedUnitValue={!f.unitValue}&selectedValuationDate={!YEAR(f.ValuationDate)}-{!MONTH(f.ValuationDate)}-{!DAY(f.ValuationDate)}')" >{!f.FundName}</div>
+                            <div class="bs col-sm-2">
+                                <apex:OutputText value="{0,date,yyyy-MM-dd}">
+                                    <apex:Param value="{!f.ValuationDate}"/>
+                                </apex:OutputText>
+                            </div>
+                            <div class="bs col-sm-2 decimal-column">
+                                <apex:outputText value="{0,number,#,##0.00}">
+                                    <apex:param value="{!f.UnitValue}"/>
+                                </apex:outputText>
+                            </div>  
+                        </div>
+                    </apex:repeat>
+                </div>
+                
+                <div class="visible-xs col-xs-12" style="padding: 0px">
+                    <apex:variable value="{!1}" var="rowNum" />
+                    <apex:repeat value="{!fundList}" var="f">
+                        <div class="bs col-xs-12 table-content-panel {!IF(MOD(rowNum,2)==1,'','cigna-bg-grey-light')}" onclick="Cigna.Util.navigateToVFP('FundPriceEnquiryDetailVFPFranco?selectedFundName={!f.FundName}&selectedFundCode={!f.FundCode}&selectedUnitValue={!f.unitValue}&selectedValuationDate={!YEAR(f.ValuationDate)}-{!MONTH(f.ValuationDate)}-{!DAY(f.ValuationDate)}')">
+                            <div class="bs row table-content table-content-title" >
+                                <div class="col-xs-12 bold-font">
+                                    {!f.FundName}
+                                    <i class="fa fa-angle-right" aria-hidden="true" style="font-size: 1.2em;float:right;color: #134688;margin-right: -20px;"></i>
+                                </div>
+                            </div>
+                            <div class="bs row table-content">
+                               <div class="col-xs-6">{!$Label.Fund_Valuation_Date}</div>
+                               <div class="col-xs-6 bold-font">
+                                   <apex:OutputText value="{0,date,yyyy-MM-dd}" escape="false">
+                                        <apex:Param value="{!f.ValuationDate}"/>
+                                    </apex:OutputText>
+                               </div>
+                            </div>
+                            <div class="bs row table-content">
+                               <div class="col-xs-6">{!$Label.Fund_Unit_Price}</div>
+                               <div class="col-xs-6 bold-font">
+                                   <apex:outputText value="{0,number,#,##0.00}">
+                                        <apex:param value="{!f.UnitValue}"/>
+                                    </apex:outputText>
+                               </div>
+                            </div>
+                        </div>
+                        <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                    </apex:repeat>
+                </div>
+                -->
+            </apex:outputPanel>
+        </apex:form>
+        <script type="text/javascript">
+            initFundList();
+        </script>
+    </div>
+</apex:page>

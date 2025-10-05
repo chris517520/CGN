@@ -1,0 +1,221 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="true" title="Incentives And Others Information" controller="IncentiveAndOtherInfoCtrl">
+
+	<head>
+		<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+		<apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}" />
+		<apex:include pageName="CignaCommonCSS" />
+		<link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+		<script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+		<style>
+			h3 {
+				font-size: 16px;
+			}
+			
+			.incentivesLayout {
+				padding: 16px 0;
+			}
+			
+			.row {
+				margin: 12px 0;
+				padding: 8px 0;
+				border-bottom: 1px solid #e1e1e1;
+			}
+			
+			.row span {
+				display: inline-block;
+				width: 20%;
+			}
+			
+			.rowValue {
+				margin-left: 16px;
+			}
+            
+        	.transactionTable{border-bottom:1px solid #e1e1e1; margin-top:4px}
+        	.transactionTable > div,span{padding:8px 0}
+            .transactionTable-item{
+                width:50%;
+                display:inline-block;
+            }
+         	
+        	.transactionTable-item4{
+                width:25%;
+                display:inline-block;
+            }
+		</style>
+	</head>
+
+	<script type="text/javascript">
+		$(document).ready(function() {
+			DisplayInc();
+        	IncentiveInfo.getTransactionHistroy();
+		});
+
+		function DisplayInc() {
+			IncentiveInfo.displayIncentiveInfo();
+		}
+	</script>
+
+	<apex:form >
+
+		<apex:actionFunction name="displayIncentiveInfo" action="{!displayIncentiveInfo}" namespace="IncentiveInfo" oncomplete="hideLoading()" status="loader-icon" reRender="incblock" />
+		<apex:actionFunction name="getTransactionHistroy" action="{!getTransactionHistroy}" namespace="IncentiveInfo" oncomplete="hideLoading()" status="loader-icon" reRender="transactionHistroyTable"/>
+        <apex:outputPanel layout="block" title="Incentives And Others Information" id="incblock" styleClass="incentivesLayout">
+			<div class="infoPanel">
+				<h3>Incentives And Others Information</h3>
+				<p class="row">
+					<span><b>{!$Label.Incentive_Policy_Number}</b></span>
+					<apex:outputText value="{!IF(inc.policyNumber == null, ploNumberStr, inc.policyNumber)}" styleClass="rowValue" />
+				</p>
+				<p class="row">
+					<span><b>{!$Label.Incentive_Plan_Name}</b></span>
+					<apex:outputText value="{!inc.marketingName}" styleClass="rowValue" />
+				</p>
+				<p class="row">
+					<span><b>{!$Label.Incentive_PolicyHolder}</b></span>
+					<apex:outputText value="{!inc.phName}" styleClass="rowValue" />
+				</p>
+			</div>
+			<apex:pageBlock title="Incentive Message">
+				<apex:pageBlockTable value="{!incList}" var="i" columns="2">
+					<apex:column headerValue="{!$Label.Incentive_Message_ID}">
+						<apex:outputText value="{!i.messageID}" />
+					</apex:column>
+					<apex:column headerValue="{!$Label.Incentive_Description}">
+						<apex:outputText value="{!i.description}" />
+					</apex:column>
+				</apex:pageBlockTable>
+			</apex:pageBlock>
+			<apex:pageBlock title="Transaction History" id="transactionHistroyTable">
+                <apex:outputText value="There is no Transaction History for this policy" rendered="{!transactionList.size == 0 || transactionList == null}"></apex:outputText>
+                <apex:repeat value="{!transactionList}" var="t" rendered="{!transactionList.size > 0}">
+                    <div class="transactionTable">
+                        <div>
+                            <b>TRANSACTION:</b>
+                            {!t.seqNum} - {!t.Status}
+                        </div>
+						<div class="transactionTable-item4">
+                            <b>Effective:</b>
+                            <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                    <apex:Param value="{!t.effective}" />
+                            </apex:OutputText> 
+                        </div>
+                        <div class="transactionTable-item4">
+                            <b>By:</b>
+                            {!t.userId}
+                        </div>
+                        <div class="transactionTable-item4">
+                            <b>On:</b>
+                            <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                    <apex:Param value="{!t.transactionDate}" />
+                            </apex:OutputText>
+                        </div>
+                        <div class="transactionTable-item4">
+                            <b>Seller:</b>
+                           	{!t.sellerId}
+                        </div>
+                        <div class="transactionTable-item">
+                            <b>Premium:</b>
+                           	{!t.premiumAmount}({!t.paymentMode})
+                        </div>
+                        <div class="transactionTable-item">
+                            <b>Premium Change:</b>
+                           	{!t.PremiumChangeAmount}
+                        </div>
+                    	<!--- above is always  --->
+                        
+                        <apex:outputPanel styleClass="transactionTable-item" rendered="{!t.PremiumOverrideAmount != null }" layout="block">
+                            <b>Premium Override:</b>
+                           	{!t.PremiumOverrideAmount}({!t.paymentMode})
+                        </apex:outputPanel>
+                        <apex:outputPanel styleClass="transactionTable-item" rendered="{!t.suspendReason != null }" layout="block">
+                            <b>Suspended Policy:</b>
+                           	{!t.suspendReason}
+                        </apex:outputPanel>
+                        <apex:outputPanel styleClass="transactionTable-item" rendered="{!t.unsuspendDate != null }" layout="block">
+                            <b>Unsuspended On:</b>
+                            <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                    <apex:Param value="{!t.unsuspendDate}" />
+                            </apex:OutputText>
+                           	By: {!t.unsuspendUserID}
+                        </apex:outputPanel>
+                        <apex:outputPanel styleClass="transactionTable-item" rendered="{!t.cancellationReason != null }" layout="block">
+                            <b>Cancellation Reason:</b>
+                            {!t.cancellationReason}
+                        </apex:outputPanel>
+                        <apex:outputPanel styleClass="transactionTable-item" rendered="{!t.adjustmentAmount != null }" layout="block">
+                            <b>Adjustment Amount:</b>
+                            {!t.adjustmentAmount}
+                        </apex:outputPanel>
+                        <apex:outputPanel styleClass="transactionTable-item" rendered="{!t.adjustmentReason != null }" layout="block">
+                            <b>Adjustment Reason:</b>
+                            {!t.adjustmentReason}
+                        </apex:outputPanel>
+                        <apex:outputPanel styleClass="transactionTable-item" rendered="{!t.hasAccountNumberChange}" layout="block">
+                            Change Account No From Account
+                            {!t.accountNumberChange_ValueFrom} To Account {!t.accountNumberChange_ValueTo}
+                        </apex:outputPanel>
+                        <apex:outputPanel styleClass="transactionTable-item" rendered="{!t.hasCreditCardNumberChange}" layout="block">
+                            Change Credit Card No From
+                            {!t.creditCardNumberChange_ValueFrom} To {!t.creditCardNumberChange_ValueTo}
+                        </apex:outputPanel>
+                        <apex:outputPanel styleClass="transactionTable-item" rendered="{!t.taxExclusion != null }" layout="block">
+                            <b>Adjustment Tax Exclusion:</b>
+                            {!t.taxExclusion}
+                        </apex:outputPanel>
+                        <apex:outputPanel styleClass="transactionTable-item" rendered="{!t.campaignCode != null}" layout="block">
+                            <b>Campaign/Split:</b>
+                            ({!t.campaignCode}) {!t.campaignSplit}
+                        </apex:outputPanel>
+                        <apex:outputPanel styleClass="transactionTable-item" rendered="{!t.packageShortName != null }" layout="block">
+                            <b>Package: </b>
+                            {!t.packageShortName}
+                        </apex:outputPanel>
+                        <apex:repeat rendered="{!t.hasBenefitLevelChange}" value="{!t.benefitLevelChangeList}" var="change">
+                        	<apex:outputPanel styleClass="transactionTable-item" layout="block" rendered="{!change.action == 'U'}">
+                             Changed Benefit Level for
+                            {!change.beneficiaryName} from  
+                            {!change.valueFrom} to 
+                            {!change.valueTo} in {!change.productCode}
+                        	</apex:outputPanel> 
+                        </apex:repeat>
+                        <apex:outputPanel styleClass="transactionTable-item" rendered="{!t.coverageChangeInd != null }" layout="block">
+                            Changed Coverages from Holder to Holder
+                        </apex:outputPanel>
+                        <apex:repeat rendered="{!t.hasBenefitLevelChange}" value="{!t.benefitLevelChangeList}" var="change">
+                        	 <apex:outputPanel styleClass="transactionTable-item"  rendered="{!change.action == 'I'}" layout="block"> 
+                            {!change.relationship} {!change.beneficiaryName}
+                            added to 
+                            {!change.productCode}
+                        	</apex:outputPanel>
+                        </apex:repeat>
+                        <apex:outputPanel styleClass="transactionTable-item" rendered="{!(t.hasOverrideExpireDateChange) && (t.overrideExpireDateChange_valueFrom != null)}" layout="block">
+                            Change override expiration date from 
+                            {!t.overrideExpireDateChange_valueFrom} to {!t.overrideExpireDateChange_ValueTo}
+                        </apex:outputPanel>
+                        <apex:outputPanel styleClass="transactionTable-item" rendered="{!(t.hasOverrideExpireDateChange) && (t.overrideExpireDateChange_valueFrom == null)}" layout="block">
+                            Override expiration date set to 
+                            {!t.overrideExpireDateChange_ValueTo}
+                        </apex:outputPanel>
+                        <apex:repeat rendered="{!t.hasBeneficiaryChange}" value="{!t.beneficiaryChangeList}" var="bChange">
+                        	<apex:outputPanel styleClass="transactionTable-item"  rendered="{!bChange.productName == null }" layout="block">
+                            	Change Beneficiary for {!bChange.beneficiaryName}
+                        	</apex:outputPanel>
+                            <apex:outputPanel styleClass="transactionTable-item" rendered="{!bChange.productName != null }" layout="block">
+                            	Change Beneficiary for {!bChange.beneficiaryName} in {!bChange.productName}
+                        	</apex:outputPanel>
+                        </apex:repeat>
+                        <apex:outputPanel styleClass="transactionTable-item" rendered="{!t.notes != null }" layout="block">
+							<b>Notes:</b>
+                            {!t.notes}
+                        </apex:outputPanel>
+                        <apex:outputPanel styleClass="transactionTable-item" rendered="{!t.productName != null }" layout="block">
+							<b>Product:</b>
+                            {!t.productName}
+                        </apex:outputPanel>
+                    </div>
+                </apex:repeat>
+            </apex:pageBlock>            
+		</apex:outputPanel>
+	</apex:form>
+
+</apex:page>

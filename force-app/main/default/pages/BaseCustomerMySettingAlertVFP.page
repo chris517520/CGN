@@ -1,0 +1,292 @@
+<!--Please change apex page id and Portal Template Page-->
+<apex:page docType="html-5.0"  showHeader="false" title="{!$Label.Login_Title}" controller="CustomerRegistrationController" language="{!JSINHTMLENCODE($CurrentPage.Parameters.lang)}" cache="false">
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <!-- CR-56_Link_20220214 -->
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-3.6.0.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-migrate-3.3.2.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap3.4.1.min.js')}"/>
+        <apex:include pageName="CignaUtilJS"/>
+
+        <style>
+             div#overlay, div#PICSoverlay {
+                display: none;
+                z-index: 10;
+                background: #D9D9D6;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                text-align: center;
+            }
+            div#specialBox, div#PICSBox {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 150px auto 0px auto;
+                width: 80%;
+                height: 70%;
+                background: #FFF;
+                color: #000;
+                left: 10%;
+                padding:20px;
+                border-radius:5px;
+                
+                
+            }
+            #closeOverlay, #closePICSOverlay {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
+
+            div#PICSoverlay ol {
+                padding-left: 0px;
+            }
+            
+            #tccontent {
+                padding:10px;
+                color:#000;
+                font-size:12px;
+                width: 100%;
+                height: 95%;
+                overflow-y:auto;
+            }
+        
+            .tooltip {
+                position: relative;
+                display: inline-block;
+            }
+            
+            .tooltip .tooltiptext {
+                visibility: hidden;
+                width: 120px;
+                background-color: black;
+                color: #fff;
+                text-align: center;
+                border-radius: 6px;
+                padding: 5px 0;
+            
+                position: relative;
+                z-index: 99;
+            }
+            
+            .tooltip:hover .tooltiptext {
+                visibility: visible;
+            }
+            
+            .tooltip-inner {
+                /* Change the tooltip width here */
+                max-width: 250px !important;
+                /* If max-width does not work, try using width instead */
+                width: 250px; 
+                min-width: 100px;
+            }
+            
+            .helptext-icon {
+                background:none !important;
+                border-top:none !important;
+                border-right:none !important;
+                border-left:none !important;
+                border-radius:0px !important;
+                border-color:#fff !important;
+                color:#fff !important;
+                font-size:18px !important;
+            }
+            
+            span[id$="cigna-error"] span div.message{
+                border: none;
+                //background-color: #cc0000;
+                background-color: #fff;
+                //background-color: transparent;
+                opacity: .9;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td img{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell div span{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell{
+                //color: #fff;
+                //color: #F68621;
+                color:red;
+                font-family: "Gotham SSm A", "Gotham SSm B";
+            }
+            
+            span[id$="cigna-error"] .messageText::before{
+                content: "\f071\20";
+                font: normal normal normal 14px/1 FontAwesome;
+                font-size: inherit;
+                text-rendering: auto;
+                -webkit-font-smoothing: antialiased;
+                padding-right: 7px;
+            }
+            
+            .inputfieldstyle{
+                box-shadow: none !important;
+                border-radius: 0px !important;
+                -webkit-box-shadow: none !important;
+                -moz-box-shadow: none !important;
+                border:0px !important;
+                border-bottom:1px solid #FFF !important;
+                background: transparent !important;
+                color: #FFF !important;
+            }
+        
+            .LogoDiv_Shorten {
+                text-align:center;
+                padding-bottom: 2cm;
+                margin: 15px;
+                margin-bottom: 90px;
+            }
+            .ui-tooltip {
+                background: black !important;
+                max-width: 250px !important;
+                width: 250px; 
+                min-width: 100px;
+                color: white !important;
+                z-index: 1070;
+                display: block;
+                text-align: center !important;
+                font-size: 12px !important;
+                border-radius: 5px !important;
+            }
+        </style>
+
+        <script>
+            $(document).ready(function(){
+               //CR-56_Link_20220214
+               $("[title]").tooltip();
+                
+               $(".inputs").on("keyup",function () {
+                    if (this.value.length == this.maxLength) {
+                      var $next = $(this).next('.inputs');
+                      if ($next.length){
+                          $(this).next('.inputs').trigger("focus");
+                      }else{
+                          $(this).trigger("blur");
+                     }
+                    }
+                });
+            });
+            //Nicole_20200113_Registration Enhancement
+            var logo =document.getElementById('cigna-logo');
+            logo.className='LogoDiv_Shorten';
+            
+            if (Cigna.Util.isMobile()) {
+                var inputIDDiv =document.getElementById('input-id-div');
+                var tooltipIcon =document.getElementById('help');
+                inputIDDiv.className='input-group';
+                tooltipIcon.style="display:'';";
+                
+                var ReminderDes =document.getElementById('Reminder_Des');
+                ReminderDes.style="display:none;";
+            }
+        
+           function toggleOverlay(){
+                var overlay = document.getElementById('overlay');
+                var specialBox = document.getElementById('specialBox');
+                overlay.style.opacity = .95;
+                if(overlay.style.display == "block"){
+                    overlay.style.display = "none";
+                    specialBox.style.display = "none";
+                } else {
+                    overlay.style.display = "block";
+                    specialBox.style.display = "block";
+                }
+            }
+        
+            function togglePICSOverlay(){
+                var overlay = document.getElementById('PICSoverlay');
+                var specialBox = document.getElementById('PICSBox');
+                overlay.style.opacity = .95;
+                if(overlay.style.display == "block"){
+                    overlay.style.display = "none";
+                    specialBox.style.display = "none";
+                } else {
+                    overlay.style.display = "block";
+                    specialBox.style.display = "block";
+                }
+            }
+            function backHome(){
+                var userType = "{!Text($User.UserType)}";
+                if(userType == 'Guest'){
+                    Cigna.Util.navigateToVFP('CustomerLoginVFP', null, null, false, false)
+                } else {
+                    Cigna.Util.navigateToVFP('CustomerLandingPage', null, null, false, false)
+                }
+            }
+            function back(){
+                var a=window.location.toString().slice(-1);
+                if(a=='#') history.go(-2);
+                else history.go(-1);
+            }
+        </script>
+    </head>
+        <apex:define name="additionalLibraries">
+            <!--additional css, bootstrap, jquery,js libraries-->
+            <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    </apex:define>
+        <apex:define name="body">
+            <br/>
+            <br/>
+            <div class="col-xs-12 col-md-12" style="display: flex;align-items: center;">
+                <div class="bs col-xs-10 cigna-fg-green-medium">
+                    <h4 style="text-transform: uppercase;">{!$Label.Registration_Alert_QR}</h4><br/>
+                </div>
+                <div class="bs cigna-list-group col-xs-12 col-sm-9">
+                    <apex:outputPanel id="registerAs">
+                        <apex:outputPanel >      
+                            <script>              
+                                var logo =document.getElementById('cigna-logo');
+                                logo.className='LogoDiv';
+                            </script>
+                        </apex:outputPanel>
+                        <apex:outputPanel >
+                            <div id="login-panel" class="col-xs-12 col-md-12" 
+                            style="padding-left: 30px;
+                            padding-right: 30px;
+                            font-size: 1.2em;;">
+                                <p>{!$Label.QR_Reminder_Android}</p>
+                                <!-- <div style="display:flex;align-items:center;justify-content:center"> -->
+                                    <img class="bs" style="display:flex;align-items:center;justify-content:center" src="{!URLFOR($Resource.mycigna_android_app_qr)}" width="140px" />
+                                <!-- </div> -->
+                                <div></div>
+                                <br/>
+                                <br/>
+                                <p>{!$Label.QR_Reminder_iOS}</p>
+                                <!-- <div style="display:flex;align-items:center;justify-content:center"> -->
+                                    <img class="bs" src="{!URLFOR($Resource.mycigna_ios_app_qr)}" width="140px" />
+                                <!-- </div> -->
+                            </div>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                </div>
+            </div>
+            <br/>
+            <br/>
+            <div id="app-reminder" class="bs col-xs-12" 
+                style="padding-left: 30px;
+                padding-right: 30px;
+                font-size: 1.2em;" >
+                <div class="bs col-xs-12" 
+                style="padding: 10px 10px 10px 10px;" >
+                {!$Label.QR_Reminder_MySetting}
+                </div>
+            </div>
+            <div class="bs col-xs-12" style="font-size: 1.1em;">
+                <br/>
+                <!-- <apex:outputLink value="{!$Label.Customer_Login_VFP}?lang={!JSINHTMLENCODE($CurrentPage.Parameters.lang)}">{!$Label.Return_To_Login_Page}</apex:outputLink> -->
+                <li id="Go_back_to_previouse_page" onclick="back()" style="list-style:none;"><a href="#" style="text-decoration:none; color:#000000; outline:none; cursor:pointer;"><h5>{!$Label.Go_back_to_previouse_page}</h5></a></li>
+            </div>
+            <div id="login-loading" class="bs col-xs-offset-3 col-xs-6 text-center" style="display:none;">
+                <img class="bs" src="{!URLFOR($Resource.Spinners, 'slds_spinner_inverse.gif')}" width="70px" />
+            </div>
+        </apex:define>
+</apex:page>

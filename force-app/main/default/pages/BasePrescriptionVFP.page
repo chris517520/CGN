@@ -1,0 +1,333 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" Controller="PrescriptionController" title="{!$Label.NavBar_Prescription}">
+    <head>
+        <meta name="format-detection" content="telephone=no" />
+        <style>
+            .content-ellipsis {
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                max-width: 500px !important;
+            }
+
+            .content-policy {
+            //white-space: nowrap;
+                word-break: break-word;
+                max-width: 500px !important;
+            }
+
+            .content-claimType {
+            //white-space: nowrap;
+                word-break: break-word;
+            //IBM KOU TEST
+            max-width: 500px !important;
+            }
+        </style>
+        <script>
+            $(document).ready(function(){
+                document.getElementById("tab_all").click()
+            });
+            var selectItems = document.getElementsByClassName("inactive-bar-tab");
+            var startItems = document.getElementsByClassName("active-bar-tab");
+
+            var selectContents = document.getElementsByClassName("inactive-bar-content");
+            var startContents = document.getElementsByClassName("active-bar-content");
+
+            var noSearchValueErrMsg = '{!$Label.Error_Input_Criteria}';
+
+            function greySeparatorStyle() {
+                /**grey separator**/
+                var srlist = document.getElementsByClassName("listcontent");
+                var flip = 0;
+                for (var i = 0; i < srlist.length; i++) {
+                    var item = srlist[i];
+                    if (flip == 0) {
+                        item.style.backgroundColor = '#f2f2f2';
+                        flip = 1;
+                    } else if ($(item).is(':first-child')) {
+                        item.style.backgroundColor = '#f2f2f2';
+                    } else {
+                        flip = 0;
+                    }
+                }
+            }
+
+            function selectedTab(item, idx) {
+
+                console.log('item---'+item);
+                console.log('idx---'+idx);
+
+                if (idx == 1) {
+                    $('#tab_pending').removeClass('active-bar-tab').addClass('inactive-bar-tab');
+                    $('#tab_completed').removeClass('active-bar-tab').addClass('inactive-bar-tab');
+
+                    $('#prescription_pending').hide();
+                    $('#prescription_completed').hide();
+
+                    $('#prescription_all').show();
+                    $('#tab_all').addClass('active-bar-tab');
+                } else if (idx == 2) {
+                    $('#tab_all').removeClass('active-bar-tab').addClass('inactive-bar-tab');
+                    $('#tab_completed').removeClass('active-bar-tab').addClass('inactive-bar-tab');
+
+                    $('#prescription_all').hide();
+                    $('#prescription_completed').hide();
+
+                    $('#prescription_pending').show();
+                    $('#tab_pending').addClass('active-bar-tab');
+                } else if (idx == 3) {
+                    $('#tab_all').removeClass('active-bar-tab').addClass('inactive-bar-tab');
+                    $('#tab_pending').removeClass('active-bar-tab').addClass('inactive-bar-tab');
+
+                    $('#prescription_all').hide();
+                    $('#prescription_pending').hide();
+
+                    $('#prescription_completed').show();
+                    $('#tab_completed').addClass('active-bar-tab');
+                }
+
+                console.log('customer portal');
+                cusInitPagingAtAction(idx);
+            }
+
+            function redirectToPrescriptionDetail(prescriptionId) {
+                console.log(' prescriptionId '+prescriptionId);
+                console.log($('[id$="encryptedSearchCriteria"]').val());
+                var encryptedSearchCriteria = $('[id$="encryptedSearchCriteria"]').val();
+                if(encryptedSearchCriteria){
+                    encryptedSearchCriteria = '?'+'{!URLParamName}'+'='+ encryptedSearchCriteria;
+                }else{
+                    encryptedSearchCriteria ='';
+                }
+                console.log(encryptedSearchCriteria);
+                sessionStorage.setItem('policy-detail-back-url', 'PrescriptionVFP'+ encryptedSearchCriteria);
+                Cigna.Util.navigateToVFP('PrescriptionDetailsVFP?PrescriptionNo=' + prescriptionId , null, null, true);
+            }
+            var prescriptionIdGlobal;
+            function getEncryptedCriteria(prescriptionId){
+                prescriptionIdGlobal = prescriptionId;
+                getEncryptedString();
+            }
+
+        </script>
+    </head>
+    <apex:define name="additionalLibraries">
+        <!--additional css, bootstrap, jquery,js libraries-->
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}" />
+    </apex:define>
+    <div class="bs">
+        <apex:form >
+            <apex:actionFunction action="{!reloadAllRecord}" name="cusInitPagingAtAction" reRender="currentPanel,errorPanel, bottomReadyJS" oncomplete="greySeparatorStyle();" status="loader-icon">
+                <apex:param name="currentTabIdx" assignTo="{!currentTabIdx}" value="" />
+            </apex:actionFunction>
+            <apex:actionFunction status="loader-icon" action="{!loadData}" name="loadDataAtAction" oncomplete="initPagingOnComplete();console.log('data loaded')" reRender="resultPanel,searchPanel"/>
+
+            <apex:actionFunction name="getEncryptedString" action="{!getEncryptedString}" reRender="encryptedSearchCriteria" oncomplete="redirectToPrescriptionDetail(prescriptionIdGlobal);"></apex:actionFunction>
+            <apex:inputHidden id="encryptedSearchCriteria" value="{!encryptedSearchCriteria}" />
+        </apex:form>
+        <apex:outputPanel id="resultPanel">
+            <div class="bs" style="padding-bottom: 50px">
+                <table class="bs bar-tab-container col-lg-12 col-sm-12 col-xs-12">
+                    <tr>
+                        <td id="tab_all" class="bs active-bar-tab onclick-pointer" onclick="selectedTab(this, 1)">
+                                {!$Label.All}
+                        </td>
+                        <td id="tab_pending" class="bs inactive-bar-tab onclick-pointer" onclick="selectedTab(this, 2)">
+                                {!$Label.Prescription_Pending}
+                        </td>
+                        <td id="tab_completed" class="bs inactive-bar-tab onclick-pointer" onclick="selectedTab(this, 3)">
+                                {!$Label.Completed}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <apex:outputPanel id="currentPanel">
+                <div class="bs row listcontent-header hidden-xs">
+                    <div class="bs col-sm-4">{!$Label.Prescription_No}</div>
+                    <div class="bs col-sm-4">{!$Label.Issue_Date}</div>
+                    <div class="bs col-sm-4">{!$Label.Status}</div>
+                </div>
+
+            <div id="prescription_all" class="{!if(currentTabIdx == 1,'active-bar-content','inactive-bar-content')}">
+                <apex:variable value="{!0}" var="rowNum_all" />
+                <apex:repeat value="{!prescriptionList_all_SF}" var="wprescription">
+                    <script>
+                        console.log('prescriptionList_all_SF---'+{!prescriptionList_all_SF});
+                    </script>
+                    <div class="hidden-xs">
+                            <div class="bs row listcontent onclick-pointer" onclick="getEncryptedCriteria('{!wprescription.prescriptionNo}')">
+                                <div class="bs col-xs-6 visible-xs">
+                                        {!$Label.Prescription_No}
+                                </div>
+                                <div class="bs col-xs-6 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(wprescription.prescriptionNo != null, wprescription.prescriptionNo, 'N/A')}"></apex:outputText>
+                                    <apex:outputPanel >
+                                        <i class="ci-hk-arrow-31 pull-right visible-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Issue_Date}</div>
+                                <div class="bs col-xs-6 col-sm-4 content-highlight content-policy">
+                                    <apex:outputText value="{!wprescription.issue_date}"></apex:outputText>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Status}</div>
+                                <div class="bs col-xs-6 col-sm-4 content-highlight">{!if(wprescription.status!=null,if(wprescription.status=='New', $Label.New,if(wprescription.status=='Pending for Preparation',$Label.Pending_for_Preparation,if(wprescription.status=='Pending Collection',$Label.Pending_Collection,if(wprescription.status=='Collected',$Label.Collected,if(wprescription.status=='Cancelled',$Label.Cancelled,'N/A'))))),'N/A')}
+                                    <apex:outputPanel >
+                                        <i class="ci-hk-arrow-31 pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                    </div>
+                    <div class="visible-xs">
+                        <apex:outputPanel layout="none">
+                            <div class="bs row listcontent onclick-pointer" onclick="getEncryptedCriteria('{!wprescription.prescriptionNo}')">
+                                <div class="bs col-xs-6 visible-xs">
+                                        {!$Label.Prescription_No}
+                                </div>
+                                <div class="bs col-xs-6 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(wprescription.prescriptionNo != null, wprescription.prescriptionNo, 'N/A')}"></apex:outputText>
+                                    <apex:outputPanel >
+                                        <i class="ci-hk-arrow-31 pull-right visible-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Issue_Date}</div>
+                                <div class="bs col-xs-6 col-sm-4 content-highlight content-policy">
+                                    <apex:outputText value="{!wprescription.issue_date}"></apex:outputText>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Status}</div>
+                                <div class="bs col-xs-6 col-sm-4 content-highlight">{!if(wprescription.status!=null,if(wprescription.status=='New', $Label.New,if(wprescription.status=='Pending for Preparation',$Label.Pending_for_Preparation,if(wprescription.status=='Pending Collection',$Label.Pending_Collection,if(wprescription.status=='Collected',$Label.Collected,if(wprescription.status=='Cancelled',$Label.Cancelled,'N/A'))))),'N/A')}
+                                    <apex:outputPanel >
+                                        <i class="ci-hk-arrow-31 pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                    </div>
+                </apex:repeat>
+                <apex:outputPanel rendered="{!prescriptionList_all_SF.size == 0}">
+                    <div style="padding:20px;{!if(currentTabIdx ==1 , '','display:none;')}" class="bs col-sm-12 col-xs-12 text-center">
+                        <i class="fa fa-smile-o cigna-fg-black" aria-hidden="true"></i> {!$Label.You_don_t_have_any_prescription_record}
+                    </div>
+                </apex:outputPanel>
+            </div>
+            <div id="prescription_pending" class="{!if(currentTabIdx == 2,'active-bar-content','inactive-bar-content')}">
+                <apex:variable value="{!0}" var="rowNum_pending" />
+                <apex:repeat value="{!prescriptionList_pending_SF}" var="wprescription">
+                    <div class="hidden-xs">
+                        <apex:outputPanel layout="none">
+                            <div class="bs row listcontent onclick-pointer" onclick="getEncryptedCriteria('{!wprescription.prescriptionNo}')">
+                                <div class="bs col-xs-6 visible-xs">
+                                        {!$Label.Prescription_No}
+                                </div>
+                                <div class="bs col-xs-6 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(wprescription.prescriptionNo != null, wprescription.prescriptionNo, 'N/A')}"></apex:outputText>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Issue_Date}</div>
+                                <div class="bs col-xs-6 col-sm-4 content-highlight content-policy">
+                                    <apex:outputText value="{!wprescription.issue_date}"></apex:outputText>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Status}</div>
+                                <div class="bs col-xs-6 col-sm-4 content-highlight">{!if(wprescription.status!=null,if(wprescription.status=='New', $Label.New,if(wprescription.status=='Pending for Preparation',$Label.Pending_for_Preparation,if(wprescription.status=='Pending Collection',$Label.Pending_Collection,if(wprescription.status=='Collected',$Label.Collected,if(wprescription.status=='Cancelled',$Label.Cancelled,'N/A'))))),'N/A')}
+                                    <apex:outputPanel >
+                                        <i class="ci-hk-arrow-31 pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                    </div>
+                    <div class="visible-xs">
+                        <apex:outputPanel layout="none">
+                            <div class="bs row listcontent onclick-pointer" onclick="getEncryptedCriteria('{!wprescription.prescriptionNo}')">
+                                <div class="bs col-xs-6 visible-xs">
+                                        {!$Label.Prescription_No}
+                                </div>
+                                <div class="bs col-xs-6 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(wprescription.prescriptionNo != null, wprescription.prescriptionNo, 'N/A')}"></apex:outputText>
+                                    <apex:outputPanel >
+                                        <i class="ci-hk-arrow-31 pull-right visible-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Issue_Date}</div>
+                                <div class="bs col-xs-6 col-sm-4 content-highlight content-policy">
+                                    <apex:outputText value="{!wprescription.issue_date}"></apex:outputText>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Status}</div>
+                                <div class="bs col-xs-6 col-sm-4 content-highlight">{!if(wprescription.status!=null,if(wprescription.status=='New', $Label.New,if(wprescription.status=='Pending for Preparation',$Label.Pending_for_Preparation,if(wprescription.status=='Pending Collection',$Label.Pending_Collection,if(wprescription.status=='Collected',$Label.Collected,if(wprescription.status=='Cancelled',$Label.Cancelled,'N/A'))))),'N/A')}
+                                    <apex:outputPanel >
+                                        <i class="ci-hk-arrow-31 pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                    </div>
+
+                </apex:repeat>
+                <apex:outputPanel rendered="{!prescriptionList_pending_SF.size == 0}">
+                    <div style="padding:20px;{!if(currentTabIdx ==2 , '','display:none;')}" class="bs col-sm-12 col-xs-12 text-center">
+                        <i class="fa fa-smile-o cigna-fg-black" aria-hidden="true"></i> {!$Label.You_don_t_have_any_prescription_record}
+                    </div>
+                </apex:outputPanel>
+            </div>
+            <div id="prescription_completed" class="{!if(currentTabIdx == 3,'active-bar-content','inactive-bar-content')}">
+                <apex:variable value="{!0}" var="rowNum_completed" />
+                <apex:repeat value="{!prescriptionList_completed_SF}" var="wprescription">
+                    <div class="hidden-xs">
+                        <apex:outputPanel layout="none">
+                            <div class="bs row listcontent onclick-pointer" onclick="getEncryptedCriteria('{!wprescription.prescriptionNo}')">
+                                <div class="bs col-xs-6 visible-xs">
+                                        {!$Label.Prescription_No}
+                                </div>
+                                <div class="bs col-xs-6 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(wprescription.prescriptionNo != null, wprescription.prescriptionNo, 'N/A')}"></apex:outputText>
+                                    <apex:outputPanel >
+                                        <i class="ci-hk-arrow-31 pull-right visible-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Issue_Date}</div>
+                                <div class="bs col-xs-6 col-sm-4 content-highlight content-policy">
+                                    <apex:outputText value="{!wprescription.issue_date}"></apex:outputText>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Status}</div>
+                                <div class="bs col-xs-6 col-sm-4 content-highlight">{!if(wprescription.status!=null,if(wprescription.status=='New', $Label.New,if(wprescription.status=='Pending for Preparation',$Label.Pending_for_Preparation,if(wprescription.status=='Pending Collection',$Label.Pending_Collection,if(wprescription.status=='Collected',$Label.Collected,if(wprescription.status=='Cancelled',$Label.Cancelled,'N/A'))))),'N/A')}
+                                    <apex:outputPanel >
+                                        <i class="ci-hk-arrow-31 pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                    </div>
+                    <div class="visible-xs">
+                        <apex:outputPanel layout="none">
+                            <div class="bs row listcontent onclick-pointer" onclick="getEncryptedCriteria('{!wprescription.prescriptionNo}')">
+                                <div class="bs col-xs-6 visible-xs">
+                                        {!$Label.Prescription_No}
+                                </div>
+                                <div class="bs col-xs-6 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(wprescription.prescriptionNo != null, wprescription.prescriptionNo, 'N/A')}"></apex:outputText>
+                                    <apex:outputPanel >
+                                        <i class="ci-hk-arrow-31 pull-right visible-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Issue_Date}</div>
+                                <div class="bs col-xs-6 col-sm-4 content-highlight content-policy">
+                                    <apex:outputText value="{!wprescription.issue_date}"></apex:outputText>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Status}</div>
+                                <div class="bs col-xs-6 col-sm-4 content-highlight">{!if(wprescription.status!=null,if(wprescription.status=='New', $Label.New,if(wprescription.status=='Pending for Preparation',$Label.Pending_for_Preparation,if(wprescription.status=='Pending Collection',$Label.Pending_Collection,if(wprescription.status=='Collected',$Label.Collected,if(wprescription.status=='Cancelled',$Label.Cancelled,'N/A'))))),'N/A')}
+                                    <apex:outputPanel >
+                                        <i class="ci-hk-arrow-31 pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                    </div>
+
+                </apex:repeat>
+                <apex:outputPanel rendered="{!prescriptionList_completed_SF.size == 0}">
+                    <div style="padding:20px;{!if(currentTabIdx ==3 , '','display:none;')}" class="bs col-sm-12 col-xs-12 text-center">
+                        <i class="fa fa-smile-o cigna-fg-black" aria-hidden="true"></i> {!$Label.You_don_t_have_any_prescription_record}
+                    </div>
+                </apex:outputPanel>
+            </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+    </div>
+</apex:page>

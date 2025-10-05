@@ -1,0 +1,181 @@
+<apex:page renderAs="pdf" controller="PreAuthCaseResultLetterCtrl">
+    
+    <apex:stylesheet value="{!URLFOR($Resource.GOPPDFStyle, 'footer.css')}"/>
+    <head>
+        <style>
+            div, table, tr, td{
+                    font-family: Arial Unicode MS, sans-serif;
+                }
+        </style>
+    </head>
+
+    <div style="width: 100%;font-family: Arial Unicode MS">
+        <div style="text-align: center;">
+        <b>Cigna Health Insurance Scheme Pre-authorization Confirmation Letter</b><br/>
+        <b>信諾環球醫療保障計劃初步保障審核確認書</b><br/>
+        <b>Hotline 查詢熱線</b>: (852) 2233-4476 <b>Email 電郵</b>: <span style="color:#0000ff;">hwc2@cigna.com</span>
+        </div>
+    </div>
+    <div style="position:absolute;right:0;top:35px;width:10%;float:right">
+        <apex:image url="{!$Resource.Cigna_Logo}" width="50" height="50"/>
+    </div>
+    <hr />
+    
+    <apex:outputPanel id="information">
+        <table style="width: 100%;font-family: Arial Unicode MS">
+            <tbody>
+                <tr>
+                    <td style="width: 100%"><u><b>Member's Particulars 會員資料</b></u></td>
+                </tr>
+                <tr>
+                    <td style="width: 100%">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td style="width: 100%">Member's Name 會員姓名: {!memberName}</td>
+                </tr>
+                <tr>
+                    <td style="width: 100%">Membership No. 會員編號: {!memberShipNo}</td>
+                </tr>
+                <tr>
+                    <td style="width: 100%">Case No. 個案編號: {!caseNo}</td>
+                </tr>
+
+                <tr>
+                    <td style="width: 100%">&nbsp;</td>
+                </tr>
+
+                <tr>
+                    <td style="width: 100%"><u><b>Treatment Details 治療詳情</b></u></td>
+                </tr>
+            </tbody>
+        </table>
+        <br/>
+        <div style="font-family: Arial Unicode MS">
+            &nbsp;Diagnosis 診斷:
+            <ol>
+                <apex:repeat value="{!diagnosis}" var="diagCode" id="diagRepeat">
+                    <li>{!diagCode}</li>
+                </apex:repeat>
+            </ol>
+
+            &nbsp;Treatment/ Investigation 治療/ 檢驗項目:
+            <ol>
+                <apex:repeat value="{!treatmentItems}" var="tr" id="treatmentItemsRepeat">
+                    <li>{!tr}</li>
+                </apex:repeat>
+            </ol>
+        </div>
+        <table width="100%" style="font-family: Arial Unicode MS">
+            <tbody>
+                <tr>
+                    <td style="width: 100%">Date of Request 申請日期: {!requestDate}</td>
+                </tr>
+                <tr>
+                    <td style="width: 100%">Treatment location 治療地點: {!hospital}</td>
+                </tr>
+                <tr>
+                    <td style="width: 100%">&nbsp;</td>
+                </tr>
+                <apex:outputPanel rendered="{!approvalResult}">
+                    <div style="font-family: Arial Unicode MS">
+                        <span><u><b>Pre-authorization Result 審批結果</b></u><br/><br/></span>
+                        <span>The pre-authorization of the above mentioned treatment/ investigation is <span style="color: red;">APPROVED</span>.<br/>以上之治療或檢驗項目之初步保障審核已被<span style="color: red;">批核</span>。<br/><br/></span>
+                        <span>The member’s medical card can be accepted at the treatment location stated above.<br/>會員持有之醫療卡適用於以上治療地點。<br/><br/></span>
+                        <!--//for HC99 add email template /change by kirk/ 20210714-->
+                        <div style="display:{!control}">
+                            <span>Eligible medical expenses incurred by the treatment stated below will be covered in full under the member’s benefit.<br/>有關以下治療費用將會於會員之網絡保障內獲得全數賠償。<br/><br/></span>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!!approvalResult}">
+                    <div style="font-family: Arial Unicode MS">
+                        <span><u><b>Pre-authorization Result 審批結果</b></u><br/><br/></span>
+                        <span>The pre-authorization of the above mentioned treatment/ investigation is <span style="color: red;">UNABLE TO BE APPROVED</span>.<br/>以上之治療或檢驗項目之初步保障審核<span style="color: red;">未能被批核</span>。<br/><br/></span>
+                        <span>Member has to settle the expenses directly with the corresponding service provider as the medical card is not accepted at the treatment location stated above.<br/>由於會員持有之醫療卡不適用於以上治療地點，會員須直接向有關服務供應商繳付費用。<br/><br/></span>
+                    </div>
+                </apex:outputPanel>
+                <div style="font-family: Arial Unicode MS">
+                    <tr>
+                        <td style="width: 100%"><u><b>Doctor’s Particulars 醫生資料</b></u></td>
+                    </tr>
+                    <tr>
+                        <td style="width: 100%">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td style="width: 100%">Doctor’s name 醫生姓名: {!doctorName}</td>
+                    </tr>
+                    <tr>
+                        <td style="width: 100%">Tel. number 電話號碼: {!tel}</td>
+                    </tr>
+                    <tr>
+                        <td style="width: 100%">Email Address 電郵地址: {!email}</td>
+                    </tr>
+                    <tr>
+                        <td style="width: 100%">Provider and physician code 醫生編號: {!doctorCode}</td>
+                    </tr>
+                    <tr>
+                        <td style="width: 100%">Fax number 傳真號碼: {!fax}</td>
+                    </tr>
+                    <tr>
+                        <td style="width: 100%">&nbsp;</td>
+                    </tr>
+                </div>
+            </tbody>
+        </table>
+    </apex:outputPanel>
+    
+    <div style="font-family: Arial Unicode MS">
+        <!--//for HC99 add email template /change by kirk/ 20210628-->
+        <div style="display:{!control}">
+            <span><u><b>Coverage Details 保障詳情</b></u></span><br/>
+            <br/>
+            <span>The above mentioned cost will be paid under the following benefits of the member's scheme.<br/>
+                以上費用會於以下保障項目下作出賠償。</span><br/>
+            <br/>
+            <table border="1px" cellspacing="0">
+                <tbody>
+                    <tr>
+                        <th>Treatment/ Investigation 治療/ 檢驗項目</th>
+                        <th>Requested Cost in HKD<br/>申請金額</th>
+                        <th>Approved Cost in HKD<br/>已批核金額</th>
+                    </tr>
+                    <apex:repeat value="{!treatmentFeesList}" var="tr">
+                        <tr>
+                            <td>{!tr.CodeDescription}</td>
+                            <td>{!tr.Requested_Fees__c}</td>
+                            <td>{!tr.Approved_Fee__c}</td>
+                        </tr>
+                    </apex:repeat>
+                </tbody>
+            </table>
+            <span><br/><b>Remarks: </b>{!remarks}</span><br/>
+            <br/>
+            <span>Please note that all fees listed in this letter are treatment costs only and do not represent the actual claim settlement amount.<br/>請注意，以上列出之所有金額僅為治療費用而非實際賠償金額。</span><br/>
+        </div>
+        <div>
+            <br/>
+            <span>All decisions made for this pre-authorisation are based on the information available at the time of this case's assessment.<br/>此初步保障審核結果是根據當時可得之資料而作出的決定。</span><br/>
+            <br/>
+            <span>The final claim decision will depend on the information that Cigna finally receives.<br/>最後賠償決定會以信諾最終收到的資料為依據。</span><br/>
+            <br/>
+            <span>For expenses not listed in this letter, please contact your attending doctor or hospital for further information.<br/>有關未在此信列出之費用，請聯絡您的主診醫生或醫院以索取有關資料。</span><br/>
+            <br/>
+        </div>
+    </div>
+
+    <div style="font-family: Arial Unicode MS">
+        <span><u><b>Important Information 重要資料</b></u></span><br/><br/>
+        <span>This letter is valid for 30 days from the date of issuance unless otherwise specified.<br/>除非另有訂明，此信件於發出日起三十天內有效。</span><br/>
+        <br/>
+        <span>Any alteration on this letter without Cigna's approval will invalidate the pre-authorisation.<br/>任何未經信諾批核之改動會導致此信失效。</span><br/>
+        <br/><br/>
+    </div>
+
+    <div style="text-align: right;font-family: Arial Unicode MS">
+        <span><u><b>Approved by 批核者</b></u></span><br/>
+        <span>{!approver}</span><br/><br/>
+        <span>Tel: 2233-4476</span><br/><br/>
+        <span><u><b>Date 日期</b></u></span><br/>
+        <span>{!approvalDate}</span>
+    </div>
+</apex:page>

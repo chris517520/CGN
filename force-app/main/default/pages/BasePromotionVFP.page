@@ -1,0 +1,187 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" controller="PromotionController" >
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <apex:include pageName="CignaCommonCSS" />
+        <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />        
+    </head>
+    
+    <style>
+        .promotion-cell{
+            width:370px;
+            height:550px;
+            padding:25px;
+            text-align:center;
+        }
+       .promotion-row{
+            padding:0 0 10px 0;
+            text-align:left;           
+        }
+       .promotion-row-header{
+            padding:0 0 10px 0;
+            text-align:left;
+            font-weight:bold;
+        }
+        .box{
+            position:relative;
+            background: white;
+            overflow: hidden;
+          }
+        .box .box-con{
+            width:85px;
+            height:130px;
+            position: absolute;
+            background: #FF5511;
+            top:-85px;
+            right:-60px;
+            transform: rotate(45deg);
+          }
+        .box .box-con span{
+            position: absolute;
+            bottom:0;
+            display: block;
+            width:60px;
+            text-align: center;
+            transform: translateX(10px) translateY(1px);
+            color: #fff;
+        }
+                
+    </style>
+    <script>
+        var promotionPDFId = '';
+        function saveUserPromotion(proId,promotionPDF){
+            $('#loading-icon').attr('style','display:block');
+            promotionPDFId = promotionPDF;
+            saveIsRead.IsReadPromotion(proId);
+        }
+        function jumpPromotionPdf(){
+            var tempwindow=window.open('_blank')
+            tempwindow.location='{!$Setup.Portal_Settings__c.File_Download_URL__c}'+promotionPDFId;
+            $('#loading-icon').attr('style','display:none');
+        }
+    </script>
+    <apex:define name="additionalLibraries">
+         <!--additional css, bootstrap, jquery,js libraries-->
+         <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    </apex:define>
+    
+    <apex:form >
+        <apex:actionFunction name="IsReadPromotion" action="{!IsReadPromotion}" namespace="saveIsRead" reRender="TopPanel"  oncomplete="jumpPromotionPdf()">
+            <apex:param name="proId" value="" assignTo="{!proId}"/>
+        </apex:actionFunction>               
+        
+        <div id="promotion-bar-div" style="padding: 10px 10px;text-align:center;" class="bs col-sm-12 col-xs-12">
+            <script>
+                if (Cigna.Util.isMobile()) {
+                    $('#promotion-bar-div').css('padding-left','10px');
+                    $('#promotion-bar-div').css('padding-right','10px');
+                } 
+            </script>
+            <div class="hidden-xs" style="min-width: 1150px;overflow-x: auto;">
+                <apex:variable value="{!1}" var="rowNum" />
+                <apex:repeat value="{!promotionList}" var="promotion">                
+                    <apex:outputPanel rendered="{!IF(MOD(rowNum,3)==1,true,false)}"><br/></apex:outputPanel>
+                    <div class="promotion-cell" id="TopPanel" style="display:inline-block;" >
+                        <div class="promotion-row" >
+                            <div class="box" >
+                                <div>
+                                    <img style="width:100%;height:240px;" src="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!promotion.attId}"/>
+                                </div>
+                                <div class="box-con" style="{!IF(promotion.status == 'New','','display:none;')}">
+                                    <span>{!promotion.status}</span>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <div class="promotion-row-header" style="height:70px;height: 60px;overflow-y:auto;">
+                            {!promotion.pro.Subject__c}
+                        </div>
+                        <div class="promotion-row" style="font-size:small;height: 130px;overflow-y:auto;">
+                            {!promotion.pro.Content__c}
+                        </div>    
+                        <div class="promotion-row-header" style="font-size:small;padding-top: 10px;">
+                            {!transField['promoPeriod'][$label.Header_Language_Code_Current]}
+                            <apex:outputPanel rendered="{!IF($Label.Header_Language_Code_Current=='en_US',true,false)}">
+                                <apex:outputText id="startDate" value="{0,date}">
+                                    <apex:param value="{!promotion.pro.Start_Date__c}" />
+                                </apex:outputText>
+                                -
+                                <apex:outputText id="endDate" value="{0,date}">
+                                    <apex:param value="{!promotion.pro.End_Date__c}" />
+                                </apex:outputText>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!IF($Label.Header_Language_Code_Current=='zh_TW',true,false)}">
+                                <apex:outputText value="{!promotion.resStartZH}"/>
+                                -
+                                <apex:outputText value="{!promotion.resEndZH}"/>
+                            </apex:outputPanel>
+                        </div>
+                        <div class="promotion-row">
+                            <div style="padding: 0">
+                                <a href="javascript: void(0)" class="bs col-sm-12 col-xs-12 btn cigna-btn-desktop-no-width cigna-fg-white cigna-bg-orange-dark" onclick="saveUserPromotion('{!promotion.pro.Id}','{!promotion.promotionPDF}')">{!transField['promotionDetail'][$label.Header_Language_Code_Current]}</a>
+                            </div>
+                        </div>
+                        <div id="loading-icon" class="loading-div" style="display:none;">
+                            <span class="loading-helper"></span>
+                            <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                            <span class="sr-only">Loading...</span>
+                        </div> 
+                    </div>
+                    <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                </apex:repeat> 
+            </div>
+            <div class="visible-xs hidden-sm hidden-md hidden-lg">
+                <apex:variable value="{!1}" var="rowNum" />
+                <apex:repeat value="{!promotionList}" var="promotion">                
+                    <br/>
+                    <div class="promotion-cell" id="TopPanel" style="display:inline-block;" >
+                        <div class="promotion-row" >
+                            <div class="box" >
+                                <div>
+                                    <img style="width:320px;height:240px;" src="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!promotion.attId}"/>
+                                </div>
+                                <div class="box-con" style="{!IF(promotion.status == 'New','','display:none;')}">
+                                    <span>{!promotion.status}</span>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <div class="promotion-row-header" style="height:70px;height: 60px;overflow-y:auto;">
+                            {!promotion.pro.Subject__c}
+                        </div>
+                        <div class="promotion-row" style="font-size:small;height: 130px;overflow-y:auto;">
+                            {!promotion.pro.Content__c}
+                        </div>    
+                        <div class="promotion-row-header" style="font-size:small;padding-top: 10px;">
+                            {!transField['promoPeriod'][$label.Header_Language_Code_Current]}
+                            <apex:outputPanel rendered="{!IF($Label.Header_Language_Code_Current=='en_US',true,false)}">
+                                <apex:outputText id="startDate" value="{0,date}">
+                                    <apex:param value="{!promotion.pro.Start_Date__c}" />
+                                </apex:outputText>
+                                -
+                                <apex:outputText id="endDate" value="{0,date}">
+                                    <apex:param value="{!promotion.pro.End_Date__c}" />
+                                </apex:outputText>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!IF($Label.Header_Language_Code_Current=='zh_TW',true,false)}">
+                                <apex:outputText value="{!promotion.resStartZH}"/>
+                                -
+                                <apex:outputText value="{!promotion.resEndZH}"/>
+                            </apex:outputPanel>
+                        </div>
+                        <div class="promotion-row">
+                            <div style="padding: 0">
+                                <a href="javascript: void(0)" class="bs col-sm-12 col-xs-12 btn cigna-btn-desktop-no-width cigna-fg-white cigna-bg-orange-dark" onclick="saveUserPromotion('{!promotion.pro.Id}','{!promotion.promotionPDF}')">{!transField['promotionDetail'][$label.Header_Language_Code_Current]}</a>
+                            </div>
+                        </div>
+                        <div id="loading-icon" class="loading-div" style="display:none;">
+                            <span class="loading-helper"></span>
+                            <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                            <span class="sr-only">Loading...</span>
+                        </div> 
+                    </div>
+                    <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                </apex:repeat> 
+            </div>           
+        </div>
+    </apex:form>    
+</apex:page>

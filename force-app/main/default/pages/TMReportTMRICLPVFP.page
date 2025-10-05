@@ -1,0 +1,343 @@
+<apex:page showHeader="true" docType="html-5.0" sidebar="false" controller="TMReportTMRICLPCtrl" id="TMReportTMRICLPVFP" title="TMR Individual Call List Performance" tabStyle="report" readOnly="true">
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <style>
+        .dataTabel{border: 1px bold black; width:100%;}
+    </style>
+    <script type="text/javascript" src="{!URLFOR($Resource.FileSaverJS)}"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.BlobJS)}"></script>
+    <script language="javascript" type="text/javascript">
+    
+    function runReport(){
+        var TMRVal = $("[id$='\\:TMR']").val();
+        var StartVal = $("[id$='\\:Start']").val();
+        var EndVal = $("[id$='\\:End']").val();
+        var JumpLink = '/apex/TMReportTMRICLPVFP?';
+        JumpLink += 'TMR=' + TMRVal + '&Start=' + StartVal +'&End=' + EndVal ;
+        navigateToUrl(JumpLink,null,'TMR Individual Call List Performance');
+    }
+        function PrintDoc() {
+            $(".s_close").remove();
+            window.print();
+        }
+
+        function ReTabColumn(_this) {
+            $("#tdheji").attr("colspan", parseInt($("#tdheji").attr("colspan") - 1));
+            TabColRemove(_this, false);
+        }
+
+        //jQuery移除Table列,isDellast：false最后一行不受影响；true最后一行受影响
+        //<th>标题<span class="s_close" style='color: Red; cursor: pointer' onclick='ReTabColumn(this)' title='隐藏当前列'>×</span></th>
+        function TabColRemove(_this, isDellast) {
+            if (isDellast) {
+                $(_this).parent().parent().parent().find("tr td:nth-child(" + ($(_this).parent().index() + 1) + ")").remove();
+            } else {
+                $(_this).parent().parent().parent().find("tr:not(:last-child)").find("td:nth-child(" + ($(_this).parent().index() + 1) + ")").remove();
+            }
+        }
+
+        //jQuery HTML导出Excel文件(兼容IE及所有浏览器)
+        function HtmlExportToExcel(tableid) {
+            $(".s_close").remove();
+            var filename = 'TMR Individual Call List Performance';
+            /*if (getExplorer() == 'ie' || getExplorer() == undefined) {
+                HtmlExportToExcelForIE(tableid, filename);
+            }
+            else {
+                HtmlExportToExcelForEntire(tableid, filename)
+            }*/
+            
+            /**
+            * 2019-02-14
+            * Currently using FileSaver.js to export excel from html, no matter IE explorer or other explorer
+            */
+            HtmlExportToExcelForEntire(tableid, filename)
+        }
+        //comment by kermit at 2019-02-14
+        //IE浏览器导出Excel
+        /*function HtmlExportToExcelForIE(tableid, filename) {
+            try {
+                var winname = window.open('', '_blank', 'top=10000');
+                var strHTML = document.getElementById(tableid).innerHTML;
+
+                winname.document.open('application/vnd.ms-excel', 'export excel');
+                winname.document.writeln(strHTML);
+                winname.document.execCommand('saveas', '', filename + '.xls');
+                winname.close();
+
+            } catch (e) {
+                alert(e.description);
+            }
+        }*/
+        var HtmlExportToExcelForEntire = (function() {
+            var uri = 'data:application/vnd.ms-excel;base64,',
+            template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>{worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>{table}</table></body></html>',
+            base64 = function(s) { return window.btoa(unescape(encodeURIComponent(s))) },
+            format = function(s, c) { return s.replace(/{(\w+)}/g, function(m, p) { return c[p]; }) }
+            return function(table, name) {
+                if (!table.nodeType) { table = document.getElementById(table); }
+                var ctx = { worksheet: name || 'Worksheet', table: table.innerHTML }
+                /*document.getElementById("dlink").href = uri + base64(format(template, ctx));
+                document.getElementById("dlink").download = name + ".xls";
+                document.getElementById("dlink").click();*/
+                var blob = new Blob([format(template,ctx)], {type: "application/vnd.ms-excel"});
+                saveAs(blob, name+".xls");
+                /**
+                * FileSaver saveAs(Blob/File/Url, optional DOMString filename, optional Object { autoBOM })
+                * Pass { autoBOM: true } if you want FileSaver.js to automatically provide Unicode text encoding hints
+                * for Firefox < 20, Opera < 15, Safari < 6, use data:uri to consturct, eg: saveAs(uri + base64(format(template, ctx)), name + ".xls")
+                */
+            }
+        })()
+        
+        
+        
+        function getExplorer() {
+            var explorer = window.navigator.userAgent;
+            //ie 
+            if (explorer.indexOf("MSIE") >= 0) {
+                return 'ie';
+            }
+            //firefox 
+            else if (explorer.indexOf("Firefox") >= 0) {
+                return 'Firefox';
+            }
+            //Chrome
+            else if (explorer.indexOf("Chrome") >= 0) {
+                return 'Chrome';
+            }
+            //Opera
+            else if (explorer.indexOf("Opera") >= 0) {
+                return 'Opera';
+            }
+            //Safari
+            else if (explorer.indexOf("Safari") >= 0) {
+                return 'Safari';
+            }
+        }
+        /*
+        function exportToExcelJS(){
+            var emailStr = $("#sendToMail").val().replace("；",";");
+            var emailL = emailStr.split(";");
+            var isEmailB = true;
+            for (i=0;i<emailL.length ;i++ ) {
+                console.log(emailL[i]);
+                if (!isEmail(emailL[i])) {isEmailB = false;}
+            }
+            if (isEmailB) {exportToExcel(emailStr);}
+            else{alert('Please enter correct email address');}
+        }
+
+        function showEmail(){
+            $("#sendTo").show();
+        }
+        function Mulitexcel(){
+            url='/apex/TMReportExcel';
+            if (sforce.console.isInConsole()) {
+                var rnd = Math.floor(Math.random() * 1000000000000);               
+                sforce.console.openPrimaryTab(null, url, true, 'Application Details');
+                sforce.console.setCustomConsoleComponentVisible(false);
+            } else {
+                window.open(url, '_blank');
+            }
+        }
+
+        function isEmail(strEmail) {
+            if (strEmail.search(/^\w+((-\w+)|(\.\w+))*\@[A-Za-z0-9]+((\.|-)[A-Za-z0-9]+)*\.[A-Za-z0-9]+$/) != -1)
+                return true;
+            else
+                return false;
+        }
+    */
+    </script>
+    <apex:includeScript value="/support/console/41.0/integration.js"/>
+    <apex:sectionHeader title="TMR Individual Call List Performance"/><br/>
+    <apex:form id="form">
+    <apex:pageBlock >
+    <apex:messages id="messages" styleClass="errorMsg"/>
+        <table id="filterTable" style="display: block;" class=".s_close">
+            <tr>
+                <th><apex:outputLabel >Agent</apex:outputLabel></th> 
+                <td><apex:input value="{!TMRName_AgentCode}" id="TMR"/></td>
+            </tr>
+            <tr>
+                <th>Call List Start date:</th>
+                <td><apex:inputField value="{!filterData.Start_Date__c}" label="Call List Start date:" id="Start"/></td>
+            </tr>
+            <tr>
+                <th>Call List End date</th>
+                <td><apex:inputField value="{!filterData.End_Date__c}" label="Call List Start End date:" id="End"/></td>
+            </tr>
+        </table>
+    <input value="Run Report" class="btn" name="run" title="Run Report" onclick="runReport();" />
+    <input value="Export to excel" class="btn" name="run" title="Export to excel" onclick="HtmlExportToExcel('PanelExcel');" />
+    <a id="dlink" style="display: none;"></a>
+      <apex:outputpanel >
+        <apex:actionstatus id="actStatusId">
+        <apex:facet name="start">
+        <div class="waitingSearchDiv" id="el_loading" style=" background-color: #fbfbfb ;
+                       height: 100%;opacity :0.65;width:100%;" >
+                    <div class="waitingHolder" style="top : 50%; width: 91px;" >
+                        <img class="waitingImage" src="/img/loading32.gif" title="Please Wait..." />
+                        <span class="waitingDescription" >Loading...</span >
+                    </div>
+        </div>
+        </apex:facet>
+        </apex:actionstatus>
+    </apex:outputpanel>
+ <!--
+    <apex:actionFunction name="exportToExcel" action="{!exportToExcel}" reRender="ItemBase" oncomplete="statusChange();" immediate="true" status="actStatusId">
+        <apex:param name="oneParam"  value="" assignTo="{!emailStr}"/>
+    </apex:actionFunction>
+-->
+    <!--p onclick="javascript:HtmlExportToExcel('PanelExcel')" class="btn">Export to excel</p>
+    <p onclick="javascript:Mulitexcel('PanelExcel')" class="btn" style="display: none;">Export to Mulit-excel</p>
+    <p onclick="javascript:showEmail()" class="btn" style="display: none;">Export to email</p>
+    <p><div id="sendTo" style="display: none;"> <input id="sendToMail" width="400px" /><p onclick="javascript:exportToExcelJS()" class="btn">send</p></div></p>
+    <a id="dlink" style="display: none;"></a-->
+    <br/>
+    <div id="PanelExcel" class="padding:10px;margin:10px">
+        <table style="padding: 10px 0 0 0;">
+            <tr>
+                <th><apex:outputText value="{!$Label.TM_Report_PrintDate}"/></th>
+                <td><apex:OutputText value="{0,date,yyyy-MM-dd}" escape="false">
+                    <apex:Param value="{!Now()}"/>
+                </apex:OutputText></td>
+            </tr>
+            <apex:outputPanel layout="none" rendered="{!filterData.Start_Date__c!=null}">
+                <tr>
+                    <th>Start date</th>
+                    <td><apex:OutputText value="{0,date,yyyy-MM-dd}" escape="false">
+                        <apex:Param value="{!filterData.Start_Date__c}"/>
+                    </apex:OutputText></td>
+                </tr>
+            </apex:outputPanel>
+            <apex:outputPanel layout="none" rendered="{!filterData.End_Date__c!=null}">
+                <tr>
+                    <th>End date</th>
+                    <td><apex:OutputText value="{0,date,yyyy-MM-dd}" escape="false">
+                        <apex:Param value="{!filterData.End_Date__c}"/>
+                    </apex:OutputText></td>
+                </tr>
+            </apex:outputPanel>
+        </table>
+    <apex:pageBlockTable value="{!dataList}" var="t1" id="theTable" rowClasses="odd,even" styleClass="dataTabel">
+  
+        <apex:facet name="caption"></apex:facet>
+        <apex:facet name="header">
+        </apex:facet>
+        
+        
+        <apex:column >
+            <apex:facet name="header">TMRName/AgentCode</apex:facet>
+            <apex:outputText value="{!t1.TMRName_AgentCode}"/>
+        </apex:column>
+
+        <apex:column >
+            <apex:facet name="header">Batch No.</apex:facet>
+            <apex:outputText value="{!t1.BatchNo}"/>
+        </apex:column>
+        <apex:column >
+            <apex:facet name="header">Campaign Type</apex:facet>
+            <apex:outputText value="{!t1.CampaignType}"/>
+        </apex:column>
+        <apex:column >
+            <apex:facet name="header">Total list</apex:facet>
+            <apex:outputText value="{!t1.Totallist}"/>
+        </apex:column>
+
+        <apex:column >
+            <apex:facet name="header">New</apex:facet>
+            <apex:outputText value="{!t1.StatusNew}"/>
+        </apex:column>
+
+        <apex:column >
+            <apex:facet name="header">Reference</apex:facet>
+            <apex:outputText value="{!t1.Reference}"/>
+        </apex:column>
+
+        <apex:column >
+            <apex:facet name="header">Contactedlist</apex:facet>
+            <apex:outputText value="{!t1.Contactedlist}"/>
+        </apex:column>
+
+        <apex:column >
+            <apex:facet name="header">Contacted Rate</apex:facet>
+            <apex:outputText value="{0, Number,0.0%}">
+                <apex:Param value="{!t1.ContactedRate}"/>
+            </apex:OutputText>
+        </apex:column>
+
+        <apex:column >
+            <apex:facet name="header">Callable</apex:facet>
+            <apex:outputText value="{!t1.Callable}"/>
+        </apex:column>
+
+        <apex:column >
+            <apex:facet name="header">Calllable Rate</apex:facet>
+            <apex:outputText value="{0, Number,0.0%}">
+                <apex:Param value="{!t1.CalllableRate}"/>
+            </apex:OutputText>
+        </apex:column>
+
+        <apex:column >
+            <apex:facet name="header">Order</apex:facet>
+            <apex:outputText value="{!t1.Order}"/>
+        </apex:column>
+
+        <apex:column >
+            <apex:facet name="header">TRR</apex:facet>
+            <apex:outputText value="{0, Number,0.0%}">
+                <apex:Param value="{!t1.TRR}"/>
+            </apex:OutputText>
+        </apex:column>
+
+        <apex:column >
+            <apex:facet name="header">Consider</apex:facet>
+            <apex:outputText value="{!t1.Consider}"/>
+        </apex:column>
+        <!-- JOBR-323, add by owen to add a new column to show 380 code -->
+        <apex:column >
+            <apex:facet name="header">Incomplete sales</apex:facet>
+            <apex:outputText value="{!t1.Incompletesales}"/>
+        </apex:column>
+        <apex:column >
+            <apex:facet name="header">DMC count</apex:facet>
+            <apex:outputText value="{!t1.DMCcount}"/>
+        </apex:column>
+        <apex:column >
+            <apex:facet name="header">Uncontact count</apex:facet>
+            <apex:outputText value="{!t1.Uncontactcount}"/>
+        </apex:column>
+        <apex:column >
+            <apex:facet name="header">Difficult contact count</apex:facet>
+            <apex:outputText value="{!t1.Difficultcontactcount}"/>
+        </apex:column>
+        <apex:column >
+            <apex:facet name="header">RTTcount</apex:facet>
+            <apex:outputText value="{!t1.RTTcount}"/>
+        </apex:column>
+        <apex:column >
+            <apex:facet name="header">Rejectcount</apex:facet>
+            <apex:outputText value="{!t1.Rejectcount}"/>
+        </apex:column>
+        <apex:column >
+            <apex:facet name="header">Declined by U/W</apex:facet>
+            <apex:outputText value="{!t1.DeclinedByUW}"/>
+        </apex:column>
+        <apex:column >
+            <apex:facet name="header">Invalid</apex:facet>
+            <apex:outputText value="{!t1.Invalid}"/>
+        </apex:column>
+        <apex:column >
+            <apex:facet name="header">Invalidrate</apex:facet>
+            <apex:outputText value="{0, Number,0.0%}">
+                <apex:Param value="{!t1.Invalidrate}"/>
+            </apex:OutputText>
+        </apex:column>
+    </apex:pageBlockTable>
+  
+  </div>
+
+</apex:pageBlock>
+  </apex:form>
+</apex:page>

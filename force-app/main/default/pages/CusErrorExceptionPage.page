@@ -1,0 +1,327 @@
+<apex:page docType="html-5.0" showHeader="false" title="{!$Label.site.login}" language="{!$CurrentPage.Parameters.lang}">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+        <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <script type='text/javascript' src='{!$Setup.Portal_Settings__c.Live_Agent_JavaScript_URL__c}'></script>
+        
+        <script type="text/javascript" src="{!URLFOR($Resource.App_Link_JS, 'js/applink.js')}"></script>
+        <apex:include pageName="CignaUtilJS"/>
+
+        <style>
+            html {
+              height: 100%;
+            }
+            
+            html body {
+                height: 100%;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                font-family: "Gotham SSm A", "Gotham SSm B";
+                font-style: normal;
+                font-weight: 4000;
+                //color: #fff;
+            }
+
+            html body .container-fluid.body-content {
+                width: 100%;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+
+            @media (max-width: 768px) {
+                body {
+                    background-size: cover;
+                    //background-image: url('{!URLFOR($Resource.Cigna_Assets, 'login_mobile.jpg')}');
+                }
+            }
+            
+            @media (min-width: 769px) {
+                body {
+                    background-size: cover;
+                    //background-image: url('{!URLFOR($Resource.Cigna_Assets, 'login_desktop2.jpg')}');
+                    background-position: center;
+                }
+            }
+            /* iPad Landscape */
+            @media only screen and (min-device-width: 481px) and (max-device-width: 1024px) and (orientation:portrait) {
+                body {
+                    background-size: cover;
+                    //background-image: url('{!URLFOR($Resource.Cigna_Assets, 'login_mobile.jpg')}');
+                }
+            }
+            /* iPad Landscape */
+            @media only screen and (min-device-width: 481px) and (max-device-width: 1024px) and (orientation:landscape) {
+                body {
+                    background-size: cover;
+                    //background-image: url('{!URLFOR($Resource.Cigna_Assets, 'login_desktop2.jpg')}');
+                    background-position: center;
+                }
+            }
+            
+            #login-panel {
+                position: relative;
+                padding: 10px 0 10px 0;
+            }
+            #login-panel-background {
+                position: fixed;
+                left: 0;
+                top: 0;
+                //background: #666;
+                opacity: 0.1;
+                width: 100%;
+                height: 100%;
+                z-index: -100;
+                border-radius: 5px;
+            }
+
+            header {
+                //background-color: #4C4;
+                min-height: 50px;
+                width: 100%;
+            }
+            header div {
+                text-align:right;
+                padding-right:20px;
+            }
+
+            footer {
+                //background-color: #4C4;
+                min-height: 30px;
+                width: 100%;
+            }
+            footer div {
+                //text-align:right;
+                //padding-top: 20px;
+                //padding-right:20px;
+            }
+            footer div span {
+                 //margin-left: 5px;
+            }
+
+            .footer-right{
+                text-align:right;
+            }
+
+            .footer-left{
+                text-align:left;
+            }
+
+            .changeLanguage {
+                display: inline-block;
+                font-size: 12pt;
+                margin-left: 10px;
+            }
+
+            .LogoDiv {
+                text-align:center;
+                padding-bottom: 2cm;
+                margin: 15px;
+                margin-bottom: 160px;
+            }
+
+            .boxs{ margin:0 auto; height:70px; width:550px; background:#4089B2;
+                   padding-top:20px; overflow:hidden} 
+            .box-left{ float:left; width:350px; text-align:left} 
+            .box-right{ float:right; width:350px; text-align:right} 
+
+            .bs .btn {
+                //background: #188CCC !important;
+                //color: #fff !important;
+                border: 0 !important;
+            }
+
+            .bs .form-control:focus {
+                box-shadow: none !important;
+                border-bottom: 1px solid #eac048 !important;
+            }
+
+            /* hover style just for information */
+            .bs label:hover:before {
+                border: 1px solid #eac048 !important;
+            }
+            
+            .logo-background{
+                background: rgba(255,255,255,0.5);
+                position: absolute;
+                z-index: 99;
+                width: 10000px;
+                margin-left: -4000px;
+                height: 160px;
+                top: 0px;
+            }
+            .cignaLogo{
+                position: absolute;
+                top: 0px;
+                left: 0px;
+                right: 0px;
+                bottom: 0px;
+                margin: 20px auto;
+                z-index: 100;
+            }
+
+        </style>
+        <!-- CR-56_Link_20220214 -->
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap3.4.1.css')}" />
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+    </head>
+    <!-- Rancho Android login error resolve -->
+    <script>
+         // alert(sessionStorage.getItem("reloadDone"));
+         var lastURL = document.referrer.toString();
+         console.log("reload start: "+sessionStorage.getItem("reloadDone"));
+         console.log("reload lastURL: "+lastURL);
+         //if(sessionStorage.getItem("reloadDone")=='true'){
+         if(lastURL.indexOf("CustomerLandingPage")>-1&&Cigna.Util.isAndroid()&&(!sessionStorage.getItem("reloadDone") || (sessionStorage.getItem("reloadDone") && sessionStorage.getItem("reloadDone") === "false"))){
+            //alert(sessionStorage.getItem("reloadDone"));
+            //alert('reload start');
+            sessionStorage.setItem("reloadDone",true);
+            window.location.href='{!$Site.Prefix}/CustomerLandingPage';
+            console.log('reload success');
+         }
+    </script>
+    <apex:define name="body">  
+
+        <!-- Start Normal Page Content -->
+        <header>
+            <div class="bs">
+                <span class="changeLanguage">
+                    <a href="?lang={!$Label.Header_Language_Code}">{!$Label.Header_Change_Language}</a>
+                </span>
+            </div> 
+        </header>
+
+        <div class="bs container-fluid body-content">    
+            <apex:form id="preForm">  
+                <apex:outputPanel id="thePreFormPanel">
+                    <div id="login-panel" class="col-xs-10 col-xs-offset-1 col-md-5 col-md-offset-4">
+                        <div id="login-panel-background"/>
+                        
+                        <div class="LogoDiv">
+                            <apex:image id="cignaLogo" styleClass="cignaLogo"
+                                        value="{!URLFOR($Resource.Cigna_Logo_png)}" 
+                                        style="height: 190px" 
+                            />
+                            
+                        </div>
+                        
+                        <!-- Insert the body of the page -->
+                        <apex:insert name="body"/>
+                            <div class="bs form-group col-xs-12 col-md-12">
+                                <h4>{!$Label.Page_Not_Found}</h4>
+                            </div>
+                            <br/>
+                            <br/>
+                            <br/>
+                            <br/>
+                            <div class="bs form-group col-xs-12 col-md-12">
+                                <div class="bs col-xs-2 col-md-1">
+                                    <li id="Go_to_HomePageicon" onclick="gotoHomePage()" style="list-style:none;"><a href="#" style="text-decoration:none; color:#000000; outline:none; cursor:pointer;"><i class="ci-hk-home ci-hk-2x" aria-hidden="true"></i></a></li>
+                                </div>
+                                <div class="bs col-xs-10 col-md-11">
+                                    <li id="Go_to_HomePage" onclick="gotoHomePage()" style="list-style:none;"><a href="#" style="text-decoration:none; color:#000000; outline:none; cursor:pointer;"><h5>{!$Label.Go_to_HomePage}</h5></a></li>
+                                </div>
+                            </div>
+                            <br/>
+                            <div class="bs form-group col-xs-12 col-md-12">
+                                <div class="bs col-xs-2 col-md-1">
+                                    <li id="Go_back_to_previouse_pageicon" onclick="back()" style="list-style:none;"><a href="#" style="text-decoration:none; color:#000000; outline:none; cursor:pointer;"><i class="ci-hk-arrow-29 ci-hk-2x" aria-hidden="true"></i></a></li>
+                                </div>
+                                <div class="bs col-xs-10 col-md-11">
+                                    <li id="Go_back_to_previouse_page" onclick="back()" style="list-style:none;"><a href="#" style="text-decoration:none; color:#000000; outline:none; cursor:pointer;"><h5>{!$Label.Go_back_to_previouse_page}</h5></a></li>
+                                </div>
+                            </div>
+                        
+                    </div>
+                </apex:outputPanel>
+            </apex:form>
+        </div>
+
+        <div>
+            {!$Site.ErrorMessage} - {!$Site.ErrorDescription}. URL:{!$Site.Domain}{!$Site.Prefix}/{!$Site.OriginalUrl}
+        </div>
+        
+        <br/>
+        
+        <script type="text/javascript">
+            
+            if(Cigna.Util.checkWebView() && Cigna.Util.isIOS()){
+                document.getElementsByTagName("body")[0].style.padding = "20px 0px 0px 0px";
+            }
+
+            function gotoHomePage() {
+                var sitePrefix = "{!$Site.Prefix}";
+                var url = "";
+                var userType = "{!Text($User.UserType)}";
+                
+                // Rancho_ErrorPage_20210528
+                console.log('sitePrefix: '+sitePrefix);
+                var tempSiteName = "{!$Setup.Portal_Settings__c.Broker_Portal_Lightning_Site_Name__c}";
+                var siteName = "{!$Site.name}";
+                if (/*sitePrefix.indexOf("/broker") >=0*/Cigna.Util.isBrokerPortal() ) {                    
+                    if(userType == 'Guest'){
+                        // Rancho_ErrorPage_20210528
+                        // url = sitePrefix + "/apex/BrokerLoginVFP";
+                        if(siteName==tempSiteName){
+                            url = sitePrefix;
+                        }else{
+                            url = sitePrefix + "/apex/BrokerLoginVFP";
+                        }
+                    } else {
+                        // Rancho_ErrorPage_20210528
+                        // url = sitePrefix + "/apex/BrkBrokerLandingVFP";
+                        if(siteName==tempSiteName){
+                            url = sitePrefix + "/s/";
+                        }else{
+                            url = sitePrefix + "/apex/BrkBrokerLandingVFP";
+                        }
+                    }
+                } else if (sitePrefix == "/customer") {
+                    if(userType == 'Guest'){
+                        url = sitePrefix + "/apex/CustomerLoginVFP";
+                    } else {
+                        url = sitePrefix + "/apex/CustomerLandingPage";
+                    }
+                } else {
+                    var currentUrl = window.location.href.substring(window.location.href.lastIndexOf('/'));
+                    console.log('currentUrl: '+currentUrl);
+                    if (currentUrl.toLowerCase().indexOf('/cus') == 0) {
+                        url = "/apex/CustomerLandingPage"; 
+                    } else if (currentUrl.toLowerCase().indexOf('/brk') == 0) {
+                        // Rancho_ErrorPage_20210528
+                        // url = "/apex/BrkBrokerLandingVFP";
+                        if(siteName==tempSiteName){
+                            url = sitePrefix + "/s/";
+                        }else{
+                            url = sitePrefix + "/apex/BrkBrokerLandingVFP";
+                        }
+                    } else {
+                        url = "/apex/CustomerLandingPage"; 
+                    } 
+                }
+                console.log('errorPageUrl: '+url);
+                if (Cigna.Util.isSalesforce1()) {
+                    // Rancho_ErrorPage_20210528
+                    // sforce.one.navigateToURL(url, true);
+                    if(siteName==tempSiteName){
+                        window.parent.location.href = url;
+                    }else{
+                        sforce.one.navigateToURL(url, true);
+                    }
+                } else {
+                    window.location.href = url;
+                }
+            }
+            
+            function back(){
+                var a=window.location.toString().slice(-1);
+                if(a=='#') history.go(-2);
+                else history.go(-1);
+            }
+            
+            //console.log("ERROR: {!$Site.ErrorMessage} - {!$Site.ErrorDescription}. URL:{!$Site.Domain}{!$Site.Prefix}/{!$Site.OriginalUrl}");
+ 
+        </script>
+    </apex:define>
+</apex:page>

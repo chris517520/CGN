@@ -1,0 +1,146 @@
+<apex:page docType="html-5.0" id="OpptyTransferRequest" title="Oppty Transfer Request" Controller="TMOpptyTransferRequestCtrl">
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <apex:includeScript value="/support/console/33.0/integration.js"/>
+    <apex:sectionHeader title="Opportunity Transfer Request"/>
+    <apex:form id="transferForm">
+    <apex:messages />
+    <apex:actionStatus id="loader-icon">
+            <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                     &nbsp;
+                 </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+    <apex:pageBlock title="Self Owned Opportunities" rendered="{!hasSelfOwnOpp}">
+        <apex:pageblockTable value="{!selfOwnOppList}" var="ow">
+            <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Opportunity_ID__c.Label}">
+                <a href="javascript:void(0);" onclick="OpenSObject('{!ow.id}','{!ow.Name}')" >{!ow.Opportunity_ID__c}</a>
+            </apex:column>
+            <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Name.Label}">
+                <a href="javascript:void(0);" onclick="OpenSObject('{!ow.id}','{!ow.Name}')" >{!ow.Name}</a>
+            </apex:column>
+            <apex:column headerValue="{!$ObjectType.Account.Fields.Name.Label}">
+                <a href="javascript:void(0);" onclick="OpenSObject('{!ow.Accountid}','{!ow.Account.Name}')" >{!ow.Account.Name}</a>
+            </apex:column>
+            <apex:column headerValue="{!$ObjectType.Account.Fields.Age__c.Label}">
+                {!ow.Account.Age__c}
+            </apex:column>
+            <apex:column headerValue="{!$ObjectType.Account.Fields.PersonMobilePhone.Label}">
+                {!ow.Account.PersonMobilePhone}
+            </apex:column>
+            <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Batch_No__c.Label}">
+                {!ow.Batch_No__c}
+            </apex:column>
+            <apex:column headerValue="Campaign Name">
+                {!ow.Campaign__r.name}
+            </apex:column>
+            <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Assign_Date__c.Label}">
+                <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                    <apex:Param value="{!ow.Assign_Date__c}"/>
+                </apex:OutputText>
+            </apex:column>
+            <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Last_Called_Date__c.Label}">
+                <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                    <apex:Param value="{!ow.Last_Called_Date__c}"/>
+                </apex:OutputText>
+            </apex:column>
+            <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Result__c.Label}">
+                {!ow.Result__c}
+            </apex:column>
+            <apex:column headerValue="Owner Full Name">
+                {!ow.Owner.Name}
+            </apex:column>
+        </apex:pageblockTable>
+    </apex:pageBlock>
+    
+    <apex:pageBlock title="Owned By Other Agents" rendered="{!hasOtherOpp}" >
+        
+        
+        <apex:pageblockButtons location="bottom">
+            <apex:commandButton value="Transfer Request" action="{!requestOpptyTransfer}" reRender="transferForm" status="loader-icon"/>
+        </apex:pageblockButtons>
+        <apex:pageblockTable value="{!otherOppWrapperList}" var="ow">
+            <apex:column headerValue="Action">
+                <apex:inputCheckbox id="wrapperCheckbox" value="{!ow.isSelected}" />
+            </apex:column>
+            <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Opportunity_ID__c.Label}">
+                {!ow.oppty.Opportunity_ID__c}
+            </apex:column>
+            <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Name.Label}">
+                {!ow.oppty.Name}
+            </apex:column>
+            <apex:column headerValue="{!$ObjectType.Account.Fields.Name.Label}">
+                {!ow.oppty.Account.Name}
+            </apex:column>
+            <apex:column headerValue="{!$ObjectType.Account.Fields.Age__c.Label}">
+                {!ow.oppty.Account.Age__c}
+            </apex:column>
+            <apex:column headerValue="{!$ObjectType.Account.Fields.PersonMobilePhone.Label}">
+                {!ow.oppty.Account.PersonMobilePhone}
+            </apex:column>
+            <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Batch_No__c.Label}">
+                {!ow.oppty.Batch_No__c}
+            </apex:column>
+            <apex:column headerValue="Campaign Name">
+                {!ow.oppty.Campaign__r.name}
+            </apex:column>
+            <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Assign_Date__c.Label}">
+                <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                    <apex:Param value="{!ow.oppty.Assign_Date__c}"/>
+                </apex:OutputText>
+            </apex:column>
+            <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Last_Called_Date__c.Label}">
+                <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                    <apex:Param value="{!ow.oppty.Last_Called_Date__c}"/>
+                </apex:OutputText>
+            </apex:column>
+            <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Result__c.Label}">
+                {!ow.oppty.Result__c}
+            </apex:column>
+            <apex:column headerValue="Owner Full Name">
+                {!ow.oppty.Owner.Name}
+            </apex:column>
+            
+        </apex:pageblockTable>
+        
+    </apex:pageBlock>
+    
+    <apex:actionFunction action="{!createAccAndOpp}" 
+                                name="createAccAndOpp" 
+                                reRender="transferForm"
+                                status="loader-icon" />
+                                
+    <script>
+        $(document).ready(function() {
+            if({!hasSelfOwnOpp} == false && {!hasOtherOpp} == false){
+                createAccAndOpp();
+            }
+        });
+    
+        function OpenSObject(id,TabName){
+            if(id!=null && id!=''){
+                if (sforce.console.isInConsole()) {
+                    var rnd = Math.floor(Math.random() * 1000000000000);
+                    sforce.console.openPrimaryTab(null, '/' + id, true, TabName, null, TabName);
+                    sforce.console.setCustomConsoleComponentVisible(false);   
+                }else{
+                    window.open('/' + id, '_blank');
+                }
+            } 
+        }
+        
+        $(function() {
+            $('input[id$="wrapperCheckbox"]').click(function() {
+                $('input[id$="wrapperCheckbox"]').prop("checked", false);
+                $(this).prop("checked", true);
+            });
+        });
+    </script>
+    </apex:form>
+</apex:page>

@@ -1,0 +1,547 @@
+<apex:page showHeader="false" applyHtmlTag="false" renderAs="PDF" controller="TMReportAutoUWApplicationPDFCtrl" id="TMReportAutoUWApplicationpdfVFP" title="Auto UW Application Form" >
+<head>
+<style>
+ @page {
+        size: A4;
+        margin: 20px; 
+    }
+.headRow {width:700px; display:block;}
+.tbRowData {width:700px; display:block; text-align: center;}
+.blockElement {display:inline-block;}
+
+.rowtb {width:100%; border: 1px solid black;  border-collapse:collapse;}
+
+.rowtb tr td,.rowtb tr th {padding: 5px 2px 5px 2px; border: 1px solid black; text-align: left;}
+
+.rowtbHeader th {border-right: 1px solid black;word-wrap:break-word;white-space: normal;}
+.rowtbHeader th:last-child  {border-right: 0px solid black;}
+.bordertopnone {  border-top:none !important;}
+.borderrightnone {  border-right:none !important;}
+.topRow th{ border-top:none !important;}
+.data tr td strong {min-width:50px;text-align: right;}
+.data tr td:last-child {border-right: none;}
+.data tr td {border-right: 1px solid black;border-top: 1px solid black; text-align: left;}
+.detail tr:first-of-type td {border-top: none;}
+.options tr td {border: none;} 
+.lineTable {text-align: center; margin: 0 20px;border: 1px solid black;}
+h3 {    padding: 2px 24px;}
+body {font-size: 11px; word-wrap:break-word;white-space: normal; font-family: Arial Unicode MS,"Microsoft YaHei",Helvetica; }
+</style>
+</head>
+<body>
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <apex:includeScript value="/support/console/41.0/integration.js"/>
+
+<apex:form id="mainPage">  
+<apex:variable value="{!0}" var="ind" />
+<apex:repeat value="{!dataList}" var="rowdata">
+<apex:variable value="{!rowdata.pol}" var="data" />
+<apex:variable value="{!ind+1}" var="ind" />
+<div class="headRow">
+ 
+        <div class="blockElement" style="width:23%; height: 85px;  text-align: center; vertical-align: bottom;">
+            <apex:image id="cignaLogo" styleClass="cignaLogo" value="{!URLFOR($Resource.Cigna_Logo_png)}" style="height: 80px" />
+        </div>
+        <div class="blockElement" style="width:50%;  height: 85px; text-align: center;   border: 1px solid black; vertical-align: bottom;
+            background-color: lightgray;"><br/><span style="font-size: 14px;">Auto UW Order Details</span> <br/><br/>
+            <apex:outputText value="{!$Label.TM_Report_ReportDate}"/><apex:outputText value="{0,date,dd MMM yyyy}">
+                <apex:Param value="{!data.Control_Report_Date__c}"/>
+            </apex:outputText>
+        </div>
+        <div class="blockElement"  style="width:25%;  height: 85px; "> 
+            <div style="padding-top: 45px ;text-align: right; vertical-align: bottom;">            
+            <apex:outputText value="{!$Label.TM_Report_PrintDate}"/><apex:outputText value="{0,date,dd MMM yyyy}">
+                <apex:Param value="{!Now()}"/>
+            </apex:outputText>
+            <br/><br/>
+            <span style="color:red;">AML High risk indicator: {!data.AML_High_Risk_Ind__c}</span>
+            </div>
+        </div>
+
+</div>
+<br/>
+
+<div class="pdfDataSheet">
+    <div class="tbRowData" style="margin: 2px 20px;">
+        <table class="rowtb" >
+            <tr>
+                <th colspan="6" style="background-color:#D8D8D8;text-align: right; ">
+                    (Office Use only 只供內部填寫) 
+                </th>
+            </tr>
+            <tr >
+                <th>SFDC Policy No.: </th>
+                <td colspan="2"><apex:outputField value="{!data.Policy_No__c}"/></td>
+                <th>Opportunity ID:</th>
+                <td colspan="2"><apex:outputField value="{!data.Opportunity__r.Opportunity_ID__c}"/></td>                 
+            </tr>
+            <tr >
+                <th style='width:17%;'>Campaign No. </th>
+                <td style='width:17%;'><apex:outputText value="{!data.Policy_Transaction__r.Selected_Campaign__r.IPAS_Campaign_Code__c}"/></td>
+                <th style='width:16%;'>Seller ID:</th>
+                 <td  style='width:17%;'><apex:outputText value="{!data.TMR_Seller_ID__c}"/></td>   
+                <th style='width:17%;'>Order Date:</th>
+                <td  style='width:16%;'><apex:outputField value="{!data.Policy_Effective_Date__c}"/></td>
+            </tr>
+            <tr >
+                <th style='width:17%;'>Eligibility:</th>
+                <td style='width:17%;'><apex:repeat value="{!data.Person_Insureds__r}" var="eli">{!eli.Insured_Type__c},</apex:repeat></td>
+                <th style='width:16%;'>Master Policy No:</th>
+                 <td  style='width:17%;'><apex:outputField value="{!data.Master_Policy_No__c}"/></td>   
+                <th style='width:17%;'>Status:</th>
+                <td  style='width:16%;'><apex:outputField value="{!data.UW_Overrall_Result__c}"/></td>
+            </tr>
+            <tr>
+                <th colspan="6" style="background-color:#D8D8D8;text-align: left; ">
+                   Policyholder Information 申請人資料
+                </th>
+            </tr>
+            <tr >
+                <th>Last Name:<br/> 姓氏:</th>
+                <td colspan="2"><apex:outputField value="{!data.Policy_Holder_Last_Name__c}"/></td>
+                <th>First Name:<br/>名字:</th>
+                <td colspan="2"><apex:outputField value="{!data.Policy_Holder_First_Name__c}"/></td>                 
+            </tr>
+            <tr >
+                <th>Nationality<br/>國籍:</th>
+                <td colspan="2"><apex:outputField value="{!data.Nationality__c}"/></td>
+                <th>ID Type:<br/>身份證類別:</th>
+                <td colspan="2"><apex:outputField value="{!data.ID_Type__c}"/></td>                 
+            </tr>
+            <tr>
+             <!--  <td colspan="6" style="padding:0px;border:none;">
+                    <table style="width:100%; border-collapse:collapse;" >
+                    <tr > -->
+                        <th style='width:17%;border-right: 1px solid black;'>ID No:<br/>證件號碼:</th>
+                        <td style='width:17%;'><apex:outputField value="{!data.Personal_ID__c}"/></td>
+                        <th style='width:16%;'>Sex:<br/>性別:</th>
+                        <td style='width:17%;'><apex:outputField value="{!data.Gender__c}"/></td>   
+                        <th style='width:17%;'>Date of Birth<br/>(YYYY/MM/DD):<br/>出生日期 (年/月/日)：</th>
+                        <td style='width:16%;'><apex:outputText value="{0,date,yyyy/MM/dd}">
+                            <apex:Param value="{!data.Date_of_Birth__c}"/>
+                        </apex:outputText></td>
+          <!--           </tr>
+                    </table>
+                </td>-->
+            </tr>
+            <tr >
+                <th>ID Expiry Date:<br/>證件有效日期:</th>
+                <td colspan="2"><apex:outputText value="{0,date,yyyy/MM/dd}">
+                    <apex:Param value="{!data.ID_Expiry_Date__c}"/>
+                </apex:outputText></td>
+                <th>Educational level:<br/>教育程度:</th>
+                <td colspan="2"><apex:outputField value="{!data.Education_Level__c}"/></td>               
+            </tr>
+            <tr >
+                <th style='width:17%;'>Home Phone:<br/>住宅電話號碼:</th>
+                <td style='width:17%;'><apex:outputField value="{!data.Home_Phone__c}"/></td>
+                <th style='width:16%;'>Office Phone:<br/>辦公室電話號碼:</th>
+                 <td style='width:17%;'><apex:outputField value="{!data.Office_Phone__c}"/></td>   
+                <th style='width:17%;'>Mobile:<br/>手提電話號碼 :</th>
+                <td style='width:16%;'><apex:outputField value="{!data.Mobile_Phone__c}"/></td>
+            </tr>
+            <tr >
+                <th style="width:17%">Residential Address:<br/>住宅地址:</th>
+                <td colspan="5" >
+                    <apex:outputPanel layout="none" rendered="{!data.product__r.Is_Life__c}">
+                        <apex:outputField value="{!data.Residential_Address_1__c}"/>&nbsp;
+                        <apex:outputField value="{!data.Residential_Address_2__c}"/>&nbsp; 
+                        <apex:outputField value="{!data.Residential_Address_3__c}"/>&nbsp;
+                        <apex:outputField value="{!data.Residential_Address_4__c}"/>&nbsp;
+                        <apex:outputField value="{!data.Residential_Address_Country__c}"/>
+                    </apex:outputPanel>
+                </td>               
+            </tr>
+             <tr >
+                <th style="width:17%">Permanent Address:<br/>永久地址：</th>
+                <td colspan="5"  >
+                    <apex:outputPanel layout="none" rendered="false">
+                        <apex:outputField value="{!data.Permanent_Address_1__c}"/>&nbsp; 
+                        <apex:outputField value="{!data.Permanent_Address_2__c}"/>&nbsp; 
+                        <apex:outputField value="{!data.Permanent_Address_3__c}"/>&nbsp;
+                        <apex:outputField value="{!data.Permanent_Address_4__c}"/>&nbsp;
+                        <apex:outputField value="{!data.Permanent_Address_Country__c}"/>
+                    </apex:outputPanel>
+                </td>
+            </tr>
+            <tr >
+                <th style="width:17%">Corresp. Address:<br/>通訊地址:</th>
+                <td colspan="5"  >
+                    <apex:outputField value="{!data.Corresponding_Address_1__c}"/>&nbsp; 
+                    <apex:outputField value="{!data.Corresponding_Address_2__c}"/>&nbsp;  
+                    <apex:outputField value="{!data.Corresponding_Address_3__c}"/>&nbsp; 
+                    <apex:outputField value="{!data.Corresponding_Address_4__c}"/>&nbsp; 
+                    <apex:outputField value="{!data.Corresponding_Address_Country__c}"/>
+                </td>
+            </tr>
+            <tr >
+                <th>Occupation /Job Title:<br/>職業及職銜:</th>
+                <td colspan="2"><apex:outputField value="{!data.Position__c}"/></td>
+                <th>Nature of Bussiness:<br/>業務性質:</th>
+                <td colspan="2"><apex:outputField value="{!data.Business_Nature__c}"/></td>               
+            </tr>
+            <tr >
+                <th>Name of Employer:<br/>僱主名稱:</th>
+                <td colspan="2"><apex:outputField value="{!data.Company__c}"/></td>
+                <th>Address of Employer<br/>(country only):<br/>僱主地址:</th>
+                <td colspan="2"><apex:outputField value="{!data.Country__c}"/></td>               
+            </tr>
+            <tr >
+                <th>Place of Birth:<br/>出生地:</th>
+                <td colspan="2"><apex:outputField value="{!data.Place_of_Birth__c}"/></td>
+                <th colspan="3"> </th>                             
+            </tr>
+            <tr >
+                <th>Means of Income:<br/>收入來源:</th>
+                <td colspan="2"><apex:outputField value="{!data.Means_of_Income__c}"/></td>
+                <th colspan="3"> </th>                             
+            </tr>
+            <tr >
+                <th>Maturity policy number:</th>
+                <td colspan="2"><apex:outputField value="{!data.Account__r.Maturity_Policy_Number__c}"/></td>
+                <th>Single Premium:</th>
+                <td colspan="2"><apex:outputText value="{!rowdata.singlePremium}"/></td>               
+            </tr>
+            <tr >
+                <th>Tax Residence 1:</th>
+                <td colspan="2"><apex:outputField value="{!data.Tax_Residence_1__c}"/></td>
+                <th>TIN 1:<br/>稅單號碼 1:</th>
+                <td colspan="2"><apex:outputField value="{!data.Tax_Num_1__c}"/></td>               
+            </tr>
+            <tr >
+                <th>Tax Residence 2:</th>
+                <td colspan="2"><apex:outputField value="{!data.Tax_Residence_2__c}"/></td>
+                <th>TIN 2:<br/>稅單號碼 2:</th>
+                <td colspan="2"><apex:outputField value="{!data.Tax_Num_2__c}"/></td>               
+            </tr>
+            <tr >
+                <th>Tax Residence 3:</th>
+                <td colspan="2"><apex:outputField value="{!data.Tax_Residence_3__c}"/></td>
+                <th>TIN 3:<br/>稅單號碼 3:</th>
+                <td colspan="2"><apex:outputField value="{!data.Tax_Num_3__c}"/></td>               
+            </tr>
+        </table>
+    </div>
+     <div class="tbRowData" style="margin: 2px 20px;">
+        <table class="rowtb" >
+            <tr>
+                <th colspan="6" style="background-color:#D8D8D8;text-align: left; ">
+                   Source of fund 資金來源
+                </th>
+            </tr>
+            <tr >
+                <apex:repeat value="{!Items}" var="itm">                            
+                        <td  >
+                            <table >
+                                <tr>
+                                    <td style='border:none !important;'>
+                                        <img src="/img/checkbox_{!IF(itm.value == data.Source_of_Fund__c, '', 'un')}checked.gif" />
+                                    </td>
+                                    <td style='text-align: center;border:none !important;'>
+                                        <label >{!itm.label} {!if(data.Source_of_Fund__c =='06 - Other (Please specify)',data.Other_Source_of_Fund__c , '')}</label>  
+                                    </td>
+                                </tr>
+                            </table>                                       
+                        </td>                            
+                </apex:repeat>
+            </tr>
+        </table> 
+    </div>
+    <div class="tbRowData" style="margin: 2px 20px;">
+        <table class="rowtb" >
+            <tr>
+                <th colspan="3" style="background-color:#D8D8D8;text-align: left; ">
+                   Person Insured Information 準受保人資料 
+                </th>
+                <th colspan="3" style="background-color:#D8D8D8;text-align: left; ">
+                   (如申請人與準受保人並非同一人，請填寫此部份)
+                </th>
+            </tr>
+            <apex:repeat value="{!piList}" var="pi">
+             <tr >
+                <th>Last Name:<br/> 姓氏:</th>
+                <td colspan="2"><apex:outputField value="{!pi.Insured_Last_Name__c}"/></td>
+                <th>First Name:<br/>名字:</th>
+                <td colspan="2"><apex:outputField value="{!pi.Insured_First_Name__c}"/></td>
+            </tr>
+            <tr>
+            <th style='width:17%;border-right: 1px solid black;'>HKID No:<br/>香港身份證號碼::</th>
+                        <td style='width:17%;'><apex:outputField value="{!pi.Personal_ID__c}"/></td>
+                        <th style='width:16%;'>Sex:<br/>性別:</th>
+                        <td style='width:17%;'><apex:outputField value="{!pi.Gender__c}"/></td>   
+                        <th style='width:17%;'>Date of Birth<br/>(YYYY/MM/DD):<br/>出生日期 (年/月/日)：</th>
+                        <td style='width:16%;'><apex:outputText value="{0,date,yyyy/MM/dd}">
+                            <apex:Param value="{!pi.Date_of_Birth__c}"/>
+                        </apex:outputText></td>
+            </tr>
+            <tr >
+                <th style='width:17%;'>Home Phone:<br/>住宅電話號碼:</th>
+                <td style='width:17%;'><apex:outputField value="{!pi.Home_Phone__c}"/></td>
+                <th style='width:16%;'>Office Phone:<br/>辦公室電話號碼:</th>
+                 <td style='width:17%;'><apex:outputField value="{!pi.Office_Phone__c}"/></td>   
+                <th style='width:17%;'>Mobile:<br/>手提電話號碼 :</th>
+                <td style='width:16%;'><apex:outputField value="{!pi.Mobile_Phone__c}"/></td>
+            </tr>
+            <tr >
+                <th style="width:17%">Address:<br/>本港住宅地址:</th>                 
+                <td colspan="5" >
+                    <apex:outputText value="{!pi.Residential_Address_1__c}"/>&nbsp;
+                    <apex:outputText value="{!pi.Residential_Address_2__c}"/>&nbsp; 
+                    <apex:outputText value="{!pi.Residential_Address_3__c}"/>&nbsp;
+                    <apex:outputText value="{!pi.Residential_Address_4__c}"/>&nbsp;
+                    <apex:outputText value="{!pi.Residential_Address_Country__c}"/>
+                </td>               
+            </tr>
+            </apex:repeat>
+        </table> 
+    </div>
+
+    <div class="tbRowData" style="margin: 2px 20px;">
+        <table class="rowtb" >
+            <tr>
+                <th colspan="7" style="text-align: left; ">
+                    Basic Plan Information 基本計劃資料
+                </th>
+            </tr>
+            <tr style="background-color:#D8D8D8;">
+                <th style="width:20%;border-bottom: none;">Plan Name</th>
+                <th style="width:20%;border-bottom: none;">Plan Level</th>
+                <th style="width:20%;border-bottom: none;">Premium (HKD)</th>
+                <th colspan="4">Discount Information 保費調整資料</th>               
+            </tr>
+            <tr style="background-color:#D8D8D8;">
+                <th style="border-top: none;">計劃名稱</th>
+                <th style="border-top: none;">基本計劃</th>
+                <th style="border-top: none;">保費 (港幣)</th>
+                <th>Discount 1</th>   
+                <th>Duration 1</th> 
+                <th>Discount 2</th> 
+                <th>Duration 2</th>              
+            </tr>
+            <apex:repeat value="{!rowdata.basicList}" var="Basic">
+                <tr>
+                    <td>{!Basic.Product_Code_for_report__c } </td>
+                    <td><apex:outputField value="{!Basic.Plan_Level__c}"/></td>
+                    <td><apex:outputText value="{!Basic.Premium__c}"/></td>
+                    <td><apex:outputField value="{!Basic.Discount_1__c}"/></td>
+                    <td><apex:outputField value="{!Basic.Duration_Discount1__c}"/></td>
+                    <td><apex:outputField value="{!Basic.Discount_2__c}"/></td>
+                    <td><apex:outputField value="{!Basic.Duration_Discount2__c}"/></td>
+                </tr>
+            </apex:repeat>
+            <tr>
+                <th colspan="7" style="text-align: left; ">
+                    Optional Rider Information 附加保障資料
+                </th>
+            </tr>
+            <tr style="background-color:#D8D8D8;">
+                <th style="width:20%;border-bottom: none;">Optional Rider Name</th>
+                <th style="width:20%;border-bottom: none;">Plan Level</th>
+                <th style="width:20%;border-bottom: none;">Premium (HKD)</th>
+                <th colspan="4">Discount Information 保費調整資料</th>               
+            </tr>
+            <tr style="background-color:#D8D8D8;">
+                <th style="border-top: none;">附加保障名稱</th>
+                <th style="border-top: none;">附加保障計劃</th>
+                <th style="border-top: none;">保費 (港幣)</th>
+                <th>Discount 1</th>  
+                <th>Duration 1</th> 
+                <th>Discount 2</th> 
+                <th>Duration 2</th>                
+            </tr>
+            <apex:repeat value="{!rowdata.riderList}" var="rider">
+                <tr>
+                    <td>{!rider.Product_Code_for_report__c }</td>
+                    <td><apex:outputField value="{!rider.Plan_Level__c}"/></td>
+                     <td><apex:outputText value="{!rider.Premium__c}"/></td>
+                    <td><apex:outputField value="{!rider.Discount_1__c}"/></td>
+                    <td><apex:outputField value="{!rider.Duration_Discount1__c}"/></td>
+                    <td><apex:outputField value="{!rider.Discount_2__c}"/></td>
+                    <td><apex:outputField value="{!rider.Duration_Discount2__c}"/></td>
+                </tr>
+            </apex:repeat>
+        </table>
+    </div>
+
+<!-- page breaker? -->
+    <div style="page-break-after:always;"></div>
+    <div class="tbRowData" style="margin: 20px 20px 2px 20px;">
+        <table class="rowtb" >
+            <tr>
+                <td style="width:25%;">
+                    SFDC Policy No. :
+                </td>
+                <td style="width:25%;">
+                    <apex:outputField value="{!data.Policy_No__c}"/>
+                </td>
+                <td style="width:25%;">
+                    Opportunity Id:
+                </td>
+                <td style="width:25%;">
+                    <apex:outputField value="{!data.Opportunity__r.Opportunity_ID__c}"/>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <apex:repeat value="{!data.Person_Insureds__r}" var="PI" >  
+    <div class="tbRowData" style="margin: 2px 20px;">
+        <table class="rowtb" >
+            <tr>
+                <th colspan="4" style="background-color:#D8D8D8;text-align: left; ">
+                    Personal Medical information 個人健康資料
+                </th>
+            </tr>
+            <tr>
+                <td style="width:25%;">
+                    Weight:<br/>
+                    重量:
+                </td>
+                <td style="width:25%;">
+                    {!PI.Weight__c} {!PI.Weight_Unit__c}
+                </td>
+                <td style="width:25%;">
+                    Height:<br/>
+                    高度:
+                </td>
+                <td style="width:25%;">
+                    {!PI.Height__c} {!PI.Height_Unit__c} {! if(PI.Height_Unit__c == 'ft' && PI.Height_Inch__c != null , PI.Height_Inch__c ,'')} {! if(PI.Height_Unit__c == 'ft' && PI.Height_Inch__c != null , 'inch' ,'')}
+                </td>
+            </tr>
+            <tr>
+                <td style="width:25%;">
+                    Smoker:<br/>
+                    吸煙者:
+                </td>
+                <td colspan="3">
+                    {!if(PI.Smoker__c=='yes','S','')}{!if(PI.Smoker__c=='no','NS','')} 
+                </td>
+                 
+            </tr>
+            <tr>
+                <td style="width:25%;">
+                    Occupation:<br/>
+                    職業:
+                </td>
+                <td style="width:25%;">
+                    {!PI.Position__c} 
+                </td>
+                <td style="width:25%;">
+                    Monthly Income (HKD):<br/>
+                    每月收入(港幣):
+                </td>
+                <td style="width:25%;">
+                    {!if (PI.insured_type__c='PH = PI', data.Income_HKD__c, PI.Income_HKD__c )}
+                </td>
+            </tr>
+             
+        </table>
+    </div>
+</apex:repeat>
+
+    <div class="tbRowData" style="margin: 2px 20px;">
+        <table class="rowtb" >
+            <tr>
+                <th style="background-color:#D8D8D8;text-align: left;border-right: none; ">
+                    Payment Details
+                </th>
+                <th colspan="3" style="background-color:#D8D8D8;text-align: right; border-left:none;">
+                    (Office Use only 只供內部填寫) 
+                </th>
+            </tr>
+             <tr>
+                <th>Sponsor / Partner:</th>
+                <td colspan="3"  ><apex:outputField value="{!data.Core_Campaign__r.Business_Partner__r.IPAS_Sponsor_Code__c}"/></td>
+            </tr>
+            <tr>
+                <th style="width:25%;">Payment Frequency:</th>
+                <td style="width:25%;"><apex:outputField value="{!data.Payment_Frequency__c}"/></td>
+                <th style="width:25%;">Payment Method:</th>
+                <td style="width:25%;"><apex:outputField value="{!data.Payment_Type__c}"/></td>
+            </tr>
+            <tr>
+                <th style="width:25%;">Bank / CRCAT:</th>
+                <td style="width:25%;"><apex:outputField value="{!data.Bank_Code__c}"/></td>
+                <th style="width:25%;">Account No:</th>
+                <td style="width:25%;">
+                    {!if (data.Payment_Type__c='Bank', data.Bank_Account_No__c, '' )}
+                    {!if (data.Payment_Type__c='Credit Card', data.Credit_Card_Number__c, '' )}
+                    {!if (data.Payment_Type__c='Direct Bill', '', '' )}
+                </td>
+            </tr>
+            <tr>
+                <th style="width:25%;">Bank Name:</th>
+                <td style="width:25%;"><apex:outputField value="{!data.Bank_Name__c}"/>{!data.Name_of_Card_Issuing_Bank__c}</td>
+                <th style="width:25%;">Card Expiry Date:</th>
+                <td style="width:25%;"><apex:outputText value="{0,date,yyyy/MM/dd}">
+                    <apex:Param value="{!data.Card_Expiry_Date__c}"/>
+                </apex:outputText></td>
+            </tr>
+             <tr>
+                <th>Total Premium (HKD):</th>
+                <td colspan="3"  ><apex:outputText value="{!data.Actual_Premium__c}"/></td>
+            </tr>
+            <tr>
+                <th colspan="4" style="background-color:#D8D8D8;text-align: left;  ">
+                    Reference Information
+                </th>
+            </tr>
+            <tr>
+                <th style="width:25%;">IQ ID:</th>
+                <td style="width:25%;"><apex:outputText value="{!data.Opportunity__r.IQ_ID__c}"/></td>
+                <th style="width:25%;">Running No:</th>
+                <td style="width:25%;"><apex:outputText value="{!data.Opportunity__r.Running_No__c}"/></td>
+            </tr>
+            <tr>
+                <th style="width:25%;">ACTIVITY:</th>
+                <td style="width:25%;"><apex:outputField value="{!data.Opportunity__r.Activity__c}"/></td>
+                <th style="width:25%;">Date:</th>
+                <td style="width:25%;"><apex:outputText value="{0,date,yyyy/MM/dd}">
+                    <apex:Param value="{!data.UW_Date__c}"/>
+                </apex:outputText></td>
+            </tr>
+        </table>
+    </div>
+    <div class="tbRowData" style="margin: 0px 20px 10px 20px;">
+        <table class="rowtb" >
+            <tr>
+                <th style="width:25%;text-align: center;background-color:#D8D8D8;">Opportunity ID</th>
+                <th style="width:38%;text-align: center;background-color:#D8D8D8;">Call Start Time</th>
+                <th style="width:37%;text-align: center;background-color:#D8D8D8;">Call End Time</th>
+            </tr>
+            <tr>
+                <td  ><apex:outputField value="{!data.Opportunity__r.Opportunity_ID__c}"/></td>
+                <td  ><apex:outputText value="{0,date,yyyy-MM-dd HH:mm:ss}">
+                    <apex:Param value="{!rowdata.lastCallStartTime}"/>
+                </apex:outputText>  </td>
+                <td  ><apex:outputText value="{0,date,yyyy-MM-dd HH:mm:ss}">
+                    <apex:Param value="{!rowdata.lastCallEndTime}"/>
+                </apex:outputText> </td>
+            </tr>
+        </table>
+    </div>
+    <div class="tbRowData" style="margin: 2px 20px 5px 20px;">
+        <table style="width:100%;text-align: left;" >
+            <tr>
+                <td style=" word-wrap:break-word;white-space: normal;">本文件內容是根據閣下(保單持有人或受保人)於保單認購日/簽發日提供予信諾之員工之答案而擬定。閣下須細簽其內容及確保其真確性。任何錯誤陳述將影響此保單對閣下保障之有效性。</td>
+            </tr> 
+        </table>
+    </div>
+    <div class="tbRowData" style="margin: 2px 20px 2px 20px;">
+        <table style="width:100%;text-align: left;" >
+            <tr>
+                <td>The above Statement is based on the answers you, the Policyholder and/or Person Insured whoever is applicable, gave to the representative of CIGNA  on the Order Date. You should read and ensure the correctness of the information, upon which CIGNA issued the Policy.  Any misrepresentation would affect your insurability and the validity of the Policy.</td>
+            </tr> 
+        </table>
+    </div>
+</div>
+<br/><br/><br/><br/>
+ <apex:outputPanel rendered="{! recordFound!=ind}">
+ <div style="page-break-after:always;"></div>
+</apex:outputPanel>
+</apex:repeat>
+</apex:form>
+
+</body>
+
+</apex:page>

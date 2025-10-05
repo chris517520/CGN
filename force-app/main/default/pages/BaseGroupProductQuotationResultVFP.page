@@ -1,0 +1,217 @@
+<apex:page docType="html-5.0" controller="GroupQuatationCtrl">
+  <div id="resultTableDivApp" >
+    <apex:form >
+    <apex:actionFunction name="confirm" action="{!confirmNext}" namespace="Confirmation"  />  
+    </apex:form>  
+    <div id="cigna-quote-summary-desktop" class="bs visible-xs cigna-floating-bottom-panel">
+        
+        <div id="resultDivApp" class="bs cigna-quote-summary">
+        <apex:outputPanel id="resultPanelApp">
+        
+            <div>
+                <apex:outputPanel rendered="{!isQuotation}" >
+                        <div style="padding-left:15px;float:left;">
+                            <h4 id='quote' style="text-transform: uppercase;">{!$Label.Quotation}</h4>
+                        </div>
+                        <div align="right" style="padding-right:15px;">
+                            <h5 style="text-align:right;padding-right:0px;" >
+                                <a class="bs cigna-fg-orange-medium onclick-pointer" id="quote-save-btn" style="text-decoration: none;" onClick="Cigna.GroupQuote.clicksaveQuote();"> 
+                                    <i aria-hidden="true" class="ci-hk-briefcase"></i>{!$Label.Save}
+                                </a>
+                            </h5>
+                        </div>
+                 </apex:outputPanel>
+                 <apex:outputPanel rendered="{!!isQuotation}">
+                        <div style="padding-left:15px;">
+                            <h4 id='quote' style="text-transform: uppercase;">{!$Label.Confirmation}</h4>
+                        </div>
+                 </apex:outputPanel>
+
+                <div id='phone'>
+                <apex:outputPanel rendered="{!showSummary}" layout="none">
+                    <h5 class="bs col-xs-4" style="text-align:right;float:right;"><a class="bs cigna-fg-orange-medium onclick-pointer dropup" onclick="preventDefault(event);Cigna.GroupQuote.changetoDetail(); return false;" style="text-decoration: none;">{!$Label.Details} <span class="caret"></span> </a></h5>
+                </apex:outputPanel>
+
+                <apex:outputPanel rendered="{!showDetail}" layout="none">
+                    <h5 class="bs col-xs-4" style="text-align:right;float:right;"><a class="bs cigna-fg-orange-medium onclick-pointer" onclick="preventDefault(event);Cigna.GroupQuote.changetoSummary(); return false;" style="text-decoration: none;">{!$Label.Summary} <span class="caret"></span> </a></h5>
+                </apex:outputPanel>
+                </div>
+                <br/>
+            </div>
+            
+            <apex:outputPanel rendered="{!showSummary}">
+            <div class="bs row cigna-quote-amount" style="padding-bottom: 5px; border-bottom: 1px solid #bbb;padding-top: 25px;">
+                <div class="bs col-xs-12">
+                    <div class="bs row" >
+                        <div class="col-xs-4">&nbsp;</div>
+                        <div class="col-xs-8" style="text-align:right;">{!$Label.Yearly_HKD}</div>
+                    </div>
+                    
+                    <!--<div class="bs row" >
+                        <div class="col-xs-4">{!$Label.Discounted}</div>
+                        <div class="col-xs-8" style="text-align:right;">
+                            <span id="cigna-quote-amount-annum">
+                                <apex:outputText id="amountPerAnnum" value="{!IF(BLANKVALUE(amountPerAnnum, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(amountPerAnnum, 0) > 0, 'cigna-fg-green-medium ', '')}"><apex:param value="{!amountPerAnnum}" /></apex:outputText>
+                            </span>
+                        </div>
+                    </div>-->
+                    
+                    <div class="bs row" >
+                        <div class="col-xs-4">
+                            <apex:outputPanel rendered="{!hasDiscount}">{!$Label.Original}</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!hasDiscount}">{!$Label.Estimated_Price}</apex:outputPanel>
+                        </div>
+                        <div class="col-xs-8" style="text-align:right;">
+                            <span id="cigna-original-amount-annum">
+                                <apex:outputText id="Original-AnnualQuote" value="{!IF(BLANKVALUE(OriginalAnnualQuote, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(OriginalAnnualQuote, 0) > 0, 'cigna-fg-green-medium cigna-original-amount', '')}"><apex:param value="{!OriginalAnnualQuote}" /></apex:outputText>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <apex:outputPanel rendered="{!hasDiscount}">
+                    <div class="bs row" >
+                        <div class="col-xs-4">{!$Label.Discounted}</div>
+                        <div class="col-xs-8" style="text-align:right;">
+                            <span id="cigna-original-amount-annum">
+                                <apex:outputText id="AnnualQuote" value="{!IF(BLANKVALUE(AnnualQuote, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(AnnualQuote, 0) > 0, 'cigna-fg-green-medium cigna-original-amount', '')}"><apex:param value="{!AnnualQuote}" /></apex:outputText>
+                            </span>
+                        </div>
+                    </div>
+                    </apex:outputPanel>
+                </div>
+            </div>
+            </apex:outputPanel>
+            
+            <!--start of show summary quote -->
+            <apex:outputPanel rendered="{!showSummary}" id="showSummaryPanel">
+
+                <div class="bs row cigna-quote-amount" style="padding-top:10px;">
+                    <div class="bs col-xs-4"><span>{!$ObjectType.Product__c.Fields.Name__c.Label}</span></div>
+                    <div class="bs col-xs-8 text-right">
+                        <span>{!selectedProductInfo.Name__c}</span>
+                    </div>
+                </div>
+                <div class="bs row cigna-quote-amount">
+                    <div class="bs col-xs-4"><span>{!$Label.Insured_Person}</span></div>
+                    <div class="bs col-xs-8 text-right">
+                        <span>{!$Label.Esales_Employee} x <span id="app-group-quote-cover-employee-num-summary">{!IF(isQuotation,IF(txn.Group_Existing_Employee__c==null,0,txn.Group_Existing_Employee__c),txn.Group_Upload_Employee_Count__c)}</span></span>, {!$Label.ESales_Dependent} x <span id="app-group-quote-cover-dependent-num-summary">{!IF(isQuotation,IF(txn.Group_Existing_Dependent__c==null,0,txn.Group_Existing_Dependent__c),txn.Group_Upload_Dependent_Count__c)}</span>
+                    </div>
+                </div>
+                
+            </apex:outputPanel>
+            <!--end of show summary quote -->
+            
+            <!--start of show detail quote -->
+            <apex:outputPanel rendered="{!showDetail}" id="showDetailPanel">
+                <div style="height:250px;overflow:auto;margin-top:20px;" id="showDetailDiv">
+                 <apex:repeat value="{!planList}" var="plan">
+                    <div class="bs row cigna-quote-amount" style="padding:15px 15px 0 15px;">
+                        <div class="bs col-xs-12 col-sm-12">
+                            <div class="bs row cigna-fg-orange-medium" style="padding-bottom:15px;">
+                                <h4>{!plan.PlanName}</h4>
+                            </div>
+                            
+                            <div class="bs row" style="padding-bottom:15px;">
+                                <div class="bs col-sm-7 col-xs-7" style="padding:0;">
+                                    <Label style="color: #969696 !important;">{!$Label.Hospitalization_Surgical_Benefits}</Label>
+                                </div>
+                                <div class="bs col-xs-3 col-sm-3" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/> 
+                                <div align="right" class="bs col-sm-2 col-xs-2" style="padding:0;">
+                                    {!plan.BasicPlanCode}
+                                </div> 
+                            </div>
+                            
+                            <div class="bs row" style="padding-bottom:15px;">
+                                <div class="bs col-sm-4 col-xs-4" style="padding:0;">
+                                    <Label style="color: #969696 !important;">{!$Label.Wellness_Option}</Label>
+                                </div>
+                                <div class="bs col-xs-6 col-sm-6" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/> 
+                                <div align="right" class="bs col-sm-2 col-xs-2" style="padding:0;">
+                                    <apex:outputPanel rendered="{!plan.WellnessOption=='true'}">
+                                        {!$Label.Yes}
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!plan.WellnessOption=='false'}">
+                                        {!$Label.No}
+                                    </apex:outputPanel>
+                                </div> 
+                            </div>
+                            
+                            <div class="bs row" style="padding-bottom:15px;border-bottom:1px solid #aaa;">
+                                <apex:outputPanel rendered="{!plan.SupplementaryMajorMedical=='true' || plan.OutpatientBenefits=='true'}">                                                
+                                    <div class="bs col-sm-4 col-xs-4" style="padding:0;">
+                                        <Label style="color: #969696 !important;">{!$Label.Additional_Benefit}</Label>
+                                    </div>
+                                    
+                                    <div class="bs col-xs-2 col-sm-2" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/> 
+                                </apex:outputPanel>    
+                                <apex:outputPanel rendered="{!plan.SupplementaryMajorMedical=='true'}">
+                                    <div align="right" class="bs col-sm-6 col-xs-6" style="padding:0;">
+                                        {!$Label.Supplementary_Major_Medical}
+                                    </div> 
+                                </apex:outputPanel>  
+                                <apex:outputPanel rendered="{!plan.SupplementaryMajorMedical=='false' && plan.OutpatientBenefits=='true'}">
+                                    <div align="right" class="bs col-sm-6 col-xs-6" style="padding:0;">
+                                         {!$Label.Outpatient_Benefits}
+                                    </div>   
+                                </apex:outputPanel>      
+                                <apex:outputPanel rendered="{!plan.SupplementaryMajorMedical=='true' && plan.OutpatientBenefits=='true'}">  
+                                    <div align="right" class="bs col-sm-offset-6 col-xs-offset-6 col-sm-6 col-xs-6" style="padding:10px 0 0 0;">
+                                        {!$Label.Outpatient_Benefits}
+                                    </div> 
+                                </apex:outputPanel>   
+                            </div>
+                            
+                            <div align="right" class="bs row cigna-fg-orange-medium" style="padding-top:10px;padding-bottom:15px;">
+                                <span>
+                                      <apex:outputText value="{!IF(BLANKVALUE(plan.PremiumAmount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" style="{!IF(BLANKVALUE(plan.PremiumAmount, 0) > 0,'','color: #58595B;')}"><apex:param value="{!plan.PremiumAmount}" /></apex:outputText>
+                                </span>
+                                <span style="color: #58595B;"> / year</span>
+                            </div>
+                        </div>
+                    </div>
+                </apex:repeat>
+                </div>
+            </apex:outputPanel>
+            <!--end of show detail quote -->
+        </apex:outputPanel>  
+        </div>
+        
+            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                
+                <apex:outputText rendered="{!!isCustomerPortal && isQuotation}"> 
+                    <a class="action-btn cigna-fg-white" role="button" onclick="Cigna.GroupQuote.SendEmailQuote();"><span class="ci-hk-envelope" aria-hidden="true"></span><br/>{!$Label.Email_Quote}</a>
+                </apex:outputText>
+                
+                <apex:outputText rendered="{!hasBuy && isEnableBuyNow}">
+                    <!--<a class="action-btn cigna-fg-white" role="button" onclick="{!IF(isQuotation,'Cigna.GroupQuote.buyNow()','confirm()')}; return false;"><span class="ci-hk-creditcard" aria-hidden="true"></span><br/>{!$Label.Buy_Now}</a>-->
+                    <a class="action-btn cigna-fg-white" role="button" onclick="{!IF(isQuotation,'Cigna.GroupQuote.buyNow()','confirm();')}; return false;"><span class="ci-hk-creditcard" aria-hidden="true"></span><br/>{!$Label.Buy_Now}</a>
+                    <!--<a class="action-btn cigna-fg-white" role="button" onclick="Cigna.GroupQuote.gotoPaperApplication(); return false;"><span class="ci-hk-creditcard" aria-hidden="true"></span><br/>{!$Label.eSales_Submit_Paper_Form}</a>-->
+                </apex:outputText>
+                
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    //confirm
+    function confirm(){
+        if ($('form[id$="frmGetQuote"] input.error').length > 0) {
+            var elementId = $('form[id$="frmGetQuote"] input.error')[0].getAttribute("id");
+            $('form[id$="frmGetQuote"] input.error')[0].focus();
+            $('form[id$="frmGetQuote"] input.error')[0].blur();
+        }else{
+            Confirmation.confirm();
+        }
+    }
+    
+    function toEsignPage(){
+        
+        var temptid  = "{!JSINHTMLENCODE($CurrentPage.Parameters.tid)}";
+        alert(temptid);
+        // Rancho_HKITSFDC212_20250401 - remove hard-code url
+        location.replace('https://{!$Site.Domain}/broker/BrkESalesGroupVFP?tid='+temptid);
+    }
+    
+    </script>
+    
+</apex:page>

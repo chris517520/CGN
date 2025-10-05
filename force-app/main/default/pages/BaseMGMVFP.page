@@ -1,0 +1,1023 @@
+<apex:page docType="html-5.0" sidebar="false" Controller="MGMController" showHeader="false" title="Customer Referral Page">
+    <head>
+        <meta charset="utf-8"/>
+        <!-- Import the amp-social-share component  -->
+        <!-- <apex:includeScript value="{!$Resource.AMP_social_js}"/> 
+        <script type="text/javascript" src="{!URLFOR($Resource.AMP_social_js, 'amp-social-share-0.1.js')}"></script>
+        <script custom-element="amp-social-share" src="https://cdn.ampproject.org/v0/amp-social-share-0.1.js"></script>
+        
+        <script type="text/javascript" src="{!$Resource.AMP_social_js}"></script>
+        <link rel="canonical" href="https://ampbyexample.com/components/amp-social-share/" />
+         -->
+         
+        
+
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>   
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+        
+        
+          
+        <style>
+        .ft-orange{
+          color: rgb(242, 98, 35);
+        }
+
+        .imp-notice{
+          color: rgb(255, 255, 255);
+          background-color:  rgb(242, 98, 35);
+          padding-left: 10px;
+          padding-right: 10px;
+          font-weight: bold;
+        }
+ 
+
+        .optionHeader{
+            font-weight: bold;
+            font-size: 18px;
+            margin: 10px 10px 10px 10px;
+            vertical-align: middle;
+        }
+        .optionSubHeader{
+            padding : 10px 10px 10px 10px;     
+            background-color:  #F2F2F2    ;   
+            font-weight: bold; 
+            
+        } 
+
+        .subHeaderIcon{
+            background: url('{!URLFOR($Resource.MGMMaterial, 'single-user.png')}') no-repeat;
+            background-position:right center; 
+            background-size: auto 100%;
+            font-weight: bold !important;
+        }
+
+        .subHeaderIcon2{
+            background: url('{!URLFOR($Resource.MGMMaterial, 'multiple-users-silhouette.png')}') no-repeat;
+            background-position:right center; 
+            background-size: auto 100%;
+            font-weight: bold !important;
+        }
+
+        .mgmInput{
+          border-bottom: 1px solid #000 !important;
+          color: #737373 !important;
+          padding-bottom: 2px !important;
+
+        }
+
+        .tb_mgm:focus{
+          border:none !important;
+        }
+
+        .mgt20{
+          margin-top:20px;
+        }
+        .mgt10{
+          margin-top:10px;
+        }
+
+        #mgmAlert{
+          color: #6ecbf6;
+          font-weight: bold;
+        }
+
+
+        body.noscroll{
+                overflow:hidden;
+                position:fixed;
+            }
+
+        div#reallocationOverlayMGM {
+                display: none;
+                z-index: 12;
+                background: #D9D9D6;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                text-align: center;
+            }
+
+
+         #reallocationCloseOverlayMGM,
+          #reallocationCloseOverlayWebMGM
+          {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
+        #reallocationtccontentMGM {
+                padding: 10px;
+                color: #000;
+                font-size: 12px;
+                width: 100%;
+                height: 90%;
+                overflow-y: auto;
+                       
+              }
+    
+        .sub1 {
+          margin-left:20px !important;
+        }
+        .genCodeBtn{
+              border-radius: 10px !important;
+              min-width: 170px !important;
+              max-width:250px !important;
+              width:100% !important;
+              font-weight: bold !important;
+            }
+        .codeDisplayBlock{
+              background-color:#fff !important;
+              font-weight:bold;border-radius: 10px !important;
+              border:1px dashed rgb(242, 98, 35) !important;
+              color:rgb(242, 98, 35) !important;
+            }
+        
+        @media (max-width: 767px) {
+            .notice-list {
+               padding-left: 5px;
+               } 
+            .notice-list li{
+              padding: 5px;
+              margin-left: 1.1em;
+            }   
+            
+            
+            .prdOption{
+              font-size: 14px;
+            }
+            div#reallocationSpecialBoxMGM {
+              display: none;
+              position: absolute;
+              z-index: 13;
+              margin: 100px auto 0px auto;
+              width: 90%;
+              height: 80%;
+              background: #FFF;
+              color: #000;
+              left: 5%;
+              padding: 20px;
+              border-radius: 5px;
+            }
+
+            .addremove{
+              text-align:center;
+            }
+
+            .autoAlign{
+              text-align:center !important;
+            }
+
+            
+
+        }
+        @media (min-width: 768px) {
+
+            .notice-list {
+             padding-left: 20px;
+             }     
+            .notice-list li{
+              padding: 10px;
+            }
+            
+            .prdOption{
+              
+            }
+            div#reallocationSpecialBoxMGM {
+             display: none;
+              position: absolute;
+              z-index: 13;
+              margin: 150px auto 0px auto;
+              width: 80%;
+              height: 60%;
+              background: #FFF;
+              color: #000;
+              left: 10%;
+              padding: 20px;
+              border-radius: 5px;
+            }
+            .addremove{
+              text-align:right;
+            }
+            .autoAlign{
+              text-align:left;
+            }
+           
+        }
+        
+        </style>
+        <script>
+            
+            var Cigna = Cigna || {};
+            
+             
+
+            $(document).ready(function(){                 
+                //$('#btnGenerateReferralCode').attr('disabled','disabled');
+                checkBrowser();
+                //hideBtnGenerateReferralCode();
+               // alert('disabled');
+                //alert('refresh');
+                console.log("refresh");
+             //   var test = $(".tb_mgm");
+                
+                popDefaultInfo();
+            });
+            /*
+            $(".tb_mgm").focus(function() { 
+                alert ('click');
+                  $(this).css("border","none");
+                   
+            }) ;
+
+            */
+              
+
+
+            
+
+            function checkBrowser(){
+                if (Cigna.Util.isAndroid() || Cigna.Util.isIOS()){
+                    $(".webOnly").hide();
+                    $(".mobileOnly").show();
+                    $(".shareChannel").html("WHATSAPP"); 
+                    $(".shareChannel2").html("Whatsapp"); 
+                    //$(".shareDescription").html("Then, simply click on the icon below and share the message with your friend:");
+                    $(".shareDescription").html('{!$Label.DM_Click_and_Share_WhatsApp}'+":");
+
+                    
+                }else{
+                    $(".webOnly").show();
+                    $(".mobileOnly").hide();
+                    $(".shareChannel").html("FACEBOOK {!$Label.DM_OR} WHATSAPP"); 
+                    $(".shareChannel2").html("Facebook {!$Label.DM_OR} Whatsapp"); 
+                    //$(".shareDescription").html("Then, simply click on the icon and connect to Facebook to share the promo code with your friend. In the \"Message\" box, please copy and paste the following:");
+                    $(".shareDescription").html('{!$Label.DM_Click_and_Share_Fackbook_Whatsapp}'+":");
+                }
+                var cpcode=$("span.cigna-fg-blue-medium").html();
+                console.log(cpcode);
+                var testmessages=$("input[id*='btnGenerateReferralCode']").val();
+                console.log(testmessages);
+
+                if(!cpcode==false&&cpcode.length>0){
+
+                  console.log('Done');
+             //     $('#btnGenerateReferralCode').hide();
+
+                  }
+            }
+
+            function deleteFriend(obj){
+               var dindex = $(obj).attr("ind");               
+               $("input[id*='dindex']").val(dindex);
+               MGM.DeleteFriend();
+            };
+
+            function popDefaultInfo(){
+              var ex_1 = /^Referee [\d]+ Name$/;
+              var ex_2 = /^Referee [\d]+ Email$/;
+              var ex_1_cn = /^被推薦人 [\d]+ 姓名$/;
+              var ex_2_cn = /^被推薦人 [\d]+ 電郵地址$/;
+
+              $(".tb_mgm").each(function(i){
+                var ind = $(this).parent().data("ind");
+                if ( ($(this).val()=='' && ind!=null) || ex_1.test ($(this).val()) || ex_2.test ($(this).val()) || ex_1_cn.test ($(this).val()) || ex_2_cn.test ($(this).val())  ){
+                  if ( $(this).hasClass('reName')  ){
+                    $(this).val('{!$Label.DM_Referee} '+ind + ' {!$Label.DM_Name}');
+                  }
+                  if ( $(this).hasClass('reEmail')  ){
+                    $(this).val('{!$Label.DM_Referee} '+ind + ' {!$Label.DM_Email}');
+                  }
+                }
+              });
+
+              //CR-56_Link_20220214
+              $(".tb_mgm").on("click",function (){
+                var v =  $(this).val();
+                var ex_3 = /^Referee Email Address$/;
+                var ex_3_cn = /^被推薦人電郵地址$/;
+               // alert (v);
+                if (  ex_1.test (v) || ex_2.test (v) || ex_3.test (v) ||
+                  ex_1_cn.test(v) || ex_2_cn.test (v) || ex_3_cn.test (v)  ){
+                  $(this).val("");
+                }
+              });
+
+              //CR-56_Link_20220214
+              $(".tb_mgm").on("blur",function (){
+                var ind = $(this).parent().data("ind");
+                if ($(this).val()==''){
+                  if ( $(this).hasClass("email-cp") ){
+                    if ( '{!userLanguage}'=='en_us' ){
+                      $(".email-cp").val('{!$Label.DM_Referee} {!$Label.DM_Email_Address}');
+                    }else{
+                      $(".email-cp").val('{!$Label.DM_Referee}{!$Label.DM_Email_Address}');
+                    }
+                  }
+                  else if (ind!=null){                  
+                    if ( $(this).hasClass('reName')  ){
+                    $(this).val('{!$Label.DM_Referee} '+ind + ' {!$Label.DM_Name}');
+                    }
+                    if ( $(this).hasClass('reEmail')  ){
+                      $(this).val('{!$Label.DM_Referee} '+ind + ' {!$Label.DM_Email}');
+                    }
+                  }
+                   
+                }
+              });
+            }
+            //}
+        //    }
+/*
+            function SendEmailTS( ) {
+                setTimeout(function(){ MGM.SendEmailTS(); }, 1);               
+            }
+            */
+        </script>
+            
+        <script>
+        // FB UI script blocks
+      window.fbAsyncInit = function() {
+        FB.init({
+           appId            : '1670807889681449',
+          autoLogAppEvents : true,
+          xfbml            : true,
+          version          : 'v2.11'
+        });
+      };
+
+      (function(d, s, id){
+         var js, fjs = d.getElementsByTagName(s)[0];
+         if (d.getElementById(id)) {return;}
+         js = d.createElement(s); js.id = id;
+         var lang = "{!userLanguage}";
+         if (lang == 'zh_tw') lang = 'zh_TW';
+         js.src = "https://connect.facebook.net/"+lang+"/sdk.js";
+         fjs.parentNode.insertBefore(js, fjs);
+       }(document, 'script', 'facebook-jssdk'));
+
+ 
+</script>
+
+        
+    </head>
+    <apex:define name="additionalLibraries">
+         <!-- CR-56_Link_20220214 -->
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+         <apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+         </apex:outputPanel>
+    </apex:define>
+    
+    <apex:form id="myform" >
+        <!--apex functions-->
+    <apex:actionFunction name="AddFriend" action="{!AddFriend}" namespace="MGM" status="loader-icon"  reRender="EDMPanel" oncomplete="popDefaultInfo();"/>
+    <apex:actionFunction name="DeleteFriend" action="{!DeleteFriend}" namespace="MGM" status="loader-icon"  reRender="EDMPanel" oncomplete="popDefaultInfo();"/>
+    <apex:actionFunction name="SendEmail" action="{!SaveEmailReferrals}" namespace="MGM" status="loader-icon"  reRender="EDMPanel" oncomplete=""/>
+    <!--
+    <apex:actionFunction name="SendEmailTS" action="{!SendEmailReferrals}" namespace="MGM" status="loader-icon"  reRender="EDMPanel" oncomplete=""/>
+    -->
+    <apex:actionFunction name="GenerateReferralCode" action="{!SaveCPReferrals}" namespace="MGM" status="loader-icon"  reRender="CPPanel" oncomplete="checkBrowser();"/>
+    <apex:actionFunction name="RefreshPrdDesc" action="{!RefreshPrdDesc}" namespace="MGM" status="loader-icon"  reRender="refPrdDescPnel" oncomplete="disableButtons();"/>
+
+    <apex:actionFunction name="UpdateReferralsFB" action="{!UpdateReferralsFB}" namespace="MGM" status="loader-icon" oncomplete=""/>
+    <apex:actionFunction name="UpdateReferralsWA" action="{!UpdateReferralsWA}" namespace="MGM" status="loader-icon" oncomplete=""/>
+    <br/>
+    <div class="bs col-xs-12 col-sm-12 " >
+      <div class="col-sm-12 col-xs-12 "> 
+          <span class="ft-orange" style='font-size:18px;font-weight: bold;'>{!$Label.DM_Please_select_a_product} </span>
+      </div>
+      <div class="col-sm-12 col-xs-12">
+          <apex:selectList value="{!selectedProductID}" id="ddlProduct" size="1"   multiselect="false" style="display: inline; width: auto;text-align:center;font-weight: bold;" styleClass="form-field-style-select prdOption required" onchange="MGM.RefreshPrdDesc();">
+            <apex:selectOptions value="{!prdListOptions}"></apex:selectOptions>
+          </apex:selectList>          
+      </div>    
+      
+
+    
+      <apex:outputPanel id="refPrdDescPnel" layout="block">
+      
+      <div class="col-sm-12 col-xs-12 mgt10"  > 
+          <apex:outputPanel layout="none"  rendered="{!curProdNotEffective}" >
+            <span style='padding-top:10px;font-size: 14px;' id="mgmAlert">{!$Label.DM_Product_Not_Eligible}</span>
+          </apex:outputPanel>
+      </div>
+
+      <div class="col-xs-12 col-sm-12 mgt10">
+         <apex:outputText value="{!prdDesc}" style="word-wrap: break-word;word-break:break-all;white-space: pre-wrap;" escape="false"/> 
+      </div>      
+      <script>
+         function disableButtons (){
+            if ({!curProdNotEffective}){
+              $("input[type=button]").attr('disabled',"true");
+            }else{
+              $("input[type=button]").removeAttr("disabled");
+             }
+           }
+      </script>
+      </apex:outputPanel>
+      
+    </div>
+      <br/><br/>
+    <div class="bs col-xs-12 col-sm-12" >
+      
+      <div class="col-xs-12 col-sm-12 mgt10" >
+        <span class="imp-notice">
+            {!$Label.DM_Important_Notice}
+        </span>
+      </div>
+      <div class="col-xs-12 col-sm-12">
+        <ul class='notice-list'>
+          <li>{!$Label.DM_Important_Notice_Desc_1}</li>
+          <li>{!$Label.DM_Important_Notice_Desc_2}</li>
+          <li>{!$Label.DM_Important_Notice_Desc_3}</li>
+        </ul>
+      </div>
+
+      <div class="col-xs-12 col-sm-12">
+        <input type="Checkbox" id="ckb_consent" style='border:1px solid rgb(242, 98, 35) !important;background:#fff;' />
+        {!$Label.DM_Written_Consent}
+      </div>
+      <div class="col-xs-12 col-sm-12">
+        <label style="color:red;display:none;" id='alertConsentChecked'>{!$Label.DM_Check_Consent}</label>
+      </div>
+    </div>
+    
+    <apex:outputPanel id="EDMPanel" layout="block">         
+        <apex:inputHidden id="dindex" value="{!DeleteIndex}"/>
+       
+        <div class="bs col-xs-12 col-sm-12 optionHeader ft-orange" >
+           <apex:image height="20px" url="{!URLFOR($Resource.MGMMaterial, '002-envelope.png')}" /> {!$Label.DM_Option_1_Refer_via_Email}
+        </div>
+        
+        <apex:outputPanel id="refereePanel1" layout="block" rendered="{!!emailSent}">
+            <div class="bs col-xs-12 col-sm-7">
+             <div class="col-xs-12 col-sm-12 optionSubHeader mgt10"  >
+                <div class="bs col-xs-12 col-sm-12  ft-orange subHeaderIcon">                    
+                    {!$Label.DM_Referrer_Information}
+                </div>  
+                 
+              </div>
+              <div class="col-xs-12 col-sm-12 mgt10  " >
+                <div class="bs col-xs-11 col-sm-11 mgmInput "  >
+                  <input type='text' readonly="true" value="{!referrerName}"   style='border:none;width:100%;'/>
+                 
+               </div>
+              </div>
+              <div class="col-xs-12 col-sm-12 mgt10  " >
+                <div class="bs col-xs-11 col-sm-11  mgmInput"  >
+                  <input type='text' readonly="true" value="{!referrerEmail}"   style='border:none;width:100%;'/>
+                 
+               </div>
+              </div>
+            
+        
+            <div class="bs col-xs-12 col-sm-12 optionSubHeader mgt20"  >
+                <div class="bs col-xs-12 col-sm-12  subHeaderIcon2 ft-orange ">
+                 {!$Label.DM_Referee_Information}
+                </div>   
+            </div>
+            <apex:variable var="referreeIndex" value="{!1}" /> 
+            <apex:repeat value="{!refereeList}" var="referee">
+              <div class="col-xs-12 col-sm-12 mgt10"  >
+                  <div class="bs col-xs-11 col-sm-11  mgmInput " data-ind="{!referee.Index}" >
+                   <apex:inputText id="referee-name"  styleClass="tb_mgm reName"  value="{!referee.Name}" style="border:none;width:100%;" /> 
+                 </div>
+                   <div class="bs col-xs-11 col-sm-11 "  >
+                     <label id="refereeNameError{!referreeIndex}" class="refereeNameError" style="color:red;display:none;">{!$Label.DM_Alert_Empty_Referee_Name}</label>
+                  </div>
+              </div>
+              <div class="col-xs-12 col-sm-12 mgt10"  >
+                  <div class="bs col-xs-11 col-sm-11  mgmInput " data-ind="{!referee.Index}" >
+                   <apex:inputText id="referee-email"  styleClass="tb_mgm reEmail" value="{!referee.Email}" style="border:none;width:100%;"  /> 
+                 </div>
+                 <div class="bs col-xs-11 col-sm-11 "  >
+                     <label id="refereeEmailError{!referreeIndex}" class="refereeEmailError" style="color:red;display:none;">{!$Label.DM_Alert_Empty_Referee_Email}</label>
+                  </div>  
+              </div>
+                
+                <div class="bs col-xs-12 col-sm-12 "  style='display:none;'>
+                   <div class="col-sm-3 col-xs-4  "> 
+                   {!$Label.DM_Email_Message} 
+                   </div>
+                   <div class="col-sm-9 col-xs-8">
+                      <apex:inputTextarea value="{!referee.Message}" styleClass="bs row form-control" rows="3" style="width:60%;"/> 
+                   </div>
+                </div>
+                <apex:outputPanel id="Operation" layout="block" style="font-size:12px;" styleClass="bs col-xs-12 col-sm-12 ft-orange addremove mgt20">
+                    <apex:outputPanel layout="inline" rendered="{!refereeList.size>1  }" style='cursor: pointer;text-decoration: underline;margin-right:30px; z-index:200;' >
+                       <span onclick="deleteFriend(this);" ind="{!referee.Index}">-{!$Label.DM_Delete_entry}</span>
+                   </apex:outputPanel>
+
+                   <apex:outputPanel layout="inline" rendered="{!referee.Index==refereeList.size}" style="cursor: pointer;text-decoration: underline;margin-right:30px; z-index:200;font-weight: bold;" onclick="MGM.AddFriend();">
+                       +{!$Label.DM_Add_another_friend}
+                   </apex:outputPanel>
+                   
+                </apex:outputPanel>
+                <apex:variable var="referreeIndex" value="{!referreeIndex+1}" /> 
+            </apex:repeat> 
+            <div class="bs col-xs-12 col-sm-12 autoAlign mgt20 " >
+                <input type='button' id='btnSendEmail' class='btn  cigna-fg-white cigna-bg-orange-dark' onclick="SendEmailClick();" value='{!$Label.DM_Send_Email}' style='border-radius: 10px;min-width: 150px;max-width:250px;width:30%;font-weight: bold;  ' /> 
+            </div>
+            <div class="col-xs-12 col-sm-12 autoAlign mgt20" style="font-style: italic;font-size:12px;" >
+               * {!$Label.DM_Unique_Code_Notice}
+            </div>
+          </div>
+        </apex:outputPanel>
+
+        <apex:outputPanel id="refereePanel2" layout="block" rendered="{!emailSent}">
+          <apex:outputPanel layout="block" rendered="{!refereeList.size > optedOutList.size && optedOutList.size=0}">
+          <div class="bs col-xs-12 col-sm-12" >
+            <div class="bs col-xs-12 col-sm-12 cigna-fg-blue-medium" style="margin-top: 20px;margin-bottom: 20px;font-size: 18px;font-weight: bold;">
+                {!$Label.DM_Email_Send_Success}
+            </div>
+          </div>
+          </apex:outputPanel>
+
+          <apex:outputPanel layout="block" rendered="{!refereeList.size > optedOutList.size && optedOutList.size>0 && sendList.size>0}">
+          <div class="bs col-xs-12 col-sm-12" >
+            <div class="bs col-xs-12 col-sm-12 cigna-fg-blue-medium" style="margin-top: 20px;margin-bottom: 20px;font-size: 18px;font-weight: bold;">
+                {!$Label.DM_Email_Send_Success_2}
+            </div>
+          </div>
+          </apex:outputPanel>
+
+          <apex:outputPanel layout="block" rendered="{!optedOutList.size>0 && sendList.size>0}">
+          <div class="bs col-xs-12 col-sm-12" >
+              <div class="bs col-xs-12 col-sm-12 cigna-fg-blue-medium" style="font-size: 16px;font-weight: bold;">                   
+                  <apex:dataList value="{!sendList}" var="edm">
+                    <apex:outputText value="{!edm}"/>
+                </apex:dataList>
+              </div>
+            </div>
+          </apex:outputPanel>
+
+          <apex:outputPanel layout="block" rendered="{!optedOutList.size=1}">
+            <div class="bs col-xs-12 col-sm-12" >
+              <div class="bs col-xs-12 col-sm-12 cigna-fg-blue-medium" style="margin-top: 20px;margin-bottom: 20px;font-size: 18px;font-weight: bold;">
+                  {!$Label.DM_MGM_Email_Opted_Out_1}
+              </div>
+            </div>
+          </apex:outputPanel>
+
+          <apex:outputPanel layout="block" rendered="{!optedOutList.size>1}">
+            <div class="bs col-xs-12 col-sm-12" >
+              <div class="bs col-xs-12 col-sm-12 cigna-fg-blue-medium" style="margin-top: 20px;margin-bottom: 20px;font-size: 18px;font-weight: bold;">
+                  {!$Label.DM_MGM_Email_Opted_Out_2}
+              </div>
+            </div>
+          </apex:outputPanel>
+
+          <apex:outputPanel layout="block" rendered="{!optedOutList.size>0}">
+          <div class="bs col-xs-12 col-sm-12" >
+              <div class="bs col-xs-12 col-sm-12 cigna-fg-blue-medium" style="font-size: 16px;font-weight: bold;">                   
+                  <apex:dataList value="{!optedOutList}" var="edm">
+                    <apex:outputText value="{!edm}"/>
+                </apex:dataList>
+              </div>
+            </div>
+          </apex:outputPanel>
+          
+        </apex:outputPanel>
+       
+    </apex:outputPanel>
+
+     <apex:outputPanel id="CPPanel" layout="block">
+     <script>
+      function shareFB (){
+
+
+        var cpcode=$("span.cigna-fg-blue-medium").html();
+        //console.log('Test');
+        console.log(cpcode);
+        
+        var userstatusfb=$("div.webOnly").css('display');
+        var userstatuswa=$("div.mobileOnly").css('display');
+        console.log('Facebook status:'+userstatusfb);
+        console.log('WhatsApp status:'+userstatuswa);
+
+        if(userstatusfb=='inline'){
+          MGM.UpdateReferralsFB();
+        }
+
+
+        var PromoUrl = "{!PromoUrl}";
+
+
+        FB.login(function(response) {
+            if (response.authResponse) {
+             FB.api('/me', function(response) {
+               console.log('Good to see you, ' + response.name + '.');
+               console.log('response: ' + response.id   );
+               var rid =  response.id ;    
+               FB.ui({
+                method: 'send',
+                link:PromoUrl
+                 }, function(response){
+                  
+                 } );
+                    
+             });
+            } else {
+             console.log('User cancelled login or did not fully authorize.');
+            }
+        }); 
+      }
+
+      function shareWA(){
+
+        var userstatusfb=$("div.webOnly").css('display');
+        var userstatuswa=$("div.mobileOnly").css('display');
+        console.log('Facebook status:'+userstatusfb);
+        console.log('WhatsApp status:'+userstatuswa);
+
+     //   if(userstatuswa=='inline'){
+          MGM.UpdateReferralsWA();
+      //  }
+
+      }
+
+      function GenerateReferralCodeClick(){
+       // alert ('in');
+        if ( $("select[id*='ddlProduct']").valid() ){
+       //   alert ('valid ok');
+          if ( !$("#ckb_consent").prop('checked')) {
+            $('#alertConsentChecked').css("display","block");
+            scrollTo(0,$("body").height()*0.5);
+          }else{              
+            $('#alertConsentChecked').css("display","none");
+            var errCount =0;   
+            $("input[id*='email-cp']").each(function(){
+              if ( !Cigna.ValidationUtil.isValidEmail($(this).val())  ){
+                $(this).parent().next().find(".refereeEmailError").show();  
+                errCount++;
+              } else{
+                $(this).parent().next().find(".refereeEmailError").hide();  
+              }
+            });
+
+            if (errCount==0){
+              MGM.GenerateReferralCode();
+            }
+
+            
+          }
+        }else{
+          var errormessage=$("label.error").html();
+          console.log(errormessage);
+          //CR-56_Link_20220214
+          $("label.error").trigger("focus");
+          scrollTo(0,$("body").height()*0.4);
+        }
+ 
+
+      }
+
+       function SendEmailClick(){
+        if (! $("select[id*='ddlProduct']").valid()){
+          var errormessage=$("label.error").html();
+          console.log(errormessage);
+          //CR-56_Link_20220214
+          $("label.error").trigger("focus");
+          scrollTo(0,$("body").height()*0.4);
+        }else{
+          if ( !$("#ckb_consent").prop('checked')) {
+            $('#alertConsentChecked').css("display","block");
+            scrollTo(0,$("body").height()*0.5);
+          }else{
+            $('#alertConsentChecked').css("display","none");
+            var errCount =0;            
+            $("input[id*='referee-name']").each(function(){             
+              if ($(this).val().trim() ==''){           
+                $(this).parent().next().find(".refereeNameError").show();
+                errCount++;
+              } else{
+                $(this).parent().next().find(".refereeNameError").hide();
+              }
+              
+            });
+
+            $("input[id*='referee-email']").each(function(){
+              if ( !Cigna.ValidationUtil.isValidEmail($(this).val())  ){
+                $(this).parent().next().find(".refereeEmailError").show();  
+                errCount++;
+              } else{
+                $(this).parent().next().find(".refereeEmailError").hide();  
+              }
+            });
+
+            if (errCount==0){
+              MGM.SendEmail();
+            }
+            /*
+            if ( $("input[id*='referee-email']").valid() &&
+              $("input[id*='referee-name']").valid() ){
+              
+              MGM.SendEmail();
+            }  
+            */
+          }
+
+
+
+        } 
+        
+      }
+ 
+    </script>
+        <div class="bs col-xs-12 col-sm-12 optionHeader ft-orange mgt10" >
+           <span class="webOnly" ><apex:image height="20px" url="{!URLFOR($Resource.MGMMaterial, 'facebook-logo.png')}"/>&nbsp;</span><apex:image height="20px" url="{!URLFOR($Resource.MGMMaterial, 'whatsapp-2.png')}" />&nbsp;{!$Label.DM_Option_2_Refer_via}&nbsp;<span class='shareChannel'></span>
+        </div>
+
+        <div class="bs col-xs-12 col-sm-12">
+           <div class="col-xs-12 col-sm-12   ">
+              {!$Label.DM_To_refer_via}&nbsp;<span class='shareChannel2'></span>,  {!$Label.DM_Enter_friend_email_and_click}:
+          </div>
+        </div>
+
+
+        <div class="bs col-xs-12 col-sm-7 mgt10"  >
+            <div class="col-xs-12 col-sm-12 "  >
+                <div class="bs col-xs-11 col-sm-11  mgmInput "  >
+                  <apex:inputText id="email-cp"  styleClass="tb_mgm email-cp"  value="{!CPEmail}" style="border:none;width:100%;" />  
+               </div>
+               <div class="bs col-xs-11 col-sm-11 "  >
+                     <label class="refereeEmailError" style="color:red;display:none;">{!$Label.DM_Alert_Empty_Referee_Email}</label>
+                  </div>
+             </div> 
+        </div>
+        <div class="col-xs-12 col-sm-7"  >
+            <div class="col-xs-12 col-sm-6 autoAlign mgt10"  >
+            <input type='button' id='btnGenerateReferralCode'  class='btn  cigna-fg-white cigna-bg-orange-dark genCodeBtn' onclick="GenerateReferralCodeClick();" value='{!$Label.DM_Generate_Promo_Code}' /> 
+            </div>
+            <div class="col-xs-12  col-sm-5 autoAlign mgt10"   >
+              <span class="btn codeDisplayBlock  "  >{!$Label.DM_Promo_Code} : {!CPCode}</span>
+            </div>
+        </div>
+        <br/><br/> 
+        <apex:outputPanel layout="block" rendered="{!CPCode!='' }">   
+
+            <div class="bs col-xs-12 col-sm-12" style="margin-top: 30px;">
+              <div class="bs col-xs-12 col-sm-12">
+                   <span class='shareDescription'></span>
+              </div>
+
+              <div class="bs col-xs-12 col-sm-12 mgt20" >
+                <div class="bs col-xs-12 col-sm-6" style='border:1px solid #737373;padding-top: 10px;padding-bottom: 10px;border-radius: 10px;'>
+                  <span id='smsg' >{!ShareMessage}</span>
+                </div>  
+              </div>
+               <div class="col-xs-12 col-sm-12">
+                  <div class="col-xs-12 col-sm-6">
+                 <span id="cp2cb" class="ft-orange" style="float:right;cursor: pointer;border-bottom:1px solid rgb(242, 98, 35) ;font-weight: bold;" data-copytarget="#smsg"  onclick='copy2clipboard();'>{!$Label.DM_Copy}</span>
+                </div>
+               </div>
+              <div class="bs col-xs-12 col-sm-12 ft-orange autoAlign mgt10" style="font-weight: bold;">
+                {!$Label.DM_Get_Started}: 
+                <span class="webOnly" onclick="shareFB();" style="cursor: pointer;" >
+                    <apex:image height="40px" url="{!URLFOR($Resource.MGMMaterial, 'messenger.png')}" />
+                  </span>
+                    &nbsp;
+                     <span onclick="shareWA();" >
+                    <a href="https://api.whatsapp.com/send?text={!WAMessage}" target="_blank"><apex:image height="40px" url="{!URLFOR($Resource.MGMMaterial, 'whatsapp.png')}" /></a> 
+                  </span>
+              </div>
+            </div>
+
+            
+           
+    </apex:outputPanel>
+        <div class="bs col-xs-12 col-sm-12 autoAlign mgt20" >
+            <div class="col-xs-12 col-sm-12">
+              <span style="text-decoration: underline;cursor: pointer" id="mgmTANDC" onclick="reallocationToggleOverlayMGM();">{!$Label.DM_MGM_T_AND_C}:</span>
+            </div>
+           <div class="col-xs-12 col-sm-12">
+              {!$Label.DM_Immediate_Assistance_Desc} <a href="tel:+85225601990">(852) 2560 1990</a>.
+           </div>
+         </div>
+    </apex:outputPanel>
+   
+
+    <div id="reallocationOverlayMGM" style="display:none;">
+            <div id="reallocationSpecialBoxMGM">
+                <a href="#">
+                    <div id="reallocationCloseOverlayMGM" class="glyphicon glyphicon-remove" onclick="reallocationToggleOverlayMGM();"></div>
+                </a>
+                <h4 style="font-weight:bold;">{!$Label.DM_MGM_T_AND_C_Title}:</h4>
+                <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'zh_TW'}">
+                    <div id="reallocationtccontentMGM" style="text-align:left">
+                        <b>Promotion Terms AND Conditions:</b><br/> 
+                        <p>1.  This promotion (the "Promotion") is organized and sponsored by Cigna Worldwide Life Insurance Company Limited and Cigna Worldwide General Insurance Company Limited (collectively "Cigna"). </p>
+                        <p>2.  To qualify for the Promotion, a customer (the "Referrer") must refer a friend or family member (the "Referee") to purchase Cigna HealthFirst Choice Medical Insurance (the "Plan") as follow (each a "Successful Referral"): </p>
+                        <p class='sub1'>
+                        a.  The Referrer completes the user registration of Cigna customer portal ("My Cigna") via webpage https://www.mycigna.com.hk/or My Cigna mobile application; and</p>
+                        <p class='sub1'>b.  After logging in My Cigna account, the Referrer needs to send a designated message (the "Referral Message") to the Referee through email, Facebook or WhatsApp by the member referral function at My Cigna; and </p>
+                        <p class='sub1'>c.  The Referee successfully applies for Cigna HealthFirst Choice Medical Insurance at Cigna website via the link with the use of a unique promotion code and email address in the Referral Message; and</p>
+                        <p class='sub1'>d.  A policy of the relevant application is underwritten and issued (each an "Eligible Policy") and the Eligible Policy is not cancelled within the cooling off period.</p>
+                        <p>3.  The Referee must not be an existing policyholder of any Cigna's policy. </p>
+                        <p>4.  Each Referee can be referred for one Successful Referral only.</p>
+                        <p>5.  The Referee is entitled to 50% discount on the first year premium of the relevant Eligible Policy (the "Referee Reward") upon a Successful Referral.</p>
+                        <p>6.  The Referee Reward cannot be used in conjunction with other premium discount offer on the Plan.</p>
+                        <p>7.  The Referrer must be an existing policyholder or person insured of Cigna HealthFirst Choice Medical Insurance.</p>
+                        <p>8.  The number of Successful Referral per Referrer is unlimited.</p>
+                        <p>9.  For each Successful Referral, the Referrer is entitled to HK$1,000 worth of supermarket coupons (the "Referrer Reward").</p>
+                        <p>10. The Referrer Reward will be mailed to the Referrer's last known correspondence address (based on Cigna's record) after 7 to 9 months from the issue date of the Eligible Policy.</p>
+                        <p>11. The coupon for the Referrer Reward is subject to the terms and conditions imposed by the suppliers. Where Cigna is not the supplier of the coupons, it shall not be liable in any way whatsoever in relation to any aspects for the use of the coupons, including but not limited to the service quality and supply.</p>
+                        <p>12. Both the Referrer Reward and Referee Reward cannot be refunded or redeemed for cash. If Cigna cannot provide the said gift voucher(s) for any reasons, Cigna reserves the right to replace the said voucher(s) with other voucher(s) in the same face value.</p>
+                        <p>13. Cigna is not liable for any loss, damage, delay, non-delivery or mis-delivery of the rewards during the delivery process by post. </p>
+                        <br/>
+                        <b>General Terms and Conditions:</b><br/>                           
+                        <p>1.  Personal information of the Referee collected under this referral program will be used for the purpose of this Promotion only. Cigna will not use and transfer the Referee's personal information for any other direct marketing purposes.</p>
+                        <p>2.  The Referrer must ensure the Referee understands the use of his/her personal information by Cigna and agrees the transfer of his/her personal information to Cigna by the Referrer for gain. </p>
+                        <p>3.  Cigna reserves the right to request the Referrer to provide the Referee's written consent to the provision of personal information to Cigna for this referral program at any time.</p>
+                        <p>4.  The record of My Cigna registration, relevant referral, policy application and eligibility of referral rewards are based on the record of Cigna.</p>
+                        <p>5.  All application(s) for the Plan(s) are subject to underwriting and approval by Cigna. Cigna reserves the right to accept or decline any application.</p>
+                        <p>6.  Cigna reserves the right to change any of the terms and conditions of the Promotion or discontinue the Promotion at any time without prior notice. In case of any disputes, Cigna's decision shall be final. </p>
+                        <p>7.  The terms and conditions apply to this Promotion only. The Plan is subject to its terms. For details of the features, contents, terms, conditions and exclusions of the Plan, please refer to relevant product brochure(s) and policy provision(s). </p>
+                        <p>8.  The English version of the terms and conditions of the Promotion and Offer shall prevail if there is any discrepancy between the English and Chinese versions.</p>
+
+
+                    </div>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'en_US'}">
+                    <div id="reallocationtccontentMGM" style="text-align:left">
+                        <b>獎賞計劃條款及細則:</b><br/> 
+                        <p>1. 此獎賞計劃（「推廣活動」）由信諾環球人壽保險有限公司及信諾環球保險有限公司（統稱「信諾」）舉辦及贊助。</p>
+                        <p>2. 現有客戶（「推薦人」）須根據下列步驟，成功推薦一親友（「被推薦人」）購買「信諾自選醫療保」（「指定保險計劃」）方合資格獲得本推廣活動的推薦獎賞（每一合資格推薦下稱「成功推薦」）：</p>
+                        <p class='sub1'>
+                        a.  推薦人透過網頁https://www.mycigna.com.hk/或My Cigna手機應用程式登記My Cigna帳戶；</p>
+                        <p class='sub1'>b.  登入My Cigna帳戶後，推薦人以My Cigna內的親友推薦功能透過電郵、 Facebook或WhatsApp向被推薦人發出指定（「推薦訊息」）；</p>
+                        <p class='sub1'>c.  被推薦人收到推薦訊息後，以訊息內提供的信諾網頁連結、推廣編碼及其電郵地址成功申請信諾自選醫療保； </p>
+                        <p class='sub1'>d.  信諾成功批核有關申請後向被推薦人發出保單（每一保單下稱「合資格保單」），而該合資格保單並未於冷靜期內取消。</p>
+                        <p>3. 被推薦人不可為任何現有信諾保單的保單持有人。 </p>
+                        <p>4. 每名被推薦人只可被成功推薦一次。</p>
+                        <p>5. 被成功推薦，被推薦人可享有關合資格保單首年保費五折優惠（「被推薦人獎賞」）。</p>
+                        <p>6. 被推薦人獎賞不可與其他現行保費折扣優惠同時享用。</p>
+                        <p>7. 推薦人必須為現有信諾自選醫療保的保單持有人或受保人。</p>
+                        <p>8. 每名推薦人可多次成功推薦親友參與此推廣活動。</p>
+                        <p>9. 每次成功推薦，推薦人可獲得價值港幣$1,000的超市購物禮券（「推薦人獎賞」）。</p>
+                        <p>10.  推薦人獎賞將於合資格保單簽發日起計7至9個月內郵寄至推薦人最近所提供之通訊地址（根據信諾紀錄）。</p>
+                        <p>11.  推薦人獎賞之禮券受其個別供應商所定之條款及細則約束。信諾並非禮券的供應商，並無須在任何形式上就服務或使用服務的結果負責（包括但不限於服務的品質及供應）。</p>
+                        <p>12.  推薦人獎賞及被推薦人獎賞均不可作退款或兌換現金。如因任何原因而不能提供有關禮券，信諾將保留權利以相同價值的禮券代替有關禮券。</p>
+                        <p>13.  信諾不會就任何獎賞於郵寄過程中的遺失、損壞、郵遞延誤、無法派遞或派遞錯誤負上任何責任。</p>
+                        <br/>
+                        <b>一般條款及細則:</b><br/>                           
+                        <p>1. 於此推薦計劃下所提供之被推薦人的個人資料只用作本推廣活動之用。信諾不會使用或轉移被推薦人的個人資料作其他直接促銷用途。</p>
+                        <p>2. 推薦人必須確保被推薦人明白信諾使用其個人資料的目的及同意推薦人轉移其個人資料予信諾以獲得利益。</p>
+                        <p>3. 信諾保留權利向推薦人要求提供被推薦人有關轉移其個人資料予信諾用作本推廣活動的書面同意。</p>
+                        <p>4. 有關My Cigna的帳戶登記、推薦紀錄、投保申請及推薦獎賞資格均以信諾紀錄為準。</p>
+                        <p>5. 所有計劃的投保申請須經由信諾核保及批核。信諾保留接納或拒絕任何申請之權利。 </p>
+                        <p>6. 信諾保留在沒有預先通知的情況下更改是次推廣活動及優惠的條款及細則，以及終止是次推廣活動之權利。有關是次推廣活動的任何爭議，信諾保留最終決定權。</p>
+                        <p>7. 此條款及細則只適用於是次推廣活動。指定保險計劃受其保單條款所約束。就有關產品特色、內容、條款、細則及不保事項，請參閱相關產品小冊子及保單條款。</p>
+                        <p>8. 如是次推廣活動條款及細則之中、英文版本有任何差異，概以英文版本為準。</p>
+                    </div>
+                </apex:outputPanel>
+            </div>
+        </div>
+
+    
+    <script>
+
+
+
+      
+
+        jQuery.extend(jQuery.validator.messages, {
+                    required: " {!$Label.ESales_Required_Field_Error_Message}"
+            });
+
+        
+
+        $("form").validate({
+          onkeyup: false
+        });
+
+        function CPEmailCheck(val){
+            if (val==''){
+              //  $('#btnGenerateReferralCode').attr('disabled','disabled');
+              //  alert('disabled');
+                return false;              
+            }else{
+                if (Cigna.ValidationUtil.isValidEmail(val)){ 
+                 //   $('#btnGenerateReferralCode').removeAttr('disabled');
+                    return true;
+                }else{
+                    //$('#btnGenerateReferralCode').attr('disabled','disabled');
+                    return false;
+                }
+            }
+        }
+ 
+        function copy2clipboard(){
+            var el =  document.getElementById("smsg");
+            var range = document.createRange()  ;
+            range.selectNodeContents(el) ; 
+            var selection = window.getSelection() ;
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try { 
+               document.execCommand('copy' ) ;                 
+            }
+            catch (err) {
+            }
+            el.blur();
+          //  $("#cp2cb").hide();
+        }
+
+        
+
+       /* function CPEmailCheck(val){
+          if(Cigna.ValidationUtil.isValidEmail(val.trim())&&val.trim()!=null){
+            return true;
+          }
+          else{
+            return false;
+          }
+        }*/
+       /* function CPEmailCheckNull(val){
+          if(val.trim()!=null){
+            return true;
+          }
+          else{
+            return false;
+          }
+        }*/
+
+
+         //  jQuery.validator.settings.onkeyup = false;
+        jQuery.validator.addMethod("emailStrict", function(value, element) {
+                return value==''?true:Cigna.ValidationUtil.isValidEmail(value);
+            }, "{!$Label.eSales_Your_Email_Address_is_invalid}");
+ 
+        jQuery.validator.addMethod("CPEmailCheck", function(value, element) {
+                return  CPEmailCheck(value);
+            }, "");
+            
+            /*
+        $("input[id*='referee-name']").each(function(idx, elem){
+            $(elem).rules("add", {
+                required : true
+            });
+        });
+
+        $("input[id*='referee-email']").each(function(idx, elem){
+            $(elem).rules("add", {
+                required : true,
+                emailStrict : true
+            });
+        });
+        //jQuery.validator control error message
+        $("input[id*='email-cp']").each(function(idx, elem){
+            $(elem).rules("add", {  
+                required : true,              
+                CPEmailCheck : true 
+                //CPEmailCheckNull : true
+            });
+        });
+        */
+/*
+        $("input[id*='ddlProduct']").each(function(idx, elem){
+            $(elem).rules("add", {                
+                required : true 
+            });
+        });
+        */
+/*
+       function triggerToggleOverlayMGM() {
+            var overlayChecker = document.getElementById("overlayChecker").value;
+            if (overlayChecker == 'TriggerbyHamburger') {
+                var overlay = document.getElementById('reallocationOverlay');
+                var specialBox = document.getElementById('reallocationSpecialBox');
+                overlay.style.opacity = .95;
+                overlay.style.display = "block";
+                specialBox.style.display = "block";
+            }
+
+
+        }
+*/
+        function reallocationToggleOverlayMGM() {
+            if (!Cigna.Util.checkWebView()) {
+              //  closetermsandCondition();
+            }
+            var overlay = document.getElementById('reallocationOverlayMGM');
+            var specialBox = document.getElementById('reallocationSpecialBoxMGM');
+            overlay.style.opacity = .95;
+            if (overlay.style.display == "block") {
+          //    $("body").removeClass('noscroll');
+                overlay.style.display = "none";
+                specialBox.style.display = "none";
+            } else {
+            //  $("body").addClass('noscroll');
+                overlay.style.display = "block";
+                specialBox.style.display = "block";
+            }
+         //   alert('ok');
+        }
+    </script>
+    </apex:form>
+
+</apex:page>

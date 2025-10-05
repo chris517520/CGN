@@ -1,0 +1,861 @@
+<apex:page sidebar="false" Controller="MyAccountUpdatePageCtrl">
+  <head>
+      <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+      <apex:include pageName="CignaCommonCSS" />
+      <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+      <style>
+            
+            
+            .tooltip { 
+                position: relative;
+                display: inline-block;
+            }
+            
+            .tooltip .tooltiptext {
+                visibility: hidden;
+                width: 120px;
+                background-color: black;
+                color: #fff;
+                text-align: center;
+                border-radius: 6px;
+                padding: 5px 0;
+            
+                position: relative;
+                z-index: 99;
+            }
+            
+            .tooltip:hover .tooltiptext {
+                visibility: visible;
+            }
+            
+            .tooltip-inner {
+                /* Change the tooltip width here */
+                max-width: 250px !important;
+                /* If max-width does not work, try using width instead */
+                width: 250px; 
+                min-width: 100px;
+            }
+            
+            .helptext-icon {
+                background:none !important;
+                border-top:none !important;
+                border-right:none !important;
+                border-left:none !important;
+                border-radius:0px !important;
+                border-color:#58595B !important;
+                //color: #E35205 !important;
+                //font-size:14px !important;
+            }
+            .form-field-style-output{
+              border:0px;
+              //border-bottom:1px solid #58595B;
+              width: 100%;
+              box-shadow: none !important;
+              border-radius: 0px;
+              color: #58595B;
+              height: 34px;
+              outline: none;
+              -webkit-box-shadow: none;
+              -moz-box-shadow: none;
+              box-shadow: none;
+              padding: 6px 0px;
+              line-height: 1.42857143 !important;
+              background: transparent;
+            }
+            .form-field-style-align{
+              border:0px;
+              border-bottom:1px solid #58595B;
+              width: 100%;
+              box-shadow: none !important;
+              border-radius: 0px;
+              color: #58595B;
+              height: 34px;
+              outline: none;
+              -webkit-box-shadow: none;
+              -moz-box-shadow: none;
+              box-shadow: none;
+              padding: 6px 0px;
+              line-height: 1.42857143 !important;
+              background: transparent;
+          }
+          .form-field-style-select-align {
+              border:0px;
+              border-bottom:1px solid #58595B;
+              background: url('{!$Resource.select_arrow_style}') no-repeat 98% 50% !important;
+              background-size: 7px 7px !important;
+              padding-right:20px;
+              padding-left:0px;
+              -moz-appearance: none; 
+              -webkit-appearance: none; 
+              appearance: none;
+              width: 100%;
+              border-radius: 0px;
+              height:34px !important;
+          }
+          span[id$="cigna-error"] span div.message{
+                
+                border: 0 !important;
+                background-color: #fff;
+                opacity: .9;
+                margin-bottom:10px;
+                margin-top:10px;
+                margin-left:-13px !important;
+                width:100%;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td img{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell div span{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell{
+                color:red;
+                /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+                font-family: "ValueSansRegular";
+            }
+       </style>
+       <script>
+       
+       $(document).ready(function(){        
+
+           $('[data-toggle="tooltip"]').tooltip({
+                //container: 'body', 
+                // This is meant to remove the glitch when hovering over the icon, but didnt work....
+                placement: "top"
+            });
+       });
+       
+       </script>
+       
+  </head>
+  <apex:define name="additionalLibraries">
+      <!--<meta name="viewport" content="width=device-width, initial-scale=1" />
+      <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap.min.js')}"></script>
+      <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap_ns.css')}" />
+      <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />-->
+      
+      <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/Chart.min.js')}"></script>
+      <apex:stylesheet value="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+      <!-- CR-56_Link_20220214 -->
+      <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap3.4.1.css')}" />
+      <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+      <!-- CR-56_Link_20220214, commented by minghua, CignaUtilJS exist in CustomerPageTemplate -->
+      <!-- <apex:include pageName="CignaUtilJS"/> -->
+      <!-- CR-56_Link_20220214 -->
+      <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+      <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+      <apex:outputPanel rendered="{!userLanguage == 'zh_TW'}" layout="none">
+          <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+      </apex:outputPanel>
+      <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+      <!-- CR-56_Link_20220214, commented by minghua, CignaUtilJS exist in CustomerPageTemplate -->
+      <!-- <apex:include pageName="CignaUtilJS"/> -->
+  </apex:define>
+  <apex:define name="body">
+      <apex:form id="mainPage">
+          <div class="bs cigna-fg-orange-medium onclick-pointer" onclick="Cigna.Util.navigateToVFP('MyAccountPageVFP')" style="padding-top: 0px;">
+               <p class="bs pull-left"><a id="eSales-back-btn" class="bs cigna-fg-orange-medium onclick-pointer" style="text-decoration: none;"><i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a></p>
+          </div>
+        <script>
+            // 20231101 - minghua - JOBR-335 MFA in existing MyCigna web and app
+            function validateCountryCodeLength(){
+                var countryCode = $("input[id*='countryCode']").val();
+                if(countryCode.length > 5){
+                   return false;
+                }
+                return true;
+            }
+            function isValidPhone() {
+               var patt = /^[0-9]{1,12}$/i;
+               var phone = $("input[id*='contactMobile']").val();
+               if(patt.exec(phone)==null){
+                   return false;
+               }
+               
+               var len = phone.toString().length;
+               var countryCode = $("input[id*='countryCode']").val();
+               if((countryCode=='852'||countryCode=='+852'||countryCode=='') && len!=8){
+                   return false;
+               }
+               if((countryCode=='86'||countryCode=='+86') && len!=11){
+                   return false;
+               }
+               return true;
+            }
+            function validatePhoneLength(){
+                var phone = $("input[id*='countryCode']").val();
+                if(phone.length > 20){
+                   return false;
+                }
+                return true;
+            }
+            function validatepassCodeLength(){
+                var otp = $("input[id*='inputOTP']").val();
+                if (!isNaN(otp)&&otp.length==6) {
+                    return true;
+                }
+                return false;
+            }
+
+            function validateNewEmail(){
+                  var newE = $("input[id*='upadte-Email-new']").val();
+                  if(newE ==null || newE ==''){
+                      return true;
+                  }else{
+                      // Rancho_PI54_20220113: allow user input max length 10 characters for email domain, e.g. test@cigna.global
+                      // return Cigna.ValidationUtil.isValidEmail(newE);
+                      return Cigna.ValidationUtil.newIsValidEmail(newE);
+                  }
+                  return true;
+            }
+            
+            function validateConfirmEmail(){
+                  var confirmE = $("input[id*='upadte-Email-confirm']").val();
+                  if(confirmE ==null || confirmE ==''){
+                      return true;
+                  }else{
+                      // Rancho_PI54_20220113: allow user input max length 10 characters for email domain, e.g. test@cigna.global
+                      // return Cigna.ValidationUtil.isValidEmail(confirmE);
+                      return Cigna.ValidationUtil.newIsValidEmail(confirmE);
+                  }
+                  return true;
+           }
+           
+           function validateEmailMatch(){
+                  var newE = $("input[id*='upadte-Email-new']").val();
+                  var confirmE = $("input[id*='upadte-Email-confirm']").val();
+                  if((newE!=null && newE!='') && (confirmE!=null && confirmE!='') && newE!= confirmE){
+                      return false;
+                  } else {
+                      return true;
+                  }
+                  return true;
+            }
+            
+            function validatePasswordMatch(){
+                  var newP = $("input[id*='upadte-Password-new']").val();
+                  var confirmP = $("input[id*='upadte-Password-confirm']").val();
+                  if((newP!=null && newP!='') && (confirmP!=null && confirmP!='') && newP!= confirmP){
+                      return false;
+                  } else {
+                      return true;
+                  }
+                  return true;
+            }
+            
+            function validatePassword(){
+                  var pr = $("input[id*='validationResult1']").val();
+                  if(pr=='false'){
+                      return false;
+                  } 
+                  return true;
+            }
+            
+            function validateNewPassword(){
+                  var pr = $("input[id*='validationResult2']").val();
+                  if(pr=='false'){
+                      return false;
+                  } 
+                  return true;
+            }
+            
+            function validateExistedEmail(){
+                  var isExistedEmail = $("input[id*='isExistedEmail']").val();
+                  if(isExistedEmail=='Yes'){
+                      return false;
+                  } 
+                  return true;
+            }
+            
+            function validateEmailLength(){
+                var email = $("input[id*='upadte-Email-new']").val();
+                if(email.length > 100){
+                   return false;
+                }
+                return true;
+            }
+            
+        </script>
+        <br/>
+        
+        <!--<apex:pageMessages rendered="false"></apex:pageMessages>-->
+        <div class="bs container">
+           <apex:outputPanel rendered="{!hasError}">
+                <div class="col-xs-12 col-sm-12">
+                    <apex:pageMessages id="cigna-error"/>
+                </div>
+           </apex:outputPanel>
+           <!--add for password policy update -->
+            
+           <apex:outputPanel >
+            <apex:inputHidden value="{!passwordErrorMessage}" id="passwordErrorMessage"></apex:inputHidden>
+           </apex:outputPanel>
+           <form>   
+                    <!--<div class="bs cigna-fg-orange-medium onclick-pointer" onclick="Cigna.Util.navigateToVFP('MyAccountPageVFP')" style="padding-bottom:70px;padding-top: 0px;">
+                        <p class="bs pull-left"><a id="eSales-back-btn" href="#" class="bs cigna-fg-orange-medium onclick-pointer" style="text-decoration: none;"><i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a></p>
+                    </div>-->
+                    <div class="bs form-group col-sm-12 col-xs-12" style="padding-top:40px;"/>
+                    <!-- 20210912 - minghua - JOBR-20: Vulnerability issue fix - Reset password -->
+                    <div id="errorMessage" class="bs form-group col-sm-12" style="display: none;color: red;"></div>
+                    <!-- 20231101 - minghua - JOBR-335 MFA in existing MyCigna web and app -->
+                    <apex:outputPanel rendered="{!!isMFAVerify}">
+                        <div class="bs form-group col-sm-5 col-xs-12" >
+                             {!$Label.Acc_Old_Password}
+                        </div>
+                        <div class="bs form-group col-sm-7 col-xs-12">
+                             <apex:inputSecret value="{!oldPassword}" id="password" styleClass="bs form-field-style-align" redisplay="true" />
+                        	 <script>
+                                  $("input[id$='password']").attr("autocomplete", "off");
+                             </script>
+                   		</div>
+                    </apex:outputPanel>
+                    
+                    <apex:outputPanel rendered="{!IF(updateType=='email',true,false)}">
+                        <div class="bs form-group col-sm-5 col-xs-12">
+                           {!$Label.Acc_New_Email_Address}
+                        </div>
+                        <div class="bs form-group col-sm-7 col-xs-12">
+                           <apex:inputText id="upadte-Email-new" value="{!newEmailAddress}" styleClass="bs form-field-style-align"  />
+                        </div>
+                        
+                        <div class="bs form-group col-sm-5 col-xs-12">
+                           {!$Label.Acc_Confirm_New_Email_Address}
+                        </div>
+                        <div class="bs form-group col-sm-7 col-xs-12">
+                           <apex:inputText id="upadte-Email-confirm" value="{!confirmEmailAddress}" styleClass="bs form-field-style-align"  />
+                        </div>
+                    </apex:outputPanel>
+                     
+                    <apex:outputPanel rendered="{!IF(updateType=='vEmail',true,false)}">
+                        <div class="bs form-group col-sm-5 col-xs-12">
+                           {!$Label.Acc_New_Email_Address}
+                        </div>
+                        <div class="bs form-group col-sm-7 col-xs-12">
+                           <apex:inputText id="vupadte-Email-new" value="{!personalEMailAddress}" styleClass="bs form-field-style-align"  />
+                        </div>
+                        
+                        <div class="bs form-group col-sm-5 col-xs-12">
+                           {!$Label.Acc_Confirm_New_Email_Address}
+                        </div>
+                        <div class="bs form-group col-sm-7 col-xs-12">
+                           <apex:inputText id="vupadte-Email-confirm" value="{!confirmEmailAddress}" styleClass="bs form-field-style-align"  />
+                        </div>
+                    </apex:outputPanel>
+                     
+                    <apex:outputPanel rendered="{!IF(updateType=='password',true,false)}">
+                        <div class="bs form-group col-sm-5 col-xs-12">
+                              {!$Label.Acc_New_Password}
+                              <span class="helptext-icon" id="help" data-toggle="tooltip" title="{!$Label.Password_Policy_Help_Text}">
+                                    <i class="fa fa-question-circle-o" aria-hidden="true" style="font-size:16px;"></i>
+                              </span>
+                        </div>
+                      
+                        <div class="bs form-group col-sm-7 col-xs-12">
+                           <apex:inputSecret value="{!newPassword}" id="upadte-Password-new" styleClass="bs form-field-style-align" redisplay="true"/>
+                           <script>
+                              $("input[id$='upadte-Password-new']").attr("autocomplete", "off");
+                           </script>
+                        </div>
+                        
+                        <div class="bs form-group col-sm-5 col-xs-12">
+                          {!$Label.Acc_Confirm_New_Password}
+                        </div>
+                        <div class="bs form-group col-sm-7 col-xs-12">
+                          <apex:inputSecret value="{!confirmPassword}" id="upadte-Password-confirm" styleClass="bs form-field-style-align" redisplay="true"/>
+                          <script>
+                              $("input[id$='upadte-Password-confirm']").attr("autocomplete", "off");
+                          </script>
+                        </div>
+                    </apex:outputPanel>
+
+                    <!-- 20231101 - minghua - JOBR-335 MFA in existing MyCigna web and app -->
+                    <apex:outputPanel id="setupFactorPanel" rendered="{!isMFAVerify}">
+                        <div class="bs col-sm-8 col-sm-offset-2">
+                            <div class="col-sm-12 col-xs-12"><h3>{!$Label.MFA_Verification}</h3></div>
+                            <apex:outputPanel rendered="{!updateType=='SMSFactor'}">
+                                <div class="col-sm-12 col-xs-12" style="padding-top:10px;">
+                                    <p>{!$Label.MFA_Activate_SMS_Reminder}</p>
+                                </div>
+                                <div class="col-sm-3 col-xs-3" style="font-weight: bold;">
+                                    <apex:inputText id="countryCode" value="{!contryCode}" html-placeholder="+852" styleClass="bs form-field-style-align" />
+                                </div>
+                                <div class="col-sm-4 col-xs-6" style="font-weight: bold;">
+                                    <apex:inputText id="contactMobile" value="{!contactNo}" styleClass="bs form-field-style-align"  />
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!updateType=='eFactor'}">
+                                <div class="col-sm-12 col-xs-12" style="padding-top:10px;">
+                                    <p>{!$Label.MFA_Activate_Email_Reminder}</p>
+                                </div>
+
+                                <div class="col-sm-7 col-xs-12" style="height:50px;padding-top:5px;">
+                                    <apex:inputText id="nEmailAdd" value="{!notifiEmailAdd}" styleClass="bs form-field-style-align"/>
+                                </div>
+                            </apex:outputPanel>
+                            <div class="hidden-xs col-sm-5">
+                                <input id="sendOTPCode" class="btn btn-primary pull-right" onclick="sendCode()" value="{!$Label.MFA_Send_OTP_Btn}" type="button" />
+                            </div>
+                            <div class="bs col-sm-12"></div>
+                            <div class="col-sm-5 col-xs-8" style="padding-top:10px">
+                              {!$Label.MFA_One_Time_Passcode}
+                            </div>
+                            <div class="col-sm-7 col-xs-4">
+                                <apex:inputText id="inputOTP" value="{!passCode}" html-placeholder="{!$Label.MFA_Code}" styleClass="bs form-field-style-align"/>
+                            </div>
+                        </div>
+                        <apex:outputPanel id="verifyPanel">
+                            <div class="bs col-sm-12 col-xs-12">
+                                <div style="padding:20px;"></div>
+                                <!--desktop action button-->
+                                <apex:outputPanel >
+                                    <input class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" value="{!$Label.MFA_Verify_Btn}" type="button" onclick="validVerifyOTP()"/>
+                                </apex:outputPanel>
+                                <!--mobile action button-->
+                                <apex:outputPanel rendered="{!!isBroker}">
+                                    <div id="mobile-app-padding" class="bs row" style="display: none; padding-bottom: 100px;">
+                                        <div class="bs col-xs-12"></div>
+                                    </div>
+                                    <apex:outputPanel rendered="{!factorId==''}">
+                                        <div class="bs visible-xs cigna-floating-bottom-panel hidden-lg">
+                                            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                                                <a id="sendOTPCode" href="javascript:void(0);" onclick="sendCode()" class="onclick-pointer action-btn cigna-fg-white" role="button">{!$Label.MFA_Send_OTP_Btn}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!factorId!=''}">
+                                        <div class="bs visible-xs cigna-floating-bottom-panel hidden-lg">
+                                            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                                                <a id="sendOTPCode" href="javascript:void(0);" onclick="sendCode()" class="onclick-pointer action-btn cigna-fg-white" role="button">{!$Label.MFA_Send_OTP_Btn}
+                                                </a>
+                                                <a href="javascript:void(0);" onclick="validVerifyOTP()" class="onclick-pointer action-btn cigna-fg-white" role="button">{!$Label.MFA_Verify_Btn}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                            </div>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    
+                    <!-- 20231101 - minghua - JOBR-335 MFA in existing MyCigna web and app -->
+                    <apex:outputPanel rendered="{!!isMFAVerify}">
+                        <div class="bs col-sm-12 col-xs-12">
+                    
+                            <div style="padding:20px;"></div>
+                            <!--desktop action button-->
+                            <!-- 20210912 - minghua - JOBR-20: Vulnerability issue fix - Reset password, update function validatePasswordApex-->
+                            <div class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="validatePasswordCheck()">
+                                {!$Label.Update_Information}
+                            </div>
+                                
+                            <!--mobile action button-->    
+                            <apex:outputPanel rendered="{!!isBroker}">
+                            <div id="mobile-app-padding" class="bs row" style="display: none; padding-bottom: 100px;">
+                                <div class="bs col-xs-12"></div>
+                            </div>
+                            <!-- 20210912 - minghua - JOBR-20: Vulnerability issue fix - Reset password, update function validatePasswordApex -->
+                            <div id="action-bar" class="bs row visible-xs cigna-floating-bottom-panel" style="left:0px;">
+                                <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark onclick-pointer" onclick="validatePasswordCheck()">
+                                    <a class="action-btn cigna-fg-white" role="button"><span class="fa fa-pencil" aria-hidden="true"></span><br/><span id="firstbtnxstext">{!$Label.Update_Information}</span></a>
+                                </div>
+                            </div>
+                            </apex:outputPanel>
+                        </div>
+                    </apex:outputPanel>
+                    
+                    <div style="display:none;">
+                        <apex:inputText id="validationResult1" value="{!validateOldPassword}" styleClass="bs form-field-style-align" />
+                        <apex:inputText id="validationResult2" value="{!validateNewPassword}" styleClass="bs form-field-style-align" />
+                        <apex:inputText id="isExistedEmail" value="{!isExistedEmail}" styleClass="bs form-field-style-align" />
+                        <apex:inputText id="isUpdateSuccess" value="{!updateResult}" styleClass="bs form-field-style-align" />
+                    </div>
+                    
+           </form>
+           <!-- updated by andy li for remove all the session when user update the password
+                after delete the login session, will redirect to the home page. -->
+            <!-- 20231101 - minghua - JOBR-335 MFA in existing MyCigna web and app -->
+           <!-- 20240112 - minghua - PI-144 Disable Okta update pw API call in My Setting -->
+           <apex:actionFunction action="{!validatePassword}" name="validatePasswordApex" reRender="mainPage" oncomplete="returnBackHomePage()" rendered="{!IF(updateType=='password',true,false)}" />
+           <!-- <apex:actionFunction action="{!validatePassword}" name="validatePasswordApex" reRender="mainPage" oncomplete="updateOktaInfo()" rendered="{!IF(updateType=='password',true,false)}" /> -->
+           <apex:actionFunction action="{!updateOktaInfo}" name="updateOktaInfo" reRender="mainPage" oncomplete="returnBackHomePage()" rendered="{!IF(updateType=='password',true,false)}" />
+           <apex:actionFunction action="{!validatePassword}" name="validatePasswordApex" reRender="mainPage" oncomplete="updatefunction()" rendered="{!IF(updateType=='password',false,true)}" />
+           <!-- updated by andy li end -->
+           <!-- 20231101 - minghua - JOBR-335 MFA in existing MyCigna web and app -->
+           <!-- <apex:actionFunction action="{!updateUserInfo}" name="updateInfoApex" reRender="mainPage" oncomplete="returnBack()"/> -->
+           <apex:actionFunction action="{!updateUserInfo}" name="updateInfoApex" reRender="mainPage" oncomplete="updateOktaInfo()"  status="loader-icon"/>
+           <apex:actionFunction action="{!updateOktaInfo}" name="updateOktaInfo" reRender="mainPage" oncomplete="returnBack()" rendered="{!IF(updateType=='password',false,true)}"  status="loader-icon"/>
+           <!-- 20231101 - minghua - JOBR-335 MFA in existing MyCigna web and app -->
+           <apex:actionFunction action="{!sendOTPCode}" name="sendOTPCode" reRender="mainPage" status="loader-icon" oncomplete="sendOTP()" />
+           <apex:actionFunction action="{!activateFactor}" name="activateFactor" reRender="mainPage" oncomplete="returnBack()" status="loader-icon"/>
+
+           <script>
+                // 20231101 - minghua - JOBR-335 MFA in existing MyCigna web and app
+                function sendCode(){
+                    if(sendOTPForm_mainPage()){
+                        sendOTPCode();
+                    }
+                }
+                function validVerifyOTP(){
+                    console.log('function validVerifyOTP');
+                    if(verifyOTPForm_mainPage()){
+                        activateFactor();
+                    }
+                }
+                function sendOTP() {
+                    console.log('function sendOTP');
+                    var button=$("input[id$='sendOTPCode']");
+                    button.attr("disabled", true);
+                    var mButton=$("a[id$='sendOTPCode']");
+                    mButton.attr("style", "pointer-events: none");
+                    // sendOTPCode();
+                    var time=60;
+                    var timer=setInterval(function() {
+                        var deskBut=$("input[id$='sendOTPCode']");
+                        var mobileBut=$("a[id$='sendOTPCode']");
+                        if (time == -1) {
+                            clearInterval(timer);
+                            deskBut.attr("disabled", false);
+                            deskBut.attr("value", "Resend");
+                            mobileBut.text("Resend");
+                            mobileBut.attr("style", "");
+                        } else {
+                            deskBut.attr("disabled", true);
+                            mobileBut.attr("style", "pointer-events: none");
+                            deskBut.attr("value", "Resend("+time+")");
+                            mobileBut.text("Resend("+time+")");
+                            time--;
+                        }
+                    }, 1000);
+                }
+
+               function update() {
+                   updateInfoApex();
+               }
+               
+                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+        
+                    /*$(document).ready(function(){
+                        var targetHeight = window.screen.height;
+                        var sfOneHeaderHeight = 44 + 20; //window.parent.document.getElementsByClassName('oneHeader')[0].offsetHeight;
+                        
+                        if($(window).width() > $(window).height()){
+                            targetHeight = window.screen.width;   
+                        }
+                        
+                        //$('body').css('height', (targetHeight  - (targetHeight * 0.09)) + 'px');
+                        $('body').css('height', (targetHeight - sfOneHeaderHeight) + 'px');
+                        $('body').bind('touchmove', function(e){$('#action-bar').css('opacity', '0');});
+                        $('body').bind('touchend', function(e){setTimeout(function(){$('#action-bar').css('opacity', '1');}, 700);});
+                        
+                    });
+                    
+                    $('#mobile-app-padding').css('display', 'block');*/
+                    
+                    $("a").attr("target","");
+                    
+                }
+                 
+           </script>
+        </div>
+        <script>
+          
+          function updatefunction(){
+              if(validateForm_mainPage()){
+                  updateInfoApex();
+              }
+          }
+          
+          function returnBack(){
+              var isUpdateSuccess = $("input[id*='isUpdateSuccess']").val();
+              if(isUpdateSuccess=='true'){
+                  Cigna.Util.navigateToVFP('MyAccountPageVFP?updateResult=Success');
+              }
+          }
+          //Add by andy Li for session delete when user update the password.
+          //after delete the login session, will redirect to the home page.
+          function returnBackHomePage(){
+            if(validateForm_mainPage() && Cigna.Util.isCustomerPortal()){
+                Cigna.Util.navigateToVFP('CustomerLandingPage','','','',false);
+            }else{
+                // 20240430 - minghua - update broker portal
+                // updatefunction();
+                var updateType='{!updateType}';
+                console.log('returnBackHomePage updateType=',updateType);
+                if (updateType=='password'&&Cigna.Util.isBrokerPortal()) {
+                    returnBack();
+                }else{
+                    updatefunction();
+                }
+            }         
+          }
+          
+            // 20210912 - minghua - JOBR-20: Vulnerability issue fix - Reset password
+            // When click button, first check the input password and comfirm password are the same
+            function validatePasswordCheck(){
+                var updateType='{!updateType}';
+                console.log('validatePasswordCheck updateType=',updateType);
+                if (updateType=='password') {
+                    jQuery.validator.addMethod("passwordNotMatch", function(value, element) {
+                        return validatePasswordMatch();
+                    }, "{!$Label.Error_Message_The_passwords_do_not_match}");
+                    $("form[id*='mainPage']").validate({
+                        errorPlacement: function(label, element) {
+                            label.addClass('errorDiv');
+                            label.insertAfter(element);
+                        },
+                            wrapper: 'div'
+                    });
+                    $("form[id*='mainPage'] input[id*='password']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            required: true
+                        });
+                    });
+                    $("form[id*='mainPage'] input[id*='upadte-Password']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            required: true
+                        });
+                    });
+                    $("form[id*='mainPage'] input[id*='upadte-Password-confirm']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            passwordNotMatch: true
+                        });
+                    });
+                    if ($("form[id*='mainPage']").validate().form()) {
+                        validatePasswordApex();
+                    }
+                }else{
+                    validatePasswordApex();
+                }
+            }
+
+          function validateForm_mainPage(){
+                // 20210912 - minghua - JOBR-20: Vulnerability issue fix - Reset password
+                var errorDisplayMessage='';
+                var errorMessage='';
+                var validaPS ='';
+                var updateType='{!updateType}';
+                console.log('validatePasswordCheck updateType=',updateType);
+                
+                // 20220412 - minghua - issue fix - Reset password, if update success will pass the validate
+                var isUpdateSuccess = $("input[id*='isUpdateSuccess']").val();
+                if(updateType=='password' && isUpdateSuccess=='true'){
+                    return true;
+                }
+
+              //add for password policy update
+              if($("input[id$='passwordErrorMessage']") != null){
+                    errorMessage = $("input[id$='passwordErrorMessage']").val();
+                    console.log(errorMessage);
+                }
+              jQuery.validator.addMethod("isInvalidNewEmail", function(value, element) {
+                  return validateNewEmail();
+              }, "{!$Label.Error_Message_Email_Not_Valid}");
+              
+              jQuery.validator.addMethod("isInvalidconfirmEmail", function(value, element) {
+                  return validateConfirmEmail();
+              }, "{!$Label.Error_Message_Email_Not_Valid}");
+              
+              jQuery.validator.addMethod("isExistedEmail", function(value, element) {
+                  return validateExistedEmail();
+              }, "{!$Label.Error_Message_Email_In_Use}");
+              
+              jQuery.validator.addMethod("emailNotMatch", function(value, element) {
+                  return validateEmailMatch();
+              }, "{!$Label.Error_Message_The_email_address_do_not_match}");
+              
+                // 20210912 - minghua - JOBR-20: Vulnerability issue fix - Reset password
+                if (updateType=='password') {
+                    validaPS = $("input[id*='validationResult1']").val();
+                    console.log('validationResult1=',validaPS);
+                    if(validaPS=='false'){
+                        errorDisplayMessage+="{!$Label.Error_Message_Invalid_Current_Password}";
+                    }else{
+                        validaPS = $("input[id*='validationResult2']").val();
+                        if(validaPS=='false'){
+                            errorDisplayMessage+=errorMessage;
+                        }
+                    }
+                    if (errorDisplayMessage!=undefined && errorDisplayMessage!='') {
+                        $('div[id=errorMessage]').html(errorDisplayMessage);
+                        document.getElementById('errorMessage').style.display = "block";
+                    }
+                }else{
+                    jQuery.validator.addMethod("isInvalidPassword", function(value, element) {
+                        return validatePassword();
+                    }, "{!$Label.Error_Message_Invalid_Current_Password}");
+
+                    jQuery.validator.addMethod("isInvalidNewPassword", function(value, element) {
+                        return validateNewPassword();
+                    }, errorMessage);//add for password policy update
+                    
+                }
+
+              
+
+              jQuery.validator.addMethod("passwordNotMatch", function(value, element) {
+                  return validatePasswordMatch();
+              }, "{!$Label.Error_Message_The_passwords_do_not_match}");
+              
+              
+              jQuery.validator.addMethod("validateEmailLength", function(value, element) {
+                  return validateEmailLength();
+              }, "{!$Label.Error_Message_100_characters}");
+              
+              $("form[id*='mainPage']").validate({
+                  errorPlacement: function(label, element) {
+                      label.addClass('errorDiv');
+                      label.insertAfter(element);
+                  },
+                      wrapper: 'div'
+              });
+              
+              $("form[id*='mainPage'] input[id*='upadte-Email']").each(function(idx, elem){
+                                    $(elem).rules("add", {
+                                        required: true,
+                                        isExistedEmail: true
+                                    });
+              });
+                
+                // 20210912 - minghua - JOBR-20: Vulnerability issue fix - Reset password
+                if (updateType=='password') {
+                    if(validaPS=='false'){
+                        return false;
+                    }else{
+                        $("form[id*='mainPage'] input[id*='password']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                required: true
+                            });
+                        });
+                        $("form[id*='mainPage'] input[id*='upadte-Password']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                required: true
+                            });
+                        });
+                    }
+                }else{
+                    $("form[id*='mainPage'] input[id*='password']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            required: true
+                        });
+                    });
+                    $("form[id*='mainPage'] input[id*='upadte-Password']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            required: true
+                        });
+                    });
+                    $("form[id*='mainPage'] input[id*='password']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            isInvalidPassword: true
+                            
+                        });
+                    });
+                    $("form[id*='mainPage'] input[id*='upadte-Password-new']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            isInvalidNewPassword: true
+                        });
+                    });
+                }
+
+              $("form[id*='mainPage'] input[id*='upadte-Email-new']").each(function(idx, elem){
+                   $(elem).rules("add", {
+                        isInvalidNewEmail: true,
+                        validateEmailLength: true
+                   });
+              });
+              
+              $("form[id*='mainPage'] input[id*='upadte-Email-confirm']").each(function(idx, elem){
+                   $(elem).rules("add", {
+                        isInvalidconfirmEmail: true,
+                        emailNotMatch: true
+                   });
+              });
+              
+              
+              $("form[id*='mainPage'] input[id*='upadte-Password-confirm']").each(function(idx, elem){
+                   $(elem).rules("add", {
+                        passwordNotMatch: true
+                   });
+              });
+              return $("form[id*='mainPage']").validate().form();
+          }
+            // 20231101 - minghua - JOBR-335 MFA in existing MyCigna web and app
+            function sendOTPForm_mainPage(){
+                $("form[id*='mainPage']").validate({
+                    errorPlacement: function(label, element) {
+                      label.addClass('errorDiv');
+                      label.insertAfter(element);
+                  },
+                    wrapper: 'div'
+                });
+                jQuery.validator.addMethod("validateCountryCodeLength", function(value, element) {
+                    return validateCountryCodeLength();
+                }, "{!$Label.Error_Message_5_characters}");
+                jQuery.validator.addMethod("isValidPhone", function(value, element) {
+                    return isValidPhone();
+                }, "{!$Label.Error_Message_Contact_Number_Not_Valid}");
+                jQuery.validator.addMethod("validatePhoneLength", function(value, element) {
+                    return validatePhoneLength();
+                }, "{!$Label.Error_Message_20_characters}");
+
+                $("form[id*='mainPage'] input[id*='countryCode']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            validateCountryCodeLength: true
+                        });
+                    }
+                );
+                $("form[id*='mainPage'] input[id*='contactMobile']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            isValidPhone: true,
+                            validatePhoneLength: true
+                        });
+                });
+                return $("form[id*='mainPage']").validate().form();
+            }
+            function verifyOTPForm_mainPage(){
+                $("form[id*='mainPage']").validate({
+                    errorPlacement: function(label, element) {
+                      label.addClass('errorDiv');
+                      label.insertAfter(element);
+                  },
+                    wrapper: 'div'
+                });
+                jQuery.validator.addMethod("validateCountryCodeLength", function(value, element) {
+                    return validateCountryCodeLength();
+                }, "{!$Label.Error_Message_5_characters}");
+                jQuery.validator.addMethod("isValidPhone", function(value, element) {
+                    return isValidPhone();
+                }, "{!$Label.Error_Message_Contact_Number_Not_Valid}");
+                jQuery.validator.addMethod("validatePhoneLength", function(value, element) {
+                    return validatePhoneLength();
+                }, "{!$Label.Error_Message_20_characters}");
+                jQuery.validator.addMethod("validatepassCodeLength", function(value, element) {
+                        return validatepassCodeLength();
+                }, "{!$Label.Error_Message_6_digits}");
+
+                $("form[id*='mainPage'] input[id*='countryCode']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            validateCountryCodeLength: true
+                        });
+                    }
+                );
+                $("form[id*='mainPage'] input[id*='contactMobile']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            isValidPhone: true,
+                            validatePhoneLength: true
+                        });
+                });
+                $("form[id*='mainPage'] input[id*='inputOTP']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            validatepassCodeLength: true
+                        });
+                });
+                return $("form[id*='mainPage']").validate().form();
+            }        
+    </script>
+     </apex:form>
+   </apex:define>
+</apex:page>

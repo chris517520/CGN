@@ -1,0 +1,43 @@
+<apex:page Controller="CSCallScriptController" >
+
+    <apex:includeScript value="/support/console/42.0/integration.js"/>
+    <apex:includescript value="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}" />
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+
+            jQuery.noConflict();
+            
+            var callListener = function (result) {
+                var phoneNumber = result.message;
+                console.log('CallScript component receivd Phone Number : ' + result.message);
+                
+                // Make console component visible
+                sforce.console.setCustomConsoleComponentVisible(true);
+                refreshScript(phoneNumber);
+            };
+
+            // Listen to call event
+            sforce.console.addEventListener('call', callListener);
+        });
+        
+    </script>
+    
+    <apex:form >
+        <apex:actionFunction name="refreshScript" action="{!refreshScript}" reRender="ScriptPanel" status="loader-icon">
+            <apex:param name="firstParam" assignTo="{!phoneNumber}" value="" />
+        </apex:actionFunction>
+        
+        <apex:tabPanel id="ScriptPanel" height="400px">
+            <apex:tab label="中文" name="ch" id="ch">
+                <apex:outputfield value="{!currentScript.Chinese_Script__c}"></apex:outputfield>
+                <apex:outputtext rendered="{!IF(currentScript==null,TRUE,FALSE) }">沒有找到脚本</apex:outputtext>
+            </apex:tab>
+            <apex:tab label="English" name="en" id="en">
+                <apex:outputfield value="{!currentScript.English_Script__c}"></apex:outputfield>
+                <apex:outputtext rendered="{!IF(currentScript==null,TRUE,FALSE) }">No available Script</apex:outputtext>
+            </apex:tab>
+            
+        </apex:tabPanel>
+    </apex:form>
+</apex:page>

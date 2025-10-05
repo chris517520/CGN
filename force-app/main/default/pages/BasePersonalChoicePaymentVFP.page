@@ -1,0 +1,245 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" title="Get Protected" controller="PersonalChoicePaymentCtrl">
+ <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+
+        <style>
+        
+            @media (max-width: 767px) {
+                body {
+                    padding-top: 50px;
+                }
+                
+                div#reallocationSpecialBoxESales {
+                    display: none;
+                    position: absolute;
+                    z-index: 11;
+                    margin: 100px auto 0px auto;
+                    width: 90%;
+                    height: 80%;
+                    background: #FFF;
+                    color: #000;
+                    left: 5%;
+                    padding: 20px;
+                    border-radius: 5px;
+                 }
+            }
+            @media (min-width: 768px) {
+                body {
+                    padding-top: 50px;
+                    min-height: 1024px;
+                }
+                
+                div#reallocationSpecialBoxESales {
+                    display: none;
+                    position: absolute;
+                    z-index: 11;
+                    margin: 150px auto 0px auto;
+                    width: 80%;
+                    height: 60%;
+                    background: #FFF;
+                    color: #000;
+                    left: 10%;
+                    padding:20px;
+                    border-radius:5px;
+                  }
+            }
+       
+        </style>
+
+        <script type="text/javascript">
+            var __sfdcSessionId = '{!GETSESSIONID()}';
+            var filesToUpload = '';  
+            var uploadedFile = 0;
+        </script>
+        <script src="/soap/ajax/32.0/connection.js" type="text/javascript"></script>
+
+        <script type="text/javascript">
+        
+            var changeLanguageWarningRequired = true;
+            var Cigna = Cigna || {};
+            
+            $(document).ready(function(){
+                // $('#isGusetuser-cigna-logo > a').attr('onclick','Cigna.Util.navigateToVFP(\'PersonalChoiceVFP?token={!txn.Personal_Choice_Token__c}\', null, null, false, false)'); 
+                var successPay = $('input[type="hidden"][id$="esales-afterPay"]').val();
+                console.log('###successPay: ' + successPay);
+                if(successPay=='true'){
+                    console.log('###begin: ' + successPay);
+                    eSalesDoneAndCallWS();
+                    $('input[type="hidden"][id$="esales-afterPay"]').val(false);
+                    console.log('###afterpay: ' + $('input[type="hidden"][id$="esales-afterPay"]').val());
+                }
+               
+            });
+            
+        
+        </script>
+    </head>
+    <apex:define name="additionalLibraries">
+         <!--additional css, bootstrap, jquery,js libraries-->
+         <!-- CR-56_Link_20220214 -->
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+         <apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+         </apex:outputPanel>
+         <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+         
+    </apex:define>
+    <!--<apex:form id="frmApplication" styleClass="cigna-esales-form">-->
+
+    <!-- 20201021 - minghua - payment error -->
+    <apex:outputPanel id="totalAll">
+    <apex:outputPanel id="paymentFailedShowBack" rendered="{!currentStep > 13 && paymentResult == 'Failed'}">
+        <script>
+            console.log('paymentFailedShowBack-{!currentStep}');
+        </script>
+        <div id="headeraction" class="bs header-action">
+            <div id="back" class="bs col-xs-6 col-sm-6" style="" >
+                <a onclick="returnToPreviouPage();" class="bs cigna-fg-orange-medium pull-left onclick-pointer" style="margin-left: -10px;">
+                    <i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}
+                </a>
+            </div>
+        </div>
+    </apex:outputPanel>
+
+    <apex:outputPanel id="errmessage">
+        <div class="bs row">
+            <apex:pagemessages ></apex:pagemessages>
+        </div>
+    </apex:outputPanel>
+    
+    <apex:outputPanel id="wrapper" rendered="{!currentStep==13}">
+        <script>
+        var val='?lang={!$Label.Header_Language_Code}&tid={!txn.id}';
+        $('#isGuestuser-true-diasplay-lang-href > a').attr('href',val);
+        $('#isGuestuser-personalchoice-Header_Change_Language').attr('href',val);
+        console.log('wrapper-{!currentStep}');
+        </script>
+        <div class="bs col-xs-12 form-horizontal">
+            <apex:form id="frmApplication" styleClass="cigna-esales-form">
+                <!--payment process-->
+                <apex:outputPanel styleClass="bs row" layout="block">
+                
+                    <apex:outputPanel styleClass="wrap-iframe-third-party">
+                        <script>
+                        
+                        //Quick fix for IPad, avoid duplicate event trigger -- Kenneth Wong
+                        var already_run = false;
+                        $(window).on("message onmessage", function(evt){
+                            var event = evt.originalEvent;
+                            if(!already_run){
+                                if (event.origin != null && event.origin.toLowerCase() == window.location.origin) {
+                                    already_run = true;
+                                    Cigna.Util.navigateToVFP("CusPersonalChoicePaymentVFP?afterPay=true&lang={!$CurrentPage.parameters.lang}&tid=" + event.data, null, null, null,false);
+                                }
+                            }
+                        });
+                        </script>
+                        <apex:iframe src="{!paymenturl}" height="1024px" scrolling="true" />
+                        <!--<apex:iframe src="eSalesPayment?merchantReference=SFDC334222Test&paymentAmount=99222000" height="1024px" scrolling="true"/>-->
+                        <!--<apex:include pageName="{!epaymentPage}" />-->
+                    </apex:outputPanel>
+                    
+                </apex:outputPanel>
+
+            </apex:form>
+        </div>
+    
+        <div id="web-app-padding" class="bs row" style="padding-bottom: 50px;">
+            <div class="bs col-xs-12"></div>
+        </div>
+        <div id="mobile-app-padding" class="bs row" style="display: none; padding-bottom: 120px;">
+            <div class="bs col-xs-12"></div>
+        </div>
+    </apex:outputPanel>        
+    <apex:outputPanel id="payment-gateway-section" style="padding-top: 25px;" rendered="{!currentStep > 13 && paymentResult != 'Failed'}" styleClass="bs row"  layout="block">
+            <script>
+                var val='?lang={!$Label.Header_Language_Code}&tid={!txn.id}&afterPay=true';
+                $('#isGuestuser-true-diasplay-lang-href > a').attr('href',val); 
+                $('#isGuestuser-personalchoice-Header_Change_Language').attr('href',val);
+            </script>
+            <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+                <i class="fa fa-check-circle-o content-active cigna-fg-green-medium" style="font-size:50px;" aria-hidden="true"></i>
+            </div>
+            <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+                <p>{!transField['Personal_Choice_Payment_Confirmation'][$label.Header_Language_Code_Current]}</p>
+            </div>
+    </apex:outputPanel>
+    <apex:outputPanel id="payment-gateway-section2" rendered="{!currentStep > 13 && paymentResult == 'Failed'}" styleClass="bs row" layout="block">
+        
+        <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+            <i class="bs cigna-fg-red-alert fa fa-times-circle fg-lg" style="font-size:50px;" aria-hidden="true"></i>
+        </div>
+        <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+            <!--changed by Stripe CR 
+            <p>{!$Label.Payment_Failed}{!txn.Payment_PSPReference__c}{!$Label.Payment_Failed_2}</p>-->
+            <p>{!$Label.Payment_Failed}{!txn.Payment_PSPReference__c}{!$Label.Payment_Failed_2}</p>
+            <br/>
+        </div>
+        <br/>
+    </apex:outputPanel>
+
+    <apex:outputPanel styleClass="bs row" layout="block" rendered="{!currentStep > 13 && !hideAcknowledgement}">
+        <div id="action-bar-desktop" class="bs  text-center">
+            <a id="eSales-view-plans-btn2" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" 
+               role="button" onClick="window.location.href = 'https://www.mycigna.com.hk/?lang={!$CurrentPage.parameters.lang}';">
+                {!transField['personal_choice_go_to_Cigna'][$label.Header_Language_Code_Current]}
+            </a>
+            <!-- <a id="eSales-home-btn2" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" 
+                role="button" onclick="Cigna.Util.navigateToVFP('PersonalChoiceVFP', null, null, false, false);">
+                {!$Label.Home}
+            </a> -->
+        </div>
+    </apex:outputPanel>
+    <apex:outputPanel id="token-expired-section" style="padding-top: 25px;" rendered="{!hasExpired}" styleClass="bs row"  layout="block">
+        <script>
+            var val='?lang={!$Label.Header_Language_Code}&afterPay=true&hasExpired=true';
+            $('#isGuestuser-true-diasplay-lang-href > a').attr('href',val); 
+            $('#isGuestuser-personalchoice-Header_Change_Language').attr('href',val);
+        </script>
+            <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+                <apex:outputText value="{!transField['Personal_Choice_Token_Expired'][$Label.Header_Language_Code_Current]}" escape="false" />
+                <br/>
+                <label style="font-style: italic;padding-top: 10px">{!transField['Personal_Choice_Token_Expired_Part2'][$label.Header_Language_Code_Current]}</label>
+            </div>
+            <div class="bs  text-center col-xs-12 col-sm-8 col-sm-offset-2">
+                <a id="eSales-view-plans-btn2" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop"  style="margin-top: 25px;"
+                   role="button" onClick="window.location.href = 'https://www.mycigna.com.hk/?lang={!$CurrentPage.parameters.lang}';">
+                    {!transField['personal_choice_go_to_Cigna'][$label.Header_Language_Code_Current]}
+                </a>
+            </div>
+    </apex:outputPanel>        
+        
+    <apex:outputPanel id="validationRulePanel">
+        <apex:form >
+            <apex:actionFunction action="{!eSalesDoneAndCallWS}" name="eSalesDoneAndCallWS" reRender="totalAll" status="loader-icon"/> 
+            
+            <!-- 20201021 - minghua - payment error -->
+            <apex:actionFunction action="{!returnToPreviouPage}" name="returnToPreviouPage" reRender="totalAll" status="loader-icon" />
+
+            <apex:inputHidden id="esales-afterPay" value="{!afterPay}" />
+            <script>
+                 //CR-56_Link_20220214
+                if (Cigna.Util.isIOS() && $(window).width() < 768) {
+                    $('.bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select').on("focus",function(evt){
+                            if ($('#action-bar').is(':visible')) {
+                                $('#action-bar').addClass('hidden-xs').removeClass('visible-xs');
+                            }
+                        });
+                        
+                        $('.bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select').on("blur",function(evt){
+                            if ($('#action-bar').hasClass('hidden-xs')) {
+                                $('#action-bar').addClass('visible-xs').removeClass('hidden-xs');
+                            }
+                        });
+                }
+                
+                if (Cigna.Util.isSalesforce1()) { 
+                     $("a").attr("target","");
+                }
+                
+            </script>
+        </apex:form>
+    </apex:outputPanel>
+</apex:outputPanel>
+</apex:page>

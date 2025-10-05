@@ -1,0 +1,330 @@
+<apex:page controller="TMGetQuoteCtrl" title="TM Get Quote"  sidebar="false" showHeader="false" docType="html-5.0" readOnly="false">
+    <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap_ns.css')}" />
+ 
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap.min.js')}"></script>
+    <apex:include pageName="CignaUtilJS"/>
+    <apex:includeScript value="/support/console/33.0/integration.js"/>
+    <script>
+        function checkIsSmoke(isSmoke){   
+            if("yes" == isSmoke){
+                document.getElementById("smokeNoRadios").checked = false;
+            }else if("no" == isSmoke){
+                document.getElementById("smokeYesRadios").checked = false;
+            }
+        }
+
+        function checkIsSmokeSecond(isSmoke){   
+            if("yes" == isSmoke){
+                document.getElementById("smokeNoRadiosSecond").checked = false;
+            }else if("no" == isSmoke){
+                document.getElementById("smokeYesRadiosSecond").checked = false;
+            }
+        }
+
+        function checkIsSmokeThird(isSmoke){   
+            if("yes" == isSmoke){
+                document.getElementById("smokeNoRadiosThird").checked = false;
+            }else if("no" == isSmoke){
+                document.getElementById("smokeYesRadiosThird").checked = false;
+            }
+        }
+
+        function checkIsSmokeFourth(isSmoke){   
+            if("yes" == isSmoke){
+                document.getElementById("smokeNoRadiosFourth").checked = false;
+            }else if("no" == isSmoke){
+                document.getElementById("smokeYesRadiosFourth").checked = false;
+            }
+        }
+
+        function checkIsSmokeFifth(isSmoke){   
+            if("yes" == isSmoke){
+                document.getElementById("smokeNoRadiosFifth").checked = false;
+            }else if("no" == isSmoke){
+                document.getElementById("smokeYesRadiosFifth").checked = false;
+            }
+        }
+
+        function showInformation(value) {
+            if (value == '1'){ 
+                document.getElementById("theSecondSection").style.display="none";
+                document.getElementById("theThirdSection").style.display="none";
+                document.getElementById("theFourthSection").style.display="none";
+                document.getElementById("theFifthSection").style.display="none";
+            }else if(value == '2'){
+                document.getElementById("theSecondSection").style.display="block";
+                document.getElementById("theThirdSection").style.display="none";
+                document.getElementById("theFourthSection").style.display="none";
+                document.getElementById("theFifthSection").style.display="none";
+            }else if(value == '3'){
+                document.getElementById("theSecondSection").style.display="block";
+                document.getElementById("theThirdSection").style.display="block";
+                document.getElementById("theFourthSection").style.display="none";
+                document.getElementById("theFifthSection").style.display="none";
+            }
+            else if(value == '4'){
+                document.getElementById("theSecondSection").style.display="block";
+                document.getElementById("theThirdSection").style.display="block";
+                document.getElementById("theFourthSection").style.display="block";
+                document.getElementById("theFifthSection").style.display="none";
+            }
+            else if(value == '5'){
+                document.getElementById("theSecondSection").style.display="block";
+                document.getElementById("theThirdSection").style.display="block";
+                document.getElementById("theFourthSection").style.display="block";
+                document.getElementById("theFifthSection").style.display="block";
+            }
+        }
+
+        function hidenZero(){
+            $('.hidenZero').each(function(){               
+                if(this.innerText == 0 || this.innerText == '0')
+                    this.innerText = '-';
+            });
+        }
+
+      
+        function checkIsSmoke(isSmoke,piIndex){
+            
+            if("yes" == isSmoke){
+                document.getElementById("smokeNoRadios"+ piIndex).checked = false;
+            }else if("no" == isSmoke){
+                document.getElementById("smokeYesRadios"+ piIndex).checked = false;
+            }
+            piIndex -= 1;
+            // Rancho_IA AML_20220120: add element id
+            $("[id$=PISmoke"+piIndex+"]").val(isSmoke);
+            console.log($("[id$=PISmoke"+piIndex+"]").val())
+            // document.getElementById("{!$Component.theForm1.detail.PersonInsuredInformation.personInsuredList}:" + piIndex + ":PIPageBlock:thePISmoke:PISmoke").value = isSmoke;
+        }
+        // function showThePremuimTabel(){
+        //     console.log({!curDiscount});
+        //     if ({!curDiscount} != null && {!curDiscount} != ''){
+        //         document.getElementById("thePremuimDiv").style.display="block";
+        //     }
+        // }
+                          
+    </script>
+    <apex:form id="theForm1">
+        <apex:pageBlock id="detail">
+            <!-- section 1 -->
+            <apex:pageBlockSection title="Product" collapsible="false" columns="1">
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.New_Policy__c.Fields.Product_Name__c.Label}" for="productLookup"></apex:outputLabel>
+                    <apex:selectList size="1" value="{!curProduct}" multiselect="false" required="true" >
+                        <apex:selectOptions value="{!productOptions}"/>
+                    </apex:selectList>
+                </apex:pageblockSectionItem>
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel value="Number of Person Insured"></apex:outputLabel>
+                    <apex:selectList size="1" value="{!curPersonChoose}" multiselect="false" required="true" onclick="showInformation(this.value)">
+                        <apex:selectOptions value="{!personOptions}"/>
+                        <apex:actionSupport event="onchange" action="{!onAmountOfPIChange}" rerender="PersonInsuredInformation" status="loader-icon"/>
+                    </apex:selectList>
+                </apex:pageblockSectionItem>
+            </apex:pageBlockSection>
+            <!-- section 2 -->
+            <apex:outputPanel id="PersonInsuredInformation">
+                <apex:variable var="pinum" value="{!1}"/>
+            <apex:repeat value="{!personInsuredStructureList}" var="pis" id="personInsuredList">
+                <apex:pageBlockSection id="PIPageBlock" title="Person Insured Information" collapsible="false" columns="1">
+                    <apex:pageBlockSectionItem id="theAge">
+                                <apex:outputLabel value="{!$ObjectType.Person_Insured__c.Fields.PI_Age__c.Label}"></apex:outputLabel>
+                                <apex:inputText id="Age" value="{!PIS.pi.PI_Age__c}"></apex:inputText>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem id="theRealtionship">
+                                <apex:outputLabel value="Relationship"></apex:outputLabel>
+                                <apex:selectList size="1" value="{!PIS.pi.Relationship__c}" multiselect="false" >
+                                    <apex:selectOptions value="{!relationshipOption}"/>                                    
+                                </apex:selectList>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem id="thePISmoke" >
+                                <apex:outputLabel value="{!$ObjectType.Person_Insured__c.Fields.Smoker__c.Label}"></apex:outputLabel>
+                                <apex:outputPanel id="theSmoke">
+                                <apex:pageBlockSectionItem >                                                        
+                                    <apex:outputLabel >
+                                        <div class="radio">
+                                           <label>
+                                               <input type="radio" id="smokeYesRadios{!pinum}" value="option1" onClick="checkIsSmoke('yes','{!pinum}')"/> 
+                                               yes
+                                           </label>
+                                        </div>
+                                        <div class="radio">
+                                           <label>
+                                               <input type="radio" id="smokeNoRadios{!pinum}" value="option2" onClick="checkIsSmoke('no','{!pinum}')"/>
+                                               no
+                                           </label>
+                                        </div>
+                                    </apex:outputLabel> 
+                                </apex:pageBlockSectionItem>
+                                <apex:inputField id="PISmoke" value="{!PIS.pi.Smoker__c}" style="display:none"></apex:inputField>
+                            </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem id="theBenefitLevelItem1" dataStyleClass="requiredInput required" >
+                                <apex:outputLabel value="{!$ObjectType.Person_Insured__c.Fields.Benefit_Level__c.Label}" for="benefitLevel"></apex:outputLabel>
+                                <apex:selectList size="1" value="{!PIS.pi.Benefit_Level__c}" multiselect="false" >
+                                    <apex:selectOptions value="{!benefitLevelOption}"/>                                    
+                                </apex:selectList>
+                            </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem id="theRider">
+                        <apex:outputLabel value="Rider"></apex:outputLabel>
+                        <apex:outputPanel styleClass="duelingListBox">
+                                <table class="multiSelectPicklistTable">
+                                    <tbody>
+                                        <tr class="multiSelectPicklistRow">
+                                            <td class="selectCell">
+                                                <apex:outputPanel layout="block" styleClass="selectTitle">    
+                                                    <apex:outputLabel value="Available Riders"/>
+                                                </apex:outputPanel>
+                                                <apex:selectList value="{!PIS.selectedRiderCodes}" multiselect="true" size="5" id="availabelBlock">
+                                                    <apex:selectOptions value="{!PIS.availableRiders}"/>
+                                                </apex:selectList>
+                                            </td>
+                                            <td class="multiSelectPicklistCell">
+                                                <apex:outputPanel layout="block" styleClass="text">
+                                                    <apex:commandLink action="{!PIS.addRiderBtn}" rerender="availabelBlock,selectedBlock" id="btnRight">
+                                                        <apex:image value="/s.gif" alt="Add" styleClass="rightArrowIcon" title="Add" />
+                                                    </apex:commandLink>
+                                                </apex:outputPanel>
+                                                <br/>
+                                                <apex:outputPanel layout="block" styleClass="text">
+                                                    <apex:commandLink action="{!PIS.removeRiderBtn}" rerender="availabelBlock,selectedBlock" id="btnLeft">
+                                                        <apex:image value="/s.gif" alt="Remove" styleClass="leftArrowIcon" title="Remove" />
+                                                    </apex:commandLink>
+                                                </apex:outputPanel>
+                                            </td>
+                                            <td class="selectCell">
+                                                <apex:outputPanel layout="block" styleClass="selectTitle"> 
+                                                    <apex:outputLabel value="Selected Riders"/>
+                                                </apex:outputPanel>
+                                                <apex:selectList value="{!PIS.removedRiderCodes}" multiselect="true" size="5" id="selectedBlock">
+                                                    <apex:selectOptions value="{!PIS.selectedRiders}"/>
+                                                </apex:selectList>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>                                
+                            </apex:outputPanel>
+                        <!-- <c:MultiselectPicklist leftLabel="Availabel Riders"
+                        leftOption="{!availabelRiders}"
+                        rightLabel="Selected Riders"
+                        rightOption="{!selectedRiders}"
+                        size="14"
+                        width="200px"/> -->
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem id="hiddenField">
+                        <apex:variable var="pinum" value="{! pinum+1}" />  
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+            </apex:repeat>
+        </apex:outputPanel>
+
+            
+
+            <!-- section 3 -->
+            <apex:pageBlockSection title="Payment" collapsible="false" columns="1">
+                <apex:pageMessages id="pageMessage"></apex:pageMessages>
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel value="discount"></apex:outputLabel>
+                    <apex:selectList size="1" value="{!curDiscount}" multiselect="false" required="true" >
+                        <apex:selectOptions value="{!discountOption}"/>
+                        <apex:actionSupport event="onchange" action="{!onChangeDiscount}"  rerender="thePremuimTabel"/>
+                        <apex:param assignTo="{!curDiscount}" value="" name="curDiscount"/>
+                    </apex:selectList>
+                </apex:pageblockSectionItem>
+                <apex:pageblockSectionItem >
+                    <apex:outputLabel value="Payment mode "></apex:outputLabel>
+                    <apex:selectList size="1" value="{!curPayMode}" multiselect="false" required="true" >
+                        <apex:selectOptions value="{!payModeOption}"/>
+                    </apex:selectList>
+                </apex:pageblockSectionItem>
+            </apex:pageBlockSection>
+
+            <apex:actionFunction name="getPaymentPremiumAF" action="{!getPaymentPremium}"  reRender="thePremuimTabel,pageMessage" />
+            <!-- <div id="thePremuimDiv" style="display:none"> -->
+                <apex:pageblockSection collapsible="false" id="thePremuimTabel" title="{!$Label.TM_Payment_Information}">
+                        <apex:outputPanel id="paymentInfoPanel">
+                            <!-- <lable sytle="color:blue;font-weight:1000px;margin-left: 400px;">{!$Label.TM_Total_Annual_Premium}:&nbsp;{!selectedProduct.currency__c}&nbsp;<apex:outputText value="{0,Number,###,###,###}"><apex:param value="{!totalPremium.subTotal}"/></apex:outputText></lable>                         -->
+                            <table class="datatable" style= "align:right; text-align:right;border-collapse:collapse; margin-top: 10px;">
+                                <tbody>
+                                <tr style="height:20px;">
+                                    <td></td>
+                                    <apex:repeat var="p" value="{!premiumAmountList}">
+                                        <td >{!p.personInsuredIndex}</td>
+                                    </apex:repeat>
+                                </tr>
+                                <tr style="height:20px; border:1px solid black;">
+                                    <td style="border:1px solid black;"></td>
+                                    <apex:repeat var="p" value="{!premiumAmountList}">
+                                        <td style="border:1px solid black;">{!p.premiumDescription}</td>
+                                    </apex:repeat>
+                                </tr>
+                                
+                                <tr style="height:20px; border:1px solid black;">
+                                    <td style="border:1px solid black;">Original Premium &nbsp; ({!selectedProduct.currency__c})</td>
+                                    <apex:repeat var="p" value="{!premiumAmountList}">
+                                        <td style="border:1px solid black;" class="hidenZero"><apex:outputText value="{0,Number,###,###,###}"><apex:param value="{!p.originalPremium}"/></apex:outputText></td>
+                                    </apex:repeat>
+                                </tr>
+                                <tr style="height:20px; border:1px solid black;">
+                                    <td style="border:1px solid black;">Discount (%) Off</td>
+                                    <apex:repeat var="p" value="{!premiumAmountList}">
+                                        <td style="border:1px solid black;"><apex:outputText value="{0,Number,###,###,##0.00}"><apex:param value="{!p.totalDiscountPercent}"/></apex:outputText></td>
+                                    </apex:repeat>
+                                </tr>
+                                <!-- <tr style="height:20px; border:1px solid black;">
+                                    <td style="border:1px solid black;">Overall Medical Loading (%)</td>  
+                                    <apex:repeat var="p" value="{!premiumAmountList}">
+                                        <td style="border:1px solid black;">{!p.medicalLoadingPercent}</td>
+                                    </apex:repeat>
+                                </tr>
+                                <tr style="height:20px; border:1px solid black;">
+                                    <td style="border:1px solid black;">Loading Premium &nbsp; ({!selectedProduct.currency__c})</td>  
+                                    <apex:repeat var="p" value="{!premiumAmountList}">
+                                        <td style="border:1px solid black;"><apex:outputText value="{0,Number,###,###,###}"><apex:param value="{!p.loadingPremium}"/></apex:outputText></td>
+                                    </apex:repeat>
+                                </tr> -->
+                                <tr style="height:20px; border:1px solid black;">
+                                    <td style="border:1px solid black;">Adjusted Premium &nbsp; ({!selectedProduct.currency__c})</td>  
+                                    <apex:repeat var="p" value="{!premiumAmountList}">
+                                        <td style="border:1px solid black;"><apex:outputText value="{0,Number,###,###,###}"><apex:param value="{!p.actualPremium}"/></apex:outputText></td>
+                                    </apex:repeat>
+                                </tr>
+                                <tr style="height:20px; border:1px solid black;">
+                                    <td style="border:1px solid black;"><b>Total Premium &nbsp; ({!selectedProduct.currency__c})</b></td>  
+                                    <apex:repeat var="p" value="{!premiumAmountList}">
+                                        <td style="border:1px solid black;"><b><apex:outputText value="{0,Number,###,###,###}"><apex:param value="{!p.subTotal}"/></apex:outputText></b></td>
+                                    </apex:repeat>
+                                </tr>
+                                <!-- <tr style="height:20px; border:1px solid black;">
+                                    <td style="border:1px solid black;"><b>Total Coupon &nbsp; ({!selectedProduct.currency__c})</b></td>  
+                                    <apex:repeat var="p" value="{!premiumAmountList}">
+                                        <td style="border:1px solid black;"><b><apex:outputText value="{0,Number,###,###,###}"><apex:param value="{!p.totalCoupon}"/></apex:outputText></b></td>
+                                    </apex:repeat>
+                                </tr> -->
+                                </tbody>
+                            </table>
+                            <script>
+                                hidenZero();
+                            </script>
+                        </apex:outputPanel> 
+                </apex:pageblockSection>
+            <!-- </div> -->
+
+            <apex:pageBlockButtons location="bottom" >
+                    <apex:outputPanel >
+                        <input class="btn" type="button" value="Back" name="Back" onclick="" />
+                    </apex:outputPanel>
+                    <apex:outputPanel >
+                        <input class="btn" type="button" value="Display Payment Information" onclick="getPaymentPremiumAF();" />
+                    </apex:outputPanel>
+                    <apex:outputPanel id="actionButton">
+                        <apex:outputPanel >
+                            <input class="btn" type="button" value="Next" name="Next" onclick="" />
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

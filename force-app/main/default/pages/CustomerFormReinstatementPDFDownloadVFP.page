@@ -1,0 +1,653 @@
+<apex:page controller="CustomerPolicyChangePDFController" renderAs="PDF" id="page" docType="html-5.0" standardStylesheets="false" applyHtmlTag="false" applyBodyTag="false" showHeader="false" sidebar="false" language="zh_TW" cache="false">
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <style type="text/css" media="print">
+        @page {
+            size: A4;
+            @top-left {
+                content: element(header);
+                verticle-align: top;
+            }
+            @bottom-center {
+                content: element(footer);
+            }
+            margin-left: 1.0cm;
+            margin-top: 4.0cm;
+            margin-bottom: 2.0cm;
+            margin-right: 1.0cm;
+        }       
+            
+        body, div, p {
+            font-family: "Arial Unicode MS";
+            font-size: 8pt;
+        }
+            
+        div.header {
+            display: block;
+            height:4cm;
+            padding-left: 0.25cm;
+            position: running(header);
+        }
+            
+        div.header img {
+            width: 20mm;
+            height: 20mm;
+        }
+        div.footer {
+            display: block;
+            padding: 5px;
+            position: running(footer);
+            text-align: center;
+        }       
+       .page-break {
+            display:block;
+            page-break-after:always;
+        }
+       .clear-margin-padding {
+            margin: 0 auto;
+            padding: 0;
+        }
+       .pagenumber:before {
+            content: counter(page);
+       }
+       .pagecount:before {
+            content: counter(pages);
+       }
+       tr {
+            height:30px;
+       }
+       .customli{type:"I";}
+       div.content{
+            font-family: Arial Unicode MS;
+            font-size: 8pt;
+            fill-opacity:.5; 
+            stroke:black; 
+            stroke-width:2;
+            /** does not work **/
+            word-wrap: break-word;
+            word-break: break-all;
+            /** does not work end **/
+       }
+       .title {
+            font-size: 10pt;
+            text-align: left;
+            float: right;
+            font-weight: bold;
+       }   
+       .title_pc {
+            font-size: 8pt;
+            text-align: left;
+            font-weight: bold;
+       } 
+       .header-bar {
+            font-size: 14pt;
+            font-weight: bold;
+        }      
+       .Tablebackgroundcolor {
+            background-color: rgb(24, 140, 204);
+            background-repeat: no-repeat;
+            border-collapse: collapse; 
+            border: none; 
+            width: 100%; 
+            padding:10px;
+        }
+       .CustomTable {
+            border-collapse: collapse; 
+            border: none; 
+            width: 100%;
+            padding:10px;
+        }        
+       .CustomTd { 
+           border: solid #000 1px;
+           width: 40%;
+           padding:10px;
+           font-weight: bold;
+           vertical-align: top;
+           word-break: normal;
+           word-wrap: break-word;
+       }
+       .CustomTd_title { 
+           border: solid #000 1px;
+           width: 60%;
+           padding:10px;
+           font-weight: bold;
+           vertical-align: top;
+           word-break: normal;
+           word-wrap: break-word;
+       }
+       .CustomTd2 { 
+           border: solid #000 1px;
+           width: 70%;
+           padding:10px;
+           font-weight: bold;
+           vertical-align: top;
+           word-break: normal;
+           word-wrap: break-word;
+       }
+       .CustomTd_title2 { 
+           border: solid #000 1px;
+           width: 30%;
+           padding:10px;
+           font-weight: bold;
+           vertical-align: top;
+           word-break: normal;
+           word-wrap: break-word;
+       }
+       .CustomColspanTd { 
+           border: solid #000 1px; 
+           padding:10px;
+       }            
+    </style>    
+</head>
+    <div class="header">
+        <br/>
+        <div style="width:720px;">
+            <div style="width: 100%; float:left;">
+                <div style="width: 60%; float:left;">
+                    <apex:outputText value="Private & Confidential  私人及機密"></apex:outputText> 
+                </div>
+                <div style="width: 40%; float:left;">
+                    <div style="width: 40%; float:left;">
+                        <apex:image url="{!$Resource.Icon_For_Form}" width="70px" /> 
+                    </div>
+                    <div style="width: 60%; float:left;">
+                        <apex:outputText escape="false" value="{!$Label.Cigna_Address_en_2_line}"/><br/><br/>
+                        Tel: 2560 1990 <apex:outputText value=" Fax: 2560 3605" rendered="{!policyChangeRequestInfo.IsGerneralPolicy__c}"/> <br/>
+                        www.cigna.com.hk
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> 
+    <div class="footer">
+        <div style="font-size: 10pt; float:right;"> <span class="pagenumber"/> / <span class="pagecount"/> </div>
+    </div>  
+<body>  
+<apex:form id="form" style="width: 100%;">
+    <table align="center" border="0" cellspacing="0" cellpadding="8" class="CustomTable">
+    <tbody>
+        <tr>
+            <td width="100%" colspan="5" style="text-align: right;">
+                Ref. 參考:<apex:outputText value="&nbsp; &nbsp; &nbsp; &nbsp; " style="text-decoration: underline;" escape="false" />(for office use內部專用)
+            </td>
+        </tr>
+        <tr>
+            <td colspan="5" width="100%" style="font-size: 12pt;">
+                 <apex:outputText value="Policy Change Form – Application For Policy Reinstatement" escape="false"/>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" width="80%" style="font-size: 12pt;">保單更改–保單復效申請書</td>
+            <td width="20%">&nbsp;</td>
+        </tr>
+        <tr>
+            <td width="50%" colspan="3">
+                <apex:outputText value="Source" />
+                <apex:outputText value="來源：" />
+                &nbsp;
+                <apex:image url="{!IF(isCustomerUser&&NOT(isBrokerUser),$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12"/>
+                <apex:outputText style="width: 100px;" value="Customer Portal" />
+                <apex:outputText style="width: 100px;" value="客戶" />
+                &nbsp;
+                <apex:image url="{!IF(isBrokerUser&&NOT(isCustomerUser),$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12"/>
+                <apex:outputText style="width: 100px;" value="Broker Portal" />
+                <apex:outputText style="width: 100px;" value="經紀" />
+            </td>
+            <td width="50%" colspan="2">&nbsp;</td>
+        </tr>
+     </tbody>
+     </table>
+     
+     <table align="center" border="0" cellspacing="0" cellpadding="2" class="CustomTable" width="100%">
+     <tbody>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomTd" colspan="2" width="100%">
+                  <span style="color:white;">Personal Particulars</span><br/>
+                  <span style="color:white;">個人資料</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title" width="60%">
+                  Submission Date<br/>
+                  申請日期<br/>
+                  (YYYY/MM/DD)
+              </td>
+              <td class="CustomTd" width="40%" align="left" valign="top">
+                  <apex:outputText value="{0,date,yyyy/MM/dd}">
+                      <apex:param value="{! Today() }" />
+                  </apex:outputText>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Name of Policy Holder<br/>
+                  保單持有人姓名
+              </td>
+              <td class="CustomTd" align="left" valign="top"><apex:outputField value="{!policyChangeRequestInfo.Policy_Holder_Name__c}"/></td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Policy No. <br/>
+                  保單編號
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Policy_No__c}"/>
+              </td>
+          </tr>
+     </tbody>
+     </table>
+
+     <apex:outputPanel rendered="{!isBrokerUser}">
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr>
+              <td class="CustomTd_title">
+                  Broker Name<br/>
+                  經紀公司
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Broker_Name__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Financial Consultant Name<br/>
+                  財務顧問姓名
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Financial_Consultant_Name__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Financial Consultant Code<br/>
+                  財務顧問編號
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Financial_Consultant_Code__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Financial Consultant Contact No.<br/>
+                  財務顧問電話號碼
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Financial_Consultant_Contact_No__c}"/>
+              </td>
+          </tr>
+     </tbody>
+     </table>
+     </apex:outputPanel>  
+
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">Section 1 – Occupation (include any part-time job)</span><br/>
+                  <span style="color:white;">第一部分 – 職業 (包括任何兼職)</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Industry <br/>
+                  行業
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Industry__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Job Duties <br/>
+                  工作職務
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Reinstatement_1_Job_Duties__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  <p>Required working over 30 feet or outside building wall? </p>
+                  <p>是否須於超過30呎以上及／或外牆工作？</p>
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!CASE( policyChangeRequestInfo.Reinstatement_2_Construction__c, 
+                                                 'YES','YES<br/>是' , 
+                                                 'NO','NO<br/>否' ,  '')}" escape="false" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Average monthly income in the last 12 months <br/>
+                  過去十二個月之平均每月收入
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!CASE( policyChangeRequestInfo.Reinstatement_Monthly_Income_Range__c, 
+                                                 "≤HKD 15,000","≤HKD 15,000<br/>港元 小於等於 15,000" , 
+                                                 "HKD 15,001 – 20,000","HKD 15,001 – 20,000<br/>港元 15,001 至 20,000" , 
+                                                 "HKD 20,001 – 25,000","HKD 20,001 – 25,000<br/>港元 20,001 至 25,000" , 
+                                                 "HKD 25,001 – 30,000","HKD 25,001 – 30,000<br/>港元 25,001 至 30,000" , 
+                                                 "HKD 30,001 – 50,000","HKD 30,001 – 50,000<br/>港元 30,001 至 50,000" , 
+                                                 "≥HKD 50,001","≥HKD 50,001<br/>港元 大於等於 50,001" ,  "")}" escape="false" />
+              </td>
+          </tr>
+
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">Section 2 – Coverage</span><br/>
+                  <span style="color:white;">第二部分 – 保障</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  <!-- Rancho_JOBR334_20230914 - rebranding -->
+                  <p>Any existing insurance and/or concurrent application for insurance other than those in Cigna Healthcare? (if “Yes”, please give details) </p>
+                  <p>除本公司以外現時是否已有或正在申請任何保險？(倘 “是”，請詳述之。)</p>
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!CASE( policyChangeRequestInfo.Reinstatement_existing_insurance__c, 
+                                                 'YES','YES<br/>是' , 
+                                                 'NO','NO<br/>否' ,  '')}" escape="false" />
+              </td>
+          </tr>
+     </tbody>
+     </table>
+     
+     <apex:outputPanel rendered="{!IF(policyChangeRequestInfo.Reinstatement_existing_insurance__c != null &&
+                                      policyChangeRequestInfo.Reinstatement_existing_insurance__c != '' &&
+                                      policyChangeRequestInfo.Reinstatement_existing_insurance__c == 'YES' , true, false)}">
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr>
+              <td class="CustomTd_title">
+                  (a) Life <br/>
+                  (a) 人壽保險
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="USD 美元 "/>
+                  <apex:outputField value="{!policyChangeRequestInfo.Reinstatement_life__c}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  (b) Critical Illness<br/>
+                  (b) 危疾
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="USD 美元 "/>
+                  <apex:outputField value="{!policyChangeRequestInfo.Reinstatement_critical_illness__c}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  (c) Accident<br/>
+                  (c) 意外
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="USD 美元 "/>
+                  <apex:outputField value="{!policyChangeRequestInfo.Reinstatement_accident__c}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  (d) Accidental Hospital Income <br/>
+                  (d) 意外住院收入
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="USD 美元 "/>
+                  <apex:outputField value="{!policyChangeRequestInfo.Reinstatement_accidental_hospital_income__c}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  (e) Hospital Income<br/>
+                  (e) 住院收入
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="USD 美元 "/>
+                  <apex:outputField value="{!policyChangeRequestInfo.Reinstatement_hospital_income__c}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  (f) Disability Income<br/>
+                  (f) 傷殘收入
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="USD 美元 "/>
+                  <apex:outputField value="{!policyChangeRequestInfo.Reinstatement_disability_income__c}" />                 
+              </td>
+          </tr>
+     </tbody>
+     </table>
+     </apex:outputPanel>  
+
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>          
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">Section 3 – Body Build</span><br/>
+                  <span style="color:white;">第三部分 – 身高體重</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Height<br/>
+                  身高
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Height__c}" style="{!IF(policyChangeRequestInfo.Height_Unit__c == 'cm', 'display:block;', 'display:none;')};"/>
+                  <apex:outputField value="{!policyChangeRequestInfo.feet__c}" style="{!IF(policyChangeRequestInfo.Height_Unit__c == 'cm', 'display:none;', 'display:block;')};" />
+                  <apex:outputText value="{!CASE( policyChangeRequestInfo.Height_Unit__c, 
+                                                 'cm',' cm 厘米' , 
+                                                 'feet',' feet 英尺' ,  '')}" escape="false" />
+                  <apex:outputField value="{!policyChangeRequestInfo.inch__c}" style="{!IF(policyChangeRequestInfo.Height_Unit__c == 'cm', 'display:none;', 'display:block;')};" />
+                                                 
+                 <apex:outputText value="{!CASE( policyChangeRequestInfo.Height_Unit__c, 
+                                                 'cm','' , 
+                                                 'feet',' inch 吋' ,  '')}" escape="false" />                                
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Weight<br/>
+                  體重
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!policyChangeRequestInfo.Weight__c}"/>
+                  <apex:outputText value="{!CASE( policyChangeRequestInfo.Weight_Unit__c, 
+                                                 "kg"," kg 公斤" , 
+                                                 "lbs"," lbs 磅" ,  "")}" escape="false" />
+              </td>
+          </tr>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">Section 4 – Medical Information (Part 1) </span><br/>
+                  <span style="color:white;">第四部分 – 健康狀況 (第一節)</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  <p>Any chest or breathing problem (e.g. asthma, bronchitis, sleep disordered breathing (including Obstructive Sleep Apnea), tuberculosis or other respiratory problem including nasal bleeding)?</p>
+                  <p>任何胸部或呼吸問題（例如︰哮喘、支氣管炎、睡眠呼吸障礙<br/>（包括睡眠窒息症）、肺結核或其他呼吸器官問題，包括流鼻血）？</p>
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!CASE( policyChangeRequestInfo.Reinstatement_breath_problem__c, 
+                                                 'YES','YES<br/>是' , 
+                                                 'NO','NO<br/>否' ,  '')}" escape="false" />
+                  <p><apex:outputField value="{!policyChangeRequestInfo.Reinstatement_breath_problem_details__c}" 
+                                       rendered="{!IF(policyChangeRequestInfo.Reinstatement_breath_problem__c != null &&
+                                      policyChangeRequestInfo.Reinstatement_breath_problem__c != '' &&
+                                      policyChangeRequestInfo.Reinstatement_breath_problem__c == 'YES' , true, false)}"/></p>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  <p>Any heart problem or chest pain (e.g. rheumatic fever, raised blood pressure, angina, murmur, heart attack) or other problem of the blood or blood vessels?</p>
+                  <p>任何心臟的疾病或胸口疼痛（例如︰風濕性發熱、高血壓、心絞痛、<br/>心臟雜音、心臟驟停），或其他血液或血管疾病？</p>
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!CASE( policyChangeRequestInfo.Reinstatement_heart_problem__c, 
+                                                 'YES','YES<br/>是' , 
+                                                 'NO','NO<br/>否' ,  '')}" escape="false" />
+                  <p><apex:outputField value="{!policyChangeRequestInfo.Reinstatement_heart_problem_details__c}" 
+                                       rendered="{!IF(policyChangeRequestInfo.Reinstatement_heart_problem__c != null &&
+                                      policyChangeRequestInfo.Reinstatement_heart_problem__c != '' &&
+                                      policyChangeRequestInfo.Reinstatement_heart_problem__c == 'YES' , true, false)}"/></p>
+
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  <p>Any digestive system problem, liver (including hepatitis or hepatitis carrier status), stomach, bowel or rectal bleeding, any kidney, bladder or genitourinary disorder including renal stones, endocrine disease, diabetes or thyroid gland problem?</p>
+                  <p>任何消化系統問題，肝（包括肝炎或肝炎帶菌者）、胃、腸或直腸出血；<br/>任何腎、膀胱或泌尿及生殖系統疾病，包括腎石、內分泌<br/>疾病、糖尿病或甲狀腺疾病？</p>
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!CASE( policyChangeRequestInfo.Reinstatement_digestive_sys_prob__c, 
+                                                 'YES','YES<br/>是' , 
+                                                 'NO','NO<br/>否' ,  '')}" escape="false" />
+                  <p><apex:outputField value="{!policyChangeRequestInfo.Reinstatement_digestive_sys_prob_details__c}" 
+                                       rendered="{!IF(policyChangeRequestInfo.Reinstatement_digestive_sys_prob__c != null &&
+                                      policyChangeRequestInfo.Reinstatement_digestive_sys_prob__c != '' &&
+                                      policyChangeRequestInfo.Reinstatement_digestive_sys_prob__c == 'YES' , true, false)}"/></p>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  <p>Any mental or brain disorder or problem affecting the nervous system including depression, schizophrenia, psychosis, anxiety, autism, learning disorder, epilepsy, paralysis, numbness, dizziness, prolonged headache, loss of balance or fits?</p>
+                  <p>任何精神或腦部失常或問題而影響神經系統，包括抑鬱、精神分裂、<br/>思覺失調、焦慮、自閉、學習障礙、癲癇、癱瘓、痳痺、頭暈、長期頭痛、<br/>身體失去平衡或抽搐？</p>
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!CASE( policyChangeRequestInfo.Reinstatement_brain_problem__c, 
+                                                 'YES','YES<br/>是' , 
+                                                 'NO','NO<br/>否' ,  '')}" escape="false" />
+                  <p><apex:outputField value="{!policyChangeRequestInfo.Reinstatement_brain_problem_details__c}" 
+                                       rendered="{!IF(policyChangeRequestInfo.Reinstatement_brain_problem__c != null &&
+                                      policyChangeRequestInfo.Reinstatement_brain_problem__c != '' &&
+                                      policyChangeRequestInfo.Reinstatement_brain_problem__c == 'YES' , true, false)}"/></p>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  <p>Cancer or tumour, cyst, lump or other growths of any kind?</p>
+                  <p>癌症或腫瘤、囊腫、腫塊或其他任何贅生物？</p>
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!CASE( policyChangeRequestInfo.Reinstatement_cancer__c, 
+                                                 'YES','YES<br/>是' , 
+                                                 'NO','NO<br/>否' ,  '')}" escape="false" />
+                  <p><apex:outputField value="{!policyChangeRequestInfo.Reinstatement_cancer_details__c}" 
+                                       rendered="{!IF(policyChangeRequestInfo.Reinstatement_cancer__c != null &&
+                                      policyChangeRequestInfo.Reinstatement_cancer__c != '' &&
+                                      policyChangeRequestInfo.Reinstatement_cancer__c == 'YES' , true, false)}"/></p>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  <p>Pain or other problem in your back, spine, muscle or joint, gout or other physical disability or condition affecting sight, speech or hearing?</p>
+                  <p>背部、脊椎、肌肉或關節疼痛或其他疾病，痛風或其他身體殘疾或<br/>任何影響視力、說話能力和聽覺的疾病？</p>
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!CASE( policyChangeRequestInfo.Reinstatement_back_problem__c, 
+                                                 'YES','YES<br/>是' , 
+                                                 'NO','NO<br/>否' ,  '')}" escape="false" />
+                  <p><apex:outputField value="{!policyChangeRequestInfo.Reinstatement_back_problem_details__c}" 
+                                       rendered="{!IF(policyChangeRequestInfo.Reinstatement_back_problem__c != null &&
+                                      policyChangeRequestInfo.Reinstatement_back_problem__c != '' &&
+                                      policyChangeRequestInfo.Reinstatement_back_problem__c == 'YES' , true, false)}"/></p>
+              </td>
+          </tr>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">Section 5 – Medical History Declaration (Part 2) </span><br/>
+                  <span style="color:white;">第五部分 – 健康狀況 (第二節)</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  <p>Apart from the conditions that aforementioned, is person insured currently receiving or have been advised to seek any medical advice or treatment (other than for minor conditions such as cold or flu) or awaiting the results of any test/ investigation since the application date of the above policy?</p>
+                  <p>除上述已告知的狀況外，由上述保單申請日期到現在受保人是否現正或<br/>曾被建議接受任何醫療諮詢或醫藥治療（輕微狀況如：傷風、<br/>感冒除外）或受保人是否現正等候任何檢驗或診斷結果？</p>
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!CASE( policyChangeRequestInfo.Reinstatement_apart_from_con__c, 
+                                                 'YES','YES<br/>是' , 
+                                                 'NO','NO<br/>否' ,  '')}" escape="false" />
+                  <p><apex:outputField value="{!policyChangeRequestInfo.Reinstatement_apart_from_con_details__c}" 
+                                       rendered="{!IF(policyChangeRequestInfo.Reinstatement_apart_from_con__c != null &&
+                                      policyChangeRequestInfo.Reinstatement_apart_from_con__c != '' &&
+                                      policyChangeRequestInfo.Reinstatement_apart_from_con__c == 'YES' , true, false)}"/></p>
+              </td>
+          </tr>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">Section 6 – Family History Declaration</span><br/>
+                  <span style="color:white;">第六部分 – 家族病史</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  <p>Has person insured’s biological mother, father, or any sister or brother been diagnosed prior to age 60 with any of the following?</p>
+                  <p>Cancer, heart disease, stroke, diabetes, polycystic kidney disease, Alzheimer’s disease or any other inherited disease or disorder.</p>
+                  <p>受保人的親生父母、兄弟姊妹是否於六十歲前被診斷患有以下疾病？</p>
+                  <p>癌症、心臟疾病、中風、糖尿病、多囊性腎病、亞爾茲默氏病<br/>或其他任何遺傳疾病或功能失常。</p>
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!CASE( policyChangeRequestInfo.Reinstatement_members_disease__c, 
+                                                 'YES','YES<br/>是' , 
+                                                 'NO','NO<br/>否' ,  '')}" escape="false" />
+                  <p><apex:outputField value="{!policyChangeRequestInfo.Reinstatement_members_disease_details__c}" 
+                                       rendered="{!IF(policyChangeRequestInfo.Reinstatement_members_disease__c != null &&
+                                      policyChangeRequestInfo.Reinstatement_members_disease__c != '' &&
+                                      policyChangeRequestInfo.Reinstatement_members_disease__c == 'YES' , true, false)}"/></p>
+              </td>
+          </tr>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">Declaration &amp; Authorization</span><br/>
+                  <span style="color:white;">聲明及授權</span>
+              </td>
+          </tr>
+          <tr>
+             <td class="CustomColspanTd" colspan="2">
+                 <div style="width:100% ; word-wrap: break-word;word-break: break-all;">
+                     <!--JOBR-184: JOBR-199/226 updated by Kermit at 20221012-->
+                     <!--<apex:include pageName="DeclarationFormVFP"/>-->
+                     <c:DeclarationFormComponent isContainGIPolicy="{!policyChangeRequestInfo.IsGerneralPolicy__c}" isContainLifePolicy="{!policyChangeRequestInfo.IsLifePolicy__c}"/>
+                 </div>
+             </td>
+          </tr>
+     </tbody>
+     </table>
+     <apex:outputPanel rendered="{!isBrokerUser}">
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>          
+          <tr>
+              <td class="CustomTd_title2" align="left" valign="top" heigth="200">
+                  Signature<br/>
+                  簽署<br/>
+              </td>
+              <td class="CustomTd2" align="left" height="200">
+                  <div style="width: 100%;">
+                      <div style="width: 100%;heigth:90%;text-align:left;">
+                          <apex:image id="theImage" value="{!PDFSignatureField}" width="450px"/>
+                      </div>
+                      <div style="width: 100%;heigth:10%">
+                          <br/>
+                          <apex:outputText value="Name of Policy Holder 保單持有人姓名: {!policyChangeRequestInfo.Policy_Holder_Name__c}"/> <br/>
+                          <apex:outputText value="Date Signed 簽署日期 (YYYY/MM/DD): {0,date,yyyy/MM/dd}">
+                              <apex:param value="{! Today() }" />
+                          </apex:outputText>
+                      </div>
+                  </div>
+              </td>
+          </tr>         
+     </tbody>
+    </table>
+    </apex:outputPanel>
+    </apex:form>
+</body> 
+</html>
+</apex:page>

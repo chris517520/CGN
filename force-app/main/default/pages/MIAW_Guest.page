@@ -1,0 +1,189 @@
+<apex:page showHeader="false" applyHtmlTag="false" applyBodyTag="false" lightningStylesheets="true" >
+ 
+  <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+     
+    <head>
+    <!-- Import the Design System style sheet -->
+  <apex:slds />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1"/>
+   
+      <style>
+        #loadingContainer {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(255,255,255,0.8);
+          z-index: 9999;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+        }
+        
+        .slds-spinner_container {
+          position: relative;
+          transform: none;
+          top: auto;
+          left: auto;
+        }
+        
+       .chatHeader{
+           height:0px;
+       }
+        
+        
+      </style>
+      <title>Guest Messaging | Salesforce</title>
+      
+        <!-- Loading Spinner Container -->
+      <div id="loadingContainer">
+       <div class="slds-scope">
+            <div class="slds-spinner_container">
+              <div role="status" class="slds-spinner slds-spinner_large">
+                <span class="slds-assistive-text">Loading</span>
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+              </div>
+            </div>
+        </div><!--end slds-->
+        <div id="loadingText" style="margin-top: 20px;">...</div>
+      </div>
+      
+     <!-- <button id="cleanSession">Clear session</button>-->
+       <apex:slds />
+    </head>
+    <body>
+    
+ <script type='text/javascript'>
+ 
+  
+        
+        function showLoading() {
+          
+          const container = document.getElementById('loadingContainer');
+          if (container) container.style.display = 'flex';
+        }
+        
+     function hideLoading() {
+         
+          const headerButtonList = document.getElementsByClassName("chatHeader");
+         console.log('get button list');
+         for (var hb of headerButtonList) {
+           console.log('item ' + hb.id);
+        }
+         
+          const container = document.getElementById('loadingContainer');
+          if (container) container.style.display = 'none';
+    }
+ 
+    function initEmbeddedMessaging() {
+        try {
+            showLoading();
+           /*  if (embeddedservice_bootstrap) {
+                  console.log('Found old item');
+                  if (  embeddedservice_bootstrap.utilAPI )
+                      embeddedservice_bootstrap.utilAPI.removeAllComponents();
+              }   */
+            
+            var urlParams = new URLSearchParams(window.location.search);
+            console.log( 'win width ' + window.innerWidth + ' window.innerHeight ' + window.innerHeight);
+            var lang = urlParams.get('lang') || 'en-US'; // Default to 'zh-TW' if not 
+            var platform = urlParams.get('pl') || 'NA';
+            var platformLink = window.location.href == null ? 'NA' : window.location.href;
+            embeddedservice_bootstrap.settings.language = lang;//'zh-TW'; // For example, enter 'en' or 'en-US'
+            embeddedservice_bootstrap.settings.hideChatButtonOnLoad = true;
+            embeddedservice_bootstrap.settings.widgetWidth = window.innerWidth == null ? 500 : window.innerWidth;   //window.innerWidth;
+            embeddedservice_bootstrap.settings.widgetHeight = window.innerHeight == null ? 800 : window.innerHeight ;   //window.innerWidth;
+            
+            
+             window.addEventListener("onEmbeddedMessagingReady", () => {
+                console.log("ready");
+               
+                 /*embeddedservice_bootstrap.prechatAPI.setVisiblePrechatFields({
+                     "Enquiry_Type": {
+                          "value": "Policy_Enquiry",
+                          "isEditableByEndUser": true
+                        }
+                 });*/
+              
+                 embeddedservice_bootstrap.prechatAPI.setHiddenPrechatFields({
+                    "UserID" : 'Guest',
+                    "Platform" : platform,
+                    "PlatformLink" : platformLink
+                 });
+                launchChat();
+            });
+            
+            embeddedservice_bootstrap.init(
+                '00D0p0000008cqz',
+                'MIAW_Guest_Channel',
+                'https://cignahk--smuat.sandbox.my.site.com/ESWMIAWGuestChannel1754028279568',
+                {
+                    scrt2URL: 'https://cignahk--smuat.sandbox.my.salesforce-scrt.com'
+                }
+            );
+            
+         
+            
+            
+            /* document.getElementById('cleanSession').addEventListener('click', () => {
+                   
+                  
+                        console.log('Remve guest Util');
+                         embeddedservice_bootstrap.utilAPI.removeAllComponents();
+                    
+             });*/
+             
+         
+             
+        }
+        catch (err) {
+            console.error('Error loading Embedded Messaging: ', err);
+             hideLoading();
+        }
+        finally {
+            console.log("finally…");
+            //launchChat();
+            setTimeout(function() {
+                launchChat(); //Becoz the page function may not finish rendered, so need to wait
+            }, 3000);
+           
+        }
+ 
+        
+        window.addEventListener("onEmbeddedMessagingIdentityTokenExpired", () => {
+            console.log("Received the onEmbeddedMessagingIdentityTokenExpired event.");
+            // Add more code here.
+        });
+    }
+</script>
+<script type='text/javascript' src='https://cignahk--smuat.sandbox.my.site.com/ESWMIAWGuestChannel1754028279568/assets/js/bootstrap.min.js' onload='initEmbeddedMessaging()'></script>
+   
+    
+    
+      
+<script>
+   
+    function launchChat() {
+        
+        embeddedservice_bootstrap.utilAPI.launchChat()
+            .then(() => {
+                // Success handler used to perform actions
+                console.log('launched chat');
+            }).catch(() => {
+                console.log('Fail to lanuch');
+            }).finally(() => {
+                console.log('Lanuch chat finally');
+                 setTimeout(function() {
+                   hideLoading();
+                }, 5000);
+                 
+            });
+    }
+</script>
+    </body>
+  </html>
+</apex:page>

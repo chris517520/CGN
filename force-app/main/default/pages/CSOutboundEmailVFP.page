@@ -1,0 +1,112 @@
+<apex:page docType="html-5.0" title="CSOutboundEmail" standardController="Case" extensions="OutboundEmailCtrl" action="{!initialize}" showHeader="false" sidebar="false"> 
+    	<head>
+            <apex:define name="additionalLibraries">
+            	<apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+                <apex:includeScript value="/support/console/42.0/integration.js"/>
+                <apex:include pageName="CignaUtilJS"/>
+            </apex:define>
+        	<style>
+                .displayNone{display:none}
+				.controlDiv{ text-align:center }
+                .contentDiv{ margin-top:8px }
+                .contentDiv_head{height:24px;background:#c9c9c9;line-height:24px;padding:0 4px;}
+                .contentDiv_row{margin:8px 0}
+                .contentDiv_row .label{width:20%;display:inline-block;text-align:right;font-weight:600}
+                .contentDiv_row .value{width:70%;display:inline-block;margin-left:2%;padding:0 4px;vertical-align:middle}
+                .required{border-left:4px solid #c00}
+                .bottomDiv{text-align:center;border-top:1px solid #e1e1e1;padding-top:4px}
+                .attachment{padding:2px 1px}
+                .attachment>i{cursor:pointer;float:right}
+            </style>
+    	</head>
+    	<apex:form >
+            	<apex:pageBlock title="Send an Email">
+                    <apex:pageMessage summary="{!ErrorMessage}" severity="{!messageType}" strength="3" id="errFileSize" title="Message" rendered="{!showErrorMessage}"/>
+                    <div class="controlDiv">
+                        <apex:commandButton value="Send" action="{!Validate}" rendered="{!canEdit}"/>
+                    	<apex:commandButton value="Cancel" style="margin-left:8px" onclick="backToPage()" />
+                    </div>
+					<div class="contentDiv">
+                        <div class="contentDiv_head">
+							<span><b>Edit Email</b></span>                            
+                        </div>
+                        <div class="contentDiv_row">
+                            <apex:outputLabel value="From" for="email_from" styleClass="label"/>
+                            <div class="value required">
+                                 <apex:inputText value="{!EmailFrom}" id="email_from" disabled="true"/>
+                            </div>
+                        </div>
+                        <div class="contentDiv_row">
+                            <apex:outputLabel value="To" for="email_to" styleClass="label"/>
+                            <div class="value required">
+                                 <apex:inputTextarea id="email_to" value="{!EmailTo}" cols="80" rows="5" disabled="{!!canEdit}"/>
+                            </div>
+                        </div>
+                        <div class="contentDiv_row">
+                            <apex:outputLabel value="Subject" for="email_subject" styleClass="label"/>
+                            <div class="value required">
+                                 <apex:inputText value="{!EmailSubject}" id="email_subject" disabled="{!!canEdit}"/>
+                            </div>
+                        </div>
+                        <div class="contentDiv_row">
+                            <apex:outputLabel value="Content" for="email_content" styleClass="label"/> 
+                            <div class="value">
+                                <apex:inputTextarea id="email_content" value="{!EmailContent}" cols="100" rows="10" disabled="{!!canEdit}"/>
+                            </div>
+                        </div>
+                        <div class="contentDiv_row">
+                            <apex:outputLabel value="Attachments " for="email_attachment" styleClass="label"/>
+                            <div class="value">
+                                <apex:repeat value="{!attachmentNameList}" var="name" id="attachmentDiv">
+                                		<apex:outputPanel styleClass="attachment" layout="block">
+                                        	{!name}
+                                        	<i class="ci-hk-x" aria-hidden="true" onclick="remove('{!name}')"></i>
+                                    	</apex:outputPanel>
+                                	</apex:repeat>
+                                <apex:commandButton value="Upload" onclick="uploadFile(event)" style="margin-top:2px" rendered="{!canEdit}"/>
+                                <apex:inputFile value="{!attachment.Body}" filename="{!attachment.Name}" fileSize="{!attachment.BodyLength}" styleclass="displayNone uploadInput" onchange="OutboundEmailCtrl.addToAttachmentList()"></apex:inputFile>
+                                <apex:input value="{!deleteItemName}" styleClass="displayNone hideInput"/>
+                            </div>
+                        </div>
+                    </div> 
+            		<div class="bottomDiv">
+                        <apex:commandButton value="Send" action="{!Validate}" rendered="{!canEdit}"/>
+                    	<apex:commandButton value="Cancel" style="margin-left:8px" onclick="backToPage()"/>
+                    </div>
+                </apex:pageBlock>
+            	<apex:actionRegion >
+            		<apex:actionFunction action="{!removeAttachment}" name="removeAttachment" namespace="OutboundEmailCtrl"></apex:actionFunction>
+           			<apex:actionFunction action="{!addToAttachmentList}" name="addToAttachmentList" namespace="OutboundEmailCtrl"/>
+            	</apex:actionRegion>
+    	</apex:form>
+		<script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    	<script type="text/javascript">
+			function uploadFile(e){
+        		$('.uploadInput').click();
+            	e.preventDefault(); 
+        	}
+        	function remove(fileName){
+                if('{!canEdit}' == 'false'){ return }
+            	$(".hideInput").val(fileName);
+            	OutboundEmailCtrl.removeAttachment();
+            }
+    		function backToPage(){
+                if(sforce.console.isInConsole()){
+                	sforce.console.getEnclosingTabId(function(result){
+                		sforce.console.closeTab(result.id);
+                	});
+                }
+                else{
+                    var url = '/' +  location.search.split("=")[1];
+                    if(sforce.one){
+                    	sforce.one.navigateToURL(url, false);
+                    }
+                    else{
+                    	sforce.console.getEnclosingTabId(function(result){
+                			sforce.console.closeTab(result.id);
+                		});
+                    }
+                }
+            }
+        </script>
+</apex:page>

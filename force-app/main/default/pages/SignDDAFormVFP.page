@@ -1,0 +1,196 @@
+<apex:page showHeader="false" applyHtmlTag="false" cache="false" renderAs="pdf" controller="SignDDAFormController" >
+    <head>
+        <style >
+            @page {
+                size: A3;
+            }
+            body {
+                font:15px;
+            }
+            .rTable { 
+                display: table; 
+                width: 100%;
+                border: 2px solid black;
+            }
+            .inner_rTable { 
+                display: table; 
+                width: 100%;
+            }
+            
+            .rTableRow{ 
+                display: table-row; 
+                padding:5px;
+            }
+            .rTableCell { 
+                display: table-cell; 
+                border-collapse: collapse;
+                padding:5px;
+            }
+            .rChild_TableCell { 
+                display: table-cell; 
+                width:50%;
+                padding:5px;  
+            }
+            .rTableCell_bold{ 
+                display: table-cell; 
+                border-collapse: collapse;
+                padding:5px;
+                font-weight: bold;
+            }
+            .rTableCell_title { 
+                display: table-cell; 
+                width: 30%;
+                float:left;
+                padding:5px;
+                vertical-align: top;
+                word-wrap: break-word;
+            }
+            .rTableCell_underline { 
+                display: table-cell; 
+                width: 60%;
+                float:right;
+                padding:5px;
+                text-align:center;
+                vertical-align: top;
+                border-bottom:2px solid black;
+            }
+
+            .titleFont{
+                font:20px;
+                font-weight:bold;
+            }
+            
+            .signatureBox{
+                width:40%;
+                border-collapse: collapse;
+                border:2px solid #bfbfbf;
+                padding:5px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="header" style="margin:40px 0;height:80px;" >
+            <div style="width:80px;float:left;margin-left:30px;">
+                <apex:image url="{!$Resource.Icon_For_Form}" height="80px"/> 
+            </div>
+            <div style="float:left; width:100%;" class="titleFont">
+                <p style="text-align:center;">
+                    <apex:outputText value="Credit Card Authorization for Shortfall" ></apex:outputText> 
+                </p>
+            </div>
+        </div>
+        
+        <div id="divider-line" style="border-bottom:1.5px solid #ddd; clear:both; margin:10px 0"></div>
+        
+        <div id="content" style="margin:0 80px;">    
+            <apex:outputText value="{!insuredPerson}" style="font-size:20px;"></apex:outputText>
+            <br/><br/>
+            <div>
+                <p>Please note that a shortfall may occur if final costs for treatment exceed your plan coverage or the medical expenses are not eligible for reimbursement.This form authorizes Cigna to collect any shortfall for you and your family from the credit card account detailed below.</p>
+                <p>Cigna reserves the right to hold a credit limit up to HK$500 until the claim assessment is fully completed.</p>
+                <p>The shortfall collection notice will be sent to you 21 days prior to the collection.</p>
+            </div>
+            <div class="rTable" >
+                <div class="rTableRow">     
+                    <div class="rTableCell_bold">
+                        Direct Debit via Credit Card<br/>                  
+                    </div>
+                </div>
+                <div class="rTableRow">
+                    <div class="rTableCell_bold" >
+                        <p>Credit Card Detail:</p>                  
+                    </div>
+                </div>
+                
+                <div class="inner_rTable">
+                    <div class="rTableRow" id="first_row" > 
+                        <div class="rChild_TableCell" >
+                            <div class="rTableCell_title">
+                                <apex:outputText value="CARDHOLDER:"></apex:outputText>
+                            </div> 
+                            <div class="rTableCell_underline">
+                                <apex:outputText value="{!cardHolder}"></apex:outputText>
+                            </div> 
+                        </div>   
+                        <div class="rChild_TableCell">
+                            <div class="rTableCell_title">
+                                <apex:outputText value="HKID CARD/PASSPORT NO.:" ></apex:outputText>
+                            </div> 
+                            <div class="rTableCell_underline" >
+                                <apex:outputText value="{!hkid}" ></apex:outputText>
+                            </div> 
+                        </div>  
+                    </div>
+                    <div class="rTableRow" id="second_row" >
+                        <div class="rChild_TableCell" >                            
+                            <div class="rTableCell_title">
+                                <apex:outputText value="NAME OF CARD ISSUING BANK:"></apex:outputText>
+                            </div> 
+                            <div class="rTableCell_underline">
+                                <apex:outputText value="{!bank}"></apex:outputText>
+                            </div>         
+                        </div>   
+                        <div class="rChild_TableCell" >   
+                            <div class="rTableCell_title">
+                                <apex:outputText value="COUNTRY OF CARD ISSUING BANK:" ></apex:outputText>
+                            </div> 
+                            <div class="rTableCell_underline">
+                                <apex:outputText value="{!country}" ></apex:outputText>
+                            </div> 
+                        </div>  
+                    </div>
+                    <div class="rTableRow" id="third_row" >
+                        <div class="rChild_TableCell" >   
+                            <div class="rTableCell_title">
+                                <apex:outputText value="VISA/MASTERCARD CREDIT CARD NUMBER:" ></apex:outputText>
+                            </div> 
+                            <div class="rTableCell_underline">
+                                <apex:outputText value="{!creditCardNumber}" ></apex:outputText>
+                            </div>                             
+                        </div>  
+                        <div class="rChild_TableCell" >
+                            <div class="rTableCell_title">
+                                <apex:outputText value="CARD EXPIRY DATE:"></apex:outputText>
+                            </div> 
+                            <div class="rTableCell_underline">
+                                <apex:outputText value="{!cardExpDate}"></apex:outputText>
+                            </div> 
+                        </div>                  
+                    </div>
+                </div>
+                <br/><br/><br/><br/>
+                
+                <div class="rTableRow">
+                    <div class="rTableCell" >
+                        Please note:<br/>
+                        – The Issuer of the credit card identified above is authorized to pay the amount as requested by the Beneficiary upon
+                        proper presentation. The Cardholder promises to pay such total (together with any other charges due thereon) subject
+                        to and in accordance with the agreement governing the use of such credit card.<br/>
+                    </div>
+                </div>
+            </div>
+            
+            <p>After you signed this Credit Card Authorization for Shortfall , it will be eligible for your spouse and all dependent(s).<br/>
+                I declare that the information provided in this form is true and accurate.</p>
+            <p>I accept the Terms and Conditions and Personal Information Collection Statement.</p>
+            
+            <p style="font-size:15px;font-weight:bold;">Cardholder’s Signature:</p>
+            <div class="signatureBox">
+                <apex:image url="{!signatureUrl}" height="150px"/>
+            </div>
+            <br/>
+            SIGNATURE MUST BE CONSISTENT WITH YOUR CREDIT CARD<br/>
+            <p style="font-size:13px;">Confidential, unpublished property of Cigna. Do not duplicate or distribute. 
+            Use and distribution limited solely to authorized personnel. 
+            &copy; Copyright Cigna</p>
+            <apex:outputPanel rendered="{!isCancle}">
+                <div style="color:Red; font-weight: bold;">This DDA Form was been cancelled by the employee at &nbsp;
+                    <!-- <apex:outputText value="{0,date,yyyy'-'MM'-'dd' 'HH':'mm':'ss}">
+                        <apex:param value="{!today}"/> 
+                    </apex:outputText>. -->
+                    <apex:outputText value="{!today}" />
+                </div>
+            </apex:outputPanel>
+        </div>  
+    </body>
+</apex:page>

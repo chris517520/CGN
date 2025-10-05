@@ -1,0 +1,487 @@
+<apex:page showHeader="false" sidebar="false" standardStylesheets="false" controller="CusPreChatCtrl">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <!-- CR-56_Link_20220214 -->
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-3.6.0.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-migrate-3.3.2.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap3.4.1.min.js')}"/>
+
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.carousel_new.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/signature_pad.min.js')}"></script>
+        <apex:include pageName="CignaUtilJS"/>
+        <style>
+            .bs .loading-helper {
+                display: inline-block;
+                height: 100%;
+                vertical-align: middle;
+            }
+            
+            .bs .loading-div {
+                // position: {!IF($Site.Name == $Setup.Portal_Settings__c.Customer_Portal_Site_Name__c, 'fixed', 'absolute')};
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                font-size: 1em;
+                color: #39B54A;
+                z-index: 999;
+                background: white;
+                opacity: 0.5;
+                vertical-align: middle;
+                text-align: center;
+                {!IF($Site.Name == $Setup.Portal_Settings__c.Customer_Portal_Site_Name__c, '', 'top:0;')}
+            }
+            body {
+                margin: auto;
+                background: #f9f9f9;
+            }
+            
+            @font-face {
+                font-family: MontserratLight;
+                src: url("{!URLFOR($Resource.DD_Demo, 'fonts/Montserrat-Light.otf')}") format("opentype");
+            }
+            
+            .error {
+              color: red;
+              background-color: #acf;
+                font-size:12px;
+           }
+            
+            .bs {
+                font-family: "MontserratLight", Arial, Helvetica, sans-serif;
+            }
+            
+            .bs .navbar-toggle .icon-bar {
+                background-color: #188CCC !important;
+            }
+            
+            .bs .navbar-brand {
+                padding: 10px !important;
+            }
+            
+            #owl-promotion-mobile .item img {
+                display: block;
+                width: 100%;
+                height: auto;
+            }
+            
+            #owl-promotion-desktop .item img {
+                display: block;
+                width: 100%;
+                height: auto;
+            }
+            
+            @media (min-width: 1px) and (max-width: 768px) {
+                .bs .navbar-nav li {
+                    background-color: #004986 !important;
+                    border-bottom: 0px solid #fff !important;
+                }
+                .bs .navbar-nav li > a {
+                    color: #fff !important;
+                }
+            }
+            
+            .bs .navbar-nav li:hover {
+                background-color: #fff !important;
+            }
+            
+            .bs .navbar-nav li a:hover {
+                color: #fff !important;
+            }
+            
+            .bs div.section {
+                position: absolute !important;
+                left: 0 !important;
+                width: 100% !important;
+                background: #188CCC !important;
+                padding-left: 5%;
+            }
+            
+            .bs div.section > h4 {
+                color: #FFF;
+            }
+            
+            #record-list {
+                font-size: 14px;
+            }
+            
+            .fa-check-circle {
+                color: #39B54A;
+            }
+            
+            .fa-times-circle {
+                color: #e80000;
+            }
+            
+            .bs .btn-default {
+                /*color: #fff !important;
+                    background-color: #F1B434 !important;
+                    border-color: #F1B434 !important;*/
+            }
+            
+            .bs .btn-plain {
+                color: #000 !important;
+                background-color: #fff !important;
+                border-color: #ddd !important;
+            }
+            .required:after {
+                content:" *";
+                color:  #DC143C;
+              }
+              p {font-weight: bolder }
+        </style>
+        <!-- CR-56_Link_20220214 -->
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap3.4.1.css')}" />
+
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.carousel.css')}" />
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.theme.css')}" />
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.transitions.css')}" />
+        
+        <apex:define name="additionalLibraries">
+            <!-- CR-56_Link_20220214 -->
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-3.6.0.min.js')}"/>
+            <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+            <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+            <apex:outputPanel rendered="{!userLanguage == 'zh_TW'}" layout="none">
+                <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+            </apex:outputPanel>
+        </apex:define>
+
+    </head>
+
+<script type='text/javascript'> 
+ 
+    (function() {
+        function handlePageLoad() {
+            var endpointMatcher = new RegExp("[\\?\\&]endpoint=([^&#]*)");
+            var domainMatcher = new RegExp("^(https?:\\/\\/(.+?\\.)?(salesforce|salesforcescrt|salesforceliveagent)\\.com(\\/[A-Za-z0-9\\-\\._~:\\/\\?#\[\\]@!$&'\\(\\)\*\\+,;\\=]*)?)");
+    
+            var endpointAttr = endpointMatcher.exec(document.location.search)[1];
+            // if the endpoint domain is valid
+            //if (domainMatcher.test(decodeURIComponent(endpointAttr))) {
+                document.getElementById('prechatForm').setAttribute('action',
+                    decodeURIComponent(endpointAttr.replace("javascript:", "")));
+            //}
+            /* else {
+                // invalid endpoint domain, set the action to empty
+                console.error("invalid domain: " + endpointAttr);
+                document.getElementById('prechatForm').setAttribute('action', "");
+            }*/
+        }
+        if (window.addEventListener) {
+            window.addEventListener('load', handlePageLoad, false);
+        } else {
+            window.attachEvent('onload', handlePageLoad, false);
+        }
+    })();
+
+    var ID = function () {
+        // Math.random should be unique because of its seeding algorithm.
+        // Convert it to base 36 (numbers + letters), and grab the first 9 characters
+        // after the decimal.
+        var random =   Math.random().toString(36).substr(2, 9) + '_';
+        var timestamp = Date.now().toString();
+        return random+timestamp;
+    };
+
+    window.onload = function(){
+        document.getElementById('chatId').value = ID();
+        console.log(document.getElementById('chatId').value);
+        if(Cigna.Util.checkWebView()){
+            $('#closeBtn').show();
+        }
+        validateForm();
+    };
+
+    function getValue(){
+
+            if($("#prechatForm").valid()){
+                let myMap = new Map();
+                let ele = document.getElementsByTagName('input');
+                for(let i = 0; i<ele.length;i++){
+                    if(ele[i].id == 'HKID' || ele[i].id == 'Policy_No' || ele[i].id == 'CerNo'){
+                        
+                        myMap.set(ele[i].id,ele[i].value);
+                        console.log(myMap)
+                    }
+                    if(ele[i].checked){
+                        if(ele[i].type="radio"){
+                            if(ele[i].name="enquiry-type"){
+                                document.getElementById('SelectedEnquiryType').value = ele[i].value;
+                            }
+                        }
+                    }
+                    
+                }
+                var temp = Object.fromEntries(myMap)
+                var myJSON = JSON.stringify(temp);
+                console.log(myJSON);
+                
+                findAccount(myJSON);
+                //document.getElementById('prechat_submit').click();
+            }
+            
+        }
+
+    function setInfo(){
+        console.log(document.querySelector('[id*="backendAccountId"]').value);
+        console.log(document.querySelector('[id*="backendcontactId"]').value);
+        document.getElementById("ContactId").value = document.querySelector('[id*="backendcontactId"]').value;
+        console.log(document.getElementById("CaseSubject").value)
+        document.getElementById("CaseSubject").value = document.getElementById("CaseSubject").value + ' ' + document.getElementById("firstname").value +' ' +document.getElementById("Lastname").value;
+        console.log(document.getElementById("CaseSubject").value);
+        console.log(document.getElementById("ContactId").value);
+        if(!document.getElementById("ContactId").value){ 
+            document.getElementById("nonCusLastName").value  = document.getElementById("Lastname").value;
+            document.getElementById("nonCusFirstName").value  = document.getElementById("firstname").value;
+        }
+
+        document.getElementById("prechat_submit").click();
+    }
+
+    function handleCerNo(){
+        var CerNoValue = document.getElementById('CerNo').value;
+        console.log(document.getElementById('CerNo').value);
+        if(CerNoValue){
+            $("#Policy_No_Label").addClass("required");
+        }else{
+            $("#Policy_No_Label").removeClass("required");
+        }
+    }
+
+    function validatePolicyField(){
+        var CerNoValue = document.getElementById('CerNo').value;
+        if(CerNoValue){
+            var PolicyValue = document.getElementById('Policy_No').value;
+            if(!PolicyValue){
+                return false;
+            }
+        }
+        return true;
+    }
+</script>
+
+<body class="bs">
+    <apex:actionStatus id="loader-icon">
+        <apex:facet name="start">
+            <div class="bs col-xs-12 col-lg-12 loading-div">
+                <span class="loading-helper"></span>
+                <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                <span class="sr-only">Loading...</span>
+            </div>
+        </apex:facet>
+    </apex:actionStatus>
+    <div class="bs container-fluid" style="padding-top: 20px;">
+        <div id="record-list" class="bs row">
+            <div class="bs col-xs-10 col-xs-offset-1 col-sm-8 col-sm-offset-2">
+                <div id="closeBtn" style="display:none;position: relative; top: 0; text-align:right;margin-right: 5px;" onclick="Cigna.Util.navigateToVFP('CustomerLoginVFP', null, null, false, false);">
+                    <a style="font-size: 12px;">X {!$Label.Close}</a>
+                </div>
+                <!-- Form that gathers information from the chat visitor and sets the values to Chat Custom Details used later in the example -->
+                <apex:form id="preChatForm">
+                    <apex:actionFunction action="{!findAccount}" name="findAccount" reRender="preChatForm" oncomplete="setInfo();" status="loader-icon">
+                        <apex:param name="result" value=""></apex:param>
+                    </apex:actionFunction>
+                    <apex:inputHidden value="{!accountId}" id="backendAccountId"></apex:inputHidden>
+                    <apex:inputHidden value="{!contactId}" id="backendcontactId"></apex:inputHidden>
+                </apex:form>
+                <form method='post' id='prechatForm'>
+                    <div class="bs col-sm-12 col-xs-12" style="padding-bottom:30px;word-break: break-all;" >
+                        <h1 style="text-align:center;font-size:1.1em;">{!transField['Welcome_Message'][$label.Header_Language_Code_Current]}</h1>
+                    </div>
+                    <div class="bs col-sm-12 col-xs-12 required" >
+                        <label for="firstname">{!$Label.FirstName}</label>
+                    </div>
+                    <div class="bs form-group col-sm-12 col-xs-12" >
+                        <input id="firstname" class="bs form-control" name="liveagent.prechat:ContactFirstName" type="text" placeholder="{!$Label.FirstName}" />
+                    </div>
+                    <div class="bs col-sm-12 col-xs-12 required" >
+                        <label for="Lastname">{!$Label.LastName}</label>
+                    </div>
+                    <div class="bs form-group col-sm-12 col-xs-12" >
+                        <input id="Lastname" class="bs form-control" name="liveagent.prechat:ContactLastName" type="text" placeholder="{!$Label.LastName}" />
+                    </div>
+                    <div class="bs col-sm-12 col-xs-12" >
+                        <label for="HKID">{!transField['HKID_or_Passport_No'][$label.Header_Language_Code_Current]}</label>
+                    </div>
+                    <div class="bs form-group col-sm-12 col-xs-12">
+                        <input id="HKID" class="bs form-control" name="liveagent.prechat:HKID" type="text" placeholder="{!transField['Placeholder_HKID'][$label.Header_Language_Code_Current]}" />
+                    </div>
+                    <div class="bs col-sm-12 col-xs-12" id="Policy_No_Label">
+                        <label for="Policy_No">{!$Label.Policy_No}</label>
+                    </div>
+                    <div class="bs form-group col-sm-12 col-xs-12" >
+                        <input type='text' name='liveagent.prechat:CasePolicyNumber' id='Policy_No'  class="bs form-control" placeholder="{!$Label.Policy_No}"/>
+                    </div>
+                    <div class="bs col-sm-12 col-xs-12" >
+                        <label for="CerNo">{!transField['Certificate_Number'][$label.Header_Language_Code_Current]}</label>
+                    </div>
+                    <div class="bs form-group col-sm-12 col-xs-12" >
+                        <input id="CerNo" class="bs form-control" name="liveagent.prechat:CaseCerNo" type="text" placeholder="{!transField['Placeholder_CerNo'][$label.Header_Language_Code_Current]}"  onchange="handleCerNo()"/>
+                    </div>
+                    <div class="bs col-sm-12 col-xs-12 required" style="padding-bottom:10px;">
+                        <label >{!transField['Enquiry_Type'][$label.Header_Language_Code_Current]}</label>
+                    </div>
+                    <div  class="bs col-sm-12 col-xs-12" style="padding:0px 15px;" ><span id="enquiry-type-error"></span></div>
+                    <div class="bs form-group col-sm-12 col-xs-12" >
+                        <div class="bs col-xs-12 col-sm-6">
+                            <input type="radio" id="enquiry-type-01" value="Claim Enquiry" name="enquiry-type" class="bs cigna-question-radio" />
+                            <label for="enquiry-type-01">{!transField['Claim_Enquiry'][$label.Header_Language_Code_Current]}</label>
+                        </div>
+                        <div class="bs col-xs-12 col-sm-6">
+                            <input type="radio" id="enquiry-type-02" value="Policy Enquiry" name="enquiry-type" class="bs cigna-question-radio" />
+                            <label for="enquiry-type-02">{!transField['Policy_Enquiry'][$label.Header_Language_Code_Current]}</label>
+                        </div>
+                        <div class="bs col-xs-12 col-sm-6">
+                            <input type="radio" id="enquiry-type-03" value="Policy Change" name="enquiry-type" class="bs cigna-question-radio" />
+                            <label for="enquiry-type-03">{!transField['Policy_Change'][$label.Header_Language_Code_Current]}</label>
+                        </div>
+                        <div class="bs col-xs-12 col-sm-6">
+                            <input type="radio" id="enquiry-type-04" value="Billing" name="enquiry-type" class="bs cigna-question-radio" />
+                            <label for="enquiry-type-04">{!transField['Billing'][$label.Header_Language_Code_Current]}</label>
+                        </div>
+                        <div class="bs col-xs-12 col-sm-6">
+                            <input type="radio" id="enquiry-type-05" value="New Business" name="enquiry-type" class="bs cigna-question-radio" />
+                            <label for="enquiry-type-05">{!transField['New_Business'][$label.Header_Language_Code_Current]}</label>
+                        </div>
+                        <div class="bs col-xs-12 col-sm-6">
+                            <input type="radio" id="enquiry-type-06" value="Others" name="enquiry-type" class="bs cigna-question-radio" />
+                            <label for="enquiry-type-06">{!transField['Others'][$label.Header_Language_Code_Current]}</label>
+                        </div>
+                        <!--select id="preferTime" name="preferTime" class="bs form-control glance_masked">
+                            <option value="Email Address Registration">Email Address Registration</option>
+                            <option value="Policy / Claims Enquiry">Policy / Claims Enquiry</option>
+                            <option value="Information Change Request">Information Change Request</option>
+                            <option value="Other Enquiry (please specify below)">Other Enquiry (please specify below)</option>
+                        </select-->
+                    </div>
+                    
+                    <!--First name: <input type='text' name='liveagent.prechat:ContactFirstName' id='firstName' /><br />
+                    Last name: <input type='text' name='liveagent.prechat:ContactLastName' id='lastName' /><br />
+                    {!$Label.email}: <input type='text' name='liveagent.prechat:ContactEmail' id='email' /><br />
+                    Phone: <input type='text' name='liveagent.prechat:ContactPhone' id='phone' /><br />
+                    Issue: <input type='text' name='liveagent.prechat:CaseSubject' id='subject' /><br />
+                    {!$Label.Policy_No} <input type='text' name='liveagent.prechat:CasePolicyNumber' id='Policy_Number__c' /><br />-->
+                    
+                    
+                    <!-- This example assumes that "Chat" was added as picklist value to the Case Origin field -->
+                    <input type="hidden" name="liveagent.prechat:Media" value="{!$Setup.Live_Chat_Auto_Case_Default_Value__c.Media__c}" /><br />
+                    <input type="hidden" name="liveagent.prechat:Category" value="{!$Setup.Live_Chat_Auto_Case_Default_Value__c.Pulse_Survey_Category__c}" /><br />
+                    <input type="hidden" name="liveagent.prechat:S2S" value="{!$Setup.Live_Chat_Auto_Case_Default_Value__c.S2S__c}" /><br />
+                    <input type="hidden" name="liveagent.prechat:CaseStatus" value="{!$Setup.Live_Chat_Auto_Case_Default_Value__c.Status__c}" /><br />
+                    <input type="hidden" name="liveagent.prechat:LeadSource" value="{!$Setup.Live_Chat_Auto_Case_Default_Value__c.Lead_Source__c}" /><br />
+                    <input type="hidden" name="liveagent.prechat:caseSub" value="{!$Setup.Live_Chat_Auto_Case_Default_Value__c.Subject__c}" id="CaseSubject"/><br />
+                    <input type="hidden" name="liveagent.prechat:AutoCreateCase" value="{!$Setup.Live_Chat_Auto_Case_Default_Value__c.Auto_Create_Case__c}"/><br />
+                    <input type="hidden" name="liveagent.prechat:CaseRecordtype" value="{!autoCaseRecordtype}" /><br />
+                    <input type="hidden" name="liveagent.prechat:EnquiryType" value="" id="SelectedEnquiryType" /><br />
+                    <input type="hidden" name="liveagent.prechat:nonCusFirstName" value="" id="nonCusFirstName"/><br />
+                    <input type="hidden" name="liveagent.prechat:nonCusLastName" value="" id="nonCusLastName"/><br />
+
+                    <input type="hidden" name="liveagent.prechat:ContactId" value="" id="ContactId" /><br />
+                    
+                    <input type="hidden" name="liveagent.prechat:chatId" value="" id="chatId" /><br /> 
+                    <input type="hidden" name="liveagent.prechat.save:chatId" value="Chat_Id__c" />
+
+                    <!-- This example will set the Case Record Type to a specific value for the record type configured on the org. Lookup the case record type's id on your org and set it here -->
+                    <!--input type="hidden" name="liveagent.prechat:CaseRecordType" value="012D00123456789" /-->
+                    
+                    <!-- Used to set the visitor's name for the agent in the Console -->
+                    <input type="hidden" name="liveagent.prechat.name" id="prechat_field_name" />
+
+                    <!-- map: Use the data from prechat form to map it to the Salesforce record's fields -->
+                    <input type="hidden" name="liveagent.prechat.findorcreate.map:Contact" value="Id,ContactId" />
+
+                    <input type="hidden" name="liveagent.prechat.findorcreate.map:Case" value="First_Name_Of_Non_Existing_Customer__c,nonCusFirstName;Last_Name_of_Non_Existing_Customer__c,nonCusLastName;Auto_Create_Case_Text__c,AutoCreateCase;RecordTypeId,CaseRecordtype;Subject,caseSub;Auto_Case_Enquiry_type__c,EnquiryType;Certificate_Number__c,CaseCerNo;HKID_or_Passport_No__c,HKID;Status,CaseStatus;RecordTypeId,CaseRecordType;Policy_Number__c,CasePolicyNumber;Media__c,Media;Lead_Source__c,LeadSource;Pulse_Survey_Category__c,Category;S2S__c,S2S;Chat_Id__c,chatId" />
+
+                    <!-- doFind, doCreate and isExactMatch example for a Contact: 
+                        Find a contact whose Email exactly matches the value provided by the customer in the form 
+                        If there's no match, then create a Contact record and set it's First Name, Last Name, Email, and Phone to the values provided by the customer -->
+                    <input type="hidden" name="liveagent.prechat.findorcreate.map.doFind:Contact" value="Id,true" />
+                    <input type="hidden" name="liveagent.prechat.findorcreate.map.isExactMatch:Contact" value="Id,true" />
+                    <input type="hidden" name="liveagent.prechat.findorcreate.map.doCreate:Contact" value="" />
+
+                    <!-- doCreate example for a Case: create a case to attach to the chat, set the Case Subject to the value provided by the customer and set the case's Status and Origin fields -->
+                    <input type="hidden" name="liveagent.prechat.findorcreate.map.doCreate:Case" value="First_Name_Of_Non_Existing_Customer__c,true;Last_Name_of_Non_Existing_Customer__c,true;Auto_Create_Case_Text__c,true;RecordTypeId,true;Subject,true;Auto_Case_Enquiry_type__c,true;Certificate_Number__c,true;HKID_or_Passport_No__c,true;Status,true;Origin,true;RecordTypeId,true;Policy_Number__c,true;Media__c,true;Lead_Source__c,true;Pulse_Survey_Category__c,true;S2S__c,true;Chat_Id__c,true;" />
+
+                    <!-- linkToEntity: Set the record Contact record, found/created above, as the Contact on the Case that's created --> 
+                    <input type="hidden" name="liveagent.prechat.findorcreate.linkToEntity:Contact" value="Case,ContactId" />
+
+                    <!-- showOnCreate: Open the Contact and Case records as sub-tabs to the chat for the agent in the Console -->
+                    <input type="hidden" name="liveagent.prechat.findorcreate.showOnCreate:Contact" value="true" />
+                    <input type="hidden" name="liveagent.prechat.findorcreate.showOnCreate:Case" value="true" />
+
+                    <!-- saveToTranscript: Associates the records found / created, i.e. Contact and Case, to the Live Chat Transcript record. --> 
+                    <input type="hidden" name="liveagent.prechat.findorcreate.saveToTranscript:Contact" value="ContactId" />
+                    <input type="hidden" name="liveagent.prechat.findorcreate.saveToTranscript:Case" value="CaseId" />
+
+                    <!-- displayToAgent: Hides the case record type from the agent -->
+                    <!--input type="hidden" name="liveagent.prechat.findorcreate.displayToAgent:CaseRecordType" value="false" /-->
+
+                    <!-- searchKnowledge: Searches knowledge article based on the text, this assumes that Knowledge is setup -->
+                    <!--input type="hidden" name="liveagent.prechat.knowledgeSearch:CaseSubject" value="true" /-->
+                    <div class="bs col-sm-12 col-xs-12" style="text-align:center;padding-bottom:40px">
+                        <div onclick="getValue();" class="bs btn btn-default pull-middle" style="font-weight:700;">{!transField['Chat_Now'][$label.Header_Language_Code_Current]} </div>
+                        <!-- <div onclick="submit()" class="bs btn btn-default pull-middle" style="font-weight:700;">{!transField['Chat_Now'][$label.Header_Language_Code_Current]} </div> -->
+                    </div>
+                    
+                    <input type='submit' value="{!transField['Chat_Now'][$label.Header_Language_Code_Current]}" id='prechat_submit' class="bs btn btn-default pull-middle" style="display:none;"/>
+                    
+                    <!-- Set the visitor's name for the agent in the Console to first and last name provided by the customer -->
+                    <script type="text/javascript">
+                        
+                        function validateForm(){
+                            jQuery.validator.addMethod("validatePolicyField", function(value, element) {
+                                return validatePolicyField();
+                            }, "With certificate number, you need to input policy number");
+                            
+                            $( "#prechatForm" ).validate(
+                                {
+                                    errorPlacement: function(error, element) {
+                                        if (element.attr("name") == "enquiry-type") {
+                                            error.insertAfter("#enquiry-type-error");
+                                        } else {
+                                            error.insertAfter(element);
+                                        }
+                                    }
+                                }
+                            );
+
+                            
+                            
+
+                            $("input[id='firstname']").each(function(idx, elem){
+                                    $(elem).rules("add", {
+                                        required: true
+                                        });
+                            });
+                            $("input[id='Lastname']").each(function(idx, elem){
+                                        $(elem).rules("add", {
+                                            required: true
+                                        });
+                            });
+                            $("input[id='enquiry-type-01']").each(function(idx, elem){
+                                        $(elem).rules("add", {
+                                            required: true
+                                        });
+                            });
+                            $("input[id='Policy_No']").each(function(idx, elem){
+                                        $(elem).rules("add", {
+                                            validatePolicyField: true
+                                        });
+                            });
+                            
+                        }
+
+                        
+                    </script>
+
+                    
+
+                </form>
+                
+            </div>
+        </div>
+    </div>
+</body>
+</apex:page>

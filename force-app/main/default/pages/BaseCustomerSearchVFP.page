@@ -1,0 +1,619 @@
+<!--Please change apex page title-->
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" title="Get Protected" controller="ESalesSelectCustomerCtrl">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <style>
+            <!--additional inline css-->
+            .bs .cigna-tab-panel {
+                border-bottom: 4px solid #00A9E0;
+                background-color: #004986;
+                color: #fff;
+                text-transform: uppercase;
+            }
+            .bs .cigna-tab-pill {
+                text-align:center;
+                color: #fff;
+                padding: 15px !important;
+                font-size: 12px;
+                width:33%;
+                cursor: pointer;
+            }
+            .bs .cigna-tab-pill.active {
+                background-color: #00A9E0;
+                width: 34%;
+                font-weight: 500;
+            }
+            .bs .cigna-tab {
+                display: none;
+            }
+            .bs .cigna-tab.active {
+                display: block;
+            }
+            
+            .bs .form-control:focus {
+                box-shadow: none !important;
+                border-bottom: 1px solid #eac048 !important;
+            }
+            
+    
+            .bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select, .bs span.form-control  {
+                border-top: 0 !important;
+                border-left: 0 !important;
+                border-right: 0 !important;
+                border-bottom: 1px solid #58595B !important;
+                background: transparent;
+                width: 100%;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                
+            }
+        </style>
+        <script>
+            <!--additional inline js-->
+            var Cigna = Cigna || {};
+            Cigna.TabComponent = function(){
+                var panelId;
+                
+                function init(id, callbackFunc) {
+                    panelId = id;
+                    //CR-56_Link_20220214
+                    $(id).find('.cigna-tab-pill').on("click",function(evt){
+                        var targetTab = $(this).data('target');
+                        switchTab(targetTab, callbackFunc);
+                    });
+                    //$(id).find('.cigna-tab-pill:first').click();
+                    
+                    var isExist = $("input[type='hidden'][id='para-isExisting']").val();
+
+                    if(isExist == "true"){
+                        
+                        $("[id$='tab-existing-cus']").addClass('active');
+                        //CR-56_Link_20220214
+                        $(id).find('.cigna-tab-pill[data-target="#tab-existing-cus"]').trigger('click');
+
+                    }else{
+                        $(id).find('.cigna-tab-pill:first').trigger('click');
+                    }
+                }
+                
+                function refreshActionBar(selectedTab) {
+                    if(selectedTab=="new"){
+                        document.getElementById('tab-new-cusApp').style.display = "block";
+                    } else {
+                        document.getElementById('tab-new-cusApp').style.display = "none";
+                    }
+                }
+                
+                function switchTab(id, callbackFunc) {
+                    $('.cigna-tab-pill[data-target="' + id + '"]').siblings().removeClass('active');
+                    $('.cigna-tab-pill[data-target="' + id + '"]').addClass('active');
+                    $(id).siblings('.cigna-tab.active').removeClass('active');
+                    $(id).addClass('active');
+                    
+                    if (callbackFunc && typeof callbackFunc == 'function') {
+                        callbackFunc(id);
+                    }
+                }
+                
+                function getCurrentTabId() {
+                    return $(panelId).find('.cigna-tab-pill.active').data('target');
+                }
+                
+                return {
+                    init : init,
+                    getCurrentTabId : getCurrentTabId,
+                    refreshActionBar : refreshActionBar
+                }
+            }();
+            
+            Cigna.CustomerSearch = function(){
+                
+                function getAQuote(customerId){
+                    if (validateForm()) {
+                        ServerCustomerSearch.getQuote();
+                    }
+                }
+                
+                function validateForm() {
+                    if (Cigna.TabComponent.getCurrentTabId() == '#tab-new-cus') {
+                        return $("form[id*='frmCustomerSelection']").validate().form();
+                    }
+                    return true;
+                }
+                
+                function redirectToQuote() {
+                    var params = $("input[type='hidden'][id='param-str']").val();
+                    if (params !== '') {
+                        Cigna.Util.navigateToVFP("GetQuoteVFP?" + params, null, null, true);
+                    }
+                }
+                
+                function redirectToQuoteCid() {
+
+                    var params = {
+                        plan : "{!paramPlan}",
+                        cid : $('input[type="hidden"][id$="holderIdPassNextPage"]').val(),
+                        phName : $('input[type="hidden"][id$="holderNamePassNextPage"]').val(),
+                        tid : $("input[type='hidden'][id='txnId']").val(),
+                        searchType : $('input[type="hidden"][id$="holdersearchType"]').val(),
+                        searchValue : $('input[type="hidden"][id$="holdersearchValue"]').val()
+                        
+                    };
+                    
+                    Cigna.Util.navigateToVFP("GetQuoteVFP?" + $.param(params), null, null, true);
+                }
+            
+
+                return {
+                    getAQuote : getAQuote,
+                    redirectToQuote : redirectToQuote,
+                    redirectToQuoteCid : redirectToQuoteCid
+                }
+            }();
+            
+            $(document).ready(function(){
+                Cigna.TabComponent.init('#tabbed-panel');
+            });
+        </script>
+    </head>
+    <apex:define name="additionalLibraries">
+         <!-- CR-56_Link_20220214 -->
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+         <apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+         </apex:outputPanel>
+    </apex:define>
+
+    
+        <div id="product-back" class="bs row" style="display: none;">
+            <div class="bs col-xs-12">
+                <p><a id="product-back-btn" href="#" class="bs cigna-fg-orange-medium"><i class="fa fa-chevron-left" aria-hidden="true"></i> {!$Label.Back}</a></p>
+            </div>
+        </div>
+
+        <div id="tabbed-panel" class="bs row cigna-tab-panel" >
+            <table class="bs cigna-tab-bar col-xs-12">
+                <tr>
+                    <td class="bs cigna-tab-pill" data-target="#tab-new-cus" onclick="Cigna.TabComponent.refreshActionBar('new');">{!$Label.New_Customer}</td>
+                    <td class="bs cigna-tab-pill" data-target="#tab-existing-cus" onclick="Cigna.TabComponent.refreshActionBar('existed');">{!$Label.Existing_Customer}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="bs row">
+            <div id="tab-new-cus" class="bs cigna-tab col-sm-offset-1 col-sm-10 col-xs-12 cigna-fg-gray-dark form-horizontal">
+                <apex:form id="frmCustomerSelection" style="padding-bottom:20px;">
+                <apex:actionFunction action="{!getQuote}" namespace="ServerCustomerSearch" name="getQuote" 
+                                     reRender="panelQuote, errorMsg"
+                                     oncomplete="Cigna.CustomerSearch.redirectToQuote();" />
+                                     
+                <apex:actionFunction action="{!saveQuote}" namespace="ServerCustomerSearch" name="saveQuote" 
+                                     reRender="panelQuote, errorMsg"
+                                     oncomplete="Cigna.CustomerSearch.redirectToQuoteCid();"/>
+                <apex:outputPanel id="panelQuote">
+                <input type="hidden" id="param-str" value="{!params}" />
+                <input type="hidden" id="txnId" value="{!txn.id}" />
+                </apex:outputPanel>
+                <input type="hidden" id="para-isExisting" value="{!isExisting}"/>
+                
+                <apex:inputHidden id="holderfirstName" value="{!cusFirstName}"/>
+                <apex:inputHidden id="holderLastName" value="{!cusLastName}"/>
+                <apex:inputHidden id="holderCusId" value="{!cusId}"/>
+                <apex:inputHidden id="holderdob" value="{!phBirth}"/>
+                <apex:inputHidden id="holderContactNo" value="{!contactNo}"/>
+                <apex:inputHidden id="holderCountryCd" value="{!countryCode}"/>
+               
+                <apex:inputHidden id="holdersearchType" value="{!searchType}"/>
+                <apex:inputHidden id="holdersearchValue" value="{!searchValue}"/>
+        
+                <apex:pageMessages id="errorMsg" />
+                <div class="bs form-group">
+                    <div class="bs col-sm-3">
+                        <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Policy_Holder_First_Name__c.Label}" for="PH-Firstname"/>
+                    </div>
+                    <div class="bs col-sm-9">
+                        <apex:inputText id="PH-Firstname" value="{!paramFirstname}" styleClass="bs form-control" style="padding-left:26px !important;"
+                               html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Policy_Holder_First_Name__c.Label}"
+                        />
+                    </div>
+                </div>
+                <div class="bs form-group">
+                    <div class="bs col-sm-3">
+                        <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Policy_Holder_Last_Name__c.Label}" for="PH-Lastname"/>
+                    </div>
+                    <div class="bs col-sm-9">
+                        <apex:inputText id="PH-Lastname" value="{!paramLastname}" styleClass="bs form-control" style="padding-left:26px !important;"
+                               html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Policy_Holder_Last_Name__c.Label}"
+                        />
+                    </div>
+                </div>
+                <div class="bs form-group">
+                    <div class="bs col-sm-3">
+                        <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Date_of_Birth_PH__c.Label}" for="PH-DOB-DD"/>
+                    </div>
+                    <div class="bs col-sm-9">
+                        <apex:input id="Val-DOB-Day-PH" type="tel" value="{!paramPHDOBDay}" 
+                                               html-maxlength="2" 
+                                               styleClass="bs form-control text-center dob-input question-kid-age question-kid-age"
+                                               size="5"
+                                               style="display: inline; width: auto;"
+                                               html-placeholder="{!$Label.DD}"
+                                               onblur="getCheckDOB('PH day',this)" 
+                        />
+                        <apex:input id="Val-DOB-Month-PH" type="tel" value="{!paramPHDOBMonth}" 
+                                               html-maxlength="2" 
+                                               styleClass="bs form-control text-center dob-input question-kid-age"
+                                               size="5"
+                                               style="display: inline; width: auto;"
+                                               html-placeholder="{!$Label.MM}"
+                                               onblur="getCheckDOB('PH month',this)" 
+                        />
+                        <apex:input id="Val-DOB-Year-PH" type="tel" value="{!paramPHDOBYear}" 
+                                               html-maxlength="4" 
+                                               styleClass="bs form-control text-center dob-input question-kid-age"
+                                               size="7"
+                                               style="display: inline; width: auto;"
+                                               html-placeholder="{!$Label.YYYY}"
+                                               onblur="getCheckDOB('PH year',this)" 
+                        />
+                    </div>
+                    <div class="bs col-sm-offset-3 col-sm-9 col-xs-12" >
+                        <apex:inputText id="PH-DOB-Check" value="{!paramPHDOB}" Styleclass="hidden-input-field" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" onfocus="hiddenonblur(this)" />
+                    </div>
+                </div>
+                <div class="bs form-group">
+                    <div class="bs col-sm-3">
+                        <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Gender__c.Label}" for="PH-Gender"/>
+                    </div>
+                    <div class="bs col-sm-9">
+                        <apex:inputField id="PH-Gender" value="{!txn.Gender__c}" styleClass="bs form-field-style-select" style="padding-left:26px !important;"/>
+                    </div>
+                </div>
+                <div class="bs form-group">
+                    <div class="bs col-sm-3 col-xs-12">
+                        <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Contact_No__c.Label}" for="PH-ContactNo"/>
+                    </div>
+                    <div class="bs col-sm-2 col-xs-4">
+                        <apex:inputText id="PH-CountryCode" value="{!paramCountryCode}" styleClass="bs form-control" style="padding-left:26px !important;"
+                                         html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Country_Code__c.Label}"
+                                          />
+                    </div>
+                    <div class="bs col-sm-7 col-xs-8">
+                        <apex:input type="tel" id="PH-ContactNo" value="{!paramMobileNo}" styleClass="bs form-control" style="padding-left:26px !important;"
+                                    html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Contact_No__c.Label}" />
+                    </div>
+                </div>
+                </apex:form>
+                <div id="mobile-app-padding" class="bs row" style="display: none; padding-bottom: 120px;">
+                    <div class="bs col-xs-12"></div>
+                </div>
+                <!--<div id="action-bar" class="bs row cigna-floating-bottom-panel visible-xs">
+                    <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" style="font-size: 0.9em;">
+                        <a href="#" class="action-btn cigna-fg-white" role="button" onclick="Cigna.CustomerSearch.getAQuote(''); return false;">
+                            <span class="ci-hk-dollars" aria-hidden="true"></span><br/>{!$Label.Get_a_Quote}</a>
+                    </div>
+                </div>-->
+                <div id="action-bar-desktop" class="bs col-xs-12 hidden-xs text-center">
+                    <div class="bs col-xs-12 text-center" style="margin-top: 15px;">
+                        <a href="#" class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" onclick="Cigna.CustomerSearch.getAQuote('');return false;">{!$Label.Get_a_Quote}</a>
+                    </div>
+                </div>
+            </div>
+            <div id="tab-existing-cus" class="bs cigna-tab col-xs-12">
+                <c:CommonSearchComp pageTypeName="ESalesVFP"/>
+            </div>
+        </div>
+        <script>
+            
+            $(document).ready(function(){
+            /*
+                $(".dob-input").keyup(function (e) {
+                
+                    if (this.value.length == this.maxLength) {
+                      var $next = $(this).next('.dob-input');
+                      if ($next.length){
+                          
+                          $next.focus();
+                          
+                      }else{
+                          $(this).blur();
+                      }
+                    }
+                    
+                });
+                */
+            });
+            
+            /*
+            $('.dob-input').keyup(function(evt) {
+                if (this.value.length == this.maxLength && evt.keyCode >= 48 && evt.keyCode <= 57) {
+                    var $next = $(this).nextAll('.dob-input');
+                    if ($next.length){
+                        $(this).nextAll('.dob-input').first().focus();
+                    } else {
+                        $(this).blur();
+                    }
+                } else if (this.value.length == 0 && evt.keyCode == 8) {
+                    // Backspace
+                    var $prev = $(this).prevAll('.dob-input');
+                    if ($prev.length){
+                        $(this).prevAll('.dob-input').first().focus();
+                    } else {
+                        $(this).blur();
+                    }
+                }
+            });
+            */
+            
+            function isNumberKey(charCode, min, max) {
+                if ((charCode >= 48 && charCode <= 57) || 
+                    $.inArray(charCode, [8, 127]) !== -1) {
+                    if (!isNaN(min) && !isNaN(max) && typeof min != undefined && typeof max != undefined) {
+                        if ((charCode - 48) >= min && (charCode - 48) <= max) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    } else {
+                        return true;
+                    }
+                } else {
+                    return false;
+                }
+            }
+            
+            function onKidAgeChange(evt) {
+                return isNumberKey(evt.charCode);
+            }
+            
+            //CR-56_Link_20220214
+            $('.question-kid-age').on("keypress",onKidAgeChange);
+            
+            function hiddenonblur(input){
+                var InputId = input.id;
+                //CR-56_Link_20220214
+                $("input[id*='" + InputId + "']").trigger("blur");
+            } 
+            
+            function getCheckDOB(datetype , input){
+                
+                var DOBDate = $("input[id*='Val-DOB-Day-PH']").val();
+                var DOBMonth = $("input[id*='Val-DOB-Month-PH']").val();
+                var DOBYear = $("input[id*='Val-DOB-Year-PH']").val();
+                
+                console.log('getCheckDOB');
+                console.log('DOBDate '+DOBDate);
+                console.log('DOBMonth '+DOBMonth );
+                console.log('DOBYear '+DOBYear );
+                
+                if((DOBDate!=null && DOBDate!='')
+                    && (DOBMonth!=null && DOBMonth!='')
+                    && (DOBYear!=null && DOBYear!='')){
+                        console.log('test');
+                        $("input[id*='PH-DOB-Check']").val(DOBDate+'/'+DOBMonth+'/'+DOBYear);
+                        //CR-56_Link_20220214
+                        $("input[id*='PH-DOB-Check']").trigger("focus");
+                } else {
+                    $("input[id*='PH-DOB-Check']").val('');
+                    //CR-56_Link_20220214
+                    $("input[id*='PH-DOB-Check']").trigger("focus");
+                }
+            }
+            
+            function validateDOB(resour){
+            
+                var day = $("input[id*='Val-DOB-Day-PH']").val();
+                console.log(day);
+                var month = $("input[id*='Val-DOB-Month-PH']").val();
+                console.log(month);
+                var year = $("input[id*='Val-DOB-Year-PH']").val();
+                console.log(year);
+                
+                if(day!='' && month!='' && year!='' ){
+                    if(day==0 || day>31){
+                         return false;
+                    }
+                    
+                    if(month==2){
+                        if(day>29) return false;
+                        if(day == 29){
+                            console.log('Feb'+year%4);
+                            if(year%4!=0) return false;
+                        }
+                    }
+                    
+                    if(month==4 || month==6 || month==9 || month==11){
+                        if(day>30) return false;
+                    }
+                    
+                    if(month==0 || month>12){
+                         return false;
+                    }
+                                        
+                    var adate=new Date(year,month-1,day);   
+                    console.log('adate'+adate);
+                    var thedate=new Date();
+                    
+                    var nowYear=thedate.getFullYear();
+                    var nowMonth=thedate.getMonth()+1;
+                    var nowday=thedate.getDate();
+                    
+                    
+                    if(year<1900 || year>nowYear){
+                         return false;
+                    } else if(year==nowYear){
+                        if(month > nowMonth){
+                            return false;
+                        } else if(month == nowMonth){
+                            if(day > nowday){
+                                return false;
+                            }
+                        }
+                    }
+                    
+                }
+                return true;
+            }
+            
+            function checkFirstCharacter(value){
+                //the first character cannot be space and *
+                if(value.indexOf('*') == 0 || value.indexOf(' ') == 0){
+                    return false;
+                }
+                return true;
+            }
+            function checkLength(value){
+
+                if(value.length > 42){
+                    return false;
+                }
+                return true;
+            }
+            function checkChinese(value){
+                if(/.*[\u4e00-\u9fa5]+.*$/.test(value)) {
+                    return false;
+                }
+                return true;
+            }
+            function checkContactNoLength(value){
+
+                if(value.length > 20){
+                    return false;
+                }
+                return true;
+            }
+
+            function proceedToNextStep() {
+                var firstNm;
+                var lastNm;
+                var cusId;
+                var contactNo;
+                var countrycd;
+                var dob;
+                var searchType;
+                var searchValue;
+                
+                firstNm = $('input[type="hidden"][id$="holderfirstNamePassNextPage"]').val();
+                lastNm = $('input[type="hidden"][id$="holderLastNamePassNextPage"]').val();
+                cusId = $('input[type="hidden"][id$="holderIdPassNextPage"]').val();
+                contactNo = $('input[type="hidden"][id$="holderContactNoPassNextPage"]').val();
+                countrycd = $('input[type="hidden"][id$="holderCountryCdPassNextPage"]').val();
+                dob = $('input[type="hidden"][id$="holderdobPassNextPage"]').val();
+                
+                searchType = $('input[type="hidden"][id$="searchTypePassNextPage"]').val();
+                searchValue = $('input[type="hidden"][id$="searchValuePassNextPage"]').val();
+                
+                $('input[type="hidden"][id$="holderfirstName"]').val(firstNm);
+                $('input[type="hidden"][id$="holderLastName"]').val(lastNm);
+                $('input[type="hidden"][id$="holderCusId"]').val(cusId);
+                $('input[type="hidden"][id$="holderContactNo"]').val(contactNo);
+                $('input[type="hidden"][id$="holderCountryCd"]').val(countrycd);
+                $('input[type="hidden"][id$="holderdob"]').val(dob);
+                
+                $('input[type="hidden"][id$="holdersearchType"]').val(searchType);
+                $('input[type="hidden"][id$="holdersearchValue"]').val(searchValue);
+                
+                ServerCustomerSearch.saveQuote();
+                
+            }
+            
+                
+        </script>
+        <script>
+            jQuery.validator.addMethod("validateDOB", function(value, element) {
+                   return validateDOB(element);
+            }, "{!$Label.ESales_Invalid_DOB}");
+            
+            jQuery.validator.addMethod("checkFirstCharacter", function(value, element) {
+                   return checkFirstCharacter(value);
+            }, "{!$Label.eSales_Cannot_space_in_first_Character}");
+            
+            jQuery.validator.addMethod("checkLength", function(value, element) {
+                   return checkLength(value);
+            }, "{!$Label.eSales_Exceed_Max_Length} 42 {!$Label.eSales_Exceed_Max_Length_2}");
+
+            jQuery.validator.addMethod("checkChinese", function(value, element) {
+                   return checkChinese(value);
+            }, "{!$Label.eSales_Cannot_input_Chinese}");
+
+            jQuery.validator.addMethod("checkContactNoLength", function(value, element) {
+                   return checkContactNoLength(value);
+            }, "{!$Label.eSales_Exceed_Max_Length} 20 {!$Label.eSales_Exceed_Max_Length_2}");
+            
+
+            $("form[id*='frmCustomerSelection']").validate({
+                ignore: ':hidden:not(.cigna-validation)'
+            });
+
+            $("input[id*='PH-']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    required: true,
+                    checkChinese : true
+                });
+            });
+            $("select[id*='PH-']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    required: true
+                });
+            });
+
+            $("input[id*='PH-Firstname']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    checkFirstCharacter: true,
+                    checkLength : true
+                });
+            });
+            $("input[id*='PH-Lastname']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    checkFirstCharacter: true,
+                    checkLength : true
+                });
+            });
+            
+            /*$("input[id*='Val-DOB-Day-PH']").rules("add", {
+                number: true,
+                min: 1,
+                max: 31
+            });
+            $("input[id*='Val-DOB-Month-PH']").rules("add", {
+                number: true,
+                min: 1,
+                max: 12
+            });
+            $("input[id*='Val-DOB-Year-PH']").rules("add", {
+                number: true,
+                min: 1900,
+                max: (new Date()).getFullYear()
+            });*/
+            $("input[id*='PH-ContactNo']").rules("add", {
+                digits: true,
+                checkContactNoLength: true
+            });
+            $("input[id*='PH-DOB-Check']").rules("add", {
+                validateDOB:true
+            });
+        </script>
+        <script>
+            if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                //$('#action-bar').css('position', 'absolute');
+                $('#mobile-app-padding').css('display', 'block');
+                
+                /*
+                var targetHeight = window.screen.height;
+                var sfOneHeaderHeight = 44 + 20;
+                
+                if($(window).width() > $(window).height()){
+                    targetHeight = window.screen.width;   
+                }
+
+                $('body').css('height', (targetHeight - sfOneHeaderHeight) + 'px');
+                $('body').bind('touchmove', function(e){$('#action-bar').css('opacity', '0');});
+                $('body').bind('touchend', function(e){setTimeout(function(){$('#action-bar').css('opacity', '1');}, 700);});
+                
+                
+                $('html').css('position', 'fixed').css('overflow', 'auto').css('width', '100%').css('height', '100%');
+                $('body').css('position', 'fixed').css('overflow-x', 'scroll').css('width', '100%').css('height', '100%');*/
+            }
+        </script>
+</apex:page>

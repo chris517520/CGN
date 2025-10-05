@@ -1,0 +1,531 @@
+<apex:page showHeader="false" sidebar="false">
+    
+    <style>
+        
+        @media 
+        only screen and (max-width: 767px){
+            #ui-datepicker-div{
+                position: fixed !important;
+                top: 0px !important;
+                left: -1px !important;
+                width: 99% !important;
+            }
+            .ui-datepicker-calendar td a {
+                font-size: 28px;
+                width: 32px;
+            }
+        }
+        
+    </style>
+    <!--Nicole_GS Login Performance_20200616-->
+    <!--<script src="/support/console/37.0/integration.js" type="text/javascript"></script>-->
+    <script type="text/javascript">
+        var Cigna = Cigna || {};
+        Cigna.Util = function(){
+            
+            function isSalesforce1() {
+                return false;
+            }
+            
+            function isInCommunity() {
+                return "{!$Network.Name}" != "";
+            }
+            
+            function isInConsole() {
+                <!--Nicole_GS Login Performance_20200616-->
+                //return ((typeof sforce != 'undefined') && sforce && (!!sforce.console) && sforce.console.isInConsole());
+                return ((typeof sforce != 'undefined') && sforce && (!!sforce.console));
+            }
+            
+        function isBDUser(){
+                return "{!$Permission.BD_Users}" == "true";
+            }
+            function isBrokerPortal() {
+                //var sitePrefix = "{!$Site.Prefix}";
+                //return sitePrefix == "/broker";
+                var TempsiteName = "{!$Setup.Portal_Settings__c.Broker_Portal_Site_Name__c}";
+                var siteName = "{!$Site.name}";
+                return (siteName.toLocaleLowerCase().match("broker")!=null || "{!$Permission.BD_Users}" == "true");
+            }
+            
+            function isCustomerPortal() {
+                //var sitePrefix = "{!$Site.Prefix}";
+                //return sitePrefix == "/customer";
+                var TempsiteName = "{!$Setup.Portal_Settings__c.Customer_Portal_Site_Name__c}";
+                
+                var siteName = "{!$Site.name}";
+                return siteName == TempsiteName;
+            }
+            
+            function navigateToVFP(pageName, isOpenSubTab, primaryTabName, debugMode, hasPrefix) {
+                if (hasPrefix == null || typeof hasPrefix == undefined) {
+                    hasPrefix = true;
+                }
+                var sitePrefix = "{!$Site.Prefix}";
+                var siteName = "{!$Site.name}";
+                console.log('sitePrefix------>'+sitePrefix);
+                var url = pageName;
+                var BrksiteName = "{!$Setup.Portal_Settings__c.Broker_Portal_Site_Name__c}";
+                var CussiteName = "{!$Setup.Portal_Settings__c.Customer_Portal_Site_Name__c}";
+                console.log('BrksiteName : ' + BrksiteName);
+                if (siteName != "") {
+                    if (siteName.toLocaleLowerCase().match("broker")!=null) {
+                        if (hasPrefix) {
+                            url = sitePrefix + "/apex/Brk" + pageName;
+                        } else {
+                            url = sitePrefix + "/apex/" + pageName;
+                        }
+                    } else if (siteName == CussiteName) {
+                        if (hasPrefix) {
+                            url = sitePrefix + "/apex/Cus" + pageName;
+                        } else {
+                            url = sitePrefix + "/apex/" + pageName;
+                        }
+                    } else {
+                        if (hasPrefix) {
+                            url = sitePrefix + "/Base" + pageName;
+                        } else {
+                            url = sitePrefix + "/" + pageName;
+                        }
+                    }
+                } else {
+                    if (debugMode == true) {
+                        var currentUrl = window.location.href.substring(window.location.href.lastIndexOf('/'));
+                        
+                        if (currentUrl.toLowerCase().indexOf('/cus') == 0) {
+                            if (hasPrefix) {
+                                url = "/apex/Cus" + pageName; 
+                            } else {
+                                url = "/apex/" + pageName; 
+                            }
+                        } else if (currentUrl.toLowerCase().indexOf('/brk') == 0) {
+                            if (hasPrefix) {
+                                url = "/apex/Brk" + pageName;
+                            } else {
+                                url = "/apex/" + pageName; 
+                            }
+                        } else {
+                            if (hasPrefix) {
+                                url = "/apex/Base" + pageName; 
+                            } else {
+                                url = "/apex/" + pageName; 
+                            }
+                        } 
+                    } else {
+                        if (hasPrefix) {
+                            url = "/apex/Base" + pageName;
+                //for BD USER
+                            if(isBDUser())
+                              url = "/apex/brk" + pageName; 
+                        } else {
+                            url = "/apex/" + pageName; 
+                        }
+                    }
+                }
+                
+                if (isSalesforce1()) {
+                    console.log('isSalesforce1');
+                    console.log('url:'+url);
+                    sforce.one.navigateToURL(url, true);
+                } else if (isInConsole()) {
+                    if (isOpenSubTab) {
+                        sforce.console.getEnclosingTabId(function(enclosingResult){
+                            sforce.console.getEnclosingPrimaryTabId(function(primaryResult){
+                                sforce.console.openSubtab(primaryResult.id, url, true, primaryTabName, null);
+                            });
+                        });
+                    } else {
+                        sforce.console.openPrimaryTab(null, url, true);
+                    }
+                } else {
+                    window.location.href = url;
+
+                }
+            }
+            
+            function isIOS() {
+                return true;
+            }
+            
+            function isAndroid() {
+                return false;
+            }
+            
+            function isMobile() {
+                return true;
+            }
+            
+            /*
+             * This is a workaround for the following issue
+             * In Salesforce1, VisualForce page scrolls up to top when users touch on an input field
+            */
+            function loadScrollFix() {
+                try {
+                    if (isSalesforce1() && isIOS() && isBrokerPortal()) { 
+                        var s = document.createElement('style'); 
+                        s.innerHTML = "html,html body{overflow: auto;-webkit-overflow-scrolling:touch;}body{position:absolute;left:0;right:0;top:0;bottom:0;}"; 
+                        document.getElementsByTagName('head')[0].appendChild(s);
+                    }
+                } catch(e) { }
+            }
+            
+            function checkWebView(){
+                return isWebView;
+            }
+            
+            function isSafari(){
+                return true;
+            }
+
+            //add by minghua
+            function isIOSChrome(){
+                return false;
+            }
+            
+            function loadSF1IOSFix() {
+                $('html').css('position', 'fixed').css('overflow', 'auto').css('width', '100%').css('height', '100%');
+                $('body').css('position', 'fixed').css('overflow-x', 'scroll').css('width', '100%').css('height', '100%');
+                
+                window.onkeydown = function(){ 
+                    window.focus();
+                }
+            }
+            
+            function getCurrentLanguageCode(){
+                return "{!$Label.Header_Language_Code_Current}";
+            }
+            
+            function getPersonalInformationCollectionStatementChi() {
+                return  "{!$Setup.Portal_Settings__c.T_C_PICS_Chi_URL__c}";
+            }
+            
+            function getPersonalInformationCollectionStatementEng() {
+                return  "{!$Setup.Portal_Settings__c.T_C_PICS_Eng_URL__c}";
+            }
+            
+            function getPrivacyStatementChi() {
+                return  "{!$Setup.Portal_Settings__c.File_Download_URL__c}{!$Setup.Portal_Settings__c.T_C_PrivacyStatement_Chi_ID__c}";
+            }
+            
+            function getPrivacyStatementEng() {
+                return  "{!$Setup.Portal_Settings__c.File_Download_URL__c}{!$Setup.Portal_Settings__c.T_C_PrivacyStatement_Eng_ID__c}";
+            }
+            
+            return {
+        isBDUser: isBDUser,
+                isSalesforce1 : isSalesforce1,
+                isIOSChrome : isIOSChrome,
+                isInCommunity : isInCommunity,
+                isInConsole: isInConsole,
+                navigateToVFP : navigateToVFP,
+                checkWebView : checkWebView,
+                isIOS : isIOS,
+                isMobile : isMobile,
+                isAndroid : isAndroid,
+                isCustomerPortal : isCustomerPortal,
+                isBrokerPortal : isBrokerPortal,
+                loadScrollFix : loadScrollFix,
+                loadSF1IOSFix : loadSF1IOSFix,
+                getCurrentLanguageCode : getCurrentLanguageCode,
+                getPersonalInformationCollectionStatementChi : getPersonalInformationCollectionStatementChi,
+                getPersonalInformationCollectionStatementEng : getPersonalInformationCollectionStatementEng,
+                getPrivacyStatementChi : getPrivacyStatementChi,
+                getPrivacyStatementEng : getPrivacyStatementEng,
+                isSafari : isSafari
+            }
+        }();
+        
+        
+        Cigna.ValidationUtil = function() {
+            
+            function isValidHKID(s) {
+                var isValid = false;
+                if (s) {
+                    var input = s.trim().toUpperCase();
+                    var pattern = /^(([A-Z]{1,2})[0-9]{6})\(([0-9A])\)$/gim;
+                    var matches = pattern.exec(input);
+                    if (matches != null && matches.length == 4) {
+                        var idPart = matches[1];
+                        var prefix = matches[2];
+                        var checkDigit = matches[3];
+                        
+                        var result = 0;
+                        var multiplier = prefix.length == 2 ? 9 : 8;
+                        
+                        for (var i = 0; i < idPart.length; i++) {
+                            var c = idPart.charCodeAt(i);
+                            if (c >= 65 && c <= 90) {
+                                c = c - 64;
+                            } else if (c >= 48 && c <= 57) {
+                                c = c - 48;                        
+                            }
+                            
+                            result += c * multiplier--;
+                        }
+                        
+                        var cd = 11 - (result % 11);
+                        var calculatedCheckDigit = '';
+                        if (cd == 10) {
+                            calculatedCheckDigit = 'A';
+                        } else if (cd == 11) {
+                            calculatedCheckDigit = '0';
+                        } else {
+                            calculatedCheckDigit = cd;
+                        }
+        
+                        if (checkDigit == calculatedCheckDigit) {
+                            isValid = true;
+                        }
+                    }
+                }
+                return isValid;
+            }
+            
+            function isValidEmail(input) {
+                var patt = /^[-a-z0-9~!$%^&*_=+}{\'?]+(\.[-a-z0-9~!$%^&*_=+}{\'?]+)*@([a-z0-9_][-a-z0-9_]*(\.[-a-z0-9_]+)*\.(aero|arpa|biz|com|coop|edu|gov|info|int|mil|museum|name|net|org|pro|travel|mobi|[a-z][a-z])|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}))(:[0-9]{1,5})?$/i;
+                return patt.exec(input);
+            }
+            
+            function isEnglishOnly(input){
+                var regex = /^[a-zA-Z0-9\/\,\.\(\) \-\'\&\"\n"]+$/;
+                return regex.exec(input);
+            }
+            
+            function isEnglishOnlyStrict(input){
+                var regex = /^[a-zA-Z ]+$/;
+                return regex.exec(input);
+            }
+            
+            function isEnglishOnlyExtend(input){
+                var regex = /^[a-zA-Z0-9\/\,\.\(\) \-\'\&\"\n\”\“\–\+"]+$/;
+                return regex.exec(input);
+            }
+            
+            function isChineseOnly(input){
+                var regex = /^[\u4E00-\u9FFF\u3400-\u4DFF\0-9\/\,\.\(\) \-]+$/;
+                return regex.exec(input);
+            }
+            
+            function isChineseOnlyStrict(input){
+                var regex = /^[\u4E00-\u9FFF\u3400-\u4DFF ]+$/;
+                return regex.exec(input);
+            }
+            
+            function isPositive(input){
+                if(input >= 0){
+                    return true;
+                }else{
+                    return false;
+                }
+            }
+            
+            /**
+             * Validate credit card number Luhn algorithm
+             *     refer to https://en.wikipedia.org/wiki/Luhn_algorithm
+             * @Param input - the credit card number
+             * @Return if the credit card number pass the validation
+            **/
+            function isValidCreditCard(input) {
+                var regex = /^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}|[0-9]{16}$/;
+            
+                if(regex.test(input)){
+                    var inputStr = input.replace(/-/g, "");
+                    var length = inputStr.length;
+                    var currentDigit;
+                    var sum = 0;
+                    var currentProcNum = 0;
+                    for(var i = length - 1; i >= 0; i--){
+                        var currentDigitStr = inputStr.substring(i, i + 1);
+                        currentDigit = parseInt(currentDigitStr);
+                        if(currentProcNum%2 != 0){
+                            if((currentDigit *= 2) > 9) {
+                                currentDigit -= 9;
+                            }
+                        }
+                        currentProcNum++ ;
+                        sum += currentDigit;
+                    }
+                    return (sum%10 == 0);
+                }
+                
+                return false;
+            }
+            
+            return {
+                isValidHKID : isValidHKID,
+                isValidEmail : isValidEmail,
+                isEnglishOnly : isEnglishOnly,
+                isEnglishOnlyStrict : isEnglishOnlyStrict,
+                isEnglishOnlyExtend : isEnglishOnlyExtend,
+                isChineseOnly : isChineseOnly,
+                isChineseOnlyStrict : isChineseOnlyStrict,
+                isPositive : isPositive,
+                isValidCreditCard : isValidCreditCard
+            }
+        }();
+        
+        Cigna.DatepickerUtil = function() {
+            function onClose() {
+                // Fix keyboard pop-up in iOS
+                $(this).attr("disabled", false);
+                $(this).attr("readonly", false);
+            }
+            
+            function beforeShow() {
+                // Fix keyboard pop-up in iOS
+                //CR-56_Link_20220214
+                $(this).trigger("blur");
+                $(this).attr("disabled", true);
+                $(this).attr("readonly", true);
+                $(this).datepicker( "option", "closeText", "{!$Label.Close}" );
+                
+                if(Cigna.Util.checkWebView()) {
+                    if(Cigna.Util.isIOS()) {
+                        $(".ui-datepicker").css("padding", "20px 0px 0px 0px");
+                    }
+                }
+            }
+            
+            function init(datepickerSelector) {
+                
+                //jQuery validator's date method cannot verify some exception date like '2017/2/31', create a custom validator to do date validation
+                //add validation method
+                jQuery.validator.addMethod("checkDate", function(value, element) {
+                    return this.optional(element) || dateValidation(element);
+                }, "{!$Label.Invalid_Date}");
+                
+                var validator = $(datepickerSelector).parents("form:first").validate();
+                
+                $.each($(datepickerSelector), function(index, element) {
+                    
+                    
+                    $(element).datepicker(
+                        {
+                            showButtonPanel : true
+                            , onClose: onClose
+                            , beforeShow: beforeShow
+                            , closeText: "{!$Label.Close}"
+                            , dateFormat: "yy/mm/dd"
+                            , altField: $(element).siblings("input:hidden[id*='-datepicker-hidden']")
+                            , altFormat: "@"
+                            
+                        }
+                    )
+                    
+                    //, altField: $("input[id$='" + $(element).data('altfieldId') + "']").first()
+                    //, altField: $(element).siblings("input[id*='-datepicker-hidden']")
+
+                    if($(element).data('dateYyyyMmDd').length > 0){
+                        $(element).datepicker("setDate", new Date($(element).data('dateYyyyMmDd')));
+                    }
+                    $(element).datepicker("option", $.datepicker.regional["{!$Label.jQuery_Datepicker_region}"]);
+                    
+                    $(element).prop('disabled', false);
+                    
+                    $( element ).datepicker( "option", "dateFormat", "yy/mm/dd" );
+                    
+                    
+                    //add validation flag
+                    $(element).attr("checkDate","checkDate");
+                    
+                    validator.element( datepickerSelector );
+                    
+                    /*
+                    //set mobile onclick event
+               //     if ($(window).width() <= 768) {
+               //         $( element ).focus(function(){
+               //             $(this).blur();
+               //             $(window).scrollTop(0);
+               //         })
+               //     }
+                    */
+                    //CR-56_Link_20220214
+                    $(element).on("change",function() {
+                      $(element).trigger("blur");
+                      $(element).trigger("focus");
+                    });
+                    
+                });
+                
+                if( Cigna.Util.isIOS() || Cigna.Util.isAndroid() ) {
+                    $(document)
+                    .on('focus', datepickerSelector, function() {
+                        $("body").addClass('selectingDate');
+                    })
+                    .on('blur', datepickerSelector, function() {
+                        $("body").removeClass('selectingDate');
+                    });
+                }
+                
+            }
+            
+            //date format validation 
+            function dateValidation(element){
+                
+                if($(element).val().length == 0){
+                    return;
+                }
+                
+                var isvalid = true;
+                try{
+                    var inputDate = $(element).val();
+                    var year = inputDate.split("/")[0];
+                    var month = inputDate.split("/")[1];
+                    var day = inputDate.split("/")[2];
+                    
+                    //define how many days in selected month
+                    var daysInMonth = 31;
+                    if (month==4 || month==6 || month==9 || month==11) {
+                        daysInMonth = 30
+                    }
+                    if (month==2) {
+                        daysInMonth = (((year % 4 == 0) && ( (!(year % 100 == 0)) || (year % 400 == 0))) ? 29 : 28 );
+                    }
+                    
+                    //do validation
+                    if( (year > 2100 || year < 1900 || year.length > 4) 
+                        ||(month > 12 || month < 1 || month.length > 2)
+                        ||(day > daysInMonth || day < 1 || day.length > 2) )
+                    {
+                        isvalid = false;
+                    }
+                    
+                }catch(e){
+                    isvalid = false;
+                }
+                
+                
+                return isvalid;
+            }
+
+            
+            return {
+                onClose : onClose,
+                beforeShow : beforeShow,
+                init : init
+            }
+        }();
+        
+        if (Cigna.Util.isCustomerPortal()&&false){
+            //prevent control c
+            document.onkeydown=function(ev){
+                var ev=window.event||ev;
+                if((ev.ctrlKey) && (ev.keyCode==67)){
+                      ev.returnValue=false;
+                      console.log("Ctrl+C is block!");
+                }
+            }
+            //prevent view source
+            document.oncontextmenu=new Function("event.returnValue=false;console.log('contextmenu is block!');");
+            document.onselectstart=new Function("event.returnValue=false;console.log('selectstart is block!');");
+            document.ondragstart=new Function("event.returnValue=false;console.log('ondragstart is block!');");
+            document.oncopy=new Function("document.selection.empty();console.log('oncopy is block!');");
+            document.onbeforecopy=new Function("event.returnValue=false;console.log('onbeforecopy is block!');");
+            //prevent select
+            var style = document.createElement('style');
+            style.innerHTML = "*:not(input) { -webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }";
+            //window.document.head.appendChild(style);
+            
+        }
+    </script>
+</apex:page>

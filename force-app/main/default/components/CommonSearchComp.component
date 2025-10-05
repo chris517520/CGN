@@ -1,0 +1,460 @@
+<apex:component id="CommonSearchComponent" controller="CommonSearchCompController" access="Global" allowDML="true">
+    <apex:attribute type="string" name="pageTypeName" assignTo="{!pageTypeNameParam}" description="pageURL pass"/>  
+    
+    <head>  
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>     
+        <style>
+            .select-list-style{
+                min-height:34px;
+                background: #ffffff !important;
+            }
+        </style>
+        
+        <script>
+            //JR1840 jack add
+            function searchWithSessionInfo(){
+                getSearchInfoAndSearch();
+            }
+            $(document).ready(function(){     
+                // Cigna.CommonSearchComp.init(); // SIT-322
+                //JR1840 jack add
+                // if('{!pageTypeNameParam}'.toLowerCase().includes('claim')){
+                //     var searchInfoString = sessionStorage.getItem('CommonSearchComp-claim-Search-Info');
+                //     console.log(searchInfoString);
+                //     if(searchInfoString){
+                //         console.log('searchInfo');
+                //         $("input[id*='searchInfo']").val(searchInfoString);
+                //         console.log($("input[id*='searchInfo']").val());
+                //         searchWithSessionInfo();
+                //         // var searchInfoMap= new Map(Object.entries(JSON.parse(searchInfoString)));
+                //         // console.log(searchInfoMap);
+                //         // $("[id$='selectedSearchOptionComponenet']").val(searchInfoMap.get('Type'));
+                //         // $("input[id*='selectedSearchValueComponent']").val(searchInfoMap.get('Value'));
+                //         // policyHolderSearchValidation();
+                //         // var currentPage = Number(searchInfoMap.get('CurPg'));
+                //         // var i = 1;
+                //         // for(;i<currentPage;i++){
+                //         //     console.log('next');
+                //         //     CommonSearchObj.handleNextPage();
+                //         // }
+                //         sessionStorage.setItem('CommonSearchComp-claim-Search-Info', '');
+                //         console.log('searchInfo finish');
+                //     }
+                // }else 
+                if('{!pageTypeNameParam}'.toLowerCase().includes('policychange')){
+                    var searchInfoString = sessionStorage.getItem('CommonSearchComp-policy-change-Search-Info');
+                    console.log(searchInfoString);
+                    if(searchInfoString){
+                        console.log('searchInfo');
+                        $("input[id*='searchInfo']").val(searchInfoString);
+                        searchWithSessionInfo();
+                        sessionStorage.setItem('CommonSearchComp-policy-change-Search-Info', '');
+                    }
+                }
+                //JR1840 jack add
+            }); 
+
+            var noSearchValueErrMsg = '{!$Label.Error_Input_Criteria}';
+            var holderId='';
+            var holderName='';
+            var holderEmail='';
+            function selectPolicyHolderToProceed(Id,name,email,searchType,searchValue,currentPage){//JR1840 jack add
+                holderId = Id;
+                holderName = name;
+                holderEmail = email;
+                $("input[id*='holderIdPassNextPage']").val(holderId);
+                $("input[id*='holderNamePassNextPage']").val(holderName);
+                $("input[id*='holderEmailPassNextPage']").val(holderEmail);
+                //JR1840 jack add
+                var searchMap = new Map();
+                searchMap.set('Type',searchType);
+                searchMap.set('Value',searchValue);
+                searchMap.set('CurPg',currentPage);
+                // if('{!pageTypeNameParam}'.toLowerCase().includes('claim')){
+                //     sessionStorage.setItem('CommonSearchComp-claim-Search-Info', JSON.stringify( Object.fromEntries(searchMap) ));
+                // }else 
+                if('{!pageTypeNameParam}'.toLowerCase().includes('policychange')){
+                    sessionStorage.setItem('CommonSearchComp-policy-change-Search-Info', JSON.stringify( Object.fromEntries(searchMap) ));
+                }
+                
+                //JR1840 jack add
+
+                proceedToNextStep();
+            }
+
+            //JR1840 jack add
+            function selectPolicyHolderToProceedClaim(Id,name,email){//JR1840 jack add
+                holderId = Id;
+                holderName = name;
+                holderEmail = email;
+                $("input[id*='holderIdPassNextPage']").val(holderId);
+                $("input[id*='holderNamePassNextPage']").val(holderName);
+                $("input[id*='holderEmailPassNextPage']").val(holderEmail);
+                
+                getEncryptedString();
+            }
+            //JR1840 jack add
+
+            // Rancho_JR1878_20210104
+            function displayPHBack(){
+                console.log('displayPHBack');
+                document.getElementById('backButton').style.display = "block";
+            }
+
+            var firstName='';
+            var lastName='';
+            var contactNo='';
+            var birthday='';
+            var countryCode='';
+            
+            function EsalesToProceed(Id,name,email,fName,lName,mobileNo,dob,countryCd,searchType,searchValue){
+                holderId = Id;
+                holderName = name;
+                holderEmail = email;
+                firstName = fName;
+                lastName = lName;
+                contactNo = mobileNo;
+                birthday = dob;
+                countryCode =  countryCd;
+                
+                $("input[id*='holderIdPassNextPage']").val(holderId);
+                $("input[id*='holderNamePassNextPage']").val(holderName);
+                $("input[id*='holderEmailPassNextPage']").val(holderEmail);
+                
+                $("input[id*='holderfirstNamePassNextPage']").val(firstName);
+                $("input[id*='holderLastNamePassNextPage']").val(lastName);
+                $("input[id*='holderContactNoPassNextPage']").val(contactNo);
+                $("input[id*='holderdobPassNextPage']").val(birthday);
+                $("input[id*='holderCountryCdPassNextPage']").val(countryCode);
+                
+                $("input[id*='searchTypePassNextPage']").val(searchType);
+                $("input[id*='searchValuePassNextPage']").val(searchValue);
+                
+                proceedToNextStep();
+            }
+            
+            function policyHolderSearchValidation(){
+            
+                var opt = $("[id$='selectedSearchOptionComponenet']").find(":selected").val();
+                var searchvalue = $("input[id*='selectedSearchValueComponent']").val().split(' ').join('');
+                $("#tooManyRecordDiv").hide();
+                if(!searchvalue.trim()){
+                    $('#inputCharErrorMessageComponenet').text(noSearchValueErrMsg); 
+                    $('#inputCharErrorMessageComponenet').show();
+                     
+                    return null;                  
+                } else {
+                      $('#inputCharErrorMessageComponenet').hide();
+                }
+                
+                if(opt == "POLICY_HOLDER_NAME" || opt == "PERSON_INSURED_NAME"){
+                    
+                    //system.debug("TestComponent: " + searchValue);
+                    if((searchvalue.length) < 2){
+                        $('#inputCharErrorMessageComponenet').text('{!$Label.Please_input_at_least_2_characters_to_search}'); 
+                        $('#inputCharErrorMessageComponenet').css('display','block');
+                        $('#tooManyRecordDiv').css('display','none');
+                    }
+                    else{
+                        $('#inputCharErrorMessageComponenet').css('display','none');
+                        policyHolderSearch();
+                    }
+                }
+                else{
+                    $('#inputCharErrorMessageComponenet').css('display','none');
+                    policyHolderSearch();
+                }
+                
+            }
+
+            var Cigna = Cigna || {};
+            Cigna.CommonSearchComp = function(){
+    
+                function init() {
+                    CommonSearchCompInit();
+                }
+                
+                function preventEnter(event){
+                    if(event.keyCode == 13) {
+                        event.preventDefault();
+                        return false;
+                    }
+                }
+                
+                return {
+                    init : init,
+                    preventEnter : preventEnter
+                }
+            }();
+            
+        </script>        
+    </head>
+    
+    <apex:form >
+        <apex:actionFunction name="CommonSearchCompInit" action="{!init}" status="loader-icon" rerender="SearchResultList"></apex:actionFunction>
+        <apex:actionFunction name="policyHolderSearch" action="{!policyHolderSearch}" status="loader-icon" reRender="SearchResultList"/>
+        <apex:actionFunction name="handlePrevPage" namespace="CommonSearchObj" action="{!handlePrevPage}" status="loader-icon" rerender="SearchResultList" />
+        <apex:actionFunction name="handleNextPage" namespace="CommonSearchObj" action="{!handleNextPage}" status="loader-icon" rerender="SearchResultList" />
+        <!--JR1840-->
+        <apex:actionFunction name="getSearchInfoAndSearch" action="{!getSearchInfoAndSearch}" status="loader-icon" reRender="SearchResultList">
+        </apex:actionFunction>
+        <apex:inputHidden value="{!searchInfo}" id="searchInfo" />
+        <apex:actionFunction name="getEncryptedString" action="{!getEncryptedString}" status="loader-icon" reRender="encryptedSearchCriteria" oncomplete="proceedToNextStep();">
+        </apex:actionFunction>
+        <apex:inputHidden value="{!encryptedSearchCriteria}" id="encryptedSearchCriteria" />
+
+        <!-- Rancho_JR1878_20210104 -->
+        <apex:actionFunction name="selectPolicyHolderToPersonInsured" action="{!selectPolicyHolderToPersonInsured}" status="loader-icon" reRender="SearchResultList" oncomplete="displayPHBack();">
+            <apex:param name="policyNumber" value="" assignTo="{!policyNumber}" />
+        </apex:actionFunction>
+        <apex:actionFunction name="phSearchBack" action="{!phSearchBack}" status="loader-icon" reRender="SearchResultList"></apex:actionFunction>
+
+        <!-- for pass holderId / insured Id to next page--> 
+        <apex:inputHidden id="holderIdPassNextPage"/>
+        <apex:inputHidden id="holderNamePassNextPage"/>
+        <apex:inputHidden id="holderEmailPassNextPage"/>
+        
+        <apex:inputHidden id="holderfirstNamePassNextPage"/>
+        <apex:inputHidden id="holderLastNamePassNextPage"/>
+        <apex:inputHidden id="holderContactNoPassNextPage"/>
+        <apex:inputHidden id="holderdobPassNextPage"/>
+        <apex:inputHidden id="holderCountryCdPassNextPage"/>
+        
+        <apex:inputHidden id="searchTypePassNextPage"/>
+        <apex:inputHidden id="searchValuePassNextPage"/>
+        <!--Select policy holder alert msg-->
+        <div id="overlayAlert" class="overlay" style="display:none;">
+            <div id="alertSelectHolder" class="ConfirmBox">
+                <div id="delmsg" class="alertmsg">
+                    {!$Label.Please_select_policy_holder} 
+                </div>
+                <div class="bs col-xs-12 col-sm-12 cigna-fg-orange-dark onclick-pointer" onclick="closeSelectHolderAlert()">
+                    {!$Label.Close}
+                </div>
+            </div>
+        </div>  
+        
+          
+    <!--The outter panel control whole search result-->      
+    <apex:outputPanel id="SearchResultList">
+
+        <div class="bs col-sm-12 col-xs-12" style="padding: 20px 0px 20px 0px; ">
+            
+            <div class="bs col-sm-6 col-xs-12" style="padding-bottom:20px;">
+                <apex:SelectList size="1" id="selectedSearchOptionComponenet" value="{!SearchType}" styleClass="bs form-field-style-select cigna-fg-gray-dark" style="font-size:1em; height:35px;" >
+                    <apex:selectOptions value="{!SearchCriteria}" rendered="{!If(pageTypeNameParam=='BrkPolicyChangeVFP' || pageTypeNameParam == 'ESalesVFP',true,false)}"/>
+                    <apex:selectOptions value="{!ClaimSearchCriteria}" rendered="{!If(pageTypeNameParam=='BrkMyClaimVFP',true,false)}"/>            
+                </apex:SelectList>
+            </div>   
+        
+            <div class="bs col-sm-6 col-xs-12">
+                  <apex:input id="selectedSearchValueComponent" onkeydown="Cigna.CommonSearchComp.preventEnter(event);" style="font-size:1em; height:35px; width:95%" styleClass="bs form-field-style cigna-fg-gray-dark" value="{!SearchInputText}"/><i class="ci-hk-modify cigna-fg-orange-dark text-center onclick-pointer" onclick="policyHolderSearchValidation()" style="width:5%" aria-hidden="true"/>
+            </div>
+        </div>
+        <div id="inputCharErrorMessageComponenet" class="bs col-sm-12 col-xs-12 text-center" style="color:red;padding-bottom:20px;display:none;">
+                {!$Label.Please_input_at_least_2_characters_to_search}
+        </div>
+        
+        <apex:outputPanel layout="block"  rendered="{!showTooManyRecordError}">
+            <div id="tooManyRecordDiv" class="bs col-sm-12 col-xs-12 text-center" style="color: red;padding-bottom: 10px" >
+                {!errorMessage }
+            </div>
+        </apex:outputPanel>
+        <script>
+            $(document).ready(function(){   
+                
+                $('.listcontent').filter(":even").css('background-color','#f2f2f2'); 
+              
+                /*Single Select Policy Change Color*/  
+                //CR-56_Link_20220214
+                $('.policyHolder-single123').on("click",function(){
+                    $(this).siblings('.policyHolder-single123').removeClass('cigna-fg-orange-dark');
+                    $(this).addClass('cigna-fg-orange-dark');
+                });   
+                
+            }); 
+            
+            $('.listcontent').filter(":even").css('background-color','#f2f2f2');
+        </script>
+    
+                
+         <!--Policy Change Search Reuslt-->      
+        <apex:outputPanel rendered="{!isPolicychangePage && !isFirstTimeComeHere && !showTooManyRecordError}">  
+            <div id="selectholder">
+                 
+             <div class="bs row listcontent-header hidden-xs">
+                    <div class="bs col-sm-3">{!$Label.Policy_Holder_Name}</div>
+                    <div class="bs col-sm-3">{!$Label.Policy_Holder_ID}</div>
+                    <div class="bs col-sm-3">{!$Label.Contact_No}</div>
+                    <div class="bs col-sm-3">{!$Label.Email}</div>
+             </div>
+            <apex:outputpanel rendered="{!CommonResultList.size == 0 && !isFirstTimeComeHere}" >
+                <div class="bs row col-xs-12 col-sm-12 text-center" style="padding:20px;">
+                    <span class="fa fa-smile-o"/> {!$Label.No_Record_Found}
+                </div>
+            </apex:outputpanel>
+            <apex:repeat value="{!CommonResultList}" var="ph" first="{!startIndex}" rows="{!pageSize}">
+                <!-- Checkmarx high security: reflected XSS  20220518 Link -->
+                 <div class="bs row listcontent onclick-pointer policyHolder-single123" onclick="selectPolicyHolderToProceed('{!JSENCODE(ph.Id)}','{!JSENCODE(ph.Name)}','{!JSENCODE(ph.Email)}','{!JSENCODE(SearchType)}','{!JSENCODE(SearchInputText)}',{!currentPage})"><!--JR1840-->
+                        <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">    
+                            <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Holder_Name}</div>
+                            <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!ph.Name}
+                            </div>
+                        </div>
+            
+                        <div class="bs table-row col-xs-12 col-sm-3 onclick-pointer" style="padding:0px !important;">   
+                            <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Holder_ID}</div>
+                            <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!ph.Id}</div>
+                        </div>
+            
+                        <div class="bs table-row col-xs-12 col-sm-3 onclick-pointer" style="padding:0px !important;">    
+                            <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Contact_No}</div>
+                            <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!ph.ContactNo}</div>
+                        </div>
+                        <div class="bs table-row col-xs-12 col-sm-3 onclick-pointer" style="padding:0px !important;">   
+                            <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Email}</div>
+                            <div class="bs col-xs-6 col-sm-12 content-highlight table-cell"><div style='word-wrap: break-word;'>{!ph.Email}</div>
+                         </div>
+                        </div>
+                 </div>
+            </apex:repeat>  
+         </div>
+        </apex:outputPanel>
+
+        <!--Claim Search Reuslt-->
+        <!-- changed width of column to make email field longer -->
+        <!-- Rancho_JR1878_20210104 -->
+        <apex:outputPanel rendered="{!isClaimPage && !isHolderSearch && !isFirstTimeComeHere && !showTooManyRecordError}">      
+             <!-- <div id="back" class="bs col-xs-12 col-sm-12" style="padding-top:15px;"></div> -->
+             <div id="backButton" class="bs col-xs-12 col-sm-12" style="display: none;">
+                <a onclick="phSearchBack();" class="bs cigna-fg-orange-medium pull-left onclick-pointer" style="margin-left: -10px;">
+                    <i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}
+                </a>
+            </div>
+             <div class="bs row listcontent-header hidden-xs">
+                    <div class="bs col-sm-3">{!$Label.Person_Insured}</div>
+                    <div class="bs col-sm-2">{!$Label.Person_Insured_ID}</div>
+                    <div class="bs col-sm-2">{!$Label.Contact_No}</div>
+                    <div class="bs col-sm-5">{!$Label.Email}</div>
+             </div>
+            <apex:outputpanel rendered="{!CommonResultList.size == 0 && !isFirstTimeComeHere}" >
+                <div class="bs row col-xs-12 col-sm-12 text-center" style="padding:20px;">
+                    <span class="fa fa-smile-o"/> {!$Label.No_Record_Found}
+                </div>
+            </apex:outputpanel>
+            <apex:repeat value="{!CommonResultList}" var="ph" first="{!startIndex}" rows="{!pageSize}">
+                 <div class="bs row listcontent onclick-pointer policyHolder-single123" onclick="selectPolicyHolderToProceedClaim('{!ph.Id}','{!ph.Name}','{!ph.Email}')"><!--JR1840-->
+                        <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">    
+                            <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Person_Insured}</div>
+                            <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!ph.Name}
+                            </div>
+                        </div>
+            
+                        <div class="bs table-row col-xs-12 col-sm-2 onclick-pointer" style="padding:0px !important;">   
+                            <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Person_Insured_ID}</div>
+                            <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!ph.Id}</div>
+                        </div>
+            
+                        <div class="bs table-row col-xs-12 col-sm-2 onclick-pointer" style="padding:0px !important;">    
+                            <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Contact_No}</div>
+                            <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!ph.ContactNo}</div>
+                        </div>
+                        <div class="bs table-row col-xs-12 col-sm-5 onclick-pointer" style="padding:0px !important;">   
+                            <div class="bs col-xs-6 visible-xs table-cell" style='word-wrap: break-word;'>{!$Label.Email}</div>
+                            <div class="bs col-xs-6 col-sm-12 content-highlight table-cell"><div style='word-wrap: break-word;'>{!ph.Email}</div>
+                         </div>
+                        </div>
+                 </div>
+            </apex:repeat>  
+        </apex:outputPanel>
+        <!-- Rancho_JR1878_20210104 -->
+        <!-- Policy number/hodername/hoderid Search Reuslt -->
+        <apex:outputPanel rendered="{!isClaimPage && isHolderSearch && !isFirstTimeComeHere && !showTooManyRecordError}">      
+             <div id="back" class="bs col-xs-12 col-sm-12" style="padding-top:15px;"></div>
+             <div class="bs row listcontent-header hidden-xs">
+                    <div class="bs col-sm-4">{!$Label.Policy_Number}</div>
+                    <div class="bs col-sm-4">{!$Label.Policy_Holder_Name}</div>
+                    <div class="bs col-sm-4">{!$Label.Policy_Holder_ID}</div>
+             </div>
+            <apex:outputpanel rendered="{!CommonResultList.size == 0 && !isFirstTimeComeHere}" >
+                <div class="bs row col-xs-12 col-sm-12 text-center" style="padding:20px;">
+                    <span class="fa fa-smile-o"/> {!$Label.No_Record_Found}
+                </div>
+            </apex:outputpanel>
+            <apex:repeat value="{!CommonResultList}" var="ph" first="{!startIndex}" rows="{!pageSize}">
+                <div class="bs row listcontent onclick-pointer policyHolder-single123" onclick="selectPolicyHolderToPersonInsured('{!ph.policyNumber}')">
+                    <div class="bs table-row col-xs-12 col-sm-4 onclick-pointer" style="padding:0px !important;">    
+                        <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Number}</div>
+                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!ph.policyNumber}</div>
+                    </div>
+                    <div class="bs table-row col-xs-12 col-sm-4" style="padding:0px !important;">    
+                        <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Holder_Name}</div>
+                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!ph.Name}</div>
+                    </div>
+                    <div class="bs table-row col-xs-12 col-sm-4 onclick-pointer" style="padding:0px !important;">   
+                        <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Holder_ID}</div>
+                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!ph.Id}</div>
+                    </div>
+                </div>
+            </apex:repeat>  
+        </apex:outputPanel>
+ 
+        <!--Esales Search Reuslt-->
+        <apex:outputPanel rendered="{!isESalesPage && !isFirstTimeComeHere && !showTooManyRecordError}">      
+             <div id="back" class="bs col-xs-12 col-sm-12" style="padding-top:15px;"></div>
+                   
+             <div class="bs row listcontent-header hidden-xs">
+                    <div class="bs col-sm-3">{!$Label.Policy_Holder_Name}</div>
+                    <div class="bs col-sm-3">{!$Label.Policy_Holder_ID}</div>
+                    <div class="bs col-sm-3">{!$Label.Contact_No}</div>
+                    <div class="bs col-sm-3">{!$Label.Email}</div>
+             </div>
+            <apex:outputpanel rendered="{!CommonResultList.size == 0 && !isFirstTimeComeHere}" >
+                <div class="bs row col-xs-12 col-sm-12 text-center" style="padding:20px;">
+                    <span class="fa fa-smile-o"/> {!$Label.No_Record_Found}
+                </div>
+            </apex:outputpanel>
+            <apex:repeat value="{!CommonResultList}" var="ph" first="{!startIndex}" rows="{!pageSize}">
+                <!-- Checkmarx high security: reflected XSS  20220518 Link -->
+                 <div class="bs row listcontent onclick-pointer policyHolder-single123" onclick="EsalesToProceed('{!JSENCODE(ph.Id)}','{!JSENCODE(ph.Name)}','{!JSENCODE(ph.Email)}','{!JSENCODE(ph.firstName)}','{!JSENCODE(ph.lastName)}','{!JSENCODE(ph.ContactNo)}','{!JSENCODE(ph.phBirth)}','{!JSENCODE(ph.countryCode)}', '{!JSENCODE(SearchType)}','{!JSENCODE(SearchInputText)}');">
+                        <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">    
+                            <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Holder_Name}</div>
+                            <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!ph.Name}
+                            </div>
+                        </div>
+            
+                        <div class="bs table-row col-xs-12 col-sm-3 onclick-pointer" style="padding:0px !important;">   
+                            <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Holder_ID}</div>
+                            <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!ph.Id}</div>
+                        </div>
+            
+                        <div class="bs table-row col-xs-12 col-sm-3 onclick-pointer" style="padding:0px !important;">    
+                            <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Contact_No}</div>
+                            <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!ph.fullContactNo}</div>
+                        </div>
+                        <div class="bs table-row col-xs-12 col-sm-3 onclick-pointer" style="padding:0px !important;">   
+                            <div class="bs col-xs-6 visible-xs table-cell" style='word-wrap: break-word;'>{!$Label.Email}</div>
+                            <div class="bs col-xs-6 col-sm-12 content-highlight table-cell"><div style='word-wrap: break-word;'>{!ph.Email}</div>
+                         </div>
+                        </div>
+                 </div>
+            </apex:repeat>  
+        </apex:outputPanel> 
+        
+        <!--select policy holder pagination-->
+        <apex:outputPanel rendered="{!!isFirstTimeComeHere && !showTooManyRecordError}" style="padding:20px;" styleClass="bs col-sm-6 col-sm-offset-3 col-xs-6 col-xs-offset-3 text-center">
+            <apex:outputPanel rendered="{!If(hasPrev,true,false)}"><span class="fa fa-chevron-left cigna-fg-orange-dark onclick-pointer" style="padding-right:10px;" aria-hidden="true" onclick="CommonSearchObj.handlePrevPage()"/></apex:outputPanel>
+            <apex:outputText value="{!$Label.pagination}">
+               <apex:param value="{!currentPage}" />
+               <apex:param value="{!totalPages}" />
+            </apex:outputText> 
+            <apex:outputPanel rendered="{!If(hasNext,true,false)}"><span class="fa fa-chevron-right cigna-fg-orange-dark onclick-pointer" style="padding-left:10px;" aria-hidden="true" onclick="CommonSearchObj.handleNextPage()"/></apex:outputPanel>
+        </apex:outputPanel>
+
+
+        <!--selected holder and next button-->
+        <div style="padding:20px;"></div>
+        
+    </apex:outputPanel> 
+    </apex:form>    
+</apex:component>

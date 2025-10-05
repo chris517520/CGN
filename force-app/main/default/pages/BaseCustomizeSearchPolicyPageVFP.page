@@ -1,0 +1,869 @@
+<apex:page Controller="CustomizeSearchPolicyPageCtrl" sidebar="false" showHeader="false" title="My Portfolio">
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+        <apex:include pageName="CignaCommonCSS" />
+        <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <style>
+        body,
+        td {
+            /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+            font-family: "ValueSansRegular", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+        }
+        
+        .broderRadius {
+            -moz-border-radius: 5px;
+            -webkit-border-radius: 5px;
+            border-radius: 5px;
+            -moz-box-shadow: 4px 0 5px -3px #999, -4px 0 9px -3px #999;
+            -webkit-box-shadow: 4px 0 5px -3px #999, -4px 0 9px -3px #999;
+            box-shadow: 4px 0 5px -3px #999, -4px 0 9px -3px #999;
+        }
+        
+        #uploadMsg {
+            position: fixed;
+            width: 30%;
+            height: 60px;
+            background-color: #EEE;
+            top: 45%;
+            left: 35%;
+            z-index: 10000001;
+            text-align: center;
+            display: none;
+            font-weight: blod;
+        }
+        
+        #cover {
+            left: 0px;
+            right: 0px;
+            top: 0px;
+            bottom: 0px;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: 10000000;
+            background: white;
+            opacity: 0.6;
+            display: none;
+        }
+
+        .bs .table-content-title{
+            font-size: 1.2em;
+        }
+
+        .bs .table-content{
+            padding: 3px;
+        }
+
+        .bs .table-content-panel{
+            padding: 20px 25px;
+        }
+        
+        .bs .panel-heading-std {
+            background-color: #0072E3 !important;
+            color: #FFF !important;
+            border-color: #3dadd3 1px solid !important;
+        }
+        
+        .stat-table-subsection>td {
+            font-weight: bold;
+        }
+        
+        .datatable tr {
+            cursor: hand;
+        }
+        
+        .bs table thead tr {
+            border-bottom: 2px #ddd solid;
+        }
+        
+        .bs table thead tr {
+            font-weight: bold;
+        }
+        
+        .bs table tbody tr {
+            /*border-bottom: 1px #ddd solid;*/
+        }
+        
+        .bs .table>tbody>tr>th,
+        .bs .table>tbody>tr>td {
+            border-top: none !important;
+        }
+        
+        th {
+            font-weight: normal;
+        }
+        
+        td {
+            font-weight: bold;
+        }
+        
+        .treegrid-expander {
+            margin-right: 5px;
+        }
+        
+        .highlight-row {
+            background-color: #f39c12 !important;
+            color: #fff !important;
+        }
+        
+        .PACell {
+            display: none;
+        }
+        
+        .filterSelection {
+            width: 250px;
+            text-align: right;
+        }
+        
+        .mySelect {
+            color: #fff !important;
+            background-color: #2E2E2E !important;
+        }
+        
+        .myDeselect {
+            color: #2E2E2E !important;
+            background-color: #fff !important;
+        }
+        
+        .myYear {
+            width: 40px;
+        }
+        
+        .myMonth {
+            width: 20px;
+        }
+        
+        .myDate {
+            width: 20px;
+        }
+        
+        .bs .btn-default {
+            color: #2E2E2E !important;
+            background-color: #fff !important;
+            border-color: #2E2E2E !important;
+        }
+        
+        .bs .btn-default:focus {
+            color: #fff !important;
+            background-color: #2E2E2E !important;
+        }
+        
+        .bs .btn-default:hover {
+            color: #fff !important;
+            background-color: #2E2E2E !important;
+        }
+        
+        .bs .btn-primary {
+            color: #fff !important;
+            background-color: #2E2E2E !important;
+            border-color: #2E2E2E !important;
+            font-color: #fff !important;
+        }
+        
+        .bs .bar-tab-container {
+            border-bottom: 4px solid #00A9E0;
+            background-color: #004986;
+            color: #fff;
+            /* Rancho_HKITSFDC264_20250903 - update font */
+            /* text-transform: uppercase; */
+        }
+        
+        .bs .active-bar-tab {
+            background-color: #00A9E0;
+            color: #fff;
+            text-align: center;
+            padding: 15px !important;
+            /* Rancho_HKITSFDC264_20250903 - update font */
+            /* font-size: 12px; */
+            font-size: 18px;
+        }
+        
+        .bs .inactive-bar-tab {
+            text-align: center;
+            color: #fff;
+            padding: 15px !important;
+            /* Rancho_HKITSFDC264_20250903 - update font */
+            /* font-size: 12px; */
+            font-size: 18px;
+        }
+        
+        .bs .content-label {
+            padding-left: 20px;
+        }
+        
+        .bs .table-row {
+            padding-bottom: 10px;
+        }
+        
+        @media (min-width: 992px) {
+            .select-search {
+                padding-right: 5px;
+            }
+            .search-value {
+                padding-left: 5px;
+            }
+            .form-horizontal {
+                padding: 20px 100px;
+            }
+        }
+        
+        @media (max-width: 991px) {
+            .select-search {
+                padding-top: 10px;
+            }
+            .search-value {
+                padding-top: 10px;
+            }
+            .form-horizontal {
+                padding-top: 20px
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .bs .table-header {
+                padding: 15px 5px;
+                margin-right: 0px;
+                margin-left: 0px;
+            }
+            .bs .table-content {
+                padding: 15px 5px;
+                margin-right: 0px;
+                margin-left: 0px;
+            }
+        }
+        
+        .bs .grey-background {
+            background-color: rgb(242, 242, 242);
+        }
+        
+        .bold-font {
+            font-weight: bold;
+        }
+        </style>
+        <script type="text/javascript">
+            var initGroup = false;
+            var initInd = false;
+            var noSearchValueErrMsg = '{!$Label.Error_Input_Criteria}';
+
+            function showLoading() {
+                $j = jQuery.noConflict();
+                $j("#msgContent").text("Searching");
+                $j("#uploadMsg,#cover").show();
+            }
+
+            function hideLoading1() {
+                $j = jQuery.noConflict();
+                $j("#uploadMsg,#cover").hide();
+            }
+
+            function showInv() {
+                document.getElementById("filterTableInv").style.display = "";
+                document.getElementById("filterTableDivGroup").style.display = "none";
+                document.getElementById("resultDiv").style.display = "";
+                document.getElementById("resultDivGroup").style.display = "none";
+                $('#IndTab').addClass('active-bar-tab');
+                $('#IndTab').removeClass('inactive-bar-tab');
+                $('#groupTab').addClass('inactive-bar-tab');
+                $('#groupTab').removeClass('active-bar-tab');
+                $("[id$='ErrorApex']").hide();
+                $('#inputCharErrorMessage').css('display','none');
+                // add Bob 20201116 Additional option to search their client case by renewing month
+                selectSearchTextDate();
+                if(!initInd){
+                    MyPortfolioAF.searchInv();
+                }
+                //                $("[id$='IndDiv']").addClass("mySelect");
+                //                $("[id$='IndDiv']").removeClass("bs btn-default");
+                //                $("[id$='GroupDiv']").removeClass("mySelect");
+                //                $("[id$='GroupDiv']").addClass("bs btn-default");
+                $("[id$='selectedCategory']").val('{!CATEGORY_INDIVIDUAL}');//JR1840 jack add
+                //MyPortfolioAF.searchInv();
+            }
+
+            function showgroup() {
+                document.getElementById("filterTableInv").style.display = "none";
+                document.getElementById("filterTableDivGroup").style.display = "";
+                document.getElementById("resultDiv").style.display = "none";
+                document.getElementById("resultDivGroup").style.display = "";
+                $('#groupTab').addClass('active-bar-tab');
+                $('#groupTab').removeClass('inactive-bar-tab');
+                $('#IndTab').addClass('inactive-bar-tab');
+                $('#IndTab').removeClass('active-bar-tab');
+                $("[id$='ErrorApex']").hide();
+                $('#inputCharErrorMessage').css('display','none');
+                // add Bob 20201116 Additional option to search their client case by renewing month
+                selectSearchGroupTextDate();
+                if(!initGroup){
+                    MyPortfolioAF.searchGroup();
+                }
+                // $("[id$='IndDiv']").addClass("myDeselect");
+                //                $("[id$='IndDiv']").removeClass("mySelect");
+                //                $("[id$='IndDiv']").addClass("bs btn-default");
+                //                $("[id$='GroupDiv']").addClass("mySelect");
+                //                $("[id$='GroupDiv']").removeClass("bs btn-default");
+                $("[id$='selectedCategory']").val('{!CATEGORY_GROUP}');//JR1840 jack add
+                //MyPortfolioAF.searchGroup();
+            }
+            //add Bob 20201116 Additional option to search their client case by renewing month
+            function selectSearchTextDate(){
+                var policyRenewingMonth = $('[id$="selectedSearchOption"]').val();
+                console.log('policyRenewingMonth'+policyRenewingMonth);
+                if (policyRenewingMonth == 'Pol_Policy_Renewing_Month') {
+                    $('[id$="selectedSearchText"]').hide();
+                    $('[id$="selectedSearchDate"]').show();
+                    var myDate = new Date;
+                    var mon = myDate.getMonth() + 1; //获取当前月
+                    $('[id$="selectedSearchDateMonth"]').val(mon);
+                    
+                }else{
+                    $('[id$="selectedSearchText"]').show();
+                    $('[id$="selectedSearchDate"]').hide();
+                }
+            }
+            function selectSearchGroupTextDate(){
+                var policyRenewingMonth = $('[id$="selectedSearchOptionGroup"]').val();
+                console.log('policyRenewingMonth'+policyRenewingMonth);
+                if (policyRenewingMonth == 'Pol_Policy_Renewing_Month') {
+                    $('[id$="selectedSearchGroupText"]').hide();
+                    $('[id$="selectedSearchGroupDate"]').show();
+                    var myDate = new Date;
+                    var mon = myDate.getMonth() + 1; //获取当前月
+                    $('[id$="selectedSearchGroupDateMonth"]').val(mon);
+                    
+                }else{
+                    $('[id$="selectedSearchGroupText"]').show();
+                    $('[id$="selectedSearchGroupDate"]').hide();
+                }
+            }
+            //end
+        </script>
+        
+        <script>
+            $("[id$='policyChange']").addClass('active'); // <-- change the id to the active tab
+
+            var selectItems = document.getElementsByClassName("inactive-bar-tab");
+            var startItems = document.getElementsByClassName("active-bar-tab");
+
+            function selectedTab(item) {
+                this.clear();
+                item.style.backgroundColor = '#00A9E0';
+            }
+
+            function clear() {
+                for (var i = 0; i < selectItems.length; i++) {
+                    var item = selectItems[i];
+                    item.style.backgroundColor = '#004986';
+                }
+                for (var i = 0; i < startItems.length; i++) {
+                    var item = startItems[i];
+                    item.style.backgroundColor = '#004986';
+                }
+            }
+            
+            function searchIndividualValidation(){
+                var opt = $("[id$='selectedSearchOption']").find(":selected").val();
+                var searchvalue = $("input[id*='selectedSearchValue']").val().split(' ').join('');
+
+                $("[id$='ErrorApex']").hide();
+
+                //add Bob 20201116 Additional option to search their client case by renewing month
+                if(!searchvalue.trim() && opt != "Pol_Policy_Renewing_Month"){
+                    $('#inputCharErrorMessage').text(noSearchValueErrMsg);  
+                    $('#inputCharErrorMessage').show();
+                    
+                    return null;                  
+                } else {
+                    $('#inputCharErrorMessage').hide();
+                }
+
+                if(opt == "Pol_Policy_holder_name" || opt == "Pol_Policy_holder_phone_number" || opt == "Pol_Person_Insured_Name"){
+                    //var searchvalue = document.getElementById('j_id0:j_id17:j_id18:myform:selectedSearchValue').value;
+                    //var searchvalue = $('#claimListSearchValue').text();
+                    //var searchvalue = $("[id$='selectedSearchValue']").find(":input").text();
+                    
+                    if((searchvalue.length) < 2){
+                        $('#inputCharErrorMessage').text('{!$Label.Please_input_at_least_2_characters_to_search}'); 
+                        $('#inputCharErrorMessage').css('display','block');
+                       
+                    }
+                    else{
+                        $('#inputCharErrorMessage').css('display','none');
+                        MyPortfolioAF.searchInv();
+                    }
+                }//add Bob 20201116 Additional option to search their client case by renewing month
+                else if (opt == "Pol_Policy_Renewing_Month") {
+                    var myDate = new Date;
+                    var year = myDate.getFullYear(); //获取当前年
+                    var mon = myDate.getMonth() + 1; //获取当前月
+                    var selectedYear = $('[id$="selectedSearchDateYear"]').find(":selected").val();
+                    var selectedMonth = $('[id$="selectedSearchDateMonth"]').find(":selected").val();
+                    if ( (year != selectedYear && selectedMonth > mon) || (year == selectedYear && selectedMonth < mon) ) {
+                        $('#inputCharErrorMessage').text('{!$Label.Error_Input_Criteria_Date}');
+                        $('#inputCharErrorMessage').show();
+                        return null;
+                    }else{
+                        $('#inputCharErrorMessage').css('display','none');
+                        MyPortfolioAF.searchInv();
+                    }
+                }else{
+                    $('#inputCharErrorMessage').css('display','none');
+                    MyPortfolioAF.searchInv();
+                }
+            }
+            
+            function searchGroupValidation(){
+                var opt = $("[id$='selectedSearchOptionGroup']").find(":selected").val();
+                var searchvalue = $("input[id*='selectedSearchValueGroup']").val().split(' ').join('');
+
+                $("[id$='ErrorApex']").hide();
+                //add Bob 20201116 Additional option to search their client case by renewing month
+                if(!searchvalue.trim() && opt != "Pol_Policy_Renewing_Month"){
+                    $('#inputCharErrorMessage').show();
+                    $('#inputCharErrorMessage').text(noSearchValueErrMsg);  
+                    return null;                  
+                } else {
+                    $('#inputCharErrorMessage').hide();
+                }
+
+                if(opt == "Pol_Policy_holder_name" || opt == "Pol_Member_Name"){
+                    //var searchvalue = document.getElementById('j_id0:j_id17:j_id18:myform:selectedSearchValueGroup').value;
+                    //var searchvalue = $('#claimListSearchValue').text();
+                    //var searchvalue = $("[id$='selectedSearchValue']").find(":input").text();
+                    if((searchvalue.length) < 2){
+                        $('#inputCharErrorMessage').text('{!$Label.Please_input_at_least_2_characters_to_search}');
+                        $('#inputCharErrorMessage').css('display','block');
+                    }
+                    else{
+                        $('#inputCharErrorMessage').css('display','none');
+                        MyPortfolioAF.searchGroup();
+                    }
+                } // add Bob 20201116 Additional option to search their client case by renewing month
+                else if (opt == "Pol_Policy_Renewing_Month") {
+                    var myDate = new Date;
+                    var year = myDate.getFullYear(); //获取当前年
+                    var mon = myDate.getMonth() + 1; //获取当前月
+                    var selectedYear = $('[id$="selectedSearchGroupDateYear"]').find(":selected").val();
+                    var selectedMonth = $('[id$="selectedSearchGroupDateMonth"]').find(":selected").val();
+                    if ( (year != selectedYear && selectedMonth > mon) || (year == selectedYear && selectedMonth < mon) ) {
+                        $('#inputCharErrorMessage').text('{!$Label.Error_Input_Criteria_Date}');
+                        $('#inputCharErrorMessage').show();
+                        return null;
+                    }else{
+                        $('#inputCharErrorMessage').css('display','none');
+                        MyPortfolioAF.searchGroup();
+                    }
+                }else{
+                    $('#inputCharErrorMessage').css('display','none');
+                    MyPortfolioAF.searchGroup();
+                }
+            }
+            
+            
+        </script>
+    </head>
+    <apex:define name="additionalLibraries">
+        <!--additional css, bootstrap, jquery libraries-->
+    </apex:define>
+
+    <apex:form id="myform">
+
+        <apex:actionFunction name="nextPage" action="{!handleNextPage}" namespace="searchPage" reRender="resultPanel" oncomplete="hideLoading()" />
+        <apex:actionFunction name="prevPage" action="{!handlePrevPage}" namespace="searchPage" reRender="resultPanel" oncomplete="hideLoading()" />
+        <apex:actionFunction name="searchInv" action="{!Search}" namespace="MyPortfolioAF" reRender="resultPanel, ErrorApex" status="loader-icon" oncomplete="initInd=true;" />
+        <apex:actionFunction name="searchGroup" action="{!SearchGroup}" namespace="MyPortfolioAF" reRender="resultPanelGroup, ErrorApex" status="loader-icon" oncomplete="initGroup=true;"/>
+        <!-- JR1840 jack add-->
+        <apex:actionFunction name="getEncryptedString" action="{!getEncryptedString}" reRender="encryptedSearchCriteria,resultPanel,resultPanelGroup">
+        </apex:actionFunction>
+        <apex:inputHidden value="{!selectedCategory}" id="selectedCategory"/>
+        <!-- JR1840 jack add-->
+        <script type="text/javascript">
+            $(document).ready(function() {
+                $('#resultDiv tr').filter(":odd").css('background-color', 'rgb(242, 242, 242)');
+                $('#indivRow.listcontent').filter(":even").css('background-color', 'rgb(242, 242, 242)');
+                $('#groupRow.listcontent').filter(":even").css('background-color', 'rgb(242, 242, 242)');
+                $('#resultDivGroup tr').filter(":odd").css('background-color', 'rgb(242, 242, 242)');
+                //JR1840 jack add
+                var selectedCat=''+'{!selectedCategory}';
+                if(selectedCat){
+                    if(selectedCat == '{!CATEGORY_GROUP}'){
+                        showgroup();
+                    }else{
+                        showInv();
+                    }
+                }
+                
+                //showInv();
+                //JR1840 jack add
+
+                <!--junda add 20201202-->
+                $('[data-toggle="tooltip"]').tooltip();
+                <!--junda add end-->
+
+            });
+            
+            //Ray's Updates
+            if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                $('html').css('position', 'fixed').css('overflow', 'auto').css('width', '100%').css('height', '100%');
+                $('body').css('position', 'fixed').css('overflow-y', 'scroll').css('width', '100%').css('height', '100%');
+            }
+        </script>
+
+        <div class="bs">
+            <div class="bs row">
+                <table class="bs bar-tab-container col-lg-12 col-sm-12 col-xs-12">
+                    <tr>
+                        <td id="IndTab" class="bs active-bar-tab onclick-pointer" onclick="showInv();">
+                            {!$Label.Pol_Individual_Policy}
+                        </td>
+                        <td id="groupTab" class="bs inactive-bar-tab onclick-pointer" onclick="showgroup();">
+                            {!$Label.Pol_Group_Policy}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <apex:actionFunction name="rerenderAgencyPanel" rerender="DistrictSelect" />
+            <apex:outputPanel id="SearchFilterPanel" layout="block" styleClass="bs row">
+                <apex:pageMessages id="showmsg"></apex:pageMessages>
+                <div class="bs">
+                    <div id="filterTableInv" class="bs col-xs-12 form-horizontal" style="padding-bottom: 40px">
+                        <div class="bs col-sm-12 col-xs-12">
+                            <div class="bs col-sm-6 col-xs-12">
+                                <apex:selectList id="selectedSearchOption" value="{!selectedSearchType}" size="1" styleClass="bs form-field-style-select cigna-fg-gray-dark" onchange="selectSearchTextDate();">
+                                    <apex:selectoption itemLabel="{!$Label.Select_Search_Type}" itemValue="" itemDisabled="true"></apex:selectoption>
+                                    <apex:selectOptions value="{!SearchType}"></apex:selectOptions>
+                                </apex:selectList>
+                            </div>
+                            
+                            <div class="bs col-sm-6 col-xs-12" id="selectedSearchText">
+                                <apex:inputText id="selectedSearchValue" style="font-size:1em; height:35px; width:95%" styleClass="bs form-field-style cigna-fg-gray-dark" value="{!selectedSearchValue}"/><i class="ci-hk-search cigna-fg-orange-dark text-center onclick-pointer" onclick="searchIndividualValidation();" style="width:5%" aria-hidden="true" />
+                            </div>
+                            <!-- add Bob 20201116 Additional option to search their client case by renewing month -->
+                            <div class="bs col-sm-6 col-xs-12" id="selectedSearchDate">
+                                <apex:selectList id="selectedSearchDateYear" size="1" styleClass="bs form-field-style cigna-fg-gray-dark" style="font-size:1em; height:35px; width:50%" value="{!selectedSearchDateYearValue}" >
+                                    <apex:selectOptions value="{!Year}"></apex:selectOptions>
+                                </apex:selectList>
+                                <apex:selectList id="selectedSearchDateMonth" size="1" styleClass="bs form-field-style cigna-fg-gray-dark" style="font-size:1em; height:35px; width:45%" value="{!selectedSearchDateMonthValue}" >
+                                    <apex:selectOptions value="{!Month}"></apex:selectOptions>
+                                </apex:selectList><i class="ci-hk-search cigna-fg-orange-dark text-center onclick-pointer" onclick="searchIndividualValidation();" style="width:5%" aria-hidden="true" />
+                            </div>
+                            <!-- end -->
+                        </div>
+                    </div>
+                    
+                    <div id="filterTableDivGroup" style="display: none;padding-bottom: 40px" class="bs col-xs-12 form-horizontal">
+                        <div class="bs col-sm-12 col-xs-12">
+                            <div class="bs col-sm-6 col-xs-12">
+                                <apex:selectList id="selectedSearchOptionGroup" value="{!selectedSearchTypeGroup}" size="1" styleClass="bs form-field-style-select cigna-fg-gray-dark" onchange="selectSearchGroupTextDate();">
+                                    <apex:selectoption itemLabel="{!$Label.Select_Search_Type}" itemValue="" itemDisabled="true"></apex:selectoption>
+                                    <apex:selectOptions value="{!SearchTypeGroup}"></apex:selectOptions>
+                                </apex:selectList>
+                            </div>
+                            <div class="bs col-sm-6 col-xs-12" id="selectedSearchGroupText">
+                                <apex:inputText id="selectedSearchValueGroup" style="font-size:1em; height:35px; width:95%" styleClass="bs form-field-style cigna-fg-gray-dark" value="{!selectedSearchValueGroup}" /><i class="ci-hk-search cigna-fg-orange-dark text-center onclick-pointer" onclick="searchGroupValidation();" style="width:5%" aria-hidden="true" />
+                            </div>
+                            <!-- add Bob 20201116 Additional option to search their client case by renewing month -->
+                            <div class="bs col-sm-6 col-xs-12" id="selectedSearchGroupDate">
+                                <apex:selectList id="selectedSearchGroupDateYear" size="1" styleClass="bs form-field-style cigna-fg-gray-dark" style="font-size:1em; height:35px; width:50%" value="{!selectedSearchDateYearValueGroup}" >
+                                    <apex:selectOptions value="{!Year}"></apex:selectOptions>
+                                </apex:selectList>
+                                <apex:selectList id="selectedSearchGroupDateMonth" size="1" styleClass="bs form-field-style cigna-fg-gray-dark" style="font-size:1em; height:35px; width:45%" value="{!selectedSearchDateMonthValueGroup}" >
+                                    <apex:selectOptions value="{!Month}"></apex:selectOptions>
+                                </apex:selectList><i class="ci-hk-search cigna-fg-orange-dark text-center onclick-pointer" onclick="searchGroupValidation();" style="width:5%" aria-hidden="true" />
+                            </div>
+                            <!-- end -->
+                        </div>
+                    </div>
+                    
+                    <div id="inputCharErrorMessage" class="bs col-sm-12 col-xs-12 text-center" style="color:red;padding-bottom:20px;display:none;">
+                            {!$Label.Please_input_at_least_2_characters_to_search}
+                    </div>
+                    
+                    <apex:outputPanel id="ErrorApex" layout="block">
+                        <div class="bs col-sm-12 col-xs-12" style="{!IF(showTooManyRecordError,'','display:none;')}color: red;padding-bottom: 30px; text-align: center;" >
+                            {!$Label.Error_Too_Many_Records}
+                        </div>
+                        <!--PI68-Add New Error Message for any WS error in broker portal-Kirk-20220526-->
+                        <div class="bs col-sm-12 col-xs-12" style="{!IF(showWSError,'','display:none;')}color: red;padding-bottom: 30px; text-align: center;" >
+                            {!$Label.Error_WS_Maintenance}
+                        </div>
+                        <div id="noType" class="bs col-sm-12 col-xs-12" style="{!IF(noTypeSelected,'','display:none;')}color: red;padding-bottom: 30px; margin-top:-30px;padding-left: 140px">
+                            {!$Label.Pol_Choose_Type}
+                        </div>
+                    </apex:outputPanel>
+
+                    <div id="resultDiv" class="bs">
+                        <apex:outputPanel id="resultPanel" rendered="{!showResult}">
+                            
+                            <div id="resultDesktop">
+                                <apex:actionFunction action="{!individualprevPage}" name="individualprevPage" reRender="individualResult" status="loader-icon" />
+                                <apex:actionFunction action="{!individualnextPage}" name="individualnextPage" reRender="individualResult" status="loader-icon" />
+                                <apex:outputPanel id="individualResult" rendered="{!IF(policyList !=null && searched ,true,false)}">
+                                    <div>
+                                        <div class="hidden-xs">
+                                            <div class="bs row table-header">
+                                                <div class="bs col-sm-3 col-md-3">{!$Label.Pol_Product_Name}</div>
+                                                <div class="bs col-sm-2 col-md-2" style="word-break: break-word;">{!$Label.Person_Insured}</div>
+                                                <div class="bs col-sm-2 col-md-2">{!$Label.Pol_Effective_Date}</div>
+                                                <div class="bs col-sm-2 col-md-2">{!$Label.Pol_Policy_Number}</div>
+                                                <div class="bs col-sm-2 col-md-2">{!$Label.Pol_Status}</div>
+                                                <div class="bs col-sm-1 col-md-1"></div>
+                                            </div>
+                                        
+                                            <apex:variable value="{!1}" var="rowNum" />
+                                            <apex:repeat value="{!individualMap[individualPage]}" var="result">
+                                                <div class="bs row table-content onclick-pointer {!IF(MOD(rowNum,2)==1,'grey-background','')}" onclick="Cigna.Util.navigateToVFP('PolicyDetailsPageVFP?policyNumber={!result.policyNumber}&policyType={!IF(result.isILAS,'ILAS','nonILAS')}&SHA256Key={!result.SHA256Key}{!IF(encryptedSearchCriteria!='','&'+URLParamName+'='+encryptedSearchCriteria,'')}', null, null, true)">
+                                                    <div class="bs col-sm-3 bold-font">{!result.marketingName}</div>
+                                                    <div class="bs col-sm-2 bold-font" style='word-wrap:break-word;'>
+                                                        {!result.insuredNameStr}
+                                                    </div>
+                                                    <div class="bs col-sm-2 bold-font">
+                                                        <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                                            <apex:Param value="{!result.effDateInDate}" />
+                                                        </apex:OutputText>
+                                                    </div>
+                                                    <div class="bs col-sm-2 bold-font">{!result.policyNumber}</div>
+                                                    <div class="bs col-sm-2 bold-font">
+                                                        {!result.policyStatusDisplayName}
+                                                            <!--junda add 20201202-->
+                                                            <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="{!$Label.Policy_Tooltip}" aria-hidden="true" STYLE="{!IF(result.isDisplayTooltip, '', 'display:none')}"></i>
+                                                            <!--junda add end-->
+                                                    </div>
+                                                    <div class="bs col-sm-1 bold-font">
+                                                        <i class="ci-hk-arrow-31 ci-hk-sm pull-right hidden-xs cigna-fg-blue-medium onclick-pointer"></i>
+                                                    </div>
+                                                </div>
+                                                <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                                            </apex:repeat>
+                                            <!--junda add 20201202-->
+                                            <script>
+                                                $('[data-toggle="tooltip"]').tooltip();
+                                            </script>
+                                            <!--junda add end-->
+                                        </div>
+                                    
+                                        <div class="visible-xs hidden-sm hidden-lg hidden-md col-xs-12" style="padding :0px">
+                                            <apex:variable value="{!1}" var="rowNum" />
+                                            <apex:repeat id="policyResult2" value="{!individualMap[individualPage]}" var="result">
+                                                <div id="indivRow" class="bs row listcontent onclick-pointer {!IF(MOD(rowNum,2)==1,'grey-background','')}" onclick="Cigna.Util.navigateToVFP('PolicyDetailsPageVFP?policyNumber={!result.policyNumber}&policyType={!IF(result.isILAS,'ILAS','nonILAS')}&SHA256Key={!result.SHA256Key}{!IF(encryptedSearchCriteria!='','&'+URLParamName+'='+encryptedSearchCriteria,'')}', null, null, true)">
+                                                    <div class="bs table-row col-xs-12 col-sm-3">
+                                                        <div class="bs col-xs-12 content-highlight table-cell">
+                                                            {!result.marketingName}
+                                                            <i class="ci-hk-arrow-31 ci-hk-sm pull-right cigna-fg-blue-medium onclick-pointer"></i>
+                                                        </div>
+                                                    </div>
+                                                    <div class="bs table-row col-xs-12 col-sm-3">
+                                                        <div class="bs col-xs-6 table-cell content-label">{!$Label.Person_Insured}</div>
+                                                        <div class="bs col-xs-6 content-highlight table-cell">
+                                                            <apex:outputText value="{!result.insuredNameStr}" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="bs table-row col-xs-12 col-sm-3">
+                                                        <div class="bs col-xs-6 table-cell content-label">{!$Label.Pol_Effective_Date}</div>
+                                                        <div class="bs col-xs-6 content-highlight table-cell">
+                                                            <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                                                <apex:Param value="{!result.effDateInDate}" />
+                                                            </apex:OutputText>
+                                                        </div>
+                                                    </div>
+                                                    <div class="bs table-row col-xs-12 col-sm-3">
+                                                        <div class="bs col-xs-6 table-cell content-label">{!$Label.Pol_Policy_Number}</div>
+                                                        <div class="bs col-xs-6 content-highlight table-cell">
+                                                            <apex:outputText value="{!result.policyNumber}" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="bs table-row col-xs-12 col-sm-3">
+                                                        <div class="bs col-xs-6 table-cell content-label">{!$Label.Pol_Status}</div>
+                                                        <div class="bs col-xs-6 content-highlight table-cell">
+                                                            <apex:outputText value="{!result.policyStatusDisplayName}" />
+                                                            <!--junda add 20201202-->
+                                                            <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="{!$Label.Policy_Tooltip}" aria-hidden="true" STYLE="{!IF(result.isDisplayTooltip, '', 'display:none')}"></i>
+                                                            <!--junda add end-->
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                                            </apex:repeat>
+                                            <!--junda add 20201202-->
+                                            <script>
+                                                $('[data-toggle="tooltip"]').tooltip();
+                                            </script>
+                                            <!--junda add end-->
+                                        </div>
+
+                                        <div class="bs row" style="{!IF((policyList == null || policyList.size == 0) && searched, '', 'display:none;')}">
+                                            <div class="bs col-xs-12 text-center" style="padding-top: 30px;">
+                                                <i aria-hidden="true" class="fa fa-smile-o cigna-fg-black"></i>
+                                                {!$Label.No_Policy_Found}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="bs col-sm-12 col-xs-12 col-lg-12 col-md-12" style="text-align: center;padding-top:30px;{!IF(searched,'','display: none;')}">
+                                            <apex:outputPanel rendered="{!If(individualTotalPage>1 && individualhasPrev,true,false)}">
+                                                <div class="ci-hk-arrow-29 ci-hk-sm onclick-pointer cigna-fg-orange-dark" style="padding-right:10px;" aria-hidden="true" onclick="individualprevPage();" />
+                                            </apex:outputPanel>
+                                            <apex:outputText value="{!$Label.Page_0_of_1}">
+                                                <apex:param value="{!individualPage}" />
+                                                <apex:param value="{!individualTotalPage}" />
+                                            </apex:outputText>
+                                            <apex:outputPanel rendered="{!If(individualTotalPage>1 && individualhasNext,true,false)}">
+                                                <div class="ci-hk-arrow-31 ci-hk-sm onclick-pointer cigna-fg-orange-dark" style="padding-left:10px;" aria-hidden="true" onclick="individualnextPage();" />
+                                            </apex:outputPanel>
+                        <!--add Bob 20201116 Additional option to search their client case by renewing monthpu-->
+                                            <apex:outputPanel rendered="{!individualhasNextTips}">
+                                                <div class="bs col-sm-12 col-xs-12 text-center" style="color:red;padding-bottom:20px">
+                                                    {!$Label.Next_Tips}
+                                                </div>
+                                            </apex:outputPanel>
+                                        </div>
+                                    </div>
+                                </apex:outputPanel>
+                            </div>
+                        </apex:outputPanel>
+                    </div>
+                    <div id="resultDivGroup" class="bs ">
+                        <apex:outputPanel id="resultPanelGroup">
+                            <div id="resultDesktop1" class="bs">
+                                <apex:actionFunction action="{!groupprevPage}" name="groupprevPage" reRender="groupResult" status="loader-icon" />
+                                <apex:actionFunction action="{!groupnextPage}" name="groupnextPage" reRender="groupResult" status="loader-icon" />
+                                
+                                <apex:outputPanel id="groupResult">
+                                
+                        
+                                    <div class="hidden-xs">
+                                        <apex:outputPanel layout="block" rendered="{!searched}">
+                                            <div class="bs row table-header">
+                                                <div class="bs col-sm-2">{!$Label.Pol_Plan_Type}</div>
+                                                <div class="bs col-sm-2" style="word-break: break-word;">{!$Label.Pol_Policy_Holder}</div>
+                                                <div class="bs col-sm-2" style="padding-left: 15px;padding-right: 0px;">{!$Label.Pol_Coverage_Period_From}</div>
+                                                <div class="bs col-sm-2">{!$Label.Pol_Coverage_Period_To}</div>
+                                                <div class="bs col-sm-2">{!$Label.Pol_Policy_Number}</div>
+                                                <div class="bs col-sm-2">{!$Label.Pol_Status}</div>                              
+                                            </div>
+                                        </apex:outputPanel>
+                                        <apex:variable value="{!1}" var="rowNum" />
+                                        <apex:repeat value="{!groupMap[groupPage]}" var="c">
+                                            <div class="bs row table-content onclick-pointer {!IF(MOD(rowNum,2)==1,'grey-background','')}" onclick="Cigna.Util.navigateToVFP('PolicyDetailsPageVFP?policyNumber={!c.policyNumber}&policyType=Group&SHA256Key={!c.SHA256Key}{!IF(encryptedSearchCriteria!='','&'+URLParamName+'='+encryptedSearchCriteria,'')}', null, null, true)">
+                                                <div class="bs col-sm-2 bold-font " >{!c.productType}</div>
+                                                <div class="bs col-sm-2 bold-font">{!c.holderName}</div>
+                                                <div class="bs col-sm-2 bold-font">
+                                                   <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                                       <apex:param value="{!c.effDateInDate}"/>
+                                                   </apex:outputText>
+                                                </div>
+                                                <div class="bs col-sm-2 bold-font">
+                                                   <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                                       <apex:param value="{!c.termDateInDate}"/>
+                                                   </apex:outputText>
+                                                </div>
+                                                <div class="bs col-sm-2 bold-font" style="word-wrap: break-word;">{!c.policyNumber}</div>
+                                                <div class="bs col-sm-2 bold-font">{!c.policyStatusDisplayName}
+                                                    <!--junda add 20201202-->
+                                                    <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="{!$Label.Policy_Tooltip}" aria-hidden="true" STYLE="{!IF(c.isDisplayTooltip, '', 'display:none')}"></i>
+                                                    <!--junda add end-->
+                                                <i class="ci-hk-arrow-31 ci-hk-sm pull-right hidden-xs cigna-fg-blue-medium onclick-pointer"></i></div>    
+                                            </div>
+                                          <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                                        </apex:repeat>
+                                        <!--junda add 20201202-->
+                                        <script>
+                                           $('[data-toggle="tooltip"]').tooltip();
+                                        </script>
+                                        <!--junda add end-->
+                                    </div>
+
+                                    <div class="visible-xs hidden-sm hidden-md col-sm-12 col-xs-12" style="padding: 0px">
+                                        <apex:variable value="{!1}" var="rowNum" />
+                                        <apex:repeat value="{!groupMap[groupPage]}" var="c">
+                                            <div class="bs col-sm-12 col-xs-12 table-content-panel {!IF(MOD(rowNum,2)==1,'grey-background','')}" onclick="Cigna.Util.navigateToVFP('PolicyDetailsPageVFP?policyNumber={!c.policyNumber}&policyType=Group&SHA256Key={!c.SHA256Key}{!IF(encryptedSearchCriteria!='','&'+URLParamName+'='+encryptedSearchCriteria,'')}', null, null, true)">
+                                                <div class="bs row table-content">
+                                                    <div class="col-xs-12 bold-font">
+                                                        {!c.productType}
+                                                        <i class="ci-hk-arrow-31 ci-hk-sm pull-right cigna-fg-blue-medium onclick-pointer"></i>
+                                                    </div>
+                                                </div>
+                        
+                                                <div class="bs row table-content">
+                                                   <div class="col-sm-6 col-xs-6" style="word-wrap: break-word;">{!$Label.Pol_Policy_Holder}</div>
+                                                   <div class="col-sm-6 col-xs-6 bold-font">{!c.holderName}</div>
+                                                </div>
+                                                <div class="bs row table-content">
+                                                   <div class="col-sm-6 col-xs-6">{!$Label.Pol_Coverage_Period_From}</div>
+                                                   <div class="col-sm-6 col-xs-6 bold-font">
+                                                       <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                                           <apex:param value="{!c.effDateInDate}"/>
+                                                       </apex:outputText>
+                                                   </div>
+                                                </div>
+                                                <div class="bs row table-content">
+                                                   <div class="col-sm-6 col-xs-6">{!$Label.Pol_Coverage_Period_To}</div>
+                                                   <div class="col-sm-6 col-xs-6 bold-font">
+                                                       <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                                           <apex:param value="{!c.termDateInDate}"/>
+                                                       </apex:outputText>
+                                                   </div>
+                                                </div>
+                                                <div class="bs row table-content">
+                                                   <div class="col-sm-6 col-xs-6">{!$Label.Pol_Policy_Number}</div>
+                                                   <div class="col-sm-6 col-xs-6 bold-font" style="word-wrap: break-word;">{!c.policyNumber}</div>
+                                                </div>
+                                                <div class="bs row table-content">
+                                                    <div class="col-sm-6 col-xs-6">{!$Label.Pol_Status}</div>
+                                                    <div class="col-sm-6 col-xs-6 bold-font">{!c.policyStatusDisplayName}
+                                                        <!--junda add 20201202-->
+                                                        <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="{!$Label.Policy_Tooltip}" aria-hidden="true" STYLE="{!IF(c.isDisplayTooltip, '', 'display:none')}"></i>
+                                                        <!--junda add end-->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                                        </apex:repeat>
+                                        <!--junda add 20201202-->
+                                        <script>
+                                            $('[data-toggle="tooltip"]').tooltip();
+                                        </script>
+                                        <!--junda add end-->
+                                    </div>
+
+                                    <div class="bs row" style="{!IF(policyListGroup == null || policyListGroup.size == 0 && searched, '', 'display:none;')}">
+                                        <div class="bs col-xs-12 text-center" style="padding-top: 30px;">
+                                            <i aria-hidden="true" class="fa fa-smile-o cigna-fg-black"></i>
+                                            {!$Label.No_Policy_Found}
+                                        </div>
+                                    </div>
+
+                                    <div class="bs col-sm-12 col-xs-12 col-lg-12 col-md-12" style="text-align: center;padding-top:30px;{!IF(searched,'','display: none;')}">
+                                        <apex:outputPanel rendered="{!If(groupTotalPage>1 && grouphasPrev,true,false)}">
+                                            <div class="ci-hk-arrow-29 ci-hk-sm onclick-pointer cigna-fg-orange-dark" style="padding-right:10px;" aria-hidden="true" onclick="groupprevPage();" />
+                                        </apex:outputPanel>
+                                        <apex:outputText value="{!$Label.Page_0_of_1}">
+                                            <apex:param value="{!groupPage}" />
+                                            <apex:param value="{!groupTotalPage}" />
+                                        </apex:outputText>
+                                        <apex:outputPanel rendered="{!If(groupTotalPage>1 && grouphasNext,true,false)}">
+                                            <div class="ci-hk-arrow-31 ci-hk-sm onclick-pointer cigna-fg-orange-dark" style="padding-left:10px;" aria-hidden="true" onclick="groupnextPage();" />
+                                        </apex:outputPanel>
+                    <!--add Bob 20201116 Additional option to search their client case by renewing monthpu-->
+                                        <apex:outputPanel rendered="{!grouphasNextTips}">
+                                            <div class="bs col-sm-12 col-xs-12 text-center" style="color:red;padding-bottom:20px">
+                                                {!$Label.Next_Tips}
+                                            </div>
+                                        </apex:outputPanel>
+                                    </div>
+
+                                </apex:outputPanel>
+                            </div>
+                        </apex:outputPanel>
+                    </div>
+                </div>
+            </apex:outputPanel>
+            
+            <div class="visible-xs hidden-sm hidden-md col-xs-12" style="padding-bottom: 30px">
+            
+            </div>
+            
+            <div id="cover"></div>
+            <div id="msgContent"></div>
+        </div>
+    </apex:form>
+</apex:page>

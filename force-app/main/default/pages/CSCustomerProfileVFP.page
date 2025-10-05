@@ -1,0 +1,2066 @@
+<apex:page docType="html-5.0" showHeader="false" sidebar="false" standardController="Account" extensions="CustomerProfileCtrl" >
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+        <style>
+            .block-header {
+                color: #000 !important;
+                font-size: 14px !important;
+                font-weight: bold !important;
+                font-family: Arial, Helvetica, sans-serif !important;
+                padding-left: 3px !important;
+            }
+            
+            .customer-profile-policy {
+                padding: 0;
+                width: 100%;
+                float: left;
+            }
+            
+            .customer-profile-policy-loading {
+                padding: 0;
+                width: 100%;
+                float: left;
+                color: #a8a8a8 !important;
+            }
+            
+            .onclick-pointer {
+                cursor: pointer;
+            }
+            
+            .handle_page_active {
+                color: #015ba7;
+                font-size: 1em;
+                font-family: Arial, Helvetica, sans-serif;
+            }
+            
+            .handle_page_inactive {
+                color: #999;
+                font-size: 1em;
+                font-family: Arial, Helvetica, sans-serif;
+            }
+            
+            .table-width {
+                width: 1450px !important;
+                padding-right: 15px !important;
+            }
+            /*CR-47 Tovid */
+            div#RPQPopUp{
+                /*display: none;*/
+                z-index: 10;
+                background: #D9D9D6;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                text-align: left;
+                opacity:0.3;
+            }
+            /*HKITSFDC-51 BEGIN*/
+            .hidden{
+            	display: none;
+            }
+            /*HKITSFDC-51 END*/
+        </style>
+    </head>
+    <apex:define name="additionalLibraries">
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <apex:stylesheet value="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap_ns.css')}" />
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}" />
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+        <apex:includeScript value="/support/console/33.0/integration.js" />
+    </apex:define>
+    
+    <apex:includeLightning />
+   <apex:slds />
+    <div id="alertPopupContainer" class="slds-scope"></div>
+   
+    <script>
+        $(document).ready(function() {
+            CustomerProfileAF.getPersonBasic();
+        });
+        
+        // BEGIN HKITSFDC-4
+       
+        //Set the alert
+        function setFlagsAndVIPSign() {
+            console.log("Complaint alert loading..");
+          
+            var isPop = {!isComplaintAlert};
+
+            if(isPop == true ){
+                 console.log("Alert pop up");
+                    
+                 complaintStatusAlert(); 
+            }
+            else {
+                 console.log("Alert NOT pop");
+                    
+                 
+            
+            }
+        }
+
+        window.onload = function(){
+           setFlagsAndVIPSign();
+        }
+        
+        function complaintStatusAlert() {
+            console.log("in complaintStatusAlert");
+            $Lightning.use("c:ComplaintAlertApp", function() {
+                    $Lightning.createComponent("c:ComplaintStatusAlert",
+                                               {},
+                                               "alertPopupContainer",
+                                               function (cmp) {
+                                               // Component creation callback
+                                               console.log("Component created!");
+                                                });    
+                });
+        }
+       
+            // END HKITSFDC-4
+        
+        //HKITSFDC-51 BEGIN
+        $(document).ready(function(){
+            window.claimShowLoading = function(compId){
+                console.log('claimShowLoading called: ',compId);
+                $('#'+compId).hide();  
+                $('#'+compId+'Inactive').hide();  
+                $('#'+compId + 'Loading').show();
+            };
+            window.claimHideLoading = function(compId){
+                console.log('claimHideLoading called: ',compId);
+                $('#'+compId).show();
+                $('#'+compId+'Inactive').show();
+                $('#'+compId + 'Loading').hide();
+            };
+        });        
+        //HKITSFDC-51 END 
+        </script>
+        
+    <apex:form id="customer-profile-form">
+        <apex:actionFunction action="{!getPersonBasic}" name="getPersonBasic" namespace="CustomerProfileAF" oncomplete="CustomerProfileAF.getGroupSummaryPolicyList();" status="loader-icon" reRender="customer-profile-summary-panel" />
+        <apex:actionFunction action="{!getGroupSummaryPolicyList}" name="getGroupSummaryPolicyList" namespace="CustomerProfileAF" oncomplete="CustomerProfileAF.getIndividualPolicyListBasicByCriteria_PH();" status="loader-icon" reRender="customer-profile-group-panel" />
+        <apex:actionFunction action="{!getIndividualPolicyListBasicByCriteria_PH}" name="getIndividualPolicyListBasicByCriteria_PH" namespace="CustomerProfileAF" oncomplete="CustomerProfileAF.getIndividualPolicyListBasicByCriteria_PI();" status="loader-icon" reRender="customer-profile-individual-ph-detail-panel" />
+        <apex:actionFunction action="{!getIndividualPolicyListBasicByCriteria_PI}" name="getIndividualPolicyListBasicByCriteria_PI" namespace="CustomerProfileAF" oncomplete="CustomerProfileAF.getGroupPolicyListBasicByCriteria();" status="loader-icon" reRender="customer-profile-individual-pi-detail-panel" />
+        <apex:actionFunction action="{!getGroupPolicyListBasicByCriteria}" name="getGroupPolicyListBasicByCriteria" namespace="CustomerProfileAF" oncomplete="CustomerProfileAF.getFamilyList();" status="loader-icon" reRender="customer-profile-group-detail-panel" />
+        <apex:actionFunction action="{!getFamilyList}" name="getFamilyList" namespace="CustomerProfileAF" status="loader-icon" oncomplete="CustomerProfileAF.getPolicyChangeList();" reRender="customer-profile-family-detail-panel" />
+        <!--Connor JOBR-43-->
+        <apex:actionFunction action="{!getGroupEMedicalCardImages}" name="getGroupEMedicalCardImages" namespace="CustomerProfileAF" status="loader-icon" oncomplete="openNewTab_MedCard();" reRender="hidden-val-medCardFrontUrl,hidden-val-medCardBackUrl">
+            <apex:param name="policyNoMedCard" value="" assignTo="{!policyNoMedCard}" />
+            <apex:param name="certNoMedCard" value="" assignTo="{!certNoMedCard}" />
+        </apex:actionFunction>
+        <apex:actionFunction action="{!getIndividualEMedicalCardImages}" name="getIndividualEMedicalCardImages" namespace="CustomerProfileAF" status="loader-icon" oncomplete="openNewTab_MedCard();" reRender="hidden-val-medCardFrontUrl,hidden-val-medCardBackUrl">
+            <apex:param name="policyNoMedCard" value="" assignTo="{!policyNoMedCard}" />
+            <apex:param name="ssnMedCard" value="" assignTo="{!ssnMedCard}" />
+        </apex:actionFunction>
+        <apex:inputHidden value="{!medCardFrontUrl}" id="hidden-val-medCardFrontUrl"/>
+        <apex:inputHidden value="{!medCardBackUrl}" id="hidden-val-medCardBackUrl"/>
+
+        <!-- 20200306 - minghua - ILAS -->
+        <apex:actionFunction action="{!getPolicyChangeList}" name="getPolicyChangeList" namespace="CustomerProfileAF" oncomplete="CustomerProfileAF.getRPQHistoryList();" status="loader-icon" reRender="customer-profile-policy-change-detail-panel" />
+        <apex:actionFunction action="{!getRPQHistoryList}" name="getRPQHistoryList" namespace="CustomerProfileAF" oncomplete="CustomerProfileAF.getClaimList();" status="loader-icon" reRender="customer-profile-rpq-histories-detail-panel" />
+
+        <apex:actionFunction action="{!getClaimList}" name="getClaimList" namespace="CustomerProfileAF" oncomplete="CustomerProfileAF.getClaimHistroyList();" status="loader-icon" reRender="customer-profile-claim-detail-panel" />
+        <!-- add by kit -->
+        <apex:actionFunction action="{!getClaimHistroyList}" name="getClaimHistroyList" namespace="CustomerProfileAF" oncomplete="CustomerProfileAF.getUnderwritingList();" status="loader-icon" reRender="customer-profile-claim-histories-detail-panel,customer-profile-group-panel" />
+        <apex:actionFunction action="{!getUnderwritingList}" name="getUnderwritingList" namespace="CustomerProfileAF" oncomplete="CustomerProfileAF.getPendingMemoList();" status="loader-icon" reRender="customer-profile-underwriting-detail-panel" />
+        <apex:actionFunction action="{!getPendingMemoList}" name="getPendingMemoList" namespace="CustomerProfileAF" oncomplete="CustomerProfileAF.getContactList();" status="loader-icon" reRender="customer-profile-pending-memo-detail-panel" />
+        <apex:actionFunction action="{!getContactList}" name="getContactList" namespace="CustomerProfileAF" oncomplete="CustomerProfileAF.getMgmDataList(); CustomerProfileAF.getEsalesApplicationList();" status="loader-icon" reRender="customer-profile-contact-detail-panel" />
+        <apex:actionFunction action="{!getEsalesApplicationList}" name="getEsalesApplicationList" namespace="CustomerProfileAF" oncomplete="CustomerProfileAF.updateTrackingHistory();" status="loader-icon" reRender="customer-profile-esales-detail-panel" />
+
+        <apex:actionFunction action="{!updateTrackingHistory}" name="updateTrackingHistory" namespace="CustomerProfileAF" oncomplete="CustomerProfileAF.refreErrorMessgae();" reRender="param-panel" />
+        <apex:actionFunction action="{!refreErrorMessgae}" name="refreErrorMessgae" namespace="CustomerProfileAF" reRender="error-message-panel" />
+        <apex:actionFunction action="{!getMgmDataList}" name="getMgmDataList" namespace="CustomerProfileAF" status="loader-icon" reRender="customer-profile-mgm-detail-panel" oncomplete="CustomerProfileAF.getAuditDataList();"/>
+
+        <!-- CS Member Level Jack add-->
+        <!-- Rancho_CR47Issue_20211005: display portal profile after loading all the page, to avoid CS user click edit before the page loading that could not change information -->
+        <apex:actionFunction action="{!getAuditDataList}" name="getAuditDataList" namespace="CustomerProfileAF" status="loader-icon" reRender="customer-profile-Audit-detail-panel" oncomplete="CustomerProfileAF.displayPortalProfile()" />
+        <apex:actionFunction action="{!displayPortalProfile}" name="displayPortalProfile" namespace="CustomerProfileAF" status="loader-icon" reRender="customer-profile-portal-profile-panel" oncomplete="console.log('display portal profile: '+{!displayPortalProfile});" />
+
+        <apex:actionFunction name="goToCustomerProfile" action="{!goToCustomerProfile}" namespace="CustomerProfileAF" reRender="param-panel" oncomplete="CustomerProfileAF.refreErrorMessgae();openNewTab_Account();">
+            <apex:param name="selectedAccountId" value="" assignTo="{!selectedAccountSSN}" />
+        </apex:actionFunction>
+        <apex:actionFunction name="getSelectedPolicyType" action="{!getSelectedPolicyType}" namespace="CustomerProfileAF" reRender="param-panel" oncomplete="searchPolicyType_Policy();">
+            <apex:param name="selectedPolicyNumber" value="" assignTo="{!selectedPolicyNumber}" />
+        </apex:actionFunction>
+        <apex:actionFunction name="getSelectedPolicyType_Claim" action="{!getSelectedPolicyType}" namespace="CustomerProfileAF" reRender="param-panel">
+            <apex:param name="selectedPolicyNumber" value="" assignTo="{!selectedPolicyNumber}" />
+            <apex:param name="selectedClaimNumber" value="" assignTo="{!selectedClaimNumber}" />
+        </apex:actionFunction>
+        <apex:actionFunction name="goToCustomerProfileForUWPI" action="{!goToCustomerProfileForUWPI}" namespace="CustomerProfileAF" reRender="param-panel" oncomplete="CustomerProfileAF.refreErrorMessgae();openNewTab_Account();">
+            <apex:param name="selectedPolicyNumber" value="" assignTo="{!selectedPolicyNumber}" />
+            <apex:param name="selectedInsuredName" value="" assignTo="{!selectedInsuredName}" />
+        </apex:actionFunction>
+
+        <!-- CS CustomerProfile  Tovid add-->
+        <apex:actionFunction name="passwordUpdateActionFunction" action="{!passwordUpdateAction}" namespace="CustomerProfileAF" status="loader-icon-portal-profile" oncomplete="CustomerProfileAF.refreshChangeLogFunction();" reRender="customer-profile-portal-profile-panel"/>
+        <apex:actionFunction name="saveActionFunction" action="{!saveAction}"  namespace="CustomerProfileAF" status="loader-icon-portal-profile" oncomplete="CustomerProfileAF.refreshChangeLogFunction();" reRender="customer-profile-portal-profile-panel" />
+        <apex:actionFunction name="cancelPortalProfileFunction" action="{!cancelPortalProfileAction}"  namespace="CustomerProfileAF" status="loader-icon-portal-profile" reRender="customer-profile-portal-profile-panel" />
+        <apex:actionFunction name="unlockAccountStatusFunction" action="{!unlockAccountStatus}"  namespace="CustomerProfileAF" status="loader-icon-portal-profile" oncomplete="CustomerProfileAF.refreshChangeLogFunction();" reRender="customer-profile-portal-profile-panel" />
+        <apex:actionFunction name="activeAccountStatusFunction" action="{!activeAccountStatus}"  namespace="CustomerProfileAF" status="loader-icon-portal-profile" oncomplete="CustomerProfileAF.refreshChangeLogFunction();" reRender="customer-profile-portal-profile-panel" />
+        <apex:actionFunction name="refreshChangeLogFunction" action="{!refreshChangeLog}"  namespace="CustomerProfileAF" status="loader-icon-portal-profile" reRender="customer-profile-change-log-panel" />
+
+
+        <apex:outputPanel id="error-message-panel">
+            <input id="error-message-focus" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" onfocus="this.onblur();" />
+            <apex:pageMessages escape="false"></apex:pageMessages>
+        </apex:outputPanel>
+        <apex:outputPanel id="param-panel">
+            <apex:inputText id="param-current-account-id" value="{!currentAccount.Id}" style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" />
+            <apex:inputText id="param-selected-account-id" value="{!selectedAccount.Id}" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" />
+            <apex:inputText id="param-selected-account-name" value="{!selectedAccount.Name}" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" />
+            <apex:inputText id="param-selected-policy-type" value="{!selectedPolicyType}" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" />
+            <apex:inputText id="param-selected-policy-number" value="{!selectedPolicyNumber}" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" />
+            <apex:inputText id="param-selected-claim-number" value="{!selectedClaimNumber}" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" />
+        </apex:outputPanel>
+        <script>
+        //CR-47 Tovid update  customer info -start
+            function passwordUpdateAction(event){
+                if (typeof event != undefined && event) {
+                    event.preventDefault();
+                } 
+                CustomerProfileAF.passwordUpdateActionFunction();
+            }
+            function saveActionFunction(event){
+                if (typeof event != undefined && event) {
+                    event.preventDefault();
+                } 
+                CustomerProfileAF.saveActionFunction();
+            }
+            function cancelPortalProfile(event){
+                if (typeof event != undefined && event) {
+                    event.preventDefault();
+                } 
+                CustomerProfileAF.cancelPortalProfileFunction();
+            }
+            function unlockAccountStatus(event){
+                if (typeof event != undefined && event) {
+                    event.preventDefault();
+                } 
+                CustomerProfileAF.unlockAccountStatusFunction();
+            }
+            function activeAccountStatus(event){
+                if (typeof event != undefined && event) {
+                    event.preventDefault();
+                } 
+                CustomerProfileAF.activeAccountStatusFunction();
+            }
+        //CR-47 Tovid update  customer info -end
+                    //Connor JOBR-43
+            function openNewTab_MedCard() {
+                var medCardFrontUrl = $('input[type="hidden"][id$="hidden-val-medCardFrontUrl"]').val();
+                var medCardBackUrl = $('input[type="hidden"][id$="hidden-val-medCardBackUrl"]').val();
+                if(sforce.console.isInConsole()) {
+                    var rnd = Math.floor(Math.random() * 1000000000000);
+                    sforce.console.openPrimaryTab(null, '/apex/CusEMedicalCardPDF?isPDF=1&front='+medCardFrontUrl+'&back='+medCardBackUrl+'?pageRnd='+rnd,true,'MedicalCard',null,'MedicalCard');
+                    sforce.console.setCustomConsoleComponentVisible(false);
+                } else {
+                    var url = '/apex/CusEMedicalCardPDF?isPDF=1&front='+medCardFrontUrl+'&back='+medCardBackUrl;
+                    sforce.one.navigateToURL(url, false);
+                }
+            }
+            function openNewTab_Account() {
+                var id = $("input[id$='param-selected-account-id']").val();
+                var name = $("input[id$='param-selected-account-name']").val();
+                if(id != null && id != '' && name != null && name != '') {
+                    if(sforce.console.isInConsole()) {
+                        var rnd = Math.floor(Math.random() * 1000000000000);
+                        sforce.console.openPrimaryTab(null, '/' + id + '?pageRnd=' + rnd, true, name, null, name + rnd);
+                        sforce.console.setCustomConsoleComponentVisible(false);
+                    } else {
+                        var url = "/" + id;
+                        sforce.one.navigateToURL(url, false);
+                    }
+                } else {
+                    $("input[id*='error-message-focus']").focus();
+                }
+            }
+
+            function searchPolicyType_Policy() {
+                var policyType = $("input[id$='param-selected-policy-type']").val();
+                var policyNumber = $("input[id$='param-selected-policy-number']").val();
+
+                if(policyNumber != null && policyNumber != '') {
+                    openNewTab_Policy(policyNumber, policyType, '');
+                }
+            }
+
+            function openNewTab_Policy(policyNo, policyType, certNo) {
+                if(policyNo != null && policyNo != '') {
+                    var accountId = $("input[id$='param-current-account-id']").val();
+                    if(sforce.console.isInConsole()) {
+                        var rnd = Math.floor(Math.random() * 1000000000000);
+                        if(policyType != null && policyType != '' && policyType != 'Group') {
+                            sforce.console.openPrimaryTab(null, '/apex/CSPolicyDetailsVFP' + '?pageRnd=' + rnd + '&policyNumber=' + policyNo + '&policyType=' + policyType + '&accountId=' + accountId, true, policyNo, null, policyNo + rnd);
+                        } else {
+                            sforce.console.openPrimaryTab(null, '/apex/CSPolicyDetailsVFP' + '?pageRnd=' + rnd + '&policyNumber=' + policyNo + '&policyType=' + policyType + '&certNo=' + certNo + '&accountId=' + accountId, true, policyNo, null, policyNo + rnd);
+                        }
+                        sforce.console.setCustomConsoleComponentVisible(false);
+                    } else {
+                        if(policyType != null && policyType != '' && policyType != 'Group') {
+                            var url = "/apex/CSPolicyDetailsVFP?policyNumber=" + policyNo + "&policyType=" + policyType + '&accountId=' + accountId;
+                            sforce.one.navigateToURL(url, false);
+                        } else {
+                            var url = "/apex/CSPolicyDetailsVFP?policyNumber=" + policyNo + "&policyType=" + policyType + '&certNo=' + certNo + '&accountId=' + accountId;
+                            sforce.one.navigateToURL(url, false);
+                        }
+                    }
+                }
+            }
+
+            function openNewTab_CRS(ssnNumber) {
+                if(ssnNumber != null && ssnNumber != '') {
+                    if(sforce.console.isInConsole()) {
+                        var rnd = Math.floor(Math.random() * 1000000000000);
+                        sforce.console.openPrimaryTab(null, '/apex/CRSInformationVFP' + '?pageRnd=' + rnd + '&GovtID=' + ssnNumber, true, 'CRS Information', null, 'CRS Information' + rnd);
+                        sforce.console.setCustomConsoleComponentVisible(false);
+                    } else {
+                        var url = "/apex/CRSInformationVFP?GovtID=" + ssnNumber;
+                        sforce.one.navigateToURL(url, false);
+                    }
+                }
+
+            }
+
+            function openNewTab_Esales(esalesId, name) {
+                if(esalesId != null && esalesId != '') {
+                    if(sforce.console.isInConsole()) {
+                        var rnd = Math.floor(Math.random() * 1000000000000);
+                        sforce.console.openPrimaryTab(null, '/apex/CSESalesApplicationDetailsVFP' + '?pageRnd=' + rnd + '&tid=' + esalesId + '&id=' + esalesId + '&type=Esales', true, name, null, name + rnd);
+                        sforce.console.setCustomConsoleComponentVisible(false);
+                    } else {
+                        var url = "/apex/CSESalesApplicationDetailsVFP?tid=" + esalesId;
+                        sforce.one.navigateToURL(url, false);
+                    }
+                }
+            }
+
+            function openNewTab_PendingMemo(policyNumber, requestId, type) {
+                if(policyNumber != null && policyNumber != '') {
+                    if(sforce.console.isInConsole()) {
+                        var rnd = Math.floor(Math.random() * 1000000000000);
+                        sforce.console.openPrimaryTab(null, '/apex/CSPendingMemoDetailsVFP' + '?pageRnd=' + rnd + '&policyNumber=' + policyNumber + '&requestId=' + requestId + '&type=' + type, true, 'Pending Memo Deatil', null, 'Pending Memo Deatil' + rnd);
+                        sforce.console.setCustomConsoleComponentVisible(false);
+                    } else {
+                        var url = "/apex/CSESalesApplicationDetailsVFP?policyNumber=" + policyNumber + '&requestId=' + requestId + '&type' + type;
+                        sforce.one.navigateToURL(url, false);
+                    }
+                }
+            }
+
+            function openNewTab_PolicyInClaimList(policyNumber, certNumber) {
+                CustomerProfileAF.getSelectedPolicyType_Claim(policyNumber, '');
+                var policyType = $("input[id$='param-selected-policy-type']").val();
+
+                if(policyNumber != null && policyNumber != '') {
+                    policyNumber = policyNumber.trim();
+                    openNewTab_Policy(policyNumber, policyType, certNumber);
+                }
+            }
+
+            //change by kit (add param sourceType)
+            function openNewTab_Claim(policyNumber, claimNumber, insuredName, productCode, certNumber, sourceType) {
+                CustomerProfileAF.getSelectedPolicyType_Claim(policyNumber, claimNumber);
+                var policyType = $("input[id$='param-selected-policy-type']").val();
+                if(claimNumber != null && claimNumber != '') {
+                    if(sforce.console.isInConsole()) {
+                        var rnd = Math.floor(Math.random() * 1000000000000);
+                        sforce.console.openPrimaryTab(null, '/apex/CSClaimDetailsVFP' + '?pageRnd=' + rnd + '&policyNumber=' + policyNumber + '&claimNo=' + claimNumber + '&policyType=' + policyType + '&certNumber=' + certNumber + '&sourceType=' + sourceType, true, claimNumber, null, claimNumber + rnd);
+                        sforce.console.setCustomConsoleComponentVisible(false);
+                    } else {
+                        var url = "/apex/CSClaimDetailsVFP?policyNumber=" + policyNumber + '&claimNo=' + claimNumber + '&policyType=' + policyType + '&certNumber=' + certNumber;
+                        sforce.one.navigateToURL(url, false);
+                    }
+                }
+            }
+
+            function openNewTab_Contact(messageId, ssn) {
+                if(messageId != null && messageId != '') {
+                    if(sforce.console.isInConsole()) {
+                        var rnd = Math.floor(Math.random() * 1000000000000);
+                        sforce.console.openPrimaryTab(null, '/apex/ContactDetailsVFP' + '?pageRnd=' + rnd + '&messageId=' + messageId + '&ssn=' + ssn, true, 'Contact Detail', null, 'Contact Deatil' + rnd);
+                        sforce.console.setCustomConsoleComponentVisible(false);
+                    } else {
+                        var url = "/apex/ContactDetailsVFP?messageId=" + +messageId + '&ssn=' + ssn;
+                        sforce.one.navigateToURL(url, false);
+                    }
+                }
+            }
+
+            //add by owen for okta MFA 
+            function oktaUnlockUser(event){
+                if (typeof event != undefined && event) {
+                    event.preventDefault();
+                } 
+                oktaFunctionAF.oktaUnlockUser();
+            }
+
+            function oktaResetSMS(event){
+                if (typeof event != undefined && event) {
+                    event.preventDefault();
+                } 
+                oktaFunctionAF.resetSMSFactor();
+            }
+
+        </script>
+        <!-- <div id="RPQPopUp" style="display:none;"> -->
+            <apex:actionStatus id="loader-icon">
+                <apex:facet name="start">
+                    <div id="RPQPopUp">
+                    <div class="bs col-xs-12 col-lg-12 loading-div" style="padding-top: 200px;padding-left:45%;">
+                        <span class="loading-helper"></span>
+                        <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+                </apex:facet>
+            </apex:actionStatus>
+       <!--  </div> -->
+        <apex:actionStatus id="loader-icon-summary">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading" style="padding: 0px;">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:outputPanel id="customer-profile-summary-panel">
+            <div style="text-align:left;text-decoration:underline;padding:5px 0 15px 0;color:#015ba7;">
+                <apex:outputLabel onclick="openNewTab_CRS('{!customerAccount.SSN__c}');" style="cursor:pointer;"> View CRS Data </apex:outputLabel>
+            
+               
+                
+            </div>
+                <!-- BEGIN HKITSFDC-4   -->
+        
+             <!-- END HKITSFDC-4  -->
+            <apex:outputPanel rendered="{!showCustomerBasicInformationPanel}">
+                <apex:pageBlock id="customer-profile-summary-block" mode="maindetail" title="Customer Profile">
+                    <apex:pageBlockSection >
+                        <apex:pageBlockSectionItem id="pageBlockSec">
+                           <apex:outputLabel >{!$Label.CP_Policy_Holder_Name_Eng} </apex:outputLabel>
+                            <apex:outputText >{!customerPerson.fullName}
+                                <!-- BEGIN HKITSFDC-4   -->
+                                 <apex:outputPanel rendered="{!IF(personHasAnyActiveComplaints == 'Red',true,false)}"><span id="red-complaint-flag"><svg width="16px" height="16px" viewBox="0 12 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" preserveAspectRatio="xMidYMid meet"><g>
+                                 <path fill="#FF0000" d="M34.7,73.3V48.4l34.6-10.1c0.7-0.2,1.2-0.8,1.2-1.5s-0.4-1.4-1-1.7L33.7,20.5c-0.5-0.2-1.1-0.2-1.6,0.2c-0.5,0.3-0.7,0.8-0.7,1.4v51.2H34.7z"/></g></svg></span></apex:outputPanel>
+                                  <apex:outputPanel rendered="{!IF(personHasAnyActiveComplaints == 'Grey',true,false)}"> <span id="grey-complaint-flag"><svg width="16px" height="16px" viewBox="0 12 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img"   preserveAspectRatio="xMidYMid meet"><g>
+                                  <path fill="#666666" d="M34.7,73.3V48.4l34.6-10.1c0.7-0.2,1.2-0.8,1.2-1.5s-0.4-1.4-1-1.7L33.7,20.5c-0.5-0.2-1.1-0.2-1.6,0.2c-0.5,0.3-0.7,0.8-0.7,1.4v51.2H34.7z"/></g></svg></span></apex:outputPanel>
+                                 <apex:outputPanel rendered="{!isPersonVIP}"><span id="vip-flag"> <svg width="14px" height="14px" viewBox="0 -4 128 128" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img"   preserveAspectRatio="xMidYMid meet"><path d="M114.75 17.2a2.375 2.375 0 0 0-1.94-1.01H90.5c-.98
+                     0-1.86.6-2.21 1.51L64 81.01L39.71 17.7a2.365 2.365 0 0 0-2.21-1.51H15.2a2.364 2.364 0 0 0-2.22 3.18l36.95 99.96c.01 0 .01 0 .01.01c.06.18.16.35.27.51c.02.02.04.04.05.06c.04.06.1.11.14.16c.1.11.2.21.32.31c.06.05.12.09.19.13c.13.08.26.14.4.2c.07.02.13.05.19.07c.21.06.43.1.66.1h23.71c.23
+                     0 .45-.04.65-.1c.07-.02.13-.05.2-.07c.14-.06.27-.12.4-.2c.07-.04.13-.08.19-.13c.12-.09.22-.19.32-.31c.05-.05.1-.1.14-.16c.02-.02.04-.03.05-.06c.11-.16.2-.33.27-.51v-.01l36.95-99.96c.25-.73.15-1.54-.29-2.17z" fill="#000000"></path></svg></span></apex:outputPanel>
+                                   <input type="hidden" id="isPersonVIP" value='{!isPersonVIP}'/>
+                             <input type="hidden" id="personHasAnyActiveComplaints" value='{!personHasAnyActiveComplaints}'/>
+                                 <!-- END HKITSFDC-4  -->
+                            </apex:outputText>   
+                          </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.CP_Policy_Holder_Name_Chi}</apex:outputLabel>
+                            <apex:outputText >{!customerPerson.chineseFullName}</apex:outputText>
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.Pol_Policyholder_ID_Passport_No}</apex:outputLabel>
+                            <apex:outputText >{!customerPerson.ssnNumber}</apex:outputText>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <!-- 20200306 - minghua - ILAS -->
+                            <apex:outputLabel >{!$Label.ILAS_RPQ_Status}</apex:outputLabel>
+                            <apex:outputText >{!customerPerson.rPQStatus}</apex:outputText>
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.CP_ID_Copy}</apex:outputLabel>
+                            <apex:outputLabel >
+                                <apex:outputPanel rendered="{!IF(customerPerson.idCopyReceivedInd == 'Y',true,false)}">
+                                    <img src="/img/checkbox_checked.gif" width="21" height="16" id="CP-ID-Copy-Recived-Date-Checked" />
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!IF(customerPerson.idCopyReceivedInd !='Y',true,false)}">
+                                    <img src="/img/checkbox_unchecked.gif" width="21" height="16" id="CP-ID-Copy-Recived-Date-UnChecked" />
+                                </apex:outputPanel>
+                            </apex:outputLabel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <!-- 20200306 - minghua - ILAS -->
+                            <apex:outputLabel >{!$Label.ILAS_RPQ_Effective_Date}</apex:outputLabel>
+                            <apex:outputText value="{0, date, dd/MM/yyyy}">
+                                <apex:param value="{!customerPerson.rPQEffectiveDate}" />
+                            </apex:outputText>
+                        </apex:pageBlockSectionItem>
+
+                        <!-- add by Jack on 2021-12-22 for project: IA AML CS part -->
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$ObjectType.New_Policy__c.Fields.Nationality__c.Label}</apex:outputLabel>
+                                <apex:outputText >{!customerPerson.Nationality}</apex:outputText>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$ObjectType.New_Policy__c.Fields.Place_of_Birth__c.Label}</apex:outputLabel>
+                            <apex:outputText >{!customerPerson.PlaceOfBirth}</apex:outputText>
+                        </apex:pageBlockSectionItem>
+                        <!-- add by Jack on 2021-12-22 for project: IA AML CS part -->
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.CP_Nationality_Proof}</apex:outputLabel>
+                            <apex:outputText >
+                                <apex:outputPanel rendered="{!IF(customerPerson.PassportProofRecInd =='Y',true,false)}">
+                                    <img src="/img/checkbox_checked.gif" width="21" height="16" id="CP-ID-Copy-Recived-Date-Checked" />
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!IF(customerPerson.PassportProofRecInd =='Y',false,true)}">
+                                    <img src="/img/checkbox_unchecked.gif" width="21" height="16" id="CP-ID-Copy-Recived-Date-UnChecked" />
+                                </apex:outputPanel>
+                            </apex:outputText>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <!-- 20200306 - minghua - ILAS -->
+                            <apex:outputLabel >{!$Label.Pol_Received_Date}</apex:outputLabel>
+                            <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                <apex:param value="{!customerPerson.IDcopyReceivedDate}" />
+                            </apex:outputText>
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.Pol_Gender}</apex:outputLabel>
+                            <apex:outputText >{!customerPerson.gender}</apex:outputText>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <!-- 20200306 - minghua - ILAS -->
+                            <apex:outputLabel >{!$Label.Pol_Received_Date}</apex:outputLabel>
+                            <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                <apex:param value="{!customerPerson.PassportProofRecDate}" />
+                            </apex:outputText>
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.CP_Age}</apex:outputLabel>
+                            <apex:outputText >{!customerAge}</apex:outputText>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <!-- 20200306 - minghua - ILAS -->
+                            <apex:outputLabel >{!$Label.Pol_Date_of_Birth}</apex:outputLabel>
+                            <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                <apex:param value="{!customerPerson.birthDateInDate}" />
+                            </apex:outputText>
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel for="homePhone">Home Number</apex:outputLabel>
+                            <support:clickToDial number="{!customerPerson.homePhoneNo }" />
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <!-- 20200306 - minghua - ILAS -->
+                            <apex:outputLabel for="mobilePhone">{!$Label.PC_Mobile_Number}</apex:outputLabel>
+                            <support:clickToDial number="{!customerPerson.mobilePhoneNo }" />
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.Email}</apex:outputLabel>
+                            <apex:outputText >{!customerPerson.emailAddress}</apex:outputText>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <!-- 20200306 - minghua - ILAS -->
+                            <apex:outputLabel for="workPhone">Work Number</apex:outputLabel>
+                            <support:clickToDial number="{!customerPerson.businessPhoneNo }" />
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.Permanent_Address}</apex:outputLabel>
+                            <apex:outputText >{!customerPerson.PermanentaddressLine1}{!customerPerson.PermanentaddressLine2}{!customerPerson.PermanentaddressLine3}{!customerPerson.PermanentaddressLine4}</apex:outputText>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <!-- 20200306 - minghua - ILAS -->
+                            <apex:outputLabel >{!$Label.CP_Sensitivity_Code}</apex:outputLabel>
+                            <apex:repeat value="{!sensitivityList}" var="s">
+                                <apex:outputText >{!s.sensitivityDesc},</apex:outputText>
+                            </apex:repeat>
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.CP_Permanent_Address_Proof}</apex:outputLabel>
+                            <apex:outputText >
+                                <apex:outputPanel rendered="{!IF(customerPerson.permanentAddressProofReceivedInd == 'Y',true,false)}">
+                                    <img src="/img/checkbox_checked.gif" width="21" height="16" id="CP-ID-Copy-Recived-Date-Checked" />
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!IF(customerPerson.permanentAddressProofReceivedInd == 'Y',false,true)}">
+                                    <img src="/img/checkbox_unchecked.gif" width="21" height="16" id="CP-ID-Copy-Recived-Date-UnChecked" />
+                                </apex:outputPanel>
+                            </apex:outputText>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.Pol_Received_Date}</apex:outputLabel>
+                            <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                <apex:param value="{!customerPerson.permanentAddressProofReceivedDate}" />
+                            </apex:outputText>
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.Residential_Address}</apex:outputLabel>
+                            <apex:outputText >{!customerPerson.ResidenceaddressLine1}&nbsp;{!customerPerson.ResidenceaddressLine2}&nbsp;{!customerPerson.ResidenceaddressLine3}&nbsp;{!customerPerson.ResidenceaddressLine4}&nbsp;{!customerPerson.ResidenceaddressConutry}</apex:outputText><!-- add by Jack on 2021-12-22 for project: IA AML CS part -->
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel />
+                            <apex:outputText />
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.CP_Residential_Address_Proof}</apex:outputLabel>
+                            <apex:outputText >
+                                <apex:outputPanel rendered="{!IF(customerPerson.residentialAddressProofReceivedInd == 'Y',true,false)}">
+                                    <img src="/img/checkbox_checked.gif" width="21" height="16" id="CP-ID-Copy-Recived-Date-Checked" />
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!IF(customerPerson.residentialAddressProofReceivedInd == 'Y',false,true)}">
+                                    <img src="/img/checkbox_unchecked.gif" width="21" height="16" id="CP-ID-Copy-Recived-Date-UnChecked" />
+                                </apex:outputPanel>
+                            </apex:outputText>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.Pol_Received_Date}</apex:outputLabel>
+                            <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                <apex:param value="{!customerPerson.residentialAddressProofReceivedDate}" />
+                            </apex:outputText>
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.Correspondence_Address}</apex:outputLabel>
+                            <apex:outputText >{!$Label.CP_Correspondence_Address_Label}</apex:outputText>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel />
+                            <apex:outputText />
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.CP_Correspondence_Address_Proof}</apex:outputLabel>
+                            <apex:outputText >
+                                <apex:outputPanel rendered="{!IF(customerPerson.correspondenceAddressProofReceivedDate!=null,true,false)}">
+                                    <img src="/img/checkbox_checked.gif" width="21" height="16" id="CP-ID-Copy-Recived-Date-Checked" />
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!IF(customerPerson.correspondenceAddressProofReceivedDate!=null,false,true)}">
+                                    <img src="/img/checkbox_unchecked.gif" width="21" height="16" id="CP-ID-Copy-Recived-Date-UnChecked" />
+                                </apex:outputPanel>
+                            </apex:outputText>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.Pol_Received_Date}</apex:outputLabel>
+                            <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                <apex:param value="{!customerPerson.correspondenceAddressProofReceivedDate}" />
+                            </apex:outputText>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.Hardcopy_Letter_Indicator}</apex:outputLabel>
+                            <apex:outputText >{!customerPerson.letterIndicator}</apex:outputText>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel />
+                            <apex:outputText />
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.Means_Of_Income}</apex:outputLabel>
+                            <apex:outputText >{!customerPerson.meansOfIncome}</apex:outputText>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel >{!$Label.Education_Level}</apex:outputLabel>
+                            <apex:outputText >{!customerPerson.educationLevel}</apex:outputText>
+                        </apex:pageBlockSectionItem>
+                    </apex:pageBlockSection>
+                    <hr style="height:2px;border:none;" color="#236fbd" />
+                </apex:pageBlock>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <!-- minghua - 20221010 - JOBR-184 - JOBR-221 -->
+        <apex:actionFunction name="healthMigration" action="{!healthMigration}" reRender="health-migration-panel" status="loader-icon-health-migration"></apex:actionFunction>
+        <apex:actionStatus id="loader-icon-health-migration">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading" style="padding: 0px;">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:outputPanel id="health-migration-panel" rendered="{!preloadPH!=null}">
+            <apex:pageBlock id="health-migration-block" mode="maindetail" title="Health Transfer">
+                <apex:pageBlockSection >
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel >{!transField['HealthOptOut']}</apex:outputLabel>
+                        <apex:inputCheckbox onclick="healthMigration()" value="{!preloadPH.HealthMigration_Opt_out__c}"/>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                <hr style="height:2px;border:none;" color="#236fbd" />
+            </apex:pageBlock>
+        </apex:outputPanel>
+
+        <apex:actionStatus id="loader-icon-group-summary">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading" style="padding: 0px;">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:outputPanel id="customer-profile-group-panel">
+            <apex:outputPanel rendered="{!showGroupSummary}">
+                <apex:repeat value="{!groupPersonSummaryList}" var="customer">
+                    <apex:pageBlock id="policy-summary-block" Title="{!$Label.CP_Policy_Summary}" mode="maindetail">
+                        <div style="width:1000px !important;padding-right:15px !important;padding-bottom:15px !important;">
+                            <apex:pageBlockTable value="{!customer}" var="p" columns="7">
+                                <apex:column headerValue="{!$Label.Policy_Number}">
+                                    <apex:outputText value="{!customer.policyNumber}" />
+                                </apex:column>
+                                <apex:column headerValue="{!$Label.Policy_Holder_Name}">
+                                    <apex:outputText value="{!customer.policyHolderName}" />
+                                </apex:column>
+                                <apex:column headerValue="{!$Label.CP_Policy_Type}">
+                                    <apex:outputText value="{!customer.productType}" />
+                                </apex:column>
+                                <apex:column headerValue="{!$Label.Pol_Policy_Status}">
+                                    <apex:outputText value="{!customer.policyStatus}" />
+                                </apex:column>
+                                <apex:column headerValue="{!$Label.Coverage_Period_From}">
+                                    <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                        <apex:param value="{!customer.policyEffectiveDate}" />
+                                    </apex:outputText>
+                                </apex:column>
+                                <apex:column headerValue="{!$Label.Coverage_Period_To}">
+                                    <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                        <apex:param value="{!customer.policyTerminationDate}" />
+                                    </apex:outputText>
+                                </apex:column>
+                                <!-- JR on EE# in SFDC -->
+                                <apex:column headerValue="No. of EE">
+                                    <apex:outputText value="{!customer.NumOfEmployee}">
+                                    </apex:outputText>
+                                </apex:column>
+                                <!-- JR on EE# in SFDC -->
+                            </apex:pageBlockTable>
+                        </div>
+                        <apex:pageBlockSection >
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!$Label.CP_Remarks_CFA}</apex:outputLabel>
+                                <apex:outputText value="{!customer.CFARemark_PolicyLevel }" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel />
+                                <apex:outputText />
+                            </apex:pageBlockSectionItem>
+                        </apex:pageBlockSection>
+                    </apex:pageBlock>
+
+                    <apex:pageBlock id="member-profile-block" title="{!$Label.CP_Member_Profile}" mode="maindetail">
+                        <apex:pageBlockSection >
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!$Label.CP_Cert_No}</apex:outputLabel>
+                                <apex:outputText >{!customer.certificateNo}</apex:outputText>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!$Label.Pol_Person_Insured_Name}</apex:outputLabel>
+                                <apex:outputText >{!customer.fullName}
+                                    <!-- BEGIN HKITSFDC-4   -->
+                               
+                                 <apex:outputPanel rendered="{!IF(customer.hasAnyMemberActiveComplaints == 'Red',true,false)}"><span><svg width="16px" height="16px" viewBox="0 12 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" preserveAspectRatio="xMidYMid meet"><g>
+                                 <path fill="#FF0000" d="M34.7,73.3V48.4l34.6-10.1c0.7-0.2,1.2-0.8,1.2-1.5s-0.4-1.4-1-1.7L33.7,20.5c-0.5-0.2-1.1-0.2-1.6,0.2c-0.5,0.3-0.7,0.8-0.7,1.4v51.2H34.7z"/></g></svg></span></apex:outputPanel>
+                                  <apex:outputPanel rendered="{!IF(customer.hasAnyMemberActiveComplaints == 'Grey',true,false)}"> <span><svg width="16px" height="16px" viewBox="0 12 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img"   preserveAspectRatio="xMidYMid meet"><g>
+                                  <path fill="#666666" d="M34.7,73.3V48.4l34.6-10.1c0.7-0.2,1.2-0.8,1.2-1.5s-0.4-1.4-1-1.7L33.7,20.5c-0.5-0.2-1.1-0.2-1.6,0.2c-0.5,0.3-0.7,0.8-0.7,1.4v51.2H34.7z"/></g></svg></span></apex:outputPanel>
+                                 <apex:outputPanel rendered="{!customer.isMemberVIP}"><span> <svg width="14px" height="14px" viewBox="0 -4 128 128" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img"   preserveAspectRatio="xMidYMid meet"><path d="M114.75 17.2a2.375 2.375 0 0 0-1.94-1.01H90.5c-.98
+                     0-1.86.6-2.21 1.51L64 81.01L39.71 17.7a2.365 2.365 0 0 0-2.21-1.51H15.2a2.364 2.364 0 0 0-2.22 3.18l36.95 99.96c.01 0 .01 0 .01.01c.06.18.16.35.27.51c.02.02.04.04.05.06c.04.06.1.11.14.16c.1.11.2.21.32.31c.06.05.12.09.19.13c.13.08.26.14.4.2c.07.02.13.05.19.07c.21.06.43.1.66.1h23.71c.23
+                     0 .45-.04.65-.1c.07-.02.13-.05.2-.07c.14-.06.27-.12.4-.2c.07-.04.13-.08.19-.13c.12-.09.22-.19.32-.31c.05-.05.1-.1.14-.16c.02-.02.04-.03.05-.06c.11-.16.2-.33.27-.51v-.01l36.95-99.96c.25-.73.15-1.54-.29-2.17z" fill="#000000"></path></svg></span></apex:outputPanel>
+                                </apex:outputText>
+                                 <!-- END HKITSFDC-4  -->
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!$Label.Policy_Number}</apex:outputLabel>
+                                <apex:outputText >{!customer.policyNumber}</apex:outputText>
+                            </apex:pageBlockSectionItem>
+
+                            <!-- CS Member Level Jack add-->
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['Nationality']}</apex:outputLabel>
+                                <apex:outputText >{!customer.nationality}</apex:outputText>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!$Label.Pol_Plan_Type}</apex:outputLabel>
+                                <apex:outputText >{!customer.productType}</apex:outputText>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!$Label.Coverage_Period_From}</apex:outputLabel>
+                                <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                    <apex:param value="{!customer.effectiveDate}" />
+                                </apex:outputText>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!$Label.Coverage_Period_To}</apex:outputLabel>
+                                <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                    <apex:param value="{!customer.terminationDate}" />
+                                </apex:outputText>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!$Label.Pol_Member_Status}</apex:outputLabel>
+                                <apex:outputText value="{!customer.memberStatusDisplay}" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!$Label.CP_Remarks_Claims}</apex:outputLabel>
+                                <apex:outputText value="{!customer.claimRemark}" />
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!$Label.Relationship}</apex:outputLabel>
+                                <apex:outputText value="{!customer.InsurableInterestReason}" />
+                            </apex:pageBlockSectionItem>
+                            <!-- Hardcopy Indicator added start-->
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!$Label.Hardcopy_Medical_Card_Indicator}</apex:outputLabel>
+                                <apex:outputText value="{!customer.medCardIndicator}" />
+                            </apex:pageBlockSectionItem>
+                            <!-- Hardcopy Indicator added end-->
+
+                            <!-- CS Member Level Jack add-->
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['OfficeTelNo']}</apex:outputLabel>
+                                <apex:outputText >{!customer.OfficeTelNo}</apex:outputText>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['ResidentTelNo']}</apex:outputLabel>
+                                <apex:outputText >{!customer.ResidentTelNo}</apex:outputText>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['MobileNo']}</apex:outputLabel>
+                                <apex:outputText >{!customer.MobileNo}</apex:outputText>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['CorrespondenceAddress']}</apex:outputLabel>
+                                <apex:outputText >{!customer.CorrespondenceAddress}<span style="color:red;font-size:8px;{!IF(customer.addressValidFlag == '0','','display:none;')}" ><br/>*This address is invalid</span></apex:outputText>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['Email']}</apex:outputLabel>
+                                <apex:outputText >{!customer.EmailAddress}<span style="color:red;font-size:8px;{!IF(customer.emailValidFlag == '0','','display:none;')}" ><br/>*This Email address is invalid</span></apex:outputText>
+                            </apex:pageBlockSectionItem>
+                            <!-- CS Member Level Jack add-->
+                        </apex:pageBlockSection>
+                    </apex:pageBlock>
+                    <hr style="height:2px;border:none;" color="#236fbd" />
+                    <br/>
+                </apex:repeat>
+                
+            </apex:outputPanel>
+        </apex:outputPanel>
+        
+      
+        
+        <!-- Rancho_CR47_20210414 portal profile start Loading-->
+        <apex:actionStatus id="loader-icon-portal-profile">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <!-- Rancho_CR47_20210414 Information -->
+        <apex:actionFunction name="editAction" action="{!editAction}" reRender="customer-profile-portal-profile-panel" status="loader-icon-portal-profile"></apex:actionFunction>
+        <apex:actionFunction name="resetPasswordAction" action="{!resetPasswordAction}" reRender="customer-profile-portal-profile-panel" status="loader-icon-portal-profile"></apex:actionFunction>
+        <!-- JOBR-355 add by owen to show Okta Muti-Factor Authentication-->
+        <apex:actionFunction action="{!oktaUnlockUser}" name="oktaUnlockUser" namespace="oktaFunctionAF" reRender="customer-profile-portal-profile-panel" status="loader-icon-portal-profile" />
+        <apex:actionFunction action="{!resetSMSFactor}" name="resetSMSFactor" namespace="oktaFunctionAF" reRender="customer-profile-portal-profile-panel" status="loader-icon-portal-profile" />
+        <apex:outputPanel id="customer-profile-portal-profile-panel">
+        <apex:outputPanel rendered="{!displayPortalProfile}"><!-- Rancho_CR47Issue_20211005 -->
+            <apex:pageBlock id="portal-profile-output" Title="{!$Label.CP_Portal_Profile}" mode="maindetail">
+                <apex:pageBlockButtons location="top">
+                    <!-- add by Jack on 2021-12-20 for project: AH23463 edit button no response -->
+                    <!-- <apex:commandButton value="Edit" action="{!editAction}" rendered="{!isEditable}" reRender="customer-profile-portal-profile-panel"/>
+                    <apex:commandButton value="Reset Password" action="{!resetPasswordAction}" rendered="{!isResetPassword}" reRender="customer-profile-portal-profile-panel"/>
+                    <apex:commandButton value="Save" onclick="saveActionFunction();" rendered="{!isSave}" reRender="false"/>
+                    <apex:commandButton value="Cancel" onclick="cancelPortalProfile();" rendered="{!isCancel}" reRender="false"/> -->
+                    <apex:outputPanel rendered="{!isEditable}"><div class="btn" onclick="editAction();" >Edit</div></apex:outputPanel>
+                    <apex:outputPanel rendered="{!isResetPassword}"><div class="btn" onclick="resetPasswordAction();" >Reset Password</div></apex:outputPanel>
+                    <apex:outputPanel rendered="{!isSave}"><div class="btn" onclick="saveActionFunction();" >Save</div></apex:outputPanel>
+                    <apex:outputPanel rendered="{!isCancel}"><div class="btn" onclick="cancelPortalProfile();" >Cancel</div></apex:outputPanel>
+                    <!-- add by Jack on 2021-12-20 for project: AH23463 edit button no response -->
+                    <!-- JOBR-355 add by owen to show Okta Muti-Factor Authentication-->
+                    <apex:outputPanel rendered="{!isOktaUser}"><div class="btn" onclick="oktaUnlockUser();" >Unlock Okta</div></apex:outputPanel>
+                    <apex:outputPanel rendered="{!isOktaUser}"><div class="btn" onclick="oktaResetSMS();" >Reset SMS Factor</div></apex:outputPanel>
+                </apex:pageBlockButtons>
+                <apex:outputPanel id="customer-profile-error-message-panel">
+                    <input id="error-message-focus" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" onfocus="this.onblur();" />
+                    <apex:pageMessages escape="false"></apex:pageMessages>
+                </apex:outputPanel>
+                <div style="width:1000px !important;padding-right:15px !important;padding-bottom:15px !important;">
+                    <!-- Output Information -->
+                    <apex:outputPanel rendered="{!!isEditContent}">
+                        <apex:pageBlockSection >
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['LoginEmail']}</apex:outputLabel>
+                                <apex:outputField value="{!portalProfile.Email}"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['HKIDPassportCertNo']}</apex:outputLabel>
+                                <apex:outputField value="{!customerAccount.SSN__c}"/>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['CPVerificationEmail']}</apex:outputLabel>
+                                <apex:outputField value="{!portalProfile.Notification_Email_Address__c}"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['countrycode']}</apex:outputLabel>
+                                <apex:outputField value="{!portalProfile.Contact_No_Country_Code__c}"/>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['ContactNumber']}</apex:outputLabel>
+                                <apex:outputField value="{!portalProfile.Contact_No__c}"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['NotificationChannel']}</apex:outputLabel>
+                                <apex:outputField value="{!portalProfile.Notification_Channel__c}"/>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['NotificationLanguage']}</apex:outputLabel>
+                                <!-- <apex:outputField value="{!portalProfile.Notification_Language__c}"/> -->
+                                <apex:outputField value="{!portalProfile.Notification_Language__c}"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['AccountStatus']}</apex:outputLabel>
+                                <apex:outputPanel >
+                                    <apex:outputText value="{!accountStatus}"/>
+                                    <apex:commandButton value="Unlock" onclick="unlockAccountStatus();"  rendered="{!isAccountStatusUnlock}" reRender="false"/>
+                                    <apex:commandButton value="Active" onclick="activeAccountStatus();"  rendered="{!isAccountStatusActive}" reRender="false"/>
+                                </apex:outputPanel>
+                            </apex:pageBlockSectionItem>
+
+                            <!-- Rancho_JOBR355_20240115 - add okta factor fields -->
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!$ObjectType.User.fields.OktaEmailFactorId__c.Label}</apex:outputLabel>
+                                <apex:outputField value="{!portalProfile.OktaEmailFactorId__c}"/>    
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!$ObjectType.User.fields.OktaSMSFactorId__c.Label}</apex:outputLabel>
+                                <apex:outputField value="{!portalProfile.OktaSMSFactorId__c}"/>    
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['LastLoginTime']}</apex:outputLabel>
+                                <apex:outputField value="{!portalProfile.LastLoginDate}"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['LastPasswordResetTime']}</apex:outputLabel>
+                                <apex:outputText value="{0, date, yyyy/MM/dd h:mm a}">
+                                    <apex:param value="{!lastPasswordChangeDate}" />
+                                </apex:outputText>
+                            </apex:pageBlockSectionItem>
+                            <!-- Reset Password -->
+                            <apex:pageBlockSectionItem rendered="{!isResetPasswordContent}">
+                                <apex:outputLabel >{!transField['SetNewPassword']}</apex:outputLabel>
+                                <apex:outputPanel >
+                                    <apex:inputText value="{!newAccPassword}"/>
+                                    <apex:commandButton value="Confirm" onclick="passwordUpdateAction();" rendered="{!isConfirm}" reRender="false"/>
+                                </apex:outputPanel>
+                            </apex:pageBlockSectionItem>
+                        </apex:pageBlockSection>
+                    </apex:outputPanel>
+                    <!-- Input Information -->
+                    <apex:outputPanel rendered="{!isEditContent}">
+                        <apex:pageBlockSection >
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['LoginEmail']}</apex:outputLabel>
+                                <apex:inputField value="{!portalProfile.Email}"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['HKIDPassportCertNo']}</apex:outputLabel>
+                                <apex:inputField value="{!customerAccount.SSN__c}"/>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['CPVerificationEmail']}</apex:outputLabel>
+                                <apex:inputField value="{!portalProfile.Notification_Email_Address__c}"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['countrycode']}</apex:outputLabel>
+                                <apex:inputField value="{!portalProfile.Contact_No_Country_Code__c}"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['ContactNumber']}</apex:outputLabel>
+                                <apex:inputField value="{!portalProfile.Contact_No__c}"/>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['NotificationChannel']}</apex:outputLabel>
+                                <apex:inputField value="{!portalProfile.Notification_Channel__c}"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['NotificationLanguage']}</apex:outputLabel>
+                                <!-- <apex:inputField value="{!portalProfile.Notification_Language__c}"/> -->
+                                <apex:selectList value="{!portalProfile.Notification_Language__c}" multiselect="false" size="1">
+                                    <apex:selectOptions value="{!nlItems}"/>
+                                </apex:selectList>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['AccountStatus']}</apex:outputLabel>
+                                <apex:outputText value="{!accountStatus}"/>
+                            </apex:pageBlockSectionItem>
+                            
+                            <!-- Rancho_JOBR355_20240115 - add okta factor fields -->
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!$ObjectType.User.fields.OktaEmailFactorId__c.Label}</apex:outputLabel>
+                                <apex:outputField value="{!portalProfile.OktaEmailFactorId__c}"/>    
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!$ObjectType.User.fields.OktaSMSFactorId__c.Label}</apex:outputLabel>
+                                <apex:outputField value="{!portalProfile.OktaSMSFactorId__c}"/>    
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['LastLoginTime']}</apex:outputLabel>
+                                <apex:outputField value="{!portalProfile.LastLoginDate}"/>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >{!transField['LastPasswordResetTime']}</apex:outputLabel>
+                                <apex:outputText value="{0, date, yyyy/MM/dd h:mm a}">
+                                    <apex:param value="{!lastPasswordChangeDate}" />
+                                </apex:outputText>
+                            </apex:pageBlockSectionItem>
+                        </apex:pageBlockSection>
+                    </apex:outputPanel>
+                </div>
+            </apex:pageBlock>
+            <hr style="height:2px;border:none;" color="#236fbd"/>
+            <br/>
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <!-- Rancho_CR47_20210414 portal profile end-->
+
+        <apex:outputPanel id="customer-profile-policy-information-panel">
+            <apex:outputPanel >
+                <div id="customer-profile-policy-information-div">
+                    <div class="customer-profile-policy">
+                        <div style="padding-bottom:15px !important;">
+                            <Label class="block-header">{!$Label.Pol_Policy_Information}</Label>
+                        </div>
+                    </div>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <apex:actionStatus id="loader-icon-individual-ph">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:actionFunction action="{!handleNext_Ind_PH}" name="handleNext_Ind_PH" namespace="CustomerProfileAF" reRender="customer-profile-individual-ph-detail-panel" />
+        <apex:actionFunction action="{!handlePrevious_Ind_PH}" name="handlePrevious_Ind_PH" namespace="CustomerProfileAF" reRender="customer-profile-individual-ph-detail-panel" />
+        <apex:outputPanel id="customer-profile-individual-ph-detail-panel">
+            <apex:outputPanel rendered="{!showIndividualPanel_PH}">
+                <div class="table-width">
+                    <apex:pageBlock title="{!$Label.CP_Individual_Policy_as_Policy_Holder}">
+                        <!-- 20200610 - minghua - levyII columns="15"-->   <!--Connor JOBR-43 column 16->15  -->
+                        <apex:pageBlockTable value="{!individualPolicyList_PH}" var="p" columns="16" first="{!StartIndex_Ind_PH}" rows="{!PageSize_Policy}">
+                            <apex:column headerValue="{!$Label.Policy_Number}" style="width:50px !important;">
+                                <apex:outputText value="">
+                                    <div class="onclick-pointer" style="text-decoration:underline;" onclick="openNewTab_Policy('{!p.policyNumber}','{!p.policyType}','');">{!p.policyNumber}</div>
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Policy_Holder_Name}">
+                                <apex:outputText value="">
+                                    <div class="onclick-pointer" style="text-decoration:underline" onclick="CustomerProfileAF.goToCustomerProfile('{!p.holder.ssnNumber}');">{!p.holder.fullName}</div>
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Policy_Insured}">
+                                <apex:variable value="{!1}" var="rowNum" />
+                                <apex:repeat value="{!p.insuredList}" var="insured">
+                                    <apex:outputText value="">
+                                        <apex:outputPanel rendered="{!rowNum!=1}">&nbsp;,</apex:outputPanel>
+                                        <div class="onclick-pointer" style="text-decoration:underline" onclick="CustomerProfileAF.goToCustomerProfile('{!insured.ssnNumber}');">{!insured.fullName}</div>
+                                    </apex:outputText>
+                                </apex:repeat>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Policy_Holder_HKID_Passport}">
+                                <apex:outputText value="{!p.holder.ssnNumber}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Status}">
+                                <apex:outputText value="{!p.policyStatusDisplayName}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Pol_Payment_Mode}">
+                                <apex:outputText value="{!p.paymentMode}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Pol_Modal_Premium}">
+                                <apex:outputText value="{!p.currencySymbol} {!p.paymentAmt}" />
+                            </apex:column>
+
+                            <!-- 20200610 - minghua - levyII -->
+                            <apex:column headerValue="{!transField['Levy']}">
+                                <apex:outputText value="{!p.currencySymbol} {!p.nextLevy}" />
+                            </apex:column>
+                            <apex:column headerValue="{!transField['Levy_Next_Premium_Including_Levy']}">
+                                <apex:outputText value="{!p.currencySymbol} {!p.modalPremiumIncludeLevy}" />
+                            </apex:column>
+                            
+                            <apex:column headerValue="{!$Label.Pol_Effective_Date}">
+                                <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                    <apex:param value="{!p.effDateInDate}" />
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Cancellation_Date}">
+                                <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                    <!--<apex:param value="{!p.termDateInDate}" />-->
+                                    <!--SPS-165-->
+                                    <apex:param value="{!p.cancelDate}"/>
+                                    <!--SPS-165-->
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Sourse_Sytem}">
+                                <apex:outputText value="{!p.sourceSystem}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Pro_Product_Name}">
+                                <apex:outputText value="{!p.planName}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Product_Code}">
+                                <apex:outputText value="{!p.productCode}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Company_Code}">
+                                <apex:OutputText value="{!IF(p.isLifePolicy, 'CLT','CGI')}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Pol_eMedical_Card}"> <!--Connor JOBR-43 -->
+                                <apex:outputPanel rendered="{!p.EMedicalCardCount>0}">
+                                  <button type="button" onclick="CustomerProfileAF.getIndividualEMedicalCardImages('{!p.policyNumber}','{!p.holder.ssnNumber}')">Show</button>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!p.EMedicalCardCount==0}">N/A</apex:outputPanel>
+                            </apex:column>
+                        </apex:pageBlockTable>
+                        <div style="padding-top:10px;">
+                            <apex:outputPanel rendered="{!HasPrevious_Ind_PH}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handlePrevious_Ind_PH();">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasPrevious_Ind_PH}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                            <apex:outputPanel rendered="{!HasNext_Ind_PH}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handleNext_Ind_PH();">Next Page&gt;</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasNext_Ind_PH}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+                        </div>
+                    </apex:pageBlock>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <apex:actionStatus id="loader-icon-individual-pi">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading" style="padding-top:30px;">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:actionFunction action="{!handleNext_Ind_PI}" name="handleNext_Ind_PI" namespace="CustomerProfileAF" reRender="customer-profile-individual-pi-detail-panel" />
+        <apex:actionFunction action="{!handlePrevious_Ind_PI}" name="handlePrevious_Ind_PI" namespace="CustomerProfileAF" reRender="customer-profile-individual-pi-detail-panel" />
+        <apex:outputPanel id="customer-profile-individual-pi-detail-panel">
+            <apex:outputPanel rendered="{!showIndividualPanel_PI}">
+                <div class="table-width">
+                    <apex:pageBlock title="{!$Label.CP_Individual_Policy_as_Person_Insured}">
+                        <apex:pageBlockTable value="{!individualPolicyList_PI}" var="p" columns="13" first="{!StartIndex_Ind_PI}" rows="{!PageSize_Policy}">
+                            <apex:column headerValue="{!$Label.Policy_Number}">
+                                <apex:outputText value="">
+                                    <div class="onclick-pointer" style="text-decoration:underline" onclick="openNewTab_Policy('{!p.policyNumber}','{!p.policyType}','');">{!p.policyNumber}</div>
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Policy_Holder_Name}">
+                                <apex:outputText value="">
+                                    <div class="onclick-pointer" style="text-decoration:underline" onclick="CustomerProfileAF.goToCustomerProfile('{!p.holder.ssnNumber}');">{!p.holder.fullName}</div>
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Policy_Insured}">
+                                <apex:variable value="{!1}" var="rowNum" />
+                                <apex:repeat value="{!p.insuredList}" var="insured">
+                                    <apex:outputText value="">
+                                        <apex:outputPanel rendered="{!rowNum!=1}">&nbsp;,</apex:outputPanel>
+                                        <div class="onclick-pointer" style="text-decoration:underline" onclick="CustomerProfileAF.goToCustomerProfile('{!insured.ssnNumber}');">{!insured.fullName}</div>
+                                    </apex:outputText>
+                                </apex:repeat>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Policy_Holder_HKID_Passport}">
+                                <apex:outputText value="{!p.holder.ssnNumber}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Status}">
+                                <apex:outputText value="{!p.policyStatusDisplayName}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Pol_Payment_Mode}">
+                                <apex:outputText value="{!p.paymentMode}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Pol_Modal_Premium}">
+                                <apex:outputText value="{!p.currencySymbol} {!p.paymentAmt}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Pol_Effective_Date}">
+                                <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                    <apex:param value="{!p.effDateInDate}" />
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Cancellation_Date}">
+                                <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                    <!--<apex:param value="{!p.termDateInDate}" />-->
+                                    <!--SPS-165-->
+                                    <apex:param value="{!p.cancelDate}"/>
+                                    <!--SPS-165-->
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Sourse_Sytem}">
+                                <apex:outputText value="{!p.sourceSystem}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Pro_Product_Name}">
+                                <apex:outputText value="{!p.planName}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Product_Code}">
+                                <apex:outputText value="{!p.productCode}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Company_Code}">
+                                <apex:OutputText value="{!IF(p.isLifePolicy, 'CLT','CGI')}" />
+                            </apex:column>
+                        </apex:pageBlockTable>
+                        <div style="padding-top:10px;">
+                            <apex:outputPanel rendered="{!HasPrevious_Ind_PI}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handlePrevious_Ind_PI();">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasPrevious_Ind_PI}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                            <apex:outputPanel rendered="{!HasNext_Ind_PI}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handleNext_Ind_PI();">Next Page&gt;</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasNext_Ind_PI}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+                        </div>
+                    </apex:pageBlock>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <apex:actionStatus id="loader-icon-group">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading" style="padding: 0px;">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:actionFunction action="{!handleNext_Group}" name="handleNext_Group" namespace="CustomerProfileAF" reRender="customer-profile-group-detail-panel" />
+        <apex:actionFunction action="{!handlePrevious_Group}" name="handlePrevious_Group" namespace="CustomerProfileAF" reRender="customer-profile-group-detail-panel" />
+        <apex:outputPanel id="customer-profile-group-detail-panel">
+            <apex:outputPanel rendered="{!showGroupPanel}">
+                <div class="table-width">
+                    <apex:pageBlock title="{!$Label.Pol_Group_Policy}"> <!--Connor JOBR-43 column 12->13   -->
+                        <apex:pageBlockTable value="{!groupPersonList}" columns="13" var="group" first="{!StartIndex_Group}" rows="{!PageSize_Policy}">
+                            <apex:column headerValue="{!$Label.Policy_Number}">
+                                <apex:outputText value="">
+                                    <div class="onclick-pointer" style="text-decoration:underline" onclick="openNewTab_Policy('{!group.policyNumber}','Group','{!group.certificateNo}');">{!group.policyNumber}</div>
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Policy_Holder_Name}">
+                                <apex:outputText value="{!group.policyHolderName}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Cert_No}">
+                                <apex:outputText value="{!group.certificateNo}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Pol_Member_Name}">
+                                <apex:outputText value="">
+                                    <div class="onclick-pointer" style="text-decoration:underline" onclick="CustomerProfileAF.goToCustomerProfile('{!group.ssnNumber}');">{!group.fullName}</div>
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.PC_HKID_Passport_No}">
+                                <apex:outputText value="{!group.ssnNumber}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_DOB}">
+                                <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                    <apex:param value="{!group.birthDateInDate}" />
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Relationship}">
+                                <apex:outputText value="{!group.InsurableInterestReason}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Pol_Policy_Status}">
+                                <apex:outputText value="{!group.policyStatus}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Pol_Member_Status}">
+                                <apex:outputText value="{!group.memberStatusDisplay}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Coverage_Period_From}">
+                                <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                    <apex:param value="{!group.effectiveDate}" />
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Coverage_Period_To}">
+                                <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                    <apex:param value="{!group.terminationDate}" />
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Product_Type}">
+                                <apex:outputText value="{!group.productType}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Pol_eMedical_Card}"> <!--Connor JOBR-43 -->
+                                <apex:outputPanel rendered="{!group.hasEMedicalCard}">
+                                    <button type="button" onclick="CustomerProfileAF.getGroupEMedicalCardImages('{!group.policyNumber}','{!group.certificateNo}')">Show</button>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!!group.hasEMedicalCard}">N/A</apex:outputPanel>
+                            </apex:column>
+                        </apex:pageBlockTable>
+                        <div style="padding-top:10px;">
+                            <apex:outputPanel rendered="{!HasPrevious_Group}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handlePrevious_Group();">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasPrevious_Group}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                            <apex:outputPanel rendered="{!HasNext_Group}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handleNext_Group();">Next Page&gt;</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasNext_Group}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+                        </div>
+                    </apex:pageBlock>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <apex:actionStatus id="loader-icon-fam">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading" style="padding-top:30px;">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:actionFunction action="{!handleNext_Fam}" name="handleNext_Fam" namespace="CustomerProfileAF" reRender="customer-profile-family-detail-panel" />
+        <apex:actionFunction action="{!handlePrevious_Fam}" name="handlePrevious_Fam" namespace="CustomerProfileAF" reRender="customer-profile-family-detail-panel" />
+        <apex:outputPanel id="customer-profile-family-detail-panel">
+            <apex:outputPanel rendered="{!showFamilyPanel}">
+                <div class="table-width">
+                    <apex:pageBlock title="{!$Label.CP_Family_Relationship}">
+                        <apex:pageBlockTable value="{!individualFamilyList}" columns="3" var="family" first="{!StartIndex_Fam}" rows="{!PageSize}">
+                            <apex:column headerValue="{!$Label.Acc_Name}">
+                                <apex:outputText value="{!family.name}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Relationship}">
+                                <apex:outputText value="{!family.relationship}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.PC_HKID_Passport_No}">
+                                <apex:outputText value="{!family.SSN}" />
+                            </apex:column>
+                        </apex:pageBlockTable>
+                        <div style="padding-top:10px;">
+                            <apex:outputPanel rendered="{!HasPrevious_Fam}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handlePrevious_Fam();">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasPrevious_Fam}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                            <apex:outputPanel rendered="{!HasNext_Fam}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handleNext_Fam();">Next Page&gt;</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasNext_Fam}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+                        </div>
+                    </apex:pageBlock>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <apex:actionStatus id="loader-icon-change">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading" style="padding: 10px 0;">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:actionFunction action="{!handleNext_Change}" name="handleNext_Change" namespace="CustomerProfileAF" reRender="customer-profile-policy-change-detail-panel"/>
+        <apex:actionFunction action="{!handlePrevious_Change}" name="handlePrevious_Change" namespace="CustomerProfileAF" reRender="customer-profile-policy-change-detail-panel"/>
+        <apex:outputPanel id="customer-profile-policy-change-detail-panel">
+            <apex:outputPanel rendered="{!showPolicyChangePanel}">
+                <div class="table-width">
+                    <apex:pageBlock title="{!$Label.CP_Policy_Change_Histories}">
+                        <apex:pageBlockTable value="{!policyChangeList}" columns="9" var="change" first="{!StartIndex_Change}" rows="{!PageSize}">
+                            <apex:column headerValue="{!$Label.CP_Request_ID}">
+                                <a href='{!change.appianRequestURL}' target='_blank'>
+                                    <apex:outputText value="{!change.requestId}" />
+                                </a>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Date}">
+                                <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                    <apex:param value="{!change.submittedDateTime}" />
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Policy_Number}">
+                                <apex:outputText value="">
+                                    <div class="onclick-pointer" style="text-decoration:underline" onclick="CustomerProfileAF.getSelectedPolicyType('{!change.policyNumber}');">{!change.policyNumber}</div>
+                                </apex:outputText>
+                            </apex:column>
+                            <!-- Rancho_HKITSFDC193_20250409 - update policy change type label -->
+                            <apex:column headerValue="{!$Label.Pol_Policy_Change_Type_Appian}">
+                                <apex:outputText value="{!change.workType}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Pol_Policy_Change_Sub_Type}">
+                                <apex:outputText value="{!change.workItem}" />
+                            </apex:column>
+                            <!-- Rancho_HKITSFDC193_20250409 - add work item -->
+                            <apex:column headerValue="{!$Label.Pol_Work_Type_EN}">
+                                <apex:outputText value="{!change.salesForceWorkType}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Pol_Work_Type_TC}">
+                                <apex:outputText value="{!change.salesForceWorkTypeTC}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Status}">
+                                <!--HKITSFDC-44 BEGIN-->
+                                <!--<apex:outputText value="{!change.UWStage}" />-->
+                                <apex:outputText value="Additional Information Required" rendered="{!change.UWStage != null && (change.UWStage == 'Pending Information' || change.UWStage == 'Work in Progress')}" />
+                                <apex:outputText value="Completed" rendered="{!change.UWStage != null && (change.UWStage == 'Request Closed' || contains(UPPER(change.UWStage),('COMPLETED')) ) }"/>
+                                <apex:outputText value="Cancel" rendered="{!change.UWStage != null && (change.UWStage == 'Request Cancelled' || change.UWStage == 'Request Termintated') }"/>
+                                <apex:outputText value="{!change.UWStage}" rendered="{!change.UWStage != null && (change.UWStage != 'Pending Information' && change.UWStage != 'Work in Progress' && change.UWStage != 'Request Closed' && change.UWStage != 'Request Cancelled' && change.UWStage != 'Request Termintated')}" />
+                                <!--HKITSFDC-44 END-->
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Portal_Status}">
+                                <apex:outputText >
+                                    <apex:outputPanel rendered="{!change.requestStatus!='Request Terminated'}">
+                                        <img src="/img/checkbox_checked.gif" width="21" height="16" id="para-is-portal-change-checked" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!change.requestStatus=='Request Terminated'}">
+                                        <img src="/img/checkbox_unchecked.gif" width="21" height="16" id="para-is-portal-change-unchecked" />
+                                    </apex:outputPanel>
+                                </apex:outputText>
+                            </apex:column>
+                        </apex:pageBlockTable>
+                        <div style="padding-top:10px;">
+                            <apex:outputPanel rendered="{!HasPrevious_Change}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handlePrevious_Change();">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasPrevious_Change}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                            <apex:outputPanel rendered="{!HasNext_Change}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handleNext_Change();">Next Page&gt;</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasNext_Change}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+                        </div>
+                    </apex:pageBlock>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <!-- 20200306 - minghua - ILAS -->
+        <apex:actionStatus id="loader-icon-rpq">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading" style="padding: 10px 0;">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:actionFunction action="{!handleNext_rpq}" name="handleNext_rpq" namespace="CustomerProfileAF" reRender="customer-profile-rpq-histories-detail-panel" />
+        <apex:actionFunction action="{!handlePrevious_rpq}" name="handlePrevious_rpq" namespace="CustomerProfileAF" reRender="customer-profile-rpq-histories-detail-panel" />
+        <apex:outputPanel id="customer-profile-rpq-histories-detail-panel">
+            <apex:outputPanel rendered="{!showRPQHistoryPanel}">
+                <div class="table-width">
+                    <apex:pageBlock title="{!$Label.ILAS_RPQ_History}">
+                        <apex:pageBlockTable value="{!rpqHistoryList}" columns="4" var="rpqHistory" first="{!StartIndex_rpq}" rows="{!PageSize}">
+                            <apex:column headerValue="{!$Label.ILAS_RPQ_Status}">
+                                <apex:outputText value="{!rpqHistory.rPQStatus}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.ILAS_RPQ_Effective_Date}">
+                                <apex:outputText value=" {0,date,EEE MMM d, yyyy}">
+                                    <apex:param value="{!rpqHistory.rPQEffectiveDate}"/>
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.ILAS_Update_Date}">
+                                <apex:outputText value="{!rpqHistory.rpqUpdateDateTimeString}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.ILAS_Update_From}">
+                                <apex:outputText value="{!rpqHistory.rPQUpdateSource}" />
+                            </apex:column>
+                        </apex:pageBlockTable>
+                        <div style="padding-top:10px;">
+                            <apex:outputPanel rendered="{!HasPrevious_rpq}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handlePrevious_rpq();">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasPrevious_rpq}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                            <apex:outputPanel rendered="{!HasNext_rpq}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handleNext_rpq();">Next Page&gt;</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasNext_rpq}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+                        </div>
+                    </apex:pageBlock>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <apex:actionStatus id="loader-icon-claim">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading" style="padding: 10px 0;">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <!-- HKITSFDC-51 BEGIN -->
+        <!--<apex:actionFunction action="{!handleNext_Claim}" name="handleNext_Claim" namespace="CustomerProfileAF" reRender="customer-profile-claim-detail-panel" />
+        <apex:actionFunction action="{!handlePrevious_Claim}" name="handlePrevious_Claim" namespace="CustomerProfileAF" reRender="customer-profile-claim-detail-panel" />-->
+        <apex:actionFunction action="{!handleNext_Claim}" name="handleNext_Claim" namespace="CustomerProfileAF" reRender="customer-profile-claim-detail-panel" oncomplete="claimHideLoading('claimNextPage');"/>
+        <apex:actionFunction action="{!handlePrevious_Claim}" name="handlePrevious_Claim" namespace="CustomerProfileAF" reRender="customer-profile-claim-detail-panel" oncomplete="claimHideLoading('claimPrevPage');"/>
+        <!-- HKITSFDC-51 END -->
+        <apex:outputPanel id="customer-profile-claim-detail-panel">
+            <apex:outputPanel rendered="{!showClaimPanel}">
+                <div class="table-width">
+                    <apex:pageBlock title="{!$Label.CP_Claim_Histories}">
+                        <!-- HKITSFDC-51 BEGIN -->
+                        <!--<apex:pageBlockTable value="{!claimList}" columns="11" var="claim" first="{!StartIndex_Claim}" rows="{!PageSize}">-->
+                        <apex:pageBlockTable value="{!claimList}" columns="11" var="claim" rows="{!PageSize}">    
+                        <!-- HKITSFDC-51 END -->
+                            <apex:column headerValue="{!$Label.Pol_Claim_No}">
+                                <apex:outputText value="">
+                                    <!-- Rancho_AH26614_20221214 - do not pass pi name -->
+                                    <!-- <div class="onclick-pointer" style="text-decoration:underline" onclick="openNewTab_Claim('{!claim.polNumber}','{!claim.claimNumber}','{!claim.benefitType}','{!claim.policyInsuredName}','{!claim.certNumber}');">{!claim.claimNumber}</div> -->
+                                    <div class="onclick-pointer" style="text-decoration:underline" onclick="openNewTab_Claim('{!claim.polNumber}','{!claim.claimNumber}',null,null,'{!claim.certNumber}');">{!claim.claimNumber}</div>
+                                </apex:outputText>
+                            </apex:column>
+                            <!-- 240412 Namster MRP-385 -->
+                            <apex:column headerValue="{!$Label.Submission_ID}">
+                                <apex:outputText value="{!claim.sfdcClaimNumber}" />
+                            </apex:column>
+                            <!-- 240412 Namster MRP-385 end -->
+                            <apex:column headerValue="{!$Label.Policy_No}">
+                                <apex:outputText value="">
+                                    <div class="onclick-pointer" style="text-decoration:underline" onclick="openNewTab_PolicyInClaimList('{!claim.polNumber}','{!claim.certNumber}');">{!claim.polNumber}</div>
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="Member Name">
+                                <apex:repeat value="{!claim.coverageList}" var="member_Name">
+                                    <apex:outputText value="{!member_Name.piName}" />
+                                    <apex:outputText value="," rendered="{!claim.coverageList.size > 1}" />
+
+                                </apex:repeat>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Pol_Claim_Type}(Portal)">
+                                <apex:outputText value="{!claim.claimTypeDisplay}" />
+
+                            </apex:column>
+                            <apex:column headerValue="Receive Date">
+                                <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                    <apex:param value="{!claim.submitDateInDate}" />
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="Claim Period From">
+                                <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                    <apex:param value="{!claim.consultationDateInDate}" />
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="Claim Period To">
+                                <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                    <apex:param value="{!claim.dischargeDateInDate}" />
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="Paid Amount">
+                                <apex:outputText value="{!claim.currencySymbol} {!claim.paidAmount}" />
+                            </apex:column>
+                            <apex:column headerValue="Internal Status">
+                                <apex:outputText value="{!claim.claimStatusDescription}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Portal_Status}">
+                                <apex:outputPanel rendered="{!claim.claimStatusDescription!='Cancelled' && claim.claimStatusDescription!='Reversal'}">
+                                    <img src="/img/checkbox_checked.gif" width="21" height="16" id="para-is-portal-claim-checked" />
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!!(claim.claimStatusDescription!='Cancelled' && claim.claimStatusDescription!='Reversal')}">
+                                    <img src="/img/checkbox_unchecked.gif" width="21" height="16" id="para-is-portal-claim-unchecked" />
+                                </apex:outputPanel>
+                            </apex:column>
+                        </apex:pageBlockTable>
+                        <div style="padding-top:10px;">
+                            <!-- HKITSFDC-51 BEGIN -->
+                            <!--<apex:outputPanel rendered="{!HasPrevious_Claim}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handlePrevious_Claim();">&lt;Previous Page</apex:outputPanel>-->
+                            <!--<apex:outputPanel rendered="{!!HasPrevious_Claim}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>-->
+                            <apex:outputPanel id="claimPrevPage" rendered="{!HasPrevious_Claim}" styleClass="handle_page_active onclick-pointer" onclick="claimShowLoading('claimPrevPage');CustomerProfileAF.handlePrevious_Claim();">&lt;Previous Page</apex:outputPanel>
+                            <span id="claimPrevPageLoading" class="hidden"><i class="spinner-icon fa fa-spinner fa-pulse fa-lg fa-fw"></i></span>
+                            <apex:outputPanel id="claimPrevPageInactive" rendered="{!!HasPrevious_Claim}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>
+                            <!-- HKITSFDC-51 END -->
+                            <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                            <!-- HKITSFDC-51 BEGIN -->
+                            <!--<apex:outputPanel rendered="{!HasNext_Claim}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handleNext_Claim();">Next Page&gt;</apex:outputPanel>-->
+                            <!--<apex:outputPanel rendered="{!!HasNext_Claim}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>-->
+                            <apex:outputPanel id="claimNextPage" rendered="{!HasNext_Claim}" styleClass="handle_page_active onclick-pointer" onclick="claimShowLoading('claimNextPage');CustomerProfileAF.handleNext_Claim();">Next Page&gt;</apex:outputPanel>
+                            <span id="claimNextPageLoading" class="hidden"><i class="spinner-icon fa fa-spinner fa-pulse fa-lg fa-fw"></i></span>
+                            <apex:outputPanel id="claimNextPageInactive" rendered="{!!HasNext_Claim}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+                            <!-- HKITSFDC-51 END -->
+                        </div>
+                    </apex:pageBlock>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <!-- Claim Histories via Portal (up to 14 days) add by kit -->
+        <apex:actionStatus id="loader-icon-claim-histroy">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading" style="padding: 10px 0;">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:actionFunction action="{!handleNext_Histroy}" name="handleNext_Histroy" namespace="CustomerProfileAF" reRender="customer-profile-claim-histories-detail-panel" />
+        <apex:actionFunction action="{!handlePrevious_Histroy}" name="handlePrevious_Histroy" namespace="CustomerProfileAF" reRender="customer-profile-claim-histories-detail-panel" />
+        <apex:outputPanel id="customer-profile-claim-histories-detail-panel">
+            <apex:outputPanel rendered="{!showClaimHistroyPanel}">
+                <div class="table-width">
+                    <apex:pageBlock title="{!$Label.CP_Claims_Histories_Portal}">
+                        <apex:pageBlockTable value="{!claimHistroyList}" var="item" first="{!StartIndex_Histroy}" rows="{!PageSize}">
+                            <apex:column headerValue="{!$Label.Policy_No}" width="10%">
+                                <apex:repeat value="{!policyListMap[item.Name]}" var="pItem">
+                                    <div class="onclick-pointer" style="text-decoration:underline" onclick="CustomerProfileAF.getSelectedPolicyType('{!pItem}')">{!pItem}</div>
+                                </apex:repeat>
+                            </apex:column>
+                            <!-- 240412 Namster MRP-385 -->
+                            <apex:column headerValue="{!$Label.Submission_ID}" width="10%">
+                                <apex:outputText value="{!item.Name}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Batch_ID}" width="10%">
+                                <apex:outputText value="{!item.Batch_ID__c}" />
+                            </apex:column>
+                            <!-- 240412 Namster MRP-385 end -->
+                            <apex:column headerValue="{!$Label.Claim_Detial}" width="10%">
+                                <apex:outputText value="">
+                                    <div class="onclick-pointer" style="text-decoration:underline" onclick="openNewTab_Claim('{!item.Policy__c}','{!item.Name}',null,null,null,'Portal');">View</div>
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Claim_Type}(Portal)" width="20%">
+                                <apex:outputText value="{!item.Display_Selected_Benefit_Type_s__c}"></apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Person_Insured}" width="10%">
+                                <apex:outputText value="">
+                                    <div class="onclick-pointer" style="text-decoration:underline" onclick="CustomerProfileAF.goToCustomerProfileForUWPI('{!item.Policy__c}','{!item.Person_Insured_Name__c}');">{!item.Person_Insured_Name__c}</div>
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Submission_Date}" width="30%">
+                                <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                    <apex:param value="{!item.Submission_Date__c}" />
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Claim_Histroy_Status}" width="20%">
+                                <apex:outputText value="Submitted"></apex:outputText>
+                            </apex:column>
+                        </apex:pageBlockTable>
+                        <div style="padding-top:10px;">
+                            <apex:outputPanel rendered="{!HasPrevious_Histroy}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handlePrevious_Histroy();">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasPrevious_Histroy}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                            <apex:outputPanel rendered="{!HasNext_Histroy}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handleNext_Histroy();">Next Page&gt;</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasNext_Histroy}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+                        </div>
+                    </apex:pageBlock>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <apex:actionStatus id="loader-icon-under">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading" style="padding: 10px 0;">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:actionFunction action="{!handleNext_Under}" name="handleNext_Under" namespace="CustomerProfileAF" reRender="customer-profile-underwriting-detail-panel" />
+        <apex:actionFunction action="{!handlePrevious_Under}" name="handlePrevious_Under" namespace="CustomerProfileAF" reRender="customer-profile-underwriting-detail-panel" />
+        <apex:outputPanel id="customer-profile-underwriting-detail-panel">
+            <apex:outputPanel rendered="{!showUnderPanel}">
+                <div class="table-width">
+                    <apex:pageBlock title="{!$Label.CP_Underwriting_Histories}">
+                        <apex:pageBlockTable value="{!uwList}" columns="10" var="uw" first="{!StartIndex_Under}" rows="{!PageSize}">
+                            <apex:column headerValue="{!$Label.CP_Request_ID}">
+                                <a href='{!uw.appianRequestURL}' target='_blank'>
+                                    <apex:outputText value="{!uw.requestId}" />
+                                </a>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Pol_Product_Name}">
+                                <apex:outputText value="{!uw.productName}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Policy_Insured}">
+                                <apex:outputText value="">
+                                    <div class="onclick-pointer" style="text-decoration:underline" onclick="CustomerProfileAF.goToCustomerProfileForUWPI('{!uw.policyNumber}','{!uw.personInsured}');">
+                                        {!uw.personInsured}
+                                    </div>
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Policy_Number}">
+                                <apex:outputText value="">
+                                    <div class="onclick-pointer" style="text-decoration:underline" onclick="CustomerProfileAF.getSelectedPolicyType('{!uw.policyNumber}');">
+                                        {!uw.policyNumber}
+                                    </div>
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="Request Status">
+                                <apex:outputText value="{!uw.requestStatus}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Work_Type}">
+                                <apex:outputText value="{!uw.workType}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Sub_Type}">
+                                <apex:outputText value="{!uw.workItem}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Pol_Received_Date}">
+                                <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                    <apex:param value="{!uw.submittedDateTime}" />
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Turnaround_Date}">
+                                <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                    <apex:param value="{!uw.turnaroundDate}" />
+                                </apex:outputText>
+                            </apex:column>
+                        </apex:pageBlockTable>
+                        <div style="padding-top:10px;">
+                            <apex:outputPanel rendered="{!HasPrevious_Under}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handlePrevious_Under();">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasPrevious_Under}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                            <apex:outputPanel rendered="{!HasNext_Under}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handleNext_Under();">Next Page&gt;</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasNext_Under}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+                        </div>
+                    </apex:pageBlock>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <apex:actionStatus id="loader-icon-memo">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading" style="padding: 10px 0;">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:actionFunction action="{!handleNext_Memo}" name="handleNext_Memo" namespace="CustomerProfileAF" reRender="customer-profile-pending-memo-detail-panel" />
+        <apex:actionFunction action="{!handlePrevious_Memo}" name="handlePrevious_Memo" namespace="CustomerProfileAF" reRender="customer-profile-pending-memo-detail-panel" />
+        <apex:outputPanel id="customer-profile-pending-memo-detail-panel">
+            <apex:outputPanel rendered="{!showMemoPanel}">
+                <div class="table-width">
+                    <apex:pageBlock title="{!$Label.Pending_Memo}">
+                        <apex:pageBlockTable value="{!pendingMemoList}" columns="8" var="memo" first="{!StartIndex_Memo}" rows="{!PageSize}">
+                            <apex:column headerValue="{!$Label.Benefit_Action}">
+                                <apex:outputText value="">
+                                    <div class="onclick-pointer" style="text-decoration:underline" onclick="openNewTab_PendingMemo('{!memo.policyNumber}','{!memo.requestId}','{!memo.requestType}');">{!$Label.CP_View}</div>
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Request_ID}">
+                                <a href='{!memo.appianRequestURL}' target='_blank'>
+                                    <apex:outputText value="{!memo.requestId}" />
+                                </a>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Policy_Number}">
+                                <apex:outputText value="">
+                                    <div class="onclick-pointer" style="text-decoration:underline" onclick="CustomerProfileAF.getSelectedPolicyType('{!memo.policyNumber}');">
+                                        {!memo.policyNumber}
+                                    </div>
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Category}">
+                                <apex:outputText value="{!memo.requestType}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Type}">
+                                <apex:outputText value="{!memo.salesForceWorkType}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Last_Updated_Date}">
+                                <apex:outputText value="{0, Date, yyyy/MM/dd}">
+                                    <apex:param value="{!memo.statusUpdatedDateTime}" />
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Status}">
+                                <apex:outputText value="{!memo.UWStage}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CustomerPolicyChange_Source}">
+                                <apex:outputText value="{!memo.sourceType}" />
+                            </apex:column>
+
+                        </apex:pageBlockTable>
+                        <div style="padding-top:10px;">
+                            <apex:outputPanel rendered="{!HasPrevious_Memo}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handlePrevious_Memo();">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasPrevious_Memo}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                            <apex:outputPanel rendered="{!HasNext_Memo}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handleNext_Memo();">Next Page&gt;</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasNext_Memo}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+                        </div>
+                    </apex:pageBlock>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <apex:actionStatus id="loader-icon-contact">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading" style="padding: 10px 0;">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:actionFunction action="{!handleNext_Contact}" name="handleNext_Contact" namespace="CustomerProfileAF" reRender="customer-profile-contact-detail-panel" />
+        <apex:actionFunction action="{!handlePrevious_Contact}" name="handlePrevious_Contact" namespace="CustomerProfileAF" reRender="customer-profile-contact-detail-panel" />
+        <apex:outputPanel id="customer-profile-contact-detail-panel">
+            <apex:outputPanel rendered="{!showContactPanel}">
+                <div class="table-width">
+                    <apex:pageBlock title="{!$Label.CP_Contact_History}">
+                        <!-- Rancho_ContactHistoryError_20241129 - avoid exceeding vf page collection max size limit -->
+                        <apex:pageBlockTable value="{!curConHisList}" columns="3" var="con" first="{!StartIndex_Contact}" rows="{!PageSize}">
+                            <apex:column headerValue="{!$Label.Benefit_Action}">
+                                <apex:outputText value="">
+                                    <div class="onclick-pointer" style="text-decoration:underline" onclick="openNewTab_Contact('{!con.messageId}','{!customerAccount.SSN__c}');">{!$Label.CP_View}</div>
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Send_Out_Date_Time}">
+                                <apex:outputText value="{0, Date, dd/MM/yyyy h:mm a}">
+                                    <apex:param value="{!con.sentDateIntime}" />
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Type}">
+                                <apex:outputText value="{!con.channel}" />
+                            </apex:column>
+                        </apex:pageBlockTable>
+                        <div style="padding-top:10px;">
+                            <apex:outputPanel rendered="{!HasPrevious_Contact}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handlePrevious_Contact();">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasPrevious_Contact}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                            <apex:outputPanel rendered="{!HasNext_Contact}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handleNext_Contact();">Next Page&gt;</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasNext_Contact}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+                        </div>
+                    </apex:pageBlock>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <apex:actionStatus id="loader-icon-esales">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading" style="padding: 10px 0;">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:actionFunction action="{!handleNext_Esales}" name="handleNext_Esales" namespace="CustomerProfileAF" reRender="customer-profile-esales-detail-panel" />
+        <apex:actionFunction action="{!handlePrevious_Esales}" name="handlePrevious_Esales" namespace="CustomerProfileAF" reRender="customer-profile-esales-detail-panel" />
+        <apex:outputPanel id="customer-profile-esales-detail-panel">
+            <apex:outputPanel rendered="{!showEsalesPanel}">
+                <div class="table-width">
+                    <!-- style="width:1450px !important;padding-right:15px !important;" -->
+                    <apex:pageBlock title="{!$Label.CP_e_Sales_Applications_Portal_only}">
+                        <apex:pageBlockTable value="{!esalesList}" columns="8" var="esales" first="{!StartIndex_Esales}" rows="{!PageSize}">
+                            <apex:column headerValue="{!$ObjectType.ESales_Transaction__c.Fields.Name.Label}">
+                                <apex:outputText value="">
+                                    <div class="onclick-pointer" style="text-decoration:underline" onclick="openNewTab_Esales('{!esales.Id}','{!esales.Name}');">{!esales.Name}</div>
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Policy_Number}">
+                                <apex:outputText value="{!IF(esales.Policy_Number_PH__c!=null,esales.Policy_Number_PH__c+', ','')}" />
+                                <apex:outputText value="{!IF(esales.Policy_Number_PI__c!=null,esales.Policy_Number_PI__c+', ','')}" />
+                                <apex:outputText value="{!IF(esales.Policy_Number_C1__c!=null,esales.Policy_Number_C1__c+', ','')}" />
+                                <apex:outputText value="{!IF(esales.Policy_Number_C2__c!=null,esales.Policy_Number_C2__c+', ','')}" /> {!esales.Policy_Number_C3__c}
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.Policy_Holder_Name}">
+                                <apex:outputText value="{!IF(esales.Policy_Holder_First_Name__c!=null,esales.Policy_Holder_First_Name__c+' '+esales.Policy_Holder_Last_Name__c,esales.Policy_Holder_Last_Name__c)}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Policy_Insured}">
+                                <apex:outputText value="{!IF(esales.PH_is_PI__c,IF(esales.Policy_Holder_First_Name__c!=null || esales.Policy_Holder_Last_Name__c!=null,esales.Policy_Holder_First_Name__c+' '+esales.Policy_Holder_Last_Name__c+', ',''),'')}" />
+                                <apex:outputText value="{!IF(esales.PI_First_Name__c!=null || esales.PI_Last_Name__c!=null,esales.PI_First_Name__c+' '+esales.PI_Last_Name__c+', ','')}" />
+                                <apex:outputText value="{!IF(esales.Child_1_First_Name__c!=null || esales.Child_1_Last_Name__c!=null,esales.Child_1_First_Name__c+' '+esales.Child_1_Last_Name__c+', ','')}" />
+                                <apex:outputText value="{!IF(esales.Child_2_First_Name__c!=null || esales.Child_2_Last_Name__c!=null,esales.Child_2_First_Name__c+' '+esales.Child_2_Last_Name__c+', ','')}" /> {!esales.Child_3_First_Name__c} {!esales.Child_3_Last_Name__c}
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Policy_Holder_HKID_Passport}">
+                                <apex:outputText value="{!esales.HKID__c}" />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Person_Insured_HKID_Passport}">
+                                <apex:outputText value="{!IF(esales.HKID__c!=null,esales.HKID__c+', ','')}" />
+                                <apex:outputText value="{!IF(esales.PI_HKID__c!=null,esales.PI_HKID__c+', ','')}" />
+                                <apex:outputText value="{!IF(esales.HKID_Child_1__c!=null,esales.HKID_Child_1__c+', ','')}" />
+                                <apex:outputText value="{!IF(esales.HKID_Child_2__c!=null,esales.HKID_Child_2__c+', ','')}" />
+                                <apex:outputText value="{!esales.HKID_Child_3__c} " />
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Submission_Date_Time}">
+                                <apex:outputText value="{0, Date, yyyy/MM/dd h:mm a}">
+                                    <apex:param value="{!esales.Submission_Date__c}" />
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="{!$Label.CP_Plan_Name}">
+                                <apex:outputText value="{!esales.Product_Name_Formula__c}" />
+                            </apex:column>
+                        </apex:pageBlockTable>
+                        <div style="padding-top:10px;">
+                            <apex:outputPanel rendered="{!HasPrevious_Esales}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handlePrevious_Esales();">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasPrevious_Esales}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                            <apex:outputPanel rendered="{!HasNext_Esales}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handleNext_Esales();">Next Page&gt;</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasNext_Esales}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+                        </div>
+                    </apex:pageBlock>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <!-- MGM-->
+        <apex:actionStatus id="loader-icon-mgm">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading" style="padding: 10px 0;">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:actionFunction action="{!handleNext_mgm}" name="handleNext_mgm" namespace="CustomerProfileAF" reRender="customer-profile-mgm-detail-panel" />
+        <apex:actionFunction action="{!handlePrevious_mgm}" name="handlePrevious_mgm" namespace="CustomerProfileAF" reRender="customer-profile-mgm-detail-panel" />
+        <apex:outputPanel id="customer-profile-mgm-detail-panel">
+            <apex:outputPanel rendered="{!showmgmPanel}">
+                <div class="table-width">
+                    <!-- style="width:1450px !important;padding-right:15px !important;" -->
+                    <apex:pageBlock title="MGM Referrals">
+                        <apex:pageBlockTable value="{!mgmList}" columns="10" var="mgm" first="{!StartIndex_mgm}" rows="{!PageSize}">
+                            <apex:column headerValue="Referee Name">
+                                <apex:outputText value="{!mgm.Referee_Name__c}" />
+                            </apex:column>
+                            <apex:column headerValue="Referee Email">
+                                <apex:outputText value="{!mgm.Referee_Email__c}" />
+                            </apex:column>
+                            <apex:column headerValue="Referral Channel">
+                                <apex:outputText value="{!mgm.Referral_Type__c}" />
+                            </apex:column>
+                            <apex:column headerValue="Referral Code">
+                                <apex:outputText value="{!mgm.Referral_Code__c}" />
+                            </apex:column>
+                            <apex:column headerValue="Product Code">
+                                <apex:outputText value="{!mgm.Product_Code__c}" />
+                            </apex:column>
+                            <apex:column headerValue="Status">
+                                <apex:outputText value="{!mgm.Status__c}" />
+                            </apex:column>
+                            <apex:column headerValue="Created By">
+                                <apex:outputText value="{0, Date, yyyy/MM/dd h:mm a}">
+                                    <apex:param value="{!mgm.CreatedDate}" />
+                                </apex:outputText>
+                            </apex:column>
+                            <apex:column headerValue="Policy 1">
+                                <apex:outputText value="{!mgm.Policy_Number_1__c}" />
+                            </apex:column>
+                            <apex:column headerValue="Policy 2">
+                                <apex:outputText value="{!mgm.Policy_Number_2__c}" />
+                            </apex:column>
+                            <apex:column headerValue="Policy 3">
+                                <apex:outputText value="{!mgm.Policy_Number_3__c}" />
+                            </apex:column>
+                        </apex:pageBlockTable>
+                        <div style="padding-top:10px;">
+                            <apex:outputPanel rendered="{!HasPrevious_mgm}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handlePrevious_mgm();">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasPrevious_mgm}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                            <apex:outputPanel rendered="{!HasNext_mgm}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handleNext_mgm();">Next Page&gt;</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasNext_mgm}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+                        </div>
+                    </apex:pageBlock>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <!-- CS Member Level Jack add-->
+        <apex:actionStatus id="loader-icon-Audit">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading" style="padding: 10px 0;">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:actionFunction action="{!handleNext_Audit}" name="handleNext_Audit" namespace="CustomerProfileAF" reRender="customer-profile-Audit-detail-panel" />
+        <apex:actionFunction action="{!handlePrevious_Audit}" name="handlePrevious_Audit" namespace="CustomerProfileAF" reRender="customer-profile-Audit-detail-panel" />
+        <apex:outputPanel id="customer-profile-Audit-detail-panel">
+            <apex:outputPanel >
+                <div class="table-width">
+                    <!-- style="width:1450px !important;padding-right:15px !important;" -->
+                    <apex:pageBlock title="{!transField['AuditPannelTitle']}">
+                        <apex:pageBlockTable value="{!auditList}" columns="10" var="audit" first="{!StartIndex_Audit}" rows="{!PageSize}">
+                            <apex:column headerValue="{!transField['UpdatedDate']}">
+                                <apex:outputText value="{!audit.updateDate}" />
+                            </apex:column>
+                            <apex:column headerValue="{!transField['UpdatedUser']}">
+                                <apex:outputText value="{!audit.updateUser}" />
+                            </apex:column>
+                            <apex:column headerValue="{!transField['AffectedField']}">
+                                <apex:outputText value="{!audit.fieldName}" />
+                            </apex:column>
+                            <apex:column headerValue="{!transField['ValueBefore']}">
+                                <apex:outputText value="{!audit.valueFrom}" />
+                            </apex:column>
+                            <apex:column headerValue="{!transField['ValueAfter']}">
+                                <apex:outputText value="{!audit.valueTo}" />
+                            </apex:column>
+                            
+                        </apex:pageBlockTable>
+                        <div style="padding-top:10px;">
+                            <apex:outputPanel rendered="{!HasPrevious_Audit}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handlePrevious_Audit();">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasPrevious_Audit}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                            <apex:outputPanel rendered="{!HasNext_Audit}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handleNext_Audit();">Next Page&gt;</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!HasNext_Audit}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+                        </div>
+                    </apex:pageBlock>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <!-- CS Member Level Jack add-->
+
+        <!-- Rancho_LoginHistoryPOC_20210413 -->
+        <apex:actionStatus id="loader-icon-login">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading" style="padding: 10px 0;">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:outputPanel id="customer-profile-login-history-panel">
+            <div class="table-width">
+                <!-- style="width:1450px !important;padding-right:15px !important;" -->
+                <apex:pageBlock title="Login History in the latest 3 Month (Up to 10)">
+                    <apex:pageBlockTable value="{!loginHistoryDtoList}" columns="10" var="his">
+                        <apex:column headerValue="Login Time">
+                            <apex:outputText value="{0, date, yyyy/MM/dd h:mm a}">
+                                <apex:param value="{!his.loginTime}" />
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Channel">
+                            <apex:outputText value="{!his.channel}" />
+                        </apex:column>
+                        <apex:column headerValue="Device">
+                            <apex:outputText value="{!his.device}" />
+                        </apex:column>
+                        <apex:column headerValue="Result">
+                            <apex:outputText value="{!his.result}" />
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlock>
+            </div>
+        </apex:outputPanel>
+        <apex:actionFunction action="{!handleNext_ChangeLog}" name="handleNext_ChangeLog" namespace="CustomerProfileAF" reRender="customer-profile-change-log-panel" status="loader-icon" />
+        <apex:actionFunction action="{!handlePrevious_ChangeLog}" name="handlePrevious_ChangeLog" namespace="CustomerProfileAF" reRender="customer-profile-change-log-panel" status="loader-icon" />
+        <apex:outputPanel id="customer-profile-change-log-panel">
+            <div class="table-width">
+                <!-- style="width:1450px !important;padding-right:15px !important;" -->
+                <apex:pageBlock title="Account change Logs">
+                    <apex:pageBlockTable value="{!accountChangeLogDtoList}" columns="10" var="his">
+                        <apex:column headerValue="Time">
+                            <apex:outputText value="{0, date, yyyy/MM/dd h:mm a}">
+                                <apex:param value="{!his.createdDate}" />
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Event">
+                            <apex:outputText value="{!his.firstName} {!his.lastName}  {!his.eventDetail}" />
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlock>
+                <div style="padding-top:10px;">
+                    <apex:outputPanel rendered="{!hasPreviousChangeLog}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handlePrevious_ChangeLog();">&lt;Previous Page</apex:outputPanel>
+                    <apex:outputPanel rendered="{!!hasPreviousChangeLog}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>
+                    <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                    <apex:outputPanel rendered="{!hasNextChangeLog}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handleNext_ChangeLog();">Next Page&gt;</apex:outputPanel>
+                    <apex:outputPanel rendered="{!!hasNextChangeLog}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+                </div>
+            </div>
+        </apex:outputPanel>
+
+    </apex:form>
+</apex:page>

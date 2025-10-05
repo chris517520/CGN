@@ -1,0 +1,232 @@
+<apex:page standardController="Case" extensions="CSCaseDetailRelatedListAppianRequestCtrl"> 
+      <head>
+          <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+         <style>
+           div#reallocationOverlay {
+                display: none;
+                z-index: 10;
+                background: #e0e3e5;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                text-align: center;
+                opacity: .85;
+            }
+            
+
+            #reallocationCloseOverlay,{
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
+            
+            .onclick-pointer{ 
+                cursor: pointer;     
+            }  
+            .handle_page_active{
+                color: #015ba7;
+                font-size: 1em;
+                font-family: Arial,Helvetica,sans-serif;
+            } 
+            .handle_page_inactive{
+                color: #999;
+                font-size: 1em;
+                font-family: Arial,Helvetica,sans-serif;
+            }
+            
+            .pbBody{overflow-x:auto} 
+         </style>
+     </head>
+     <apex:define name="additionalLibraries">
+         <meta name="viewport" content="width=device-width, initial-scale=1" />
+         <apex:stylesheet value="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+         <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap_ns.css')}" />
+         <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+         <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+         <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+         <apex:includeScript value="/support/console/33.0/integration.js"/>
+     </apex:define>
+     
+     <script> 
+            $(document).ready(function(){
+                 CaseDetailRelatedList.updateAppianRequest();
+            });
+            
+            function CreateAppianRequest(){
+                        var CaseId = "{!CaseId }";
+                        console.log('CaseId '+CaseId );
+                        if (sforce.console.isInConsole()) {                               
+                                var rnd = Math.floor(Math.random() * 1000000000000); 
+                                sforce.console.openPrimaryTab(null, '/apex/CSCaseRelatedAppianRequestVFP'+'?pageRnd=' + rnd+'&CaseId='+CaseId , true, 'New Appian Request', null, 'New Appian Request' + rnd);                                
+                                sforce.console.setCustomConsoleComponentVisible(false);
+                        } else {                                
+                                //window.open('/apex/CSCaseRelatedAppianRequestVFP'+'?CaseId='+CaseId , '_blank');
+                                var url= "/apex/CSCaseRelatedAppianRequestVFP?CaseId=" + CaseId;
+                                sforce.one.navigateToURL(url,false);                                  
+                        }                        
+             }
+             
+             function EditAppianRequest(id,name){
+                        var CaseId = "{!CaseId }";
+                        console.log('CaseId '+CaseId );
+                        if (sforce.console.isInConsole()) {                               
+                                var rnd = Math.floor(Math.random() * 1000000000000); 
+                                sforce.console.openPrimaryTab(null, '/apex/CSCaseRelatedAppianRequestVFP'+'?pageRnd=' + rnd+'&AppianId='+id , true, name, null, name + rnd);                                
+                                sforce.console.setCustomConsoleComponentVisible(false);
+                        } else {                                
+                                //window.open('/apex/CSCaseRelatedAppianRequestVFP'+'?AppianId='+id, '_blank');
+                                var url= "/apex/CSCaseRelatedAppianRequestVFP?AppianId=" + id;
+                                sforce.one.navigateToURL(url,false);                                      
+                        }                        
+             }
+             
+             function openNewTab_Appian(id,name){       
+                      if(id!=null && id!='' && name!=null && name!=''){
+                            if (sforce.console.isInConsole()) {
+                                  var rnd = Math.floor(Math.random() * 1000000000000);
+                                  sforce.console.openPrimaryTab(null, '/' + id + '?pageRnd=' + rnd, true, name, null, name + rnd);
+                                  sforce.console.setCustomConsoleComponentVisible(false);                                
+                            } else {
+                                  //window.open('/' + id, '_blank');
+                                  var url= "/" + id;
+                                  sforce.one.navigateToURL(url,false);   
+                            }
+                      }
+                  }
+             
+             function beforeDeleteCheck(action,id){
+                var overlay = document.getElementById('reallocationOverlay');
+                if (overlay.style.display == "block") {
+                    overlay.style.display = "none";
+                } else {
+                    overlay.style.display = "block";
+                }
+                
+                if(action!=null && action!=''){
+                    var appianId = $("input[id$='param-selected-appian-id']").val();
+                    if(appianId!=null && appianId!='' && action=='Delete'){
+                        console.log('appianId:'+appianId);
+                        CaseDetailRelatedList.deleteAppianRequest();
+                    }
+                }else{
+                    if(id!=null && id!=''){
+                        $("input[id$='param-selected-appian-id']").val(id);
+                    }
+                }
+             } 
+                                    
+     </script>
+     <apex:form id="detail">
+         <!--<apex:actionFunction action="{!updateAppianRequest}" name="updateAppianRequest" namespace="CaseDetailRelatedList" reRender="detail" oncomplete="CaseDetailRelatedList.redirectToCaseDetail();"/>-->
+          <apex:actionFunction action="{!updateAppianRequest}" name="updateAppianRequest" namespace="CaseDetailRelatedList" reRender="detail" status="loader-icon" oncomplete="CaseDetailRelatedList.refreshResult();" />
+          <apex:actionFunction action="{!refreshResult}" name="refreshResult" namespace="CaseDetailRelatedList" reRender="detail" status="loader-icon" />
+          <apex:actionFunction name="deleteAppianRequest" action="{!deleteAppianRequest}" namespace="CaseDetailRelatedList" />            
+        
+          <apex:actionStatus id="loader-icon">
+             <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 100; background-color: #e0e3e5;">
+                     &nbsp;
+                 </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 101; margin: 5% 50%">
+                    <div style="display: inline-block; padding: 2px; background-color: #e0e3e5; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Please Wait...</span>
+                    </div>
+                 </div>
+            </apex:facet>
+        </apex:actionStatus>
+            
+         <div id="reallocationOverlay" >
+            <div id="reallocationSpecialBox">                                
+                <div id="reallocationtccontent" style="text-align:center;padding-top:30px;">
+                    <div style="font-size:18px !important;">Are you sure?</div>
+                </div>
+                <div style="padding-top:10px !important; border-bottom: 1px solid #f2f2f2;"></div>
+                <div style="text-align:center;padding-top:10px;">
+                    
+                    <apex:commandButton value="Delete" onclick="beforeDeleteCheck('Delete','');" reRender="refresh_panel" />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <apex:commandButton value="Cancel" onclick="beforeDeleteCheck('Cancel','');" reRender="refresh_panel" />
+                </div>
+            </div>
+        </div>
+        
+        <apex:outputPanel id="refresh_panel">
+            <apex:inputText id="param-selected-appian-id" value="{!selectedAppianId}" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" /> 
+        </apex:outputPanel>
+        
+        <apex:actionFunction action="{!handleNext}" name="handleNext" namespace="CustomerProfileAF" reRender="case-appian-related-list-panel" />
+        <apex:actionFunction action="{!handlePrevious}" name="handlePrevious" namespace="CustomerProfileAF" reRender="case-appian-related-list-panel" />  
+        <apex:outputPanel id="case-appian-related-list-panel">     
+            <apex:pageBlock title="Appian Request">       
+                 <apex:pageblockbuttons location="top">
+                     <!--<apex:commandButton value="New Appian Request" onclick="CreateAppianRequest();" />-->
+                     <div class="onclick-pointer" style="padding:10px;background-color: #fff !important;border-radius: 3px;width:120px;text-align:center;color: #0070d2;border: 1px solid #dbdbdb;" onclick="CreateAppianRequest();">New Appian Request</div>
+                 </apex:pageblockbuttons>
+                              
+                 <apex:pageBlockTable value="{!appianList}" var="appian" columns="11" first="{!StartIndex}" rows="5" >
+                     <apex:column headerValue="Action">  
+                             <apex:outputText value="" rendered="{!appian.Submission_Status__c=='Submitted'}"><div class="onclick-pointer" style="cursor:pointer;color:#015ba7;" onclick="openNewTab_Appian('{!appian.Id}','{!appian.Name}','');">View</div></apex:outputText>
+                             <apex:outputText value="" rendered="{!appian.Submission_Status__c!='Submitted'}">
+                                 <div>
+                                 <span class="onclick-pointer" style="cursor:pointer;color:#015ba7;" onclick="EditAppianRequest('{!appian.Id}','{!appian.Name}','');">Edit</span>&nbsp;|&nbsp;
+                                 <span class="onclick-pointer" style="cursor:pointer;color:#015ba7;" onclick="beforeDeleteCheck('','{!appian.Id}');">Del</span>
+                                 </div>
+                             </apex:outputText>
+                     </apex:column>
+                     
+                     <apex:column headerValue="{!$Label.Request_ID}">  
+                             <apex:outputText value="{!appian.Request_ID__c}"/>
+                     </apex:column>
+                     
+                     <apex:column headerValue="{!$ObjectType.Appian_Request__c.fields.Name.label}">  
+                             <apex:outputText value="{!appian.Name}"/>
+                     </apex:column>
+                     
+                     <apex:column headerValue="{!$ObjectType.Appian_Request__c.fields.Category__c.label}">  
+                             <apex:outputField value="{!appian.Category__c}"/>
+                     </apex:column>
+                     
+                     <apex:column headerValue="{!$ObjectType.Appian_Request__c.fields.Request_Type__c.label}">  
+                             <apex:outputField value="{!appian.Request_Type__c}"/>
+                     </apex:column>
+                     
+                     <apex:column headerValue="{!$ObjectType.Appian_Request__c.fields.Work_Type__c.label}">  
+                             <apex:outputField value="{!appian.Work_Type__c}"/>
+                     </apex:column>
+                     
+                     <apex:column headerValue="{!$ObjectType.Appian_Request__c.fields.Sub_Type__c.label}">  
+                             <apex:outputField value="{!appian.Sub_Type__c}"/>
+                     </apex:column>
+                     
+                     <apex:column headerValue="{!$ObjectType.Appian_Request__c.fields.Submission_Status__c.label}">  
+                             <apex:outputField value="{!appian.Submission_Status__c}"/>
+                     </apex:column>
+                     
+                     <apex:column headerValue="{!$ObjectType.Appian_Request__c.fields.Submission_Date__c.label}">  
+                             <!-- <apex:outputField value="{!appian.Submission_Date__c}"/> -->
+                             <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                <apex:param value="{!appian.Submission_Date__c}"/>
+                             </apex:outputText>
+                     </apex:column>
+                     
+                     <apex:column headerValue="{!$ObjectType.Appian_Request__c.fields.Status__c.label}" >  
+                             <apex:outputField value="{!appian.Status__c}"/>
+                     </apex:column>
+                     
+                     <apex:column headerValue="Created By">  
+                             <apex:outputField value="{!appian.Createdby.Name}"/>
+                     </apex:column>
+                 </apex:pageBlockTable>
+                 <div style="padding-top:10px;">
+                       <apex:outputPanel rendered="{!HasPrevious}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handlePrevious();">&lt;Previous Page</apex:outputPanel>
+                       <apex:outputPanel rendered="{!!HasPrevious}" styleClass="handle_page_inactive">&lt;Previous Page</apex:outputPanel>                   
+                       <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                       <apex:outputPanel rendered="{!HasNext}" styleClass="handle_page_active onclick-pointer" onclick="CustomerProfileAF.handleNext();">Next Page&gt;</apex:outputPanel>
+                       <apex:outputPanel rendered="{!!HasNext}" styleClass="handle_page_inactive">Next Page&gt;</apex:outputPanel>
+                  </div>
+             </apex:pageBlock>
+         </apex:outputPanel>
+     </apex:form>
+</apex:page>

@@ -1,0 +1,441 @@
+<apex:page showHeader="true" docType="html-5.0" sidebar="false" controller="TMReportCBMSCampaignProgressCtrl" id="TMReportCBMSCampaignProgressVFP" title="CBMSReport_Campaign Progress Report" tabStyle="report" readOnly="true">
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <style>
+    #dataTabel{
+        width: 100%;
+    }
+    #dataTable thead tr th {
+        text-align: center;
+        background: #f2f3f3;
+        border-width: 0 0 1px 1px;
+        border-color: #e0e3e5;
+        color: #000;
+        font-size: .9em;
+        font-weight: bold;
+        padding: 5px 2px 4px 5px;
+    }
+
+    #dataTable tr td {
+        width: 80px;
+    }
+ 
+</style>
+<script>
+	function runReport(){
+		var TargetVal = $("[id$='\\:Target_lkid']").val();
+		var ProductVal = $("[id$='\\:Prouct_lkid']").val();
+		var BaseVal = $("[id$='\\:Base']").val();
+		var StartVal = $("[id$='\\:Start']").val();
+		var CompleteVal = $("[id$='\\:Complete']").val();
+		var StatusVal = $("[id$='\\:Status']").val();
+		var JumpLink = '/apex/TMReportCBMSCampaignProgressVFP?';
+		JumpLink += 'Base=' + BaseVal + '&Start=' + StartVal +'&Complete=' + CompleteVal +'&Status=' + StatusVal ;
+		if (TargetVal != '000000000000000') {
+			JumpLink += '&Target=' + TargetVal;
+		}
+		if (ProductVal != '000000000000000') {
+			JumpLink += '&Product=' + ProductVal;
+		}
+		navigateToUrl(JumpLink,null,'Consumer Marketing');
+	}
+	function PrintDoc() {
+            $(".s_close").remove();
+            window.print();
+        }
+
+        function ReTabColumn(_this) {
+            $("#tdheji").attr("colspan", parseInt($("#tdheji").attr("colspan") - 1));
+            TabColRemove(_this, false);
+        }
+
+        //jQuery移除Table列,isDellast：false最后一行不受影响；true最后一行受影响
+        //<th>标题<span class="s_close" style='color: Red; cursor: pointer' onclick='ReTabColumn(this)' title='隐藏当前列'>×</span></th>
+        function TabColRemove(_this, isDellast) {
+            if (isDellast) {
+                $(_this).parent().parent().parent().find("tr td:nth-child(" + ($(_this).parent().index() + 1) + ")").remove();
+            } else {
+                $(_this).parent().parent().parent().find("tr:not(:last-child)").find("td:nth-child(" + ($(_this).parent().index() + 1) + ")").remove();
+            }
+        }
+
+        //jQuery HTML导出Excel文件(兼容IE及所有浏览器)
+        function HtmlExportToExcel(tableid) {
+            $(".s_close").remove();
+            var filename = 'CBMSReport_Campaign Progress Report';
+            if (getExplorer() == 'ie' || getExplorer() == undefined) {
+                HtmlExportToExcelForIE(tableid, filename);
+            }
+            else {
+                HtmlExportToExcelForEntire(tableid, filename)
+            }
+        }
+        //IE浏览器导出Excel
+        function HtmlExportToExcelForIE(tableid, filename) {
+            try {
+                var winname = window.open('', '_blank', 'top=10000');
+                var strHTML = document.getElementById(tableid).innerHTML;
+
+                winname.document.open('application/vnd.ms-excel', 'export excel');
+                winname.document.writeln(strHTML);
+                winname.document.execCommand('saveas', '', filename + '.xls');
+                winname.close();
+
+            } catch (e) {
+                alert(e.description);
+            }
+        }
+        //非IE浏览器导出Excel
+        var HtmlExportToExcelForEntire = (function() {
+            var uri = 'data:application/vnd.ms-excel;base64,',
+        template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>{worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>{table}</table></body></html>',
+        base64 = function(s) { return window.btoa(unescape(encodeURIComponent(s))) },
+        format = function(s, c) { return s.replace(/{(\w+)}/g, function(m, p) { return c[p]; }) }
+            return function(table, name) {
+                if (!table.nodeType) { table = document.getElementById(table); }
+                var ctx = { worksheet: name || 'Worksheet', table: table.innerHTML }
+                document.getElementById("dlink").href = uri + base64(format(template, ctx));
+                document.getElementById("dlink").download = name + ".xls";
+                document.getElementById("dlink").click();
+            }
+        })()
+        function getExplorer() {
+            var explorer = window.navigator.userAgent;
+            //ie 
+            if (explorer.indexOf("MSIE") >= 0) {
+                return 'ie';
+            }
+            //firefox 
+            else if (explorer.indexOf("Firefox") >= 0) {
+                return 'Firefox';
+            }
+            //Chrome
+            else if (explorer.indexOf("Chrome") >= 0) {
+                return 'Chrome';
+            }
+            //Opera
+            else if (explorer.indexOf("Opera") >= 0) {
+                return 'Opera';
+            }
+            //Safari
+            else if (explorer.indexOf("Safari") >= 0) {
+                return 'Safari';
+            }
+        }
+ 
+
+        function checkIsEmpty(){
+            if ($("[id$='Target']").val()==''){
+                return true;
+            }else{
+                return false;
+            }
+        }
+
+        function runReportClick(){
+            //alert ($("[id$='Target']").val());
+            if (!checkIsEmpty()){                
+                runReport();
+                $(".altMsg").hide();
+            }else{
+                $(".altMsg").show();
+            }
+             
+        }
+
+        function exportExcelVFP(polNum){
+            var idstr= $("[id$='campid']").val();
+            var url='/apex/TMReportCBMSCampaignProgressExcelVFP?idstr='+idstr;
+            window.open(url, '_blank');
+        }
+	</script>
+    <apex:sectionHeader title="Consumer Marketing" subtitle="Progress Report"/><br/>
+    <apex:pageBlock mode="maindetail">
+    <apex:messages id="messages" styleClass="errorMsg"/>
+    
+    <apex:form id="form">
+            <apex:actionStatus id="loader-icon">
+            <apex:facet name="start">
+                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                         &nbsp;
+                     </div>
+                    <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                        <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                            <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                            <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                        </div>
+                     </div>
+                </apex:facet>
+            </apex:actionStatus>
+        <apex:actionFunction name="refresh" action="{!refresh}" reRender="form"  status="loader-icon" />
+     
+        <apex:pageBlock >
+        <script>
+            var newWin=null;
+            function openLookupPopup(){ 
+               
+               try{            
+               //     var bpid = $("input[id$='BPartner']").val();
+                var bpid = getElementByIdCS('TMReportCBMSCampaignProgressVFP:j_id3:form:j_id6:BPartner_lkid').value;
+                   var url="/apex/TMReportCBMSCampaignProgressLookupVFP?bpid="+ bpid +"&core.apexpages.devmode.url=1" ;
+                   newWin=window.open(url, 'Popup','height=400,width=650,left=100,top=100,resizable=no,scrollbars=yes,toolbar=no,status=no');
+                   if (window.focus){
+                        newWin.focus();
+                   }
+                    
+                }catch(e){
+                        alert('Server Error: '+e);
+                }                   
+                return false;
+            }      
+             function closeLookupPopup(){
+               if (null!=newWin)
+               {
+                  newWin.close();
+               }  
+            }   
+        </script>
+
+    	<table id="filterTable" style="display: block;" class=".s_close">
+            <tr>
+                <th><label>Business Partner:</label></th>
+                <th><apex:inputField value="{!filterData.Business_Partner__c}"  id="BPartner"/></th>
+            </tr>
+ 
+            <tr>
+                <th><label>Batch No.:</label></th>
+                <th><apex:inputText value="{!campaignName}" label="Target Name" id="Target2"/><a href="#" id="acc3_lkwgt" onclick="openLookupPopup();" tabindex="2" title="Campaign Lookup (New Window)" style="text-decoration: none;"><img src="/s.gif" alt="Campaign Lookup (New Window)" class="lookupIcon" onblur="this.className = 'lookupIcon';" onfocus="this.className = 'lookupIconOn';" onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';" title="Campaign Lookup (New Window)"/>
+                    </a>
+                </th>
+            </tr>
+ 
+            <tr><td colspan="2"><span class="altMsg" style="display:none;color: red;">Please select a campaign.</span></td>
+            </tr>
+            <tr>
+            	<td></td>
+            	<td></td>
+            </tr>
+        </table>
+        <apex:inputHidden value="{!cids}" id="campid"/>
+        <br/>
+        <span class="btn"  onclick="refresh(); ">Run Report</span>
+         <apex:outputPanel rendered="{!wrapList!=null && wrapList.size>0 }" layout="none" >
+        <span  class="btn" name="run" title="Export to excel" onclick="exportExcelVFP();" >Export to excel</span>
+        </apex:outputPanel>
+    </apex:pageBlock>
+    <!--<input value="Run Report" class="btn" name="run" title="Run Report" onclick="runReportClick();" />-->
+    
+   
+    <a id="dlink" style="display: none;"></a>
+    <div id="PanelExcel" style=" padding: 10px 0 0 0;">
+        <apex:repeat value="{!wrapList}" var="witem">
+           
+            <apex:variable var="camp" value="{!witem.camp}" />
+
+            <apex:outputPanel layout="none" rendered="{!cids!=null}">         
+        	<table id="display Table" style="" >
+                
+                <tr>
+                    <th style="text-align: left;"><label>Business Partner:</label></th>
+                    <th style="text-align: left;"><apex:outputText value="{!witem.BusinessPartnerName}" label="Business Partner" id="BusinessPartnerName"/></th>
+                </tr>
+
+        		<tr>
+                	<th style="text-align: left;"><label>Batch No.:</label></th>
+                	<th style="text-align: left;"><apex:outputField value="{!camp.Name}" label="Target Name" id="dTarget"/></th>
+                </tr>
+                 
+                <tr>
+                	<th style="text-align: left;"><label>Product:</label></th>
+                	<th style="text-align: left;"><apex:outputField value="{!camp.Core_Product__r.Name}" label="Product" id="dProuct"/></th>
+                </tr>
+                <tr>
+                	<th style="text-align: left;"><label>Base:</label></th>
+                	<th style="text-align: left;"><apex:outputText value="{!witem.Base}" label="Base" id="dBase"/></th>
+                </tr>
+                <tr>
+                	<th style="text-align: left;"><label>Start Date:</label></th>
+                	<th style="text-align: left;"> <apex:OutputText value="{0,date,yyyy-MM-dd}" escape="true">
+                            <apex:Param value="{!witem.StartDate}"/></apex:OutputText> </th>
+                </tr>
+                <tr>
+                	<th style="text-align: left;"><label>Target Complete Date:</label></th>
+                	<th style="text-align: left;"> <apex:OutputText value="{0,date,yyyy-MM-dd}" escape="true">
+                            <apex:Param value="{!witem.CompleteDate}"/> </apex:OutputText></th>
+                </tr>
+                <tr>
+                	<th style="text-align: left;"><label>Status:</label></th>
+                	<th style="text-align: left;"><apex:outputText value="{!witem.Status}" label="Status" id="dStatus"/></th>
+                </tr>
+
+                <tr>
+                	<td colspan="2"><apex:outputPanel rendered="{!witem.rows == null || !(witem.rows.size > 0)}" ><span class="altMsg">No Data found!</span></apex:outputPanel></td>
+                </tr>
+                
+            </table>
+            </apex:outputPanel>
+            <apex:outputPanel layout="none" rendered="{!witem.rows != null && witem.rows.size > 0}" >
+            <table id="dataTable" class="list dataTabel">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Submission Date</th>
+                        <th rowspan="2">Contactable Name</th>
+                        <th rowspan="2">Contactable Rate(For Total)</th>
+                        <th colspan="4">Reasons for CANNOT Present</th>
+                        <th rowspan="2">Callable Name</th>
+                        <th rowspan="2">Callable Rate(For Total)</th>
+                        <th colspan="{!witem.ls_hdr_p1.size + witem.ls_hdr_p2.size + 3}">Successful Order</th>
+                        <th rowspan="2">Contactable Response Rate</th>
+                        <th rowspan="2">Callable Response Rate</th>
+                        <th rowspan="2">Total Response Rate (For Total)</th>
+                        <th colspan="{!witem.ls_hdr_p1.size + witem.ls_hdr_p2.size + 3}">ANP</th>
+                        <th rowspan="2">AARP</th>
+                        <th rowspan="2">Pending / Consider</th>
+                        <th rowspan="2">Unsuccess</th>
+                        <th colspan="9">Reason for Unsuccess</th>
+                        <th colspan="5">Reference Data</th>
+                    </tr>
+                    <tr>
+                        <th>Duplicate Selling</th>
+                        <th>Refuse to Talk</th>
+                        <th>Over/Under Age</th>
+                        <th>Not Eligible</th>
+                         <apex:repeat value="{!witem.ls_hdr_p1}" var="item">
+                            <th>{!item}</th>
+                        </apex:repeat>           
+                        <th>Cancel order</th>
+                        <apex:repeat value="{!witem.ls_hdr_p2}" var="item">
+                            <th>{!item}</th>
+                        </apex:repeat> 
+                        <th>Cancel</th>
+                        <th>FINAL</th>
+                        <apex:repeat value="{!witem.ls_hdr_p1}" var="item">
+                            <th>{!item}</th>
+                        </apex:repeat>                     
+                        <th>Cancel order</th>
+                        <apex:repeat value="{!witem.ls_hdr_p2}" var="item">
+                            <th>{!item}</th>
+                        </apex:repeat>    
+                        <th>Cancel</th>
+                        <th>FINAL</th>
+                        <th>Too Expensive</th>
+                        <th>Many similar products</th>
+                        <th>Not enough coverage</th>
+                        <th>Others</th>
+                        <th>Unemployed/ No money</th>
+                        <th>Cancel order</th>
+                        <th>No a/c  no credit card</th>
+                        <th>Product not suitable</th>
+                        <th>No interest</th>
+                        <th>Difficult contact</th>
+                        <th>DMC</th>
+                        <th>Drop Call</th>
+                        <th>Foreigner</th>
+                        <th>Invalid</th>
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                    <apex:repeat value="{!witem.rows}" var="data">
+                    <tr>
+                        <td>
+                            <apex:outputPanel layout="none" rendered="{!data.Idate <= Today() }">
+                                <apex:OutputText value="{0,date,yyyy-MM-dd}" escape="false">
+                                <apex:Param value="{!data.Idate}"/></apex:OutputText>
+                            </apex:outputPanel>
+                            <apex:outputPanel layout="none" rendered="{!data.Idate > Today() }">
+                                Grand Total
+                            </apex:outputPanel>
+                        </td>
+                        <td>{!data.ContactableName}</td>
+                        <td><apex:outputText value="{0, Number,0.00%}">
+                                        <apex:Param value="{!data.ContactableRate}"/>
+                                    </apex:OutputText></td>
+                        <td>{!data.DuplicateSelling}</td>
+                        <td>{!data.RefusetoTalk}</td>
+                        <td>{!data.OverUnderAge}</td>
+                        <td>{!data.NotEligible}</td>
+                        <td>{!data.CallableName}</td>
+                        <td><apex:outputText value="{0, Number,0.00%}">
+                                        <apex:Param value="{!data.CallableRate}"/>
+                                    </apex:OutputText></td>
+                        <apex:repeat value="{!data.Ls_SucP1}" var="item">
+                            <th>{!item}</th>
+                        </apex:repeat>  
+                        <td>{!data.Can_SucP1}</td>
+                         <apex:repeat value="{!data.Ls_SucP2}" var="item">
+                            <th>{!item}</th>
+                        </apex:repeat>  
+                        <td>{!data.Can_SucP2}</td>
+                        <td>{!data.SOFINAL}</td>
+                        <td><apex:outputText value="{0, Number,0.00%}">
+                                <apex:Param value="{!data.ContactableResponseRate}"/>
+                            </apex:OutputText></td>
+                        <td><apex:outputText value="{0, Number,0.00%}">
+                                <apex:Param value="{!data.CallableResponseRate}"/>
+                            </apex:OutputText></td>
+                        <td><apex:outputText value="{0, Number,0.00%}">
+                                <apex:Param value="{!data.TotalResponseRate}"/>
+                            </apex:OutputText></td>
+                         <apex:repeat value="{!data.Ls_AnpP1}" var="item1">
+                        <td>
+                            <apex:outputText value="{0, number, #,###.##}">
+                                   <apex:param value="{!item1}" />
+                             </apex:outputText>
+                        </td>
+                        </apex:repeat>  
+                        <td>
+                            <apex:outputText value="{0, number, #,###.##}">
+                               <apex:param value="{!data.Can_AnpP1}" />
+                            </apex:outputText>
+                        </td>
+                        <apex:repeat value="{!data.Ls_AnpP2}" var="item2">
+                            <td>
+                                <apex:outputText value="{0, number, #,###.##}">
+                                    <apex:param value="{!item2}" />
+                                </apex:outputText>
+                            </td>
+                        </apex:repeat> 
+                        <td>
+                            <apex:outputText value="{0, number, #,###.##}">
+                               <apex:param value="{!data.Can_AnpP2}" />
+                            </apex:outputText>
+                        </td> 
+                        <td>
+                            <apex:outputText value="{0, number, #,###.##}">
+                               <apex:param value="{!data.ANPFINAL}" />
+                             </apex:outputText>
+                         </td>
+                        <td>
+                            <apex:outputText value="{0, number, #,###.##}">
+                               <apex:param value="{!data.AARP}" />
+                            </apex:outputText>
+                        </td>
+                        <td>{!data.PendingConsider}</td>
+                        <td>{!data.Unsuccess}</td>
+                        <td>{!data.UnsuccessTooExpensive}</td>
+                        <td>{!data.UnsuccessManysimilarproducts}</td>
+                        <td>{!data.UnsuccessNotenoughcoverage}</td>
+                        <td>{!data.UnsuccessOthers}</td>
+                        <td>{!data.UnsuccessUnemployedNomoney}</td>
+                        <td>{!data.UnsuccessCancelorder}</td>
+                        <td>{!data.UnsuccessNoacnocreditcard}</td>
+                        <td>{!data.UnsuccessProductnotsuitable}</td>
+                        <td>{!data.UnsuccessNointerest}</td>
+                        <td>{!data.RDDifficultcontact}</td>
+                        <td>{!data.RDDMC}</td>
+                        <td>{!data.RDDropCall}</td>
+                        <td>{!data.RDForeigner}</td>
+                        <td>{!data.RDInvalid}</td>
+                         
+                    </tr>
+                </apex:repeat>
+                </tbody>
+            </table>
+
+            </apex:outputPanel>
+             <br/><br/><br/> <br/><br/><br/>
+        </apex:repeat>
+    </div>
+</apex:form>
+</apex:pageBlock>
+</apex:page>

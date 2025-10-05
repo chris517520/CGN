@@ -1,0 +1,243 @@
+<apex:page docType="html-5.0" showHeader="false" title="" controller="RPQFormController" action="{!initRPQFormVFP}" cache="false">
+    
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        
+        
+        <style>
+            .bs input[type="radio"].cigna-question-radio2 {
+            display: none;
+        }
+        .bs input[type="radio"].cigna-question-radio2 ~ label {
+            cursor: pointer;
+        }
+        .bs input[type="radio"].cigna-question-radio2 + label:before {
+            font: normal normal normal 14px/1 FontAwesome;
+            content: "\f058";
+            display: inline-block;
+            height: 20px;
+            margin: 0 .25em 0 0;
+            padding: 0;
+            vertical-align: top;
+            width: 20px;
+            color: #C8C9C7;
+            font-size: 1.2em !important;
+        }
+        .bs input[type="radio"].cigna-question-radio2:checked + label:before {
+            color: #39B54A;
+            content: "\f058";
+        }
+        .bs input[type="radio"].cigna-question-radio2:checked + label:before {
+            font-weight: bold;
+        }
+            
+            @media (min-width: 768px) {
+            .header-bar {
+            //background-image: url({!URLFOR($Resource.KV_Get_Quote)});
+            background-image: url({!URLFOR($Resource.NL_Get_Quote)});
+            background-size: cover;
+            background-position-y: 37%;
+            }
+            }
+            @media (max-width: 767px) {
+            .header-bar {
+            //background-image: url({!URLFOR($Resource.KV_Get_Quote_Mobile)});
+            background-image: url({!URLFOR($Resource.NL_Get_Quote_Mobile)});
+            background-size: cover;
+            background-position-y: 48%;
+            }
+            }
+            
+            .bs .cigna-quote-question {
+                padding:5px 0 5px 5px;
+                font-size: 16px;
+                font-weight: 400;
+                color: #58595B !important;
+            }
+            .button {
+                padding:1em;
+                text-align: center;
+                display:inline-block;
+                text-decoration: none !important;
+                margin:0 auto;
+            
+                -webkit-transition: all 0.2s ease-in-out;
+                -moz-transition: all 0.2s ease-in-out;
+                -ms-transition: all 0.2s ease-in-out;
+                -o-transition: all 0.2s ease-in-out;
+                transition: all 0.2s ease-in-out;
+            }
+			.TitleText {
+           		font-size:22px !important;
+            	text-align:center;
+            	font-weight: bold !important;
+            }
+            .paddingControl{
+            	padding:10px 5px !important;
+            }
+            div#RPQPopUp{
+                display: none;
+                z-index: 10;
+                background: #D9D9D6;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                text-align: left;
+            }
+        
+        div#RPQBox {
+            display: none;
+            position: absolute;
+            z-index: 11;
+            margin: 150px auto 0px auto;
+            width: 80%;
+            height: 50%;
+            background: #FFF;
+            color: #000;
+            left: 10%;
+            padding:20px;
+            border-radius:5px;
+        }
+        
+        #closeRPQPopUp {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        
+        #RPQcontent {
+            padding:5px;
+            color:#000;
+            font-size:12px;
+            width: 100%;
+            height: 70%;
+            overflow-y:auto;
+        } 
+
+        </style>
+        <script>
+        
+        function submit(){
+            let myList = [];
+            let ele = document.getElementsByTagName('input');
+            for(let i = 0; i<ele.length;i++){
+                if(ele[i].checked){
+                    if(ele[i].type="radio"){
+                        var question = {
+                            name: ele[i].name,
+                            value : ele[i].value
+                        }
+                        myList.push(question);
+                    }
+                }
+            }
+            var myJSON = JSON.stringify(myList);
+            
+            saveFormResult(myJSON);
+            console.log(myJSON);
+        }
+        
+        function toggleRPQ(){
+            var overlay = document.getElementById('RPQPopUp');
+            var specialBox = document.getElementById('RPQBox');
+            overlay.style.opacity = .95;
+            if(overlay.style.display == "block"){
+                overlay.style.display = "none";
+                specialBox.style.display = "none";
+            } else {
+                overlay.style.display = "block";
+                specialBox.style.display = "block";
+            }
+        }
+        </script>
+    </head>
+    	<apex:define name="additionalLibraries">
+            <apex:include pageName="CignaCommonCSS" />
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap_ns.css')}" />
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+            
+            <!-- Bootstrap Core CSS -->
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+            <!--<script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap.min.js')}"></script>-->
+            <!-- HKITSFDC-26 -->
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap3.3.6.min.js')}"/>
+            <apex:include pageName="CignaUtilJS"/>
+        </apex:define>
+        <apex:define name="additionalLibraries">
+            
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap_ns.css')}" />
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+            
+            <!-- Bootstrap Core CSS -->
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+            <!--<script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap.min.js')}"></script>-->
+            <apex:include pageName="CignaUtilJS"/>
+        </apex:define>
+                    <apex:form id="RPQForm">
+                        <apex:actionFunction action="{!saveFormResult}" name="saveFormResult" reRender="RPQPopUpPanel,RPQResultPanel,pageMessage" oncomplete="toggleRPQ();"  status="loader-icon">
+                            <apex:param name="result" value=""/>
+                        </apex:actionFunction>
+                        <apex:outputPanel id="pageMessage"><apex:pageMessages /></apex:outputPanel>
+                        <apex:outputPanel id="RPQPopUpPanel">
+                            <div id="RPQPopUp" style="display:none;">
+                                <div id="RPQBox">
+                                    <a href="javascript:void(0);" class="onclick-pointer" ><div id="closeRPQPopUp" class="glyphicon glyphicon-remove" onclick="toggleRPQ();"></div></a>
+                                    <h4>Risk Profile Result Confirmation</h4>
+                                    <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                                    <div id="RPQcontent">
+                                        <p>Your RPQ status is updated as below:</p>
+                                        <p>RPQ status: {!RPQStatus}</p>
+                                        <p>RPQ Effectvie Date: <apex:outputText value="{0,date, MM/dd/yyyy}"> <apex:param value="{!RPQEffectiveDate}" /> </apex:outputText></p>            
+                                    </div>
+                                    <div style="text-align:center;padding: 0 8px 0 8px;width: fit-content;margin:auto;">
+                                        
+                                        <a class="bs button btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" href="#" onclick="nextStep();" >
+                                            confirm
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        <div Class="bs col-xs-12 paddingControl TitleText">
+                            <apex:outputText value="Risk Profile Questionnaire 風險取向問卷" ></apex:outputText>
+                        </div>
+                        <br />
+                        <div Class="bs col-xs-12 paddingControl" style="font-size:12px;">
+                            <apex:outputText escape="false" value="The series of questions below may help you appraise your risk attitudes, financial means and investment objectives, in order to make suitable decisions prior to your consideration of setting up an investment / financial planning scheme.  <br /> 下列問題可助閣下於考慮成立投資／理財計劃前，評估本身的風險取態、財政資源及投資目標，以作出適當決定。">
+                            </apex:outputText> 
+                        </div>
+                        <br />
+                        <div Class="bs col-xs-12 paddingControl">
+                            <apex:outputText escape="false" value="* The Risk Profile Questionnaire update will be applied to all policies with this HKID/Passport Number.<br /> 更新風險取向問卷將適用於所有以此香港身份證／護照號碼開立的保單。">
+                            </apex:outputText>
+                        </div>
+                        <br />
+                        <apex:repeat value="{!questionList}" var="question">
+                            <div class="bs col-xs-12 cigna-quote-question" style="">
+                                <apex:outputText escape="false" value="{!question.question}"></apex:outputText>
+                            </div>
+                            <div>
+                                <apex:repeat var="option" value="{!question.options}">
+                                    <div class="bs cigna-quote-answer ">
+                                        <input type="radio" id="{!option.label}" name="{!question.name}" value="{!option.value}" class="bs cigna-question-radio2"  />
+                                        <label for="{!option.label}">{!option.label}</label>
+                                    </div>
+                                </apex:repeat>
+                            </div>
+                            
+                        </apex:repeat>
+                        <apex:outputText escape="false" styleClass="bs col-xs-12 paddingControl" value="This risk profile questionnaire and the results should not be regarded as investment advice on, an offer to sell, or a solicitation for an offer to purchase any investment products or services. Cigna accepts no responsibility or liability as to the accuracy or completeness of the information provided in this questionnaire and the results. This questionnaire is not a comprehensive financial planning tool and is not a substitute for independent professional advice. <br />本問卷及測試結果僅供參考，並不構成投資意見，亦不得視為招攬買賣任何投資產品或服務。信諾對本問卷內容及結果的準確性及完整性概不作出任何保證。本問卷並非全面的理財策劃工具，不能取代獨立的專業意見。">
+                        </apex:outputText>
+                        <div class="bs col-xs-12" style="text-align:center;">
+                            <a class="bs button btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" href="#" onclick="submit();" >
+                                {!$Label.Next}
+                            </a>
+                        </div>
+                        
+                        
+                    </apex:form>
+             
+</apex:page>

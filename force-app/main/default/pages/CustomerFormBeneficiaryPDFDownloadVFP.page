@@ -1,0 +1,355 @@
+<apex:page showHeader="false" applyHtmlTag="false" renderAs="PDF" cache="true" controller="CustomerFormBeneficiaryPDFDownloadCTRL">
+    <head>
+        <style >
+            @page {
+                /* Rancho_PICSRender_20231219 - fix large empty space in pics */
+                size: A4;
+                margin-left: 1.0cm;
+                margin-top: 4.0cm;
+                margin-bottom: 2.0cm;
+                margin-right: 1.0cm;
+                
+                @top-center {
+                    content: element(header);
+                }
+                
+                @bottom-left {
+                    content: element(footer);
+                }
+            }
+            div.header {
+                font-size: 8pt;
+                display: block;
+                padding-top: 30px;
+                text-align: left;
+                position: running(header);
+                font-family: Arial Unicode MS;
+                //color:  #d3d3d3;
+                
+            }
+            div.footer {
+                
+                text-align: center;
+                padding: 0px;
+                font-size: 8pt;
+                font-family: Arial Unicode MS;
+                position: running(footer);
+            }
+            div.content{
+                font-family: Arial Unicode MS;
+                font-size: 8pt;
+                fill-opacity:.5; 
+                stroke:black; 
+                stroke-width:2;
+                /** does not work **/
+                word-wrap: break-word;
+                word-break: break-all;
+                /** does not work end **/
+            }
+            .pagenumber:before {
+                content: counter(page);
+            }
+            .pagecount:before {
+                content: counter(pages);
+            }
+            tr {
+                height:30px;
+            }
+            
+            .rTable { 
+                display: table; 
+                width: 100%;
+                float: left;
+                margin-bottom: -1px;
+            }
+            .rTableRow { 
+                display: table-row;
+                border: 1px solid black;
+                border-top: 0px;
+            }
+            .rTableRow_title { 
+                display: table-row; 
+                background-color: rgb(24, 140, 204);
+                color:white;
+            }
+            
+            .rTableCell_header { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border: 1px solid black;
+                padding:10px;
+            }
+            
+            .rTableCell_title { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border-right: 1px solid black;
+                padding:10px;
+                width: 35%;
+                font-weight: bold;
+                vertical-align: top;
+                border-width: 0px 1px 1px 1px;
+                border-style: solid;
+                border-color: black;
+            }
+            
+            .rTableCell { 
+                display: table-cell; 
+                border-collapse: collapse;
+                padding:10px;
+                border-style: solid;
+                border-width: 0px 1px 1px 0px;
+                width: 65%;
+                vertical-align: middle;
+            }
+            .sourceOptionsDiv *{
+                vertical-align: middle;
+            }
+            
+            .beneficiary_table{
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .beneficiary_table th{
+                width: 25%;
+            }
+            .beneficiary_table th, .beneficiary_table td{
+                border: 1px solid black;
+                border-collapse: collapse;
+                padding: 10px;
+                display: table-cell;
+            }
+            
+            
+        </style>
+    </head>
+    <div class="header">
+        <div style="width:720px;">
+            <div style="width: 100%; float:left;">
+                <div style="width: 60%; float:left;">
+                    <apex:outputText value="Private & Confidential 私人及機密"></apex:outputText> 
+                </div>
+                <div style="width: 40%; float:left;">
+                    <div style="width: 40%; float:left;">
+                        <apex:image url="{!$Resource.Icon_For_Form}" width="60px" /> 
+                    </div>
+                    <div style="width: 60%; float:left;">
+                        <apex:outputText escape="false" value="{!$Label.Cigna_Address_en_2_line}"/><br/><br/>
+                        Tel: 2560 1990 <apex:outputText value=" Fax: 2560 3605" rendered="{!policyRequest.IsGerneralPolicy__c}"/> <br/>
+                        www.cigna.com.hk
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <div style="width:720px;">
+            <div style="float:right;"  >
+                <apex:outputText ><span class="pagenumber"/> / <span class="pagecount"/></apex:outputText>
+            </div>
+        </div>
+    </div>
+    <div class="content">
+        <div style="width:720px;">
+            
+            <!-- page content -->
+            <div style="width:98%">
+                <div style="width:100%; float: left;">
+                    <div style="float:right; ">
+                        Ref. 參考:<apex:outputText value="&nbsp; &nbsp; &nbsp; &nbsp; " style="text-decoration: underline;" escape="false" />(for office use內部專用)  
+                    </div>
+                </div>
+                <div style="width:100%; float: left; font-size: 16px;">
+                    Policy Change Form – Change of Beneficiary  
+                </div>
+                <div style="width:100%; float: left; font-size: 16px;">
+                    保單更改–更改受益人
+                </div>
+                <div style="width:100%; float: left; padding-top: 10px; padding-bottom: 10px;" class="sourceOptionsDiv">
+                    <div style="width:10%; float: left; ">
+                        <apex:outputText value="Source  " />
+                        <apex:outputText value="來源：  " />
+                    </div>
+                    <div style="width:20%; float: left;">
+                        <apex:image url="{!IF(sitePrefix == '/customer',$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12" style="margin:0px 5px;"/>
+                        <apex:outputText style="width: 100px;" value="Customer Portal      " />
+                        <apex:outputText style="width: 100px;" value="客戶      " />
+                    </div>
+                    <div style="width:20%; float: left;">
+                        <apex:image url="{!IF(sitePrefix == '/broker',$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12" style="margin:0px 5px;"/>
+                        <apex:outputText style="width: 100px;" value="Broker Portal      " />
+                        <apex:outputText style="width: 100px;" value="經紀      " />
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            Personal Particulars<br/>
+                            個人資料
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Submission Date<br/>
+                            申請日期<br/>
+                            (YYYY/MM/DD)
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{0,date, yyyy/MM/dd}">
+                                <apex:param value="{!submissionDate}" />
+                            </apex:outputText>
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Name of Policy Holder<br/>
+                            保單持有人姓名
+                        </div>
+                        <div class="rTableCell">
+                            {!policyRequest.Policy_Holder_Name__c}
+                        </div>
+                    </div>
+                    
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Policy No.<br/>
+                            保單編號
+                        </div>
+                        <div class="rTableCell">
+                            {!policyRequest.Policy_No__c}
+                        </div>
+                    </div>
+                    <apex:outputPanel rendered="{!sitePrefix == '/broker' }">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Broker Name<br/>
+                                經紀公司
+                            </div>
+                            <div class="rTableCell">
+                                {!policyRequest.Broker_Name__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Financial Consultant Name<br/>
+                                財務顧問姓名
+                            </div>
+                            <div class="rTableCell">
+                                {!policyRequest.Financial_Consultant_Name__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Financial Consultant Code<br/>
+                                財務顧問編號
+                            </div>
+                            <div class="rTableCell">
+                                {!policyRequest.Financial_Consultant_Code__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Financial Consultant Contact No.<br/>
+                                財務顧問聯絡電話                        
+                            </div>
+                            <div class="rTableCell">
+                                {!policyRequest.Financial_Consultant_Contact_No__c}
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                </div>
+                
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            <apex:outputText value="Beneficiary Details" ></apex:outputText><br/>
+                            受益人資料
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title" style="width:100%;padding:0px;" >
+                            <table class="beneficiary_table">
+                                <tr>
+                                    <th>
+                                        English Name<br/>
+                                        英文姓名
+                                    </th>
+                                    <th>
+                                        HKID<br/>
+                                        香港身分證
+                                    </th>
+                                    <th>
+                                        Relationship with Person Insured<br/>
+                                        與受保人關係
+                                    </th>
+                                    <th>
+                                        Share (%)<br/>
+                                        分配(％)
+                                    </th>
+                                </tr>
+                                <apex:repeat value="{!policyRequest.Policy_Change_Request_Details__r}" var="beneficiary">
+                                    <tr>
+                                        <td>{!beneficiary.English_Name__c}</td>
+                                        <td>{!beneficiary.HKID_Birth_Cert_Passport_No__c}</td>
+                                        <td>{!beneficiary.Relationship_with_Person_Insured__c}</td>
+                                        <td>{!beneficiary.Share__c}</td>
+                                    </tr>
+                                </apex:repeat>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            <apex:outputText value="Declaration & Authorization" ></apex:outputText><br/>
+                            聲明及授權
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <!-- tnc -->
+                        <div class="rTableCell_title" style="width:100%;" >
+                            <!--JOBR-184: JOBR-199/226 updated by Kermit at 20221012-->
+                     		<!--<apex:include pageName="DeclarationFormVFP"/>-->
+                     		<c:DeclarationFormComponent isContainGIPolicy="{!policyRequest.IsGerneralPolicy__c}" isContainLifePolicy="{!policyRequest.IsLifePolicy__c}"/>
+                        </div>
+                    </div>
+                </div>
+                <apex:outputPanel rendered="{!sitePrefix == '/broker' }">
+                    <div class="rTable">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title" >
+                                <div>
+                                Signature<br/>
+                                簽署
+                                </div>
+                            </div>
+                            <div class="rTableCell">
+                                <apex:outputPanel rendered="{! ph_esignature != null}">
+                                    <apex:image url="/servlet/servlet.FileDownload?file={!ph_esignature.id}" width="450px"/>
+                                </apex:outputPanel>
+                                <br/>
+                                Name of Policy Holder 保單持有人姓名：{!policyRequest.Policy_Holder_Name__c} <br/>
+                                Date Signed 簽署日期(YYYY/MM/DD)：
+                                <apex:outputText value="{0,date, yyyy/MM/dd}">
+                                    <apex:param value="{!submissionDate}" />
+                                </apex:outputText>
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+            </div>
+            
+        </div>
+    </div>
+    
+</apex:page>

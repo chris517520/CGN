@@ -1,0 +1,373 @@
+<apex:page showHeader="false">
+
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap_ns.css')}" />
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.carousel.css')}" />
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.theme.css')}" />
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.transitions.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+        <apex:include pageName="CignaCommonCSS" />
+        
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap.min.js')}"></script>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.carousel.min.js')}"></script>
+        <apex:include pageName="CignaUtilJS" />
+        <style>
+            
+            
+            #liveAgentClientChat.liveAgentStateWaiting {
+                // The CSS class that is applied when the chat request is waiting to be accepted
+                // See "Waiting State" screenshot below
+            }
+            
+            #liveAgentClientChat {
+                // The CSS class that is applied when the chat is currently engaged
+                // See "Engaged State" screenshot below
+            }
+            
+            #liveAgentClientChat.liveAgentStateEnded {
+                // The CSS class that is applied when the chat has ended
+                // See "Ended State" screenshot below
+            }
+            
+            body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                padding: 0;
+                margin: 0
+            }
+            
+            #waitingMessage {
+                height: 100%;
+                width: 100%;
+                vertical-align: middle;
+                text-align: center;
+                display: none;
+            }
+            
+            #liveAgentClientChat.liveAgentStateWaiting #waitingMessage {
+                display: table;
+            }
+            
+            .liveAgentSaveButton {
+                z-index: 2;
+                color: #fff !important;
+                background: #39B54A !important;
+                border-color: #39B54A !important;
+            }
+            
+            .liveAgentEndButton {
+                z-index: 2;
+                color: #fff !important;
+                background: #39B54A !important;
+                border-color: #39B54A !important;
+            }
+            
+            #fileCancelButton {
+                z-index: 2;
+                color: #fff !important;
+                background: #39B54A !important;
+                border-color: #39B54A !important;
+            }
+            
+            #liveAgentSaveButton,
+            #liveAgentEndButton {
+                z-index: 2;
+            }
+            
+            .liveAgentChatInput {
+                height: 25px;
+                border-width: 1px;
+                border-style: solid;
+                /*border-color: #000;*/
+                padding: 2px 0 2px 0px;
+                background: #fff;
+                display: block;
+                width: 99.9%;
+                background: #fff !important;
+                font-size: 14px;
+                border-color: #bfbfbf!important;
+            }
+            
+            .liveAgentSendButton {
+                display: block;
+                width:60px;
+                position: absolute;
+                top: 0;
+                right: -67px;
+                margin-top:5px !important;
+                color: #fff !important;
+                background: #39B54A !important;
+                border-color: #39B54A !important;
+            }
+            
+            #liveAgentChatLog {
+                width: auto;
+                height: auto;
+                top: 0px;
+                position: absolute;
+                overflow-y: auto;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: #fff !important;
+                font-size: 14px;
+                border-color: #bfbfbf!important;
+            }
+            
+            .bs .btn-primary {
+                color: #fff !important;
+                background-color: #2E2E2E !important;
+                border-color: #2E2E2E !important;
+                font-color: #fff !important;
+            }
+            
+            .header-bar {
+                background-color: #D9D9D6;
+                color: #FFF;
+                background-image: url({!$Resource.LiveChat_Banner_New});
+                background-size:100%;
+                font-size: 1.25em;
+                text-align: center;
+                height:150px;
+                position: relative;
+             }
+            
+        </style>
+
+        <script>
+            $(function(){
+                if(Cigna.Util.isIOS() || Cigna.Util.isAndroid()){
+                    $('.liveAgentCobrowseButton').css('display', 'none');
+                }
+            });
+            
+            var waitingTimeout;
+            
+            function waitForMoreMinutes(minutes){
+                waitingTimeout = setTimeout(function(){
+                    timeoutRedirect();
+                }, minutes*60*1000);
+            }
+            
+            function timeoutRedirect(){
+                cancelChatByVisitor();
+                var livechatWindow = document.getElementById("liveAgentClientChatSettings");
+                if (livechatWindow.className == "no_chat no_brand") {
+                    // Rancho_HKITSFDC212_20250401 - remove hard-code url
+                    var sitePrefix = "{!IF(ISBLANK($Site.Prefix), '', $Site.Prefix)}";
+                    var pageName = '/{!$Label.LiveChatMessageToCaseWebPageName}';
+                    
+                    if (sitePrefix != "") {
+                        pageName = sitePrefix + pageName;
+                    }
+                    if ((typeof sforce != 'undefined') && sforce && (!!sforce.one)) {
+                        sforce.one.navigateToURL(pageName); // Salesforce1 navigation
+                    } else {
+                        window.location.href = pageName;
+                    }
+    
+                }
+                //if (thename.className == "no_brand") {
+                    // alert("In chat");
+                //}
+            }
+            
+            var waitingTimeout = setTimeout(function() {
+                /*if(confirm("{!$Label.LiveChatMessageToCase_Waiting_Reminder}")){
+                    waitForMoreMinutes(2);
+                } else {
+                    timeoutRedirect();
+                }*/
+                $('#ReminderDialog').modal({backdrop: 'static'});
+            }, 120000);
+            
+            var thename = document.getElementById("liveAgentClientChatSettings");
+            
+            if (thename != null && thename.className == "no_brand") {
+                $(window).bind('beforeunload', function() {
+                    stopCobrowse();
+                    return 'The Cobrowse End';
+                });
+            }
+        </script>
+    </head>
+
+    <body class="bs" id="body">
+        <div class="bs header-bar" style="margin-top: 0px; background-position-y: 30%;">
+            <p style="position: relative; top: 45%; text-align:center; text-transform: uppercase;">
+                {!$Label.LiveChat_Banner_Title}
+            </p>
+        </div>
+        <div class="bs container-fluid " style="top: 155px; left: 0; right: 0; bottom: 10px; position: absolute;">
+            <liveAgent:clientChat >
+                <input type="hidden" name="liveagent.prechat.findorcreate.map:Product2" value="Name,Canna Health" />
+                <input type="hidden" name="liveagent.prechat.findorcreate.map:Contact" value="FirstName,contactFirstName;" />
+                <input type="hidden" name="liveagent.prechat.findorcreate.showOnCreate:Contact" value="true" />
+                <input type="hidden" name="liveagent.prechat.findorcreate.showOnCreate:Account" value="name,Chan Ha hA;show,true" />
+                <div class="bs" style="float:left;" > <!-- onclick="closeWin()" -->
+                    <liveAgent:clientChatEndButton id="ChatEndButtonId" label="{!$Label.LiveChat_End_Chat}"/>
+                </div>
+                <!-- remove the T&C in co-browsing as confirmed by requirement.
+                <div class="bs" style="float:left;margin-left:5px;">
+                    <button class="bs liveAgentChatElement liveAgentEndButton liveAgentCobrowseButton" type="button" data-backdrop="static" data-toggle="modal" data-target="#TermsDialog">{!$Label.StartCobrowse}</button>
+                </div>
+                -->
+                <!-- PPCP-36 temporary disable the Co-browse button in the Live Chat pop-up
+                <div class="bs" style="float:left;margin-left:5px;">
+                    <button class="bs liveAgentChatElement liveAgentEndButton liveAgentCobrowseButton" type="button" onclick="startCobrowse();">{!$Label.StartCobrowse}</button>
+                </div>
+                -->
+                <!--<div class="bs" style="float:right;">
+                    <liveAgent:clientChatSaveButton label="{!$Label.LiveChat_Save}"/>
+                </div>-->
+                <div id="save" class="bs liveAgentChatElement" style="padding-right:0px !important;">
+                   <a class="bs cigna-fg-orange-medium pull-right onclick-pointer" onclick="SfdcApp.LiveAgent.Chasitor.saveChat();" style="text-decoration: none;">
+                      {!$Label.LiveChat_Save} <i class="ci-hk-briefcase" aria-hidden="true" style="font-weight:bold;"></i> 
+                   </a>
+                </div>
+                
+                <div class="bs container-fluid " style="top: 25px; left: 5px; right: 5px; bottom: 5px; position: absolute; z-index:0;color: '#0000FF'">
+                    <liveAgent:clientChatFileTransfer fileTransferUploadLabel="Send a file over" />
+                </div>
+                <div class="bs container" style="top: 40px; left: 5px; right: 5px; bottom: 5px; position: absolute; z-index:0;">
+                    <liveAgent:clientChatAlertMessage />
+                    <liveAgent:clientChatStatusMessage />
+                    <table id="waitingMessage" cellpadding="0" cellspacing="0">
+                        <tbody id="waitingMessage1">
+                            <tr>
+                                <td style="font-size: 15px">
+                                    <label>{!$Label.Please_wait_to_be_connected_with_an_available_representative}</label>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="top: 0; right: 0; bottom: 55px; left: 0; padding: 0; position: absolute;word-wrap: break-word; z-index: 0;">
+                        <liveAgent:clientChatLog id="clientChatLog" showTimeStamp="true" />
+                    </div>
+                    <div class="bs container-fluid " style="position: absolute; height: auto; right: 0; bottom: 0; left: 0; margin-right:67px; padding:5px 0 5px 0">
+                        <liveagent:clientChatInput />
+                        <liveAgent:clientChatSendButton label="{!$Label.LiveChat_Send}"/>
+                    </div>
+                </div>
+            </liveAgent:clientChat>
+            <!-- Terms Dialog -->
+            <div id="TermsDialog" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">{!$Label.Initiating_CoBrowsing}</h4>
+                        </div>
+                        <div class="modal-body" style="height:300px;overflow:auto;">
+                            <p> 1.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem. Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed. 1.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem. Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed 1.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem. Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed 1.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem. Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-primary" onclick=" $('#TermsDialog').modal('hide');startCobrowse()" type="button">{!$Label.Cobrowse_Initiating_Accept}</button>
+                            <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="stopCobrowse()">{!$Label.Cobrowse_Initiating_Decline}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="ReminderDialog" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <!--<button type="button" class="close" data-dismiss="modal">&times;</button>-->
+                            <h4 class="modal-title">{!$Label.LiveChatMessageToCase_Waiting_Reminder_Title}</h4>
+                        </div>
+                        <div class="modal-body" style="height:60px;">
+                            <p>{!$Label.LiveChatMessageToCase_Waiting_Reminder}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-primary" onclick=" $('#ReminderDialog').modal('hide');waitForMoreMinutes(2);" type="button">{!$Label.OK}</button>
+                            <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="timeoutRedirect()">{!$Label.Cancel}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <script type='text/javascript' src='{!$Setup.Portal_Settings__c.Live_Agent_JavaScript_URL__c}'></script>
+        <script type='text/javascript'>
+            // liveagent.enableLogging();  
+            //liveagent.addCustomDetail('MyName', 'Chan Ha Ha', true);
+            // liveagent.findOrCreate('Product2').map('name', 'MyName', true, true, false).showOnCreate();
+            //liveagent.findOrCreate("Account").map("name", "MyName", true, true, true).saveToTranscript('accountId').showOnCreate();
+            //liveagent.findOrCreate("Case").map("name", "MyName", true, true, true).saveToTranscript("CaseId").showOnCreate();
+            //liveagent.init('{!$Setup.Portal_Settings__c.Live_Agent_Init_URL__c}', '{!$Setup.Portal_Settings__c.Live_Agent_Deployment_ID__c}', '{!$Organization.Id}'.substring(0,15));
+            
+            /*var detailCallback = function (details){
+                for (var i = 0; i < details.customDetails.length; i++) {
+                    if(details.customDetails[i].label == 'PreferProduct'){
+                        console.log(details.customDetails[i].value);
+                    }
+                }
+            };
+            liveagent.details.preChatInit('{!$Setup.Portal_Settings__c.Live_Agent_Init_URL__c}', 'detailCallback');*/
+            
+            liveagent.addEventListener(liveagent.chasitor.Events.START_CHASITOR_IDLE_TIMEOUT_WARNING,
+                function(){
+                    var ampm = formatAMPM(new Date());
+                    var message = '<span class="system" style="margin-bottom:10px;"><em><apex:outputText value="{!$Label.LiveChat_Start_Timeout_Warning}" escape="false"></apex:outputText></em><span class="timestamp">' + ampm + '</span></span>';
+                    $("#liveAgentChatLogText").append(message);
+                }
+            );
+        </script>
+        <a id="Cobrowse_startSession" href="javascript:;" glance_button="startSession" style="display: none"></a>
+        <a id="Cobrowse_stopSession" href="javascript:;" glance_button="stopSession" style="display: none"></a>
+        <a id="Cobrowse_showTerms" href="javascript:;" glance_button="showTerms" style="display: none"></a>
+        <script id="cobrowsescript" type="text/javascript" src="https://www.glancecdn.net/cobrowse/CobrowseJS.ashx?group={!$Setup.Portal_Settings__c.Glance_Cobrowse_Group_ID__c}&site={!$Setup.Portal_Settings__c.Glance_Cobrowse_Site__c}" data-inputevents='{"shift-13":"startSession"}' data-groupid="{!$Setup.Portal_Settings__c.Glance_Cobrowse_Group_ID__c}" data-site="{!$Setup.Portal_Settings__c.Glance_Cobrowse_Site__c}" charset="UTF-8"  data-termsurl="http://cigna.com.hk/zh-hant/legal#1"></script>
+        <script type="text/javascript">
+            function startCobrowse() {
+                var evt = document.createEvent("MouseEvents");
+                evt.initMouseEvent("click", true, true, window,
+                    0, 0, 0, 0, 0, false, false, false, false, 0, null);
+                var a = document.getElementById("Cobrowse_startSession");
+                a.dispatchEvent(evt);
+            }
+            
+            function stopCobrowse() {
+                var evt = document.createEvent("MouseEvents");
+                evt.initMouseEvent("click", true, true, window,
+                    0, 0, 0, 0, 0, false, false, false, false, 0, null);
+                var a = document.getElementById("Cobrowse_stopSession");
+                a.dispatchEvent(evt);
+            }
+            
+            function closeWin() {
+                window.close();
+            }
+            
+            function cancelChatByVisitor(){
+                try{
+                    liveagent.chasitor.cancelChat();
+                } catch(e){}
+            }
+            
+            function formatAMPM(date) {
+                var hours = date.getHours();
+                var minutes = date.getMinutes();
+                var seconds = date.getSeconds();
+                var ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12; // the hour '0' should be '12'
+                minutes = minutes < 10 ? '0'+minutes : minutes;
+                seconds = seconds < 10 ? '0'+seconds : seconds;
+                var strTime = hours + ':' + minutes + ':' + seconds + ' ' + ampm;
+                return strTime;
+            }
+            
+            setInterval(function(){
+                var displayCSS = $('.liveAgentChatElement.liveAgentEndButton').css("display");
+                if(displayCSS === 'inline-block'){ //mean the agent has accepted the request
+                    clearTimeout(waitingTimeout);
+                }
+            },500);
+        </script>
+    </body>
+</apex:page>

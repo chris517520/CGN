@@ -1,0 +1,495 @@
+<apex:page controller="TMSearchAddressCtrl" title="TM Address" showHeader="false" cache="false">
+    <apex:define name="additionalLibraries">
+        
+        
+        
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate.min.js')}"></script>
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+        
+        </apex:define>
+        <style>
+            div#reallocationSpecialBoxESales {
+            
+            
+            position:fixed;
+        
+        z-index: 11;
+        margin: 100px auto 0px auto;
+        width: 40%;
+        height: 50%;
+        background: #FFF;
+        color: #000;
+        top: 10%;
+        left: 30%;
+        padding: 20px;
+        border-radius: 5px;
+        }
+        </style>
+        <script type="text/javascript">
+            
+            function openAddTab(){
+            var address  = $("input[id$='searchText']").val();
+            window.open('/apex/TMCreateAddressVFP?tmaddress='+address);
+        }
+        
+
+        
+        function fillIn(name, id)
+        {
+            
+            var winMain=window.opener;
+            if (null==winMain)
+            {
+                winMain=window.parent.opener;
+            }
+            var ele=winMain.document.getElementById('{!$CurrentPage.parameters.addressName}');
+            ele.value=name;
+            ele=winMain.document.getElementById('{!$CurrentPage.parameters.addressId}');
+            ele.value=id;
+            
+            CloseWindow();
+        }
+        
+        function CloseWindow()
+        {
+            var winMain=window.opener;
+            if (null==winMain)
+            {
+                winMain=window.parent.opener;
+            }
+            
+            if($("input[type=hidden][id*='addressType']").val()!='Corresponding'){
+                if($("input[type=hidden][id*='addressType']").val()=='Company'){
+                    winMain.companyAddressChange();
+                    winMain.closeLookupPopup_company();
+                }else{
+                    winMain.TMResidentialAddressChange();
+                    winMain.closeLookupPopup();
+                }
+            } else{
+                winMain.TMCorrespondingAddressChange();
+                winMain.closeLookupPopup1();
+            }           
+        }
+        
+        function ShowAdd(){
+            changeAdd();
+            var show = $('#addTMaddress').removeAttr("style","display:none");
+        }
+        
+        function HideAdd(){
+            var hide = $('#addTMaddress'.attr("style","display:none"));
+        }
+        
+        function changeToEdit(edit,type){
+            console.log('id+'+edit+'type'+type);
+            
+            if(type=='edit'){
+                $("input[type='hidden'][id*='changeAddressId']").val(edit);
+                changeEdit();
+                
+                $('#hidePage').show();
+                
+                $('#reallocationSpecialBoxESales').show();
+                
+                
+            }else if(type=='delete'){
+                console.log('id+'+edit+'type delete'+type);
+                
+                var result = confirm('Are you sure?')
+                if(result == true){
+                    $("input[type='hidden'][id*='changeAddressId']").val(edit);
+                    changeDelete();
+                }else{
+                    return false;
+                }
+                
+                
+                
+            }
+        }
+        function EditCancle(){
+            
+            $('#hidePage').hide();
+            $('#reallocationSpecialBoxESales').hide();
+            
+            
+            
+        }
+        
+        function validate(){
+            var questionsAnswered = $("form[id*='form']").validate().form();
+            
+            console.log(questionsAnswered);
+            return questionsAnswered;
+        }
+        
+        
+        
+        function checkInputEnglish(value){
+            console.log('9999999');
+            if(/(^$)|(^[^\u4e00-\u9fa5,"]+$)/.test(value)){
+                return true;
+            }
+            return false;
+        }
+        
+        function checkInputChinese(value){
+            console.log('2222222222299999999922222222');
+            if(/(^$)|(^[^,""]+$)/.test(value)){
+                return true;
+            }
+            return false;
+        }
+        
+        jQuery.extend(jQuery.validator.messages, {
+            required: "{!$Label.ESales_Required_Field_Error_Message}"
+        });
+        jQuery.validator.addMethod("checkInputEnglish", function(value, element) {
+            return checkInputEnglish(value);
+        }, "only input digit and alphabet");
+        jQuery.validator.addMethod("checkInputChinese", function(value, element) {
+            return checkInputChinese(value);
+        }, "please input one chinese at least");
+        
+        
+        
+        </script>
+        
+        
+        <div id="hidePage" style="position: fixed;background-color: rgb(0,0,0,0.5);width:100vw;height: 100vh;top: 0;left: 0;z-index: 9;display: none;">
+            
+        </div>
+        <apex:form id="form">
+            
+            <apex:actionFunction name="changeAdd" action="{!changeAdd}"/>
+            <apex:actionFunction name="changeEdit" action="{!changeEdit}" reRender="editAddressList"/>
+            
+            <!-- <apex:actionFunction name="addSave" action="{!addSave}" reRender="tmAddressList,addTMaddress"/> -->
+            <apex:actionFunction name="addSave" action="{!addSave}" />
+            <apex:actionFunction name="validateName" action="{!validateName}"/>
+            <apex:actionFunction name="changeCancle" action="{!changeCancle}" />
+            <apex:actionFunction name="changeDelete" action="{!changeDelete}" />
+            <apex:actionFunction name="EditValidate" action="{!EditValidate}"/>
+            <apex:inputHidden id="addressType" value="{!addressType}" />
+            <!-- search tm address -->
+            <apex:pageBlock title="TM Address">
+                <apex:outputPanel id="showMessage">
+                    <apex:pageMessages ></apex:pageMessages>
+                </apex:outputPanel>
+                <apex:inputHidden id="showError" value="{!isValidate}"/>
+                <apex:pageBlockSection >
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel for="searchText">Name</apex:outputLabel>
+                        <apex:panelGroup >
+                            <apex:inputText id="searchText" value="{!searchText}"/>
+                            <apex:commandButton action="{!searchAddress}" value="Search" status="status"/>
+                            <apex:commandButton action="{!changeAdd}" value="Add" rendered="{!isTMBackOffice}" reRender="addTMaddress"/>
+                        </apex:panelGroup>
+                        
+                    </apex:pageBlockSectionItem>
+                    
+                </apex:pageBlockSection>
+                <apex:outputPanel id="addTMaddress">
+                    <apex:outputPanel rendered="{!isAdd}">
+                        <script type="text/javascript">
+                        console.log('fffffffffTest');
+                        $("form[id$='form']").validate();
+                        $("input[id$='englishField-Building_Name__c']").rules("add",{
+                            required:true
+                        });
+                        
+                        $("input[id*='chineseField']").each(function(idx, elem){
+                            console.log('test BuildingName'+$(elem)+idx);
+                            $(elem).rules("add", {
+                                
+                                checkInputChinese: true
+                                
+                            });
+                        });
+                        
+                        $("input[id*='englishField']").each(function(idx, elem){
+                            console.log('test StreetName');
+                            $(elem).rules("add", {
+                                
+                                checkInputEnglish: true
+                                
+                            });
+                        });
+                        
+                        function clickSave(){
+                            // debugger;
+                            if(validate()){
+                                
+                                var isError=$("input[type='hidden'][id*='showError']").val();
+                                
+                                
+                                // debugger;
+                                if(isError=='true'){
+                                    
+                                    
+                                    addSave();
+                                }else{
+                                    return false;
+                                }
+                            }
+                            
+                            
+                        }
+                        </script>
+                        <!-- Add tm addres -->
+                        <apex:pageBlockSection title="Add TM Address">
+                            
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel value="{!$ObjectType.TM_address__c.fields.Building_Name__c.Label}"/>
+                                <apex:inputField id="englishField-Building_Name__c" value="{!tmAddress.Building_Name__c}"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel value="{!$ObjectType.TM_address__c.fields.Chinese_Building_Name__c.Label}"/>
+                                <apex:inputField id="chineseField-Chinese_Building_Name__c" value="{!tmAddress.Chinese_Building_Name__c}"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel value="{!$ObjectType.TM_address__c.fields.Street_Name__c.Label}"/>
+                                <apex:inputField id="englishField-Street_Name__c" value="{!tmAddress.Street_Name__c}"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel value="{!$ObjectType.TM_address__c.fields.Chinese_Street_Name__c.Label}"/>
+                                <apex:inputField id="chineseField-Chinese_Street_Name__c" value="{!tmAddress.Chinese_Street_Name__c}"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel value="{!$ObjectType.TM_address__c.fields.District__c.Label}"/>
+                                <apex:inputField id="englishField-District__c" value="{!tmAddress.District__c}"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel value="{!$ObjectType.TM_address__c.fields.Chinese_District__c.Label}"/>
+                                <apex:inputField id="chineseField-Chinese_District__c" value="{!tmAddress.Chinese_District__c}"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel value="{!$ObjectType.TM_address__c.fields.Region__c.Label}"/>
+                                <apex:inputField id="englishField-Region__c" value="{!tmAddress.Region__c}"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel value="{!$ObjectType.TM_address__c.fields.Chinese_Region__c.Label}"/>
+                                <apex:inputField id="chineseField-Chinese_Region__c" value="{!tmAddress.Chinese_Region__c}"/>
+                            </apex:pageBlockSectionItem>
+                            
+                        </apex:pageBlockSection>
+                        <div class="bs col-xs-12 col-sm-12" style="text-align: center;">
+                            
+                            <!--  <button  onclick="clickSave()" type="button" >Save</button> -->
+                            <apex:commandButton value="Save" action="{!validateName}"  reRender="form,showMessage,showError,tmAddressList,addTMaddress" oncomplete="clickSave()"/>
+                            
+                            <apex:commandButton value="Cancel" action="{!addCancle}" reRender="addTMaddress,showMessage,showError"/>
+                            
+                        </div>
+                        
+                    </apex:outputPanel>
+                </apex:outputPanel>
+                
+            </apex:pageBlock>
+            
+            <apex:actionFunction name="changeDelete" action="{!changeDelete}" />
+            
+            <apex:actionFunction name="EditeSave" action="{!EditeSave}"/>
+            
+            
+            <apex:actionFunction name="changeCancle" action="{!changeCancle}"/>
+            <apex:actionFunction name="changeDelete" action="{!changeDelete}" />
+            <apex:outputPanel id="editAddressList">
+                <apex:outputPanel rendered="{!isEdit}">
+                    <script>
+                    console.log('test:{!isEdit}');
+                    $('#reallocationSpecialBoxESales').show();
+                    </script>
+                    <div id="reallocationSpecialBoxESales" title="Edit TM Address" style="padding-bottom:10px; border-top: 1px solid #f2f2f2;display: none;">
+                        <!-- edit tm address -->
+                        <apex:pageBlock title="Edit TM Address">
+                            <apex:outputPanel id="showEditMessage">
+                                <apex:pageMessages ></apex:pageMessages>
+                            </apex:outputPanel>
+                            <apex:inputHidden id="showEditeError" value="{!isEditValidate}"/>
+                            <script type="text/javascript">
+                            console.log('GGGGGGGGGGTEST');
+                            $("input[id*='chineseField']").each(function(idx, elem){
+                                $(elem).rules("remove");
+                            });
+                            $("input[id*='englishField']").each(function(idx, elem){
+                                $(elem).rules("remove");
+                            });  
+                            
+                            $("form[id$='form']").validate();
+                            $("input[id$='englishEditField-Building_Name__c']").rules("add",{
+                                required:true
+                            });
+                            $("input[id*='chineseEditField']").each(function(idx, elem){
+                                console.log('test edit BuildingName'+$(elem)+idx);
+                                $(elem).rules("add", {
+                                    checkInputChinese: true
+                                    
+                                });
+                            });
+                            
+                            $("input[id*='englishEditField']").each(function(idx, elem){
+                                console.log('test edit StreetName');
+                                $(elem).rules("add", {
+                                    checkInputEnglish: true
+                                    
+                                });
+                            });
+                            function validate1(){
+                                var questionsAnswered =  $("form[id$='form']").validate().form();
+                                
+                                console.log(questionsAnswered);
+                                return questionsAnswered;
+                            }
+                            
+                            function clcikEditSave(){
+                                if(validate1()){
+                                    var isError = $("input[type='hidden'][id*='showEditeError']").val();
+                                    if(isError=='true'){
+                                        EditeSave();
+                                        EditCancle();
+                                        $("form[id$='form']").validate();
+                                        $("input[id$='englishField-Building_Name__c']").rules("add",{
+                                            required:true
+                                        });
+                                        
+                                        $("input[id*='chineseField']").each(function(idx, elem){
+                                            console.log('test BuildingName'+$(elem)+idx);
+                                            $(elem).rules("add", {
+                                                
+                                                checkInputChinese: true
+                                                
+                                            });
+                                        });
+                                        
+                                        $("input[id*='englishField']").each(function(idx, elem){
+                                            console.log('test StreetName');
+                                            $(elem).rules("add", {
+                                                
+                                                checkInputEnglish: true
+                                                
+                                            });
+                                        });
+                                    }else{
+                                        return false;
+                                    }
+                                }
+                            }
+                            </script>
+                            <apex:pageBlockSection >
+                                <apex:pageBlockSectionItem >
+                                    <apex:outputLabel value="{!$ObjectType.TM_address__c.fields.Building_Name__c.Label}"/>
+                                    <apex:inputField id="englishEditField-Building_Name__c" value="{!editTmAddress.Building_Name__c}"/>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem >
+                                    <apex:outputLabel value="{!$ObjectType.TM_address__c.fields.Chinese_Building_Name__c.Label}"/>
+                                    <apex:inputField id="chineseEditField-Chinese_Building_Name__c" value="{!editTmAddress.Chinese_Building_Name__c}"/>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem >
+                                    <apex:outputLabel value="{!$ObjectType.TM_address__c.fields.Street_Name__c.Label}"/>
+                                    <apex:inputField id="englishEditField-Street_Name__c" value="{!editTmAddress.Street_Name__c}"/>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem >
+                                    <apex:outputLabel value="{!$ObjectType.TM_address__c.fields.Chinese_Street_Name__c.Label}"/>
+                                    <apex:inputField id="chineseEditField-Chinese_Street_Name__c" value="{!editTmAddress.Chinese_Street_Name__c}"/>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem >
+                                    <apex:outputLabel value="{!$ObjectType.TM_address__c.fields.District__c.Label}"/>
+                                    <apex:inputField id="englishEditField-District__c" value="{!editTmAddress.District__c}"/>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem >
+                                    <apex:outputLabel value="{!$ObjectType.TM_address__c.fields.Chinese_District__c.Label}"/>
+                                    <apex:inputField id="chineseEditField-Chinese_District__c" value="{!editTmAddress.Chinese_District__c}"/>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem >
+                                    <apex:outputLabel value="{!$ObjectType.TM_address__c.fields.Region__c.Label}"/>
+                                    <apex:inputField id="englishEditField-Region__c" value="{!editTmAddress.Region__c}"/>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem >
+                                    <apex:outputLabel value="{!$ObjectType.TM_address__c.fields.Chinese_Region__c.Label}"/>
+                                    <apex:inputField id="chineseEditField-Chinese_Region__c" value="{!editTmAddress.Chinese_Region__c}"/>
+                                </apex:pageBlockSectionItem>
+                                
+                            </apex:pageBlockSection>
+                            <div class="bs col-xs-12 col-sm-12" style="text-align: center;">
+                                
+                                <!--  <button  onclick="clickSave()" >Save</button> -->
+                                <apex:commandButton value="Save" action="{!EditValidate}" oncomplete="clcikEditSave()" reRender="showEditMessage,showEditeError,tmAddressList"/>
+                                
+                                <!-- <apex:commandButton value="Save" onclick="clcikEditSave()" oncomplete="EditCancle()" reRender="tmAddressList,showEditMessage,showEditeError"/> -->
+                                <!--  <Button class="btn" name="Save" onclick="clcikEditSave('{!editTmAddress.Building_Name__c}','{!editTmAddress.Street_Name__c}','{!editTmAddress.Id}')"/> -->
+                                <apex:commandButton value="Cancel" action="{!changeCancle}" oncomplete="EditCancle()" reRender="addTMaddress,editAddressList"/>
+                                
+                            </div>
+                        </apex:pageBlock>
+                        
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel>
+            <apex:actionStatus id="status" startText="requesting..."/>
+            <apex:inputHidden id="changeAddressId" value="{!changeAddressId}"/>
+            <!-- view tm address list -->
+            <apex:outputPanel id="tmAddressList">
+                <apex:pageBlock >
+                    
+                    <apex:pageBlockTable value="{!addressList}" var="tm">
+                        
+                        <apex:column ><apex:facet name="header">{!$ObjectType.TM_address__c.fields.Name.label}</apex:facet>
+                            <apex:outputLink onclick="fillIn('{!JSENCODE(tm.tmaddressProcessed)}','{!tm.tmaddress.Id}');" rendered="{!!isTMBackOffice}"> {!tm.tmaddress.TM_Address_Name__c}</apex:outputLink><!--SPS-623-->
+                            <apex:outputText rendered="{!isTMBackOffice}">{!tm.tmaddress.TM_Address_Name__c}</apex:outputText>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">{!$ObjectType.TM_address__c.fields.Building_Name__c.label}</apex:facet>
+                            
+                            <apex:inputField styleClass="englishField-{!tm.tmaddress.Id} validationCheck" value="{!tm.tmaddress.Building_Name__c}" rendered="{!tm.isEdit}" onchange=""/>
+                            
+                            <apex:outputField value="{!tm.tmaddress.Building_Name__c}"  rendered="{!!tm.isEdit}"/>
+                        </apex:column>
+                        <apex:column ><apex:facet name="header">{!$ObjectType.TM_address__c.fields.Chinese_Building_Name__c.label}</apex:facet>
+                            <apex:inputField styleClass="chineseField-{!tm.tmaddress.Id} validationCheck" value="{!tm.tmaddress.Chinese_Building_Name__c}" rendered="{!tm.isEdit}"/> 
+                            <apex:outputField value="{!tm.tmaddress.Chinese_Building_Name__c}" rendered="{!!tm.isEdit}"/></apex:column>
+                        <apex:column ><apex:facet name="header">{!$ObjectType.TM_address__c.fields.Street_Name__c.label}</apex:facet>
+                            <apex:inputField styleClass="englishField-{!tm.tmaddress.Id} validationCheck" value="{!tm.tmaddress.Street_Name__c}" rendered="{!tm.isEdit}"/> 
+                            <apex:outputField value="{!tm.tmaddress.Street_Name__c}" rendered="{!!tm.isEdit}"/></apex:column>
+                        <apex:column ><apex:facet name="header">{!$ObjectType.TM_address__c.fields.Chinese_Street_Name__c.label}</apex:facet>
+                            <apex:inputField styleClass="chineseField-{!tm.tmaddress.Id} validationCheck" value="{!tm.tmaddress.Chinese_Street_Name__c}" rendered="{!tm.isEdit}"/> 
+                            <apex:outputField value="{!tm.tmaddress.Chinese_Street_Name__c}" rendered="{!!tm.isEdit}"/></apex:column>
+                        <apex:column ><apex:facet name="header">{!$ObjectType.TM_address__c.fields.District__c.label}</apex:facet>
+                            <apex:inputField styleClass="englishField-{!tm.tmaddress.Id} validationCheck" value="{!tm.tmaddress.District__c}" rendered="{!tm.isEdit}"/> 
+                            <apex:outputField value="{!tm.tmaddress.District__c}" rendered="{!!tm.isEdit}"/></apex:column>
+                        <apex:column ><apex:facet name="header">{!$ObjectType.TM_address__c.fields.Chinese_District__c.label}</apex:facet><apex:inputField styleClass="chineseField-{!tm.tmaddress.Id} validationCheck"  value="{!tm.tmaddress.Chinese_District__c}"  rendered="{!tm.isEdit}"/> 
+                            <apex:outputField value="{!tm.tmaddress.Chinese_District__c}" rendered="{!!tm.isEdit}"/></apex:column>
+                        <apex:column ><apex:facet name="header">{!$ObjectType.TM_address__c.fields.Region__c.label}</apex:facet><apex:inputField styleClass="englishField-{!tm.tmaddress.Id} validationCheck" value="{!tm.tmaddress.Region__c}" rendered="{!tm.isEdit}"/> 
+                            <apex:outputField value="{!tm.tmaddress.Region__c}" rendered="{!!tm.isEdit}"/></apex:column>
+                        <apex:column ><apex:facet name="header">{!$ObjectType.TM_address__c.fields.Chinese_Region__c.label}</apex:facet><apex:inputField styleClass="chineseField-{!tm.tmaddress.Id} validationCheck"  value="{!tm.tmaddress.Chinese_Region__c}"  rendered="{!tm.isEdit}"/> 
+                            <apex:outputField value="{!tm.tmaddress.Chinese_Region__c}" rendered="{!!tm.isEdit}"/></apex:column>
+                        <apex:column ><apex:facet name="header">{!$ObjectType.TM_address__c.fields.LastModifiedDate.label}</apex:facet> 
+                            <apex:outputField value="{!tm.tmaddress.LastModifiedDate}" /></apex:column>
+                        <apex:column id="changeEdit" rendered="{!isTMBackOffice}">
+                            <!-- <apex:inputHidden id="edit-{!tm.tmaddress.Id}"   value="{!tm.tmaddress.Id}"/> -->
+                            <input  value="{!tm.tmaddress.Id}" type="hidden" id="edit-{!tm.tmaddress.Id}" />
+                            <!-- <apex:commandLink value="Edit" rendered="{!!tm.isEdit}" onclick="clickEdit('{!tm.tmaddress.Id}')" reRender="tmAddressList">/</apex:commandLink> -->
+                            
+                            <a  rendered="{!!tm.isEdit}"><div onclick="changeToEdit('{!tm.tmaddress.Id}','edit');false;">Edit</div> </a>
+                            <apex:commandLink value="Delete" rendered="{!!tm.isEdit}" onclick="changeToEdit('{!tm.tmaddress.Id}','delete')" reRender="tmAddressList"></apex:commandLink>
+                            
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlock>
+            </apex:outputPanel>
+            
+            
+            <apex:panelGrid columns="4">
+                <apex:commandLink action="{!first}">First</apex:commandlink>
+                <apex:commandLink action="{!previous}" rendered="{!hasPrevious}">Previous</apex:commandlink>
+                {!pageNumber} of {!pages}
+                <apex:commandLink action="{!next}" rendered="{!hasNext}">Next</apex:commandlink>
+                <apex:commandLink action="{!last}">Last</apex:commandlink>
+                
+            </apex:panelGrid>
+            
+            
+        </apex:form>
+    </apex:page>

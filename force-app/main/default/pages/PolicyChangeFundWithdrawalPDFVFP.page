@@ -1,0 +1,467 @@
+<apex:page showHeader="false" applyHtmlTag="false" renderAs="PDF" cache="true" controller="PolicyChangeFundManagementPDFCTRL" language="en_US">
+    <head>
+        <style >
+            @page {
+                padding-top: 90px;
+                margin-bottom: 90px;
+                
+                @top-center {
+                    content: element(header);
+                }
+                
+                @bottom-left {
+                    content: element(footer);
+                }
+            }
+            div.header {
+                font-size: 8pt;
+                display: block;
+                padding-top: 30px;
+                text-align: left;
+                position: running(header);
+                font-family: Arial Unicode MS;
+                //color:  #d3d3d3;
+                
+            }
+            div.footer {
+                
+                text-align: center;
+                padding: 0px;
+                font-size: 8pt;
+                font-family: Arial Unicode MS;
+                position: running(footer);
+            }
+            div.content{
+                font-family: Arial Unicode MS;
+                font-size: 8pt;
+                fill-opacity:.5; 
+                stroke:black; 
+                stroke-width:2;
+                /** does not work **/
+                word-wrap: break-word;
+                word-break: break-all;
+                /** does not work end **/
+            }
+            .pagenumber:before {
+                content: counter(page);
+            }
+            .pagecount:before {
+                content: counter(pages);
+            }
+            tr {
+                height:30px;
+            }
+            
+            .rTable { 
+                display: table; 
+                width: 100%;
+                float: left;
+                margin-bottom: -1px;
+            }
+            .rTableRow { 
+                display: table-row;
+                border: 1px solid black;
+                border-top: 0px;
+            }
+            .rTableRow_title { 
+                display: table-row; 
+                background-color: rgb(24, 140, 204);
+                color:white;
+            }
+            
+            .rTableCell_header { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border: 1px solid black;
+                padding:10px;
+            }
+            
+            .rTableCell_title { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border-right: 1px solid black;
+                padding:10px;
+                width: 35%;
+                font-weight: bold;
+                vertical-align: top;
+                border-width: 0px 1px 1px 1px;
+                border-style: solid;
+                border-color: black;
+            }
+            
+            .rTableCell { 
+                display: table-cell; 
+                border-collapse: collapse;
+                padding:10px;
+                border-style: solid;
+                border-width: 0px 1px 1px 0px;
+                width: 65%;
+                vertical-align: middle;
+            }
+            .sourceOptionsDiv *{
+                vertical-align: middle;
+            }
+            
+            .fund_to_buy_table{
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .fund_to_buy_table th{
+                width: 25%;
+            }
+            .fund_to_buy_table th, .fund_to_buy_table td{
+                border: 1px solid black;
+                border-collapse: collapse;
+                padding: 10px;
+                display: table-cell;
+            }
+            
+            
+        </style>
+    </head>
+    <div class="header">
+        <div style="width:720px;">
+            <div style="width: 100%; float:left;">
+                <div style="width: 60%; float:left;">
+                    <apex:outputText value="Private & Confidential 私人及機密"></apex:outputText> 
+                </div>
+                <div style="width: 40%; float:left;">
+                    <div style="width: 40%; float:left;">
+                        <apex:image url="{!$Resource.Icon_For_Form}" width="60px" /> 
+                    </div>
+                    <div style="width: 60%; float:left;">
+                        <apex:outputText escape="false" value="{!$Label.Cigna_Address_en_2_line}"/><br/><br/>
+                        Tel: 2560 1990 Fax: 2560 3605 <br/>
+                        www.cigna.com.hk
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <div style="width:720px;">
+            <div style="float:right;"  >
+                <apex:outputText ><span class="pagenumber"/> / <span class="pagecount"/></apex:outputText>
+            </div>
+        </div>
+    </div>
+    <div class="content">
+        <div style="width:720px;">
+            
+            <!-- page content -->
+            <div style="width:98%">
+                <div style="width:100%; float: left;">
+                    <div style="float:right; ">
+                        Ref. 參考:<apex:outputText value="&nbsp; &nbsp; &nbsp; &nbsp; " style="text-decoration: underline;" escape="false" />(for office use內部專用)  
+                    </div>
+                </div>
+                <div style="width:100%; float: left; font-size: 16px;">
+                    Policy Change Form – Fund Withdrawal
+                </div>
+                <div style="width:100%; float: left; font-size: 16px;">
+                    保單更改–基金提取
+                </div>
+                <div style="width:100%; float: left; padding-top: 10px; padding-bottom: 10px;" class="sourceOptionsDiv">
+                    <div style="width:10%; float: left; ">
+                        <apex:outputText value="Source  " />
+                        <apex:outputText value="來源：  " />
+                    </div>
+                    <div style="width:20%; float: left;">
+                        <apex:image url="{!IF(request.Site_Prefix__c == '/customer',$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12" style="margin:0px 5px;"/>
+                        <apex:outputText style="width: 100px;" value="Customer Portal      " />
+                        <apex:outputText style="width: 100px;" value="客戶      " />
+                    </div>
+                    <div style="width:20%; float: left;">
+                        <apex:image url="{!IF(contains(LOWER(request.Site_Prefix__c), '/broker'),$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12" style="margin:0px 5px;"/>
+                        <apex:outputText style="width: 100px;" value="Broker Portal      " />
+                        <apex:outputText style="width: 100px;" value="經紀      " />
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            Personal Particulars<br/>
+                            個人資料
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Submission Date<br/>
+                            申請日期<br/>
+                            (YYYY/MM/DD)
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{0,date, yyyy/MM/dd}">
+                                <apex:param value="{!TODAY()}" />
+                            </apex:outputText>
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Name of Policy Holder<br/>
+                            保單持有人姓名
+                        </div>
+                        <div class="rTableCell">
+                            {!request.Policy_Holder_Name__c}
+                        </div>
+                    </div>
+                    
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Policy No.<br/>
+                            保單編號
+                        </div>
+                        <div class="rTableCell">
+                            {!request.Policy_No__c}
+                        </div>
+                    </div>
+                    <apex:outputPanel rendered="{! contains(LOWER(request.Site_Prefix__c), '/broker') }">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Broker Name<br/>
+                                經紀公司
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Broker_Name__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Financial Consultant Name<br/>
+                                財務顧問姓名
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Financial_Consultant_Name__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Financial Consultant Code<br/>
+                                財務顧問編號
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Financial_Consultant_Code__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Financial Consultant Contact No.<br/>
+                                財務顧問聯絡電話                        
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Financial_Consultant_Contact_No__c}
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    
+                </div>
+                
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            <apex:outputText value="Fund Withdrawal Information" ></apex:outputText><br/>
+                            基金提取資料
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Withdrawal Type<br/>
+                            提取類型
+                        </div>
+                        <div class="rTableCell">
+                            {!request.Withdrawal_Type__c}<br/>
+                            {! translationMap[request.Withdrawal_Type__c]}
+                        </div>
+                    </div>
+                </div>
+                <apex:outputPanel rendered="{!request.Withdrawal_Type__c == 'Partial Fund Withdrawal'}">
+                    
+                    <div class="rTable" >  
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title" style="width:100%;padding:0px;" >
+                                <table class="fund_to_buy_table">
+                                    <tr style="background: #eee;">
+                                        <th>
+                                            Selected Plan Type<br/>
+                                            已選之計劃類型
+                                        </th>
+                                        <th>
+                                            Amount<br/>
+                                            金額
+                                        </th>
+                                    </tr>
+                                    <apex:repeat value="{!withdrawPlanList}" var="withdrawPlan">
+                                        <tr>
+                                            <th>
+                                                {!withdrawPlan.Withdrawal_Plan_Type__c}<br/>
+                                                {! translationMap[withdrawPlan.Withdrawal_Plan_Type__c]}
+                                            </th>
+                                            <th>
+                                                {!withdrawPlan.Currency__c}
+                                                {!translationMap[withdrawPlan.Currency__c]}
+                                                &nbsp;
+                                                {!withdrawPlan.Amount__c}
+                                            </th>
+                                        </tr>
+                                    </apex:repeat>
+                                </table>
+                            </div>
+                        </div>  
+                    </div>
+                    
+                </apex:outputPanel>
+                
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            <apex:outputText value="Payment Instruction" ></apex:outputText><br/>
+                            付款指示
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Payment Method<br/>
+                            付款方式
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputPanel rendered="{!request.Payment_Method__c == 'Cheque'}">
+                                {!request.Payment_Method__c}<br/>
+                                {! translationMap[request.Payment_Method__c]}
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!request.Payment_Method__c != 'Cheque'}">
+                                Direct Account Transfer in HKD  <br/>
+                                以港元直接轉數至銀行賬戶 <br/>
+                                (only applicable to policy with valid monthly bank account autopay, 
+                                Payor and Policyholder of which are the same person <br/>
+                                只適用於有效的銀行賬戶自動轉賬的月供保單，同時付款人與保單持有人必須為同一人。)
+                            </apex:outputPanel>
+                            
+                        </div>
+                    </div>
+                    <apex:outputPanel rendered="{!request.Payment_Method__c == 'Cheque'}">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Delivery Option<br/>
+                                運送選擇
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Delivery_Option__c}<br/>
+                                {! translationMap[request.Delivery_Option__c]}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Cheque Currency<br/>
+                                支票貨幣
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Currency__c}<br/>
+                                {! translationMap[request.Currency__c]}
+                            </div>
+                        </div>
+                        <apex:outputPanel rendered="{!request.Currency__c == 'USD'}">
+                            <div class="rTableRow" >
+                                <div class="rTableCell_title">
+                                    Location of Bank<br/>
+                                    銀行地點
+                                </div>
+                                <div class="rTableCell">
+                                    {!request.Bank_Name__c}
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    
+                </div>
+                
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <!-- tnc -->
+                        <div class="rTableCell_title" style="width:100%;" >
+                            <p>
+                            Note 注意：<br/>
+                            1. If no payment or cheque currency instruction is assigned, HKD cheque will be issued 
+                            and sent by Surface mail to policy address.<br/>
+                            如無任何付款或支票貨幣指示，將會發出港元支票並以平郵寄至保單地址。<br/>
+                            2. For change currency, a handling fee of HKD150 will be charged for re-issue cheque currency, 
+                            if the cheque has been issued. (It takes 3 weeks time to process this re-issue.)<br/>
+                            倘若支票已發出，如要申請更換支票貨幣所需費用為港元一佰五十元正。(處理此申請需時約三星期。)<br/>
+                            <!-- 
+                            3. For apply Fund Withdrawal, please fill in below item 3 Fund Deduction Sequence, otherwise the 
+                            Withdrawal of fund will be executed according to company defaulted withdrawal sequence.<br/>
+                            如申請提取基金價值，請填寫第三部份基金調用次序，如沒有閣下之指示，基金將會根據本公司預設的次序提取。<br/>
+                            Zoe updated on 0614, PPCP-30
+                            -->
+                            3. Please submit Policyholder/Person Insured’s HKID/Passport copy and Address Proof with this Withdrawal Form. (if necessary)<br/>
+                            請遞交此申請表時連同保單持有人/受保人之身份証/護照副本及地址證明。(如適用)<br/>
+                            <!-- Zoe updated on 0725, PPCP-105 -->
+                            </p>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            <apex:outputText value="Remarks" ></apex:outputText><br/>
+                            備註
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <!-- tnc -->
+                        <div class="rTableCell_title" style="width:100%;" >
+                            <p>
+                                Please note that investment involves risks and that the value of the investments and the yield from 
+                                our investment linked insurance plans may <br/> 
+                                go down as well as up as a consequence of the generalnature of varied investments and possible 
+                                exchange or interest rate fluctuations. <br/>
+                                The fund prices shown above are not indicative of future performance of the plans. These funds are 
+                                the investment options of several CIGNA <br/> 
+                                Worldwide Life Insurance Company Limited investment linked insurance plans. Please read the fund 
+                                information in conjunction with the CIGNA <br/>
+                                Funds brochure and the related principle brochure of related insurance plans.
+                                由於投資涉及風險及投資項目的性質不同，以及匯率和利率的波動，各項投資價值及收益均可升可降，以上基金價格並不代表將來之表現。<br/>
+                                此等基金為信諾環球人壽保險有限公司數個投資相連保險計劃之基金選擇。閲讀有關基金資料須一併參閱「信諾基金系列」簡介及有關之<br/>
+                                主要銷售刊物。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <apex:outputPanel rendered="{! contains(request.Site_Prefix__c, '/broker') }">
+                    <div class="rTable">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title" >
+                                <div>
+                                Signature<br/>
+                                簽署
+                                </div>
+                            </div>
+                            <div class="rTableCell">
+                                <apex:outputPanel rendered="{! ph_esignature != null }">
+                                    <apex:image url="{!URLFOR($Action.Attachment.Download, ph_esignature.id)}" width="450px"/>
+                                </apex:outputPanel>
+                                <br/>
+                                Name of Policy Holder 保單持有人姓名： {!request.Policy_Holder_Name__c}<br/>
+                                Date Signed 簽署日期(YYYY/MM/DD)：
+                                <apex:outputText value="{0,date, yyyy/MM/dd}">
+                                    <apex:param value="{!TODAY()}" />
+                                </apex:outputText>
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+            </div>
+            
+        </div>
+    </div>
+    
+</apex:page>

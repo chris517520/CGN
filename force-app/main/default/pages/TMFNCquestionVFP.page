@@ -1,0 +1,139 @@
+<apex:page standardController="Opportunity"  extensions="TMFNCquestionCtrl" showHeader="false" sidebar="false">
+
+<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />  
+<style>
+#from {
+	padding-top: 50px;
+}
+.bs .cigna-quote-question {
+	padding:15px 0 30px 20px;
+	border-bottom: 1px solid #D9D9D6;
+}
+.bs .cigna-quote-answer {
+	padding-top:20px;
+}    
+.bs input.cigna-question-text {
+	border: 0;
+	border-bottom: 1px solid #58595B;
+	background: transparent;
+	//width: auto;
+	box-shadow: none !important;
+	border-radius: 0;
+	//color: #58595B;
+	width: 50px;
+	text-align: left;
+	padding:12px;
+	outline: none;
+}
+.bs input.text-center{
+	text-align:center;
+}
+.bs input.cigna-question-text:focus {
+	box-shadow: none !important;
+	border-bottom: 1px solid #eac048 !important;
+}
+.bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select, .bs span.form-control  {
+	border-top: 0 !important;
+	border-left: 0 !important;
+	border-right: 0 !important;
+	border-bottom: 1px solid #58595B !important;
+	background: transparent;
+	// width: 100%;
+	box-shadow: none !important;
+	border-radius: 0 !important;
+	background-color:#FFF!important;
+}    
+</style>
+<apex:define name="additionalLibraries">
+<link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap_ns.css')}" />
+<link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+<!-- Bootstrap Core CSS -->
+<script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+<script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap.min.js')}"></script>
+<apex:include pageName="CignaUtilJS"/>
+<!--additional css, bootstrap, jquery,js libraries-->
+<script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate.min.js')}"></script>
+<script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+<apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+<script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+</apex:outputPanel>
+<apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+</apex:define>
+<apex:form id="form">
+<apex:actionFunction name="save" action="{!save}"/>
+<div class="bs col-xs-12 col-sm-6 col-lg-7">
+	<div class="bs cigna-quote-answer col-xs-12" style="padding-left:30px;padding-top: 10px;">
+		<label>{!$Label.LastName}</label><apex:inputText styleClass=".bs input.cigna-question-text" value="{!LastName}"/>
+		<br/>
+		<label>{!$Label.FirstName}</label><apex:inputText styleClass=".bs input.cigna-question-text" value="{!FirstName}"/>
+		<br/>
+		
+		<!-- <label>{!$Label.Upload_Excel_Header_Marital_Status}</label><apex:inputText styleClass=".bs input.cigna-question-text" value="{!MaritalStatus}"/>
+		<br/> -->
+	</div>
+<!-- 	<apex:outputPanel > 
+	<c:FNCcheckboxes esaleQuestion="{!ObjectivesQuestion}" idPrefix="{!ObjectivesQuestion.questionId}-FNC-question"/>
+	</apex:outputPanel>
+	<apex:outputPanel >
+		<c:FNCRadio esaleQuestion="{!BenefitQuestion}" idPrefix="{!BenefitQuestion.questionId}-FNC-question"/>
+		</apex:outputPanel>
+		<apex:outputPanel >
+		<c:FNCRadio esaleQuestion="{!WillingQuestion}" idPrefix="{!WillingQuestion.questionId}-FNC-question"/>
+		</apex:outputPanel>
+		<apex:outputPanel styleClass="bs col-xs-12 cigna-quote-question">
+		<div class="bs col-xs-12" style="padding: 1px;">
+			<apex:variable var="count" value="{!0}" />
+			{!PayInsureQuestion.question}
+			<br/>
+			{!PayInsureQuestion.CHquestion}
+			<br/>
+			{!AverageIncomeQuestion.question}
+			<br/>
+			{!AverageIncomeQuestion.CHquestion}
+			<br/>
+			<div class="bs cigna-quote-answer col-xs-12" style="padding-left:30px;">
+				<apex:repeat var="option" value="{!AverageIncomeQuestion.FNCOptions}">
+				<div class="bs cigna-quote-answer col-xs-12">
+					<apex:outputPanel rendered="{!option.value=='NO'}">
+					<label>{!option.label}</label><apex:inputText styleClass=".bs input.cigna-question-text" value="{!option.answer}"/>
+					<br/>
+					<label>{!option.CHlabel}</label><apex:inputText styleClass=".bs input.cigna-question-text" value="{!option.answer}"/>
+					<br/>
+					<apex:inputHidden value="{!option.answer}" html-class="cigna-validation answer-validation" />
+				</apex:outputPanel>
+				<apex:outputPanel rendered="{!option.value!='NO'&&option.value!='F'}">
+				<input type="radio" id="FNCFourquestion-{!AverageIncomeQuestion.questionId}-{!count}" name="{!AverageIncomeQuestion.questionId}" value="{!option.value}" class="bs cigna-question-radio" />
+				<label for="FNCFourquestion-{!AverageIncomeQuestion.questionId}-{!count}">{!option.label}</label>
+				<br/>
+				<label for="{!AverageIncomeQuestion.questionId}-{!count}" style="margin-left: 17px;">{!option.CHlabel}</label>
+				<br/>
+				<apex:inputHidden value="{!option.answer}" html-class="cigna-validation answer-validation" />
+			</apex:outputPanel>
+			<apex:outputPanel rendered="{!option.value=='F'}">
+			<label>{!option.label}</label><apex:inputText styleClass=".bs input.cigna-question-text" value="{!option.answer}"/>
+			<br/>
+			<label>{!option.CHlabel}</label><apex:inputText styleClass=".bs input.cigna-question-text" value="{!option.answer}"/>
+			<apex:inputHidden value="{!option.answer}" html-class="cigna-validation answer-validation" />
+		</apex:outputPanel>
+		<apex:variable var="count" value="{!count+ 1}"/>
+		</div>
+		</apex:repeat> -->
+<!-- <script>
+	
+
+</div>
+</div> -->
+
+<!-- <apex:outputPanel >
+<apex:outputPanel >
+<c:FNCRadio esaleQuestion="{!InsurancePremiumQuestion}" idPrefix="{!InsurancePremiumQuestion.questionId}-FNC-question"/>
+</apex:outputPanel>
+</apex:outputPanel> -->
+<apex:outputPanel >
+<apex:commandButton action="{!doSave}" value="save"/>
+<apex:commandButton action="{!doCancel}" value="cancel"/>
+</apex:outputPanel>
+</div>
+</apex:form>
+</apex:page>

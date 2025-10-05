@@ -1,0 +1,205 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="true" title="ESales" controller="GenericEsalesCtrl">
+
+    <head>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <apex:include pageName="CignaBrokerCommonCSS" />
+        <apex:include pageName="CignaCommonCSS" />
+         <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <style type="text/css">
+            .header-bar {
+                color: #FFF;
+                font-size: 1.25em;
+                text-align: center;
+                height: 150px;
+                position: relative;
+            }
+            @media (min-width: 768px) {
+                .header-bar {
+                    background-image: url({!$Resource.LaptopCard})!important;
+                    background-size: cover;
+                    background-position-y: 70%;
+                }
+            	#esalesmainwrapper{
+                	padding-left:50px;
+            		padding-right:50px;
+                }
+            }
+            @media (max-width: 767px) {
+                .header-bar {
+                    background-image: url({!$Resource.LaptopCard})!important;
+                    background-size: cover;
+                    background-position-y: 40%;
+                }
+            	#esalesmainwrapper{
+                	padding-left:20px;
+            		padding-right:20px;
+                }
+            }
+             
+            .cigna-floating-bottom-panel-testing { 
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                margin-left: 0px !important;
+            }
+            
+             @media (max-width: 767px) {
+                 .carousel-div {
+                     overflow: scroll;
+                    }
+             }
+             
+             .mainwrapper {
+                 width: 100vw;
+                 height: 100vh;
+                 overflow-y: scroll;
+                 -webkit-overflow-scrolling: touch;
+             }
+                    
+        </style>
+        
+    </head>
+        <apex:define name="additionalLibraries">
+            <apex:stylesheet value="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+            <!-- CR-56_Link_20220214 -->
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap3.4.1.css')}" />
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+             
+
+            <!-- CR-56_Link_20220214 -->
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-3.6.0.min.js')}"/>
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-migrate-3.3.2.js')}"/>
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap3.4.1.min.js')}"/>
+            
+
+            <apex:include pageName="CignaUtilJS"/> 
+
+        </apex:define>
+
+        <apex:define name="body">
+        <div class="bs" style="width:100%">
+            <apex:actionStatus id="loader-icon">
+                <apex:facet name="start">
+                   <div class="bs col-xs-12 col-lg-12 loading-div" style="padding: 0px;">
+                      <span class="loading-helper"></span>
+                      <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                      <span class="sr-only">Loading...</span>
+                   </div>
+                </apex:facet>
+            </apex:actionStatus>
+         
+            <div id="maincontent" class="carousel-div">
+                <div class="header-bar">
+                    <p style="position: relative; top: 45%; text-align:center;text-transform: uppercase;">
+                        {!$Label.Product_Deck}
+                    </p>
+                </div>
+                 <div id="esalesmainwrapper" class="bs container-fluid" >
+                        <apex:include pageName="BaseGenericEsalesVFP"/>
+                </div>
+            </div>
+                                           
+            <apex:outputPanel id="wrapperApp">
+                <apex:outputPanel id="showNextButtonApp" rendered="{!currentStep < STEP_PAYMENT && currentStep != STEP_ASSESSMENT_QUESTION && currentStep != STEP_UNDERWRITING && currentStep != STEP_UNDERWRITING_SP && currentStep != STEP_UNDERWRITING_C1 && currentStep != STEP_UNDERWRITING_C2 && currentStep != STEP_UNDERWRITING_C3 && currentStep!= STEP_ESIGNATURE }" styleClass="bs row" layout="block"><!-- Rancho_BPE57_6_20210430 -->
+                    <apex:outputPanel rendered="{!displayNextButton}">
+                         <div id="action-bar" class="bs cigna-floating-bottom-panel visible-xs">
+                            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                                <!-- Rancho_PI31_20210601 align auw pop-up with elite -->
+                                <!-- <a href="#" class="action-btn cigna-fg-white" role="button" onclick="nextStep();"> -->
+                                <a href="#" class="action-btn cigna-fg-white" role="button" onclick="goNext();">
+                                    <i class="ci-hk-arrow-31" aria-hidden="true"></i><br/>{!$Label.Next}
+                                </a>    
+                            </div>
+                        </div>
+                     </apex:outputPanel>
+                </apex:outputPanel>
+                <apex:outputPanel id="confirmation-sectionApp" rendered="{!currentStep == STEP_CONFIRMATION}" styleClass="bs row" layout="block">
+                        <apex:outputPanel id="showappealQuestionApp">
+                            <apex:outputPanel rendered="{!isBrokerPortal && txn.AUW_Overall_Result__c != 'Referred' && !(txn.AUW_Overall_Result__c == 'Accept' && !hasExclusion && !hasDecline) && !isAppealYes && !isAppealNo}">
+                                <div id="action-bar" class="bs cigna-floating-bottom-panel visible-xs">
+                                    <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                                        <a id="eSales-home-btn" href="javascript:void(0);" class="action-btn cigna-fg-white" role="button" 
+                                           onclick="Cigna.ESales.appealQuestionYes(); return false;">
+                                            {!$Label.eSales_Yes}
+                                        </a> 
+                                        <a href="#" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" role="button" onclick="Cigna.ESales.appealQuestionNo();return false;">
+                                            {!$Label.eSales_No}
+                                        </a> 
+                                    </div>
+                                </div>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                </apex:outputPanel>
+                <apex:outputPanel id="showReturnHomeApp" rendered="{!txn.AUW_Overall_Result__c == 'Decline' && (isAppealNo || !isBrokerPortal)}">
+                    <apex:outputPanel styleClass="bs row" layout="block">
+                        <div id="action-bar" class="bs cigna-floating-bottom-panel visible-xs">
+                            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                                <a id="eSales-home-btn" href="javascript:void(0);" class="action-btn cigna-fg-white" role="button" 
+                                   onclick="Cigna.ESales.goHome();">
+                                   <i class="ci-hk-home" aria-hidden="true"></i><br/>
+                                    {!$Label.ESales_Return_to_Home}
+                                </a> 
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+                <!-- 20190624 - David Zhang - Temp Fix to hide pervious button -->
+                <apex:outputPanel id="payment-gateway-section2App" rendered="{!false && currentStep > STEP_PAYMENT && paymentResult == 'Failed' && txn.AUW_Overall_Result__c != 'Referred'}" styleClass="bs row" layout="block">
+                    <div id="action-bar" class="bs cigna-floating-bottom-panel visible-xs">
+                        <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                            <a id="eSales-previous-btn" href="#" class="action-btn cigna-fg-white" 
+                                role="button" onclick="Cigna.ESales.returnToPreviousPage();">
+                                <i class="ci-hk-arrow-29" aria-hidden="true"></i><br/>{!$Label.Return_to_previous_page}
+                            </a>    
+                        </div>
+                    </div>
+                </apex:outputPanel>              
+
+                <apex:outputPanel rendered="{!currentStep > STEP_PAYMENT && paymentResult != 'Failed'}" styleClass="bs row" layout="block">
+                    <div id="action-bar" class="bs cigna-floating-bottom-panel visible-xs">
+                        <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                            <a id="eSales-view-plans-btn" href="javascript:void(0);" class="action-btn cigna-fg-white" role="button"
+                               onclick="Cigna.ESales.viewOtherPlans();">
+                               <i class="ci-hk-modify" aria-hidden="true"></i><br/>
+                                {!$Label.View_Other_Plans}
+                            </a>
+                            <a id="eSales-home-btn" href="javascript:void(0);" class="action-btn cigna-fg-white" role="button" 
+                               onclick="Cigna.ESales.goHome();">
+                               <i class="ci-hk-home" aria-hidden="true"></i><br/>
+                                {!$Label.Home}
+                            </a> 
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                
+                    <div id="mobile-submit" style="display:none;">
+                        <div class="bs cigna-floating-bottom-panel visible-xs">
+                            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                                <div onclick="Cigna.ESignatureComp.saveSignature()" class="action-btn cigna-fg-white text-center onclick-pointer" role="button">
+                                    <span class="ci-hk-document-send" aria-hidden="true" style="padding-right:10px;"/>
+                                    <br/>
+                                    {!$Label.Submit}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </apex:outputPanel>
+        </div>
+        <script>
+            if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal() && $(window).width() < 768) {
+                 $('html').css('position', 'fixed').css('overflow', 'hidden').css('width', '100%').css('height', '100%');
+                 $('body').css('position', 'fixed').css('overflow', 'hidden').css('width', '100%').css('height', '100%');
+                 $('#maincontent').addClass('mainwrapper');
+             
+             }
+             
+             if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal() && $(window).width() >= 768) {
+                 $('html').css('position', 'fixed').css('overflow', 'hidden').css('width', '100%').css('height', '100%');
+                 $('body').css('position', 'fixed').css('overflow-y', 'scroll').css('overflow-x', 'hidden').css('width', '100%').css('height', '100%');
+             
+             }
+             
+        </script>
+        </apex:define>
+</apex:page>

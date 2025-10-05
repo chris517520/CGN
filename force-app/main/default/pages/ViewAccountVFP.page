@@ -1,0 +1,181 @@
+<apex:page standardController="Account" extensions="ViewAccountVFPCtrl" docType="html-5.0" tabStyle="Account">
+    <script  type="text/javascript">
+        // block page showing  in IE brower
+        (function isIE11below() { //ie?
+            if (!!window.ActiveXObject && {!wortAtHome}) {
+                console.log('coming ie11');
+                window.opener = null;
+                window.open("about:blank", "_self");
+                window.close();
+            }
+        })();
+    </script>
+    <apex:includeScript value="/support/console/49.0/integration.js"/>
+    <apex:detail title="true" showChatter="true" inlineEdit="{!!wortAtHome}"/>
+
+    <script  type="text/javascript">
+            var workAtHome = {!wortAtHome};
+
+            if(!Array.indexOf){
+                Array.prototype.indexOf = function(obj){              
+                    for(var i=0; i<this.length; i++){
+                        if(this[i]==obj){
+                            return i;
+                        }
+                    }
+                    return -1;
+                }
+            }
+            // fix the content due to overriding view page causes that shows 'External Page' text on tab
+            function resetTabContent() {
+
+                let primaryTabId = '';
+                let subTabId = '';
+                let primaryTabObjId = '';
+                let subTabObjId = '';
+
+                sforce.console.getFocusedPrimaryTabId(function(result) {
+                    primaryTabId = result.id;
+                });
+
+                sforce.console.getFocusedSubtabId(function(result) {
+                    subTabId = result.id;
+                });
+
+                sforce.console.getFocusedPrimaryTabObjectId(function(result) {
+                    primaryTabObjId = result.id;
+                });
+                sforce.console.getFocusedSubtabObjectId(function(result) {
+                    subTabObjId = result.id;
+                    if(primaryTabObjId == subTabObjId ) {
+                        sforce.console.setTabTitle('{!Account.Name}', primaryTabId);
+                        sforce.console.setTabIcon("{!URLFOR($Resource.objectIcon, 'accounticon_16x16.png')}", primaryTabId);
+                    } else {
+                        sforce.console.setTabTitle('{!Account.Name}', subTabId);
+                        sforce.console.setTabIcon("{!URLFOR($Resource.objectIcon, 'accounticon_16x16.png')}", subTabId);
+                    }
+                });
+            }
+
+            var pageLoad = window.onload;
+            window.onload = function() {
+                if (pageLoad) {
+                        pageLoad();
+                }
+                if(sforce.console.isInConsole()){
+                    
+                    resetTabContent();
+                }
+            }
+
+            // @param retainLen - retain original lenght and other chart will be masked
+            function maskData(origData, retainLen) {
+
+                var processData = origData;
+                if(processData && origData.length > retainLen) {
+
+                    var maskLen = origData.length - retainLen;
+                    var maskStr = '';
+                    for(var i = 0; i < maskLen; i++) {
+                        maskStr+= '*';
+                    }
+                    processData = origData.substring(0, retainLen) + maskStr;
+
+                }
+
+                return processData;
+            }
+
+            function preKey(keys){
+                var data=["/",".","*","+","?","|","(",")","[","]","{","}"];
+                var data2=["\\/","\\.","\\*","\\+","\\?","\\|","\\(","\\)","\\[","\\]","\\{","\\}"];
+                
+                for(var count = 0; count<data.length;count++){
+                    if(keys.indexOf(data[count])>-1) {
+                        var reg = new RegExp(data2[count], 'g');
+                        keys=keys.replace(reg, data2[count]);
+                    }
+                }
+                return keys;
+            }
+
+            // Mask sensitive data when user work at home
+            let maskCallBack = function(){
+                if(!workAtHome) {
+                    return null;
+                }
+
+                const maskPhoneLabelArr = ['Phone', 'Mobile', 'Mobile Phone', 'Home Phone', 'Office Phone'];
+                const maskAllLabelArr = ['Residential Address Line 1', 'Home Address Line 1' ];
+                const maskLabelArr = ['Personal ID', 'SSN' ];
+                // get all label elements
+                const labelEles = document.querySelectorAll("td.labelCol");
+
+                // console.log('labelEles:', labelEles);
+                for (let i = 0; i < labelEles.length; i++) {
+                    const currentEle = labelEles[i];
+
+                    let labelTxt = currentEle.innerText;
+
+                    if(maskPhoneLabelArr.indexOf(labelTxt) != -1 || maskAllLabelArr.indexOf(labelTxt) != -1 || maskLabelArr.indexOf(labelTxt) != -1) {
+
+                        // value element
+                        let valueEle = currentEle.nextElementSibling;
+                        let valueText = valueEle.innerText;
+                        
+                        if(valueText && valueText.trim()) {
+
+                            let valueInnerHtml = valueEle.innerHTML;
+                            if(maskPhoneLabelArr.indexOf(labelTxt) != -1 && valueInnerHtml.indexOf("<img") != -1) {
+                                let phoneTextValue = valueEle.textContent;
+                                valueText = phoneTextValue.substring(0, phoneTextValue.length/2);
+                            }
+
+                            let preValueText = preKey(valueText);
+                            let regStr = ">" + preValueText + "<";
+                            let reg = new RegExp(regStr, 'g');
+
+                            let matchResultArr = valueInnerHtml.match(reg);
+                            // console.log('coming4', matchResultArr);
+                            // console.log("matchResultArr: ", matchResultArr);
+                            if(matchResultArr != null) {
+
+                                // mask data
+                                let value = matchResultArr[0];
+                                let maskedValue = '';
+                                if(maskAllLabelArr.indexOf(labelTxt) != -1) {
+                                    maskedValue = maskData(value, 0);
+                                } else {
+                                    maskedValue = maskData(value, 5);
+                                }
+
+                                //replace original html
+                                let regRplc = new RegExp(value, 'g');
+                                valueEle.innerHTML = valueInnerHtml.replace(regRplc, maskedValue + '<');
+
+                                valueEle.classList.add("masked");
+                            } else {
+                                //<td>fasdf23423</td>
+                                // note: only has textcontent, hasn't other inner html
+                                let maskedValue = '';
+                                if(maskAllLabelArr.indexOf(labelTxt) != -1) {
+                                    maskedValue = maskData(valueText, 0);
+                                } else {
+                                    maskedValue = maskData(valueText, 4);
+                                }
+                                let preValueText = preKey(valueText);
+                                let regRplc = new RegExp(preValueText, 'g');
+                                valueEle.innerHTML = valueInnerHtml.replace(regRplc, maskedValue);
+                                valueEle.classList.add("masked");
+                            }
+                        }
+
+                    }
+                }
+            }
+
+            // callback when DOM is ready
+            document.addEventListener("DOMContentLoaded", maskCallBack());
+
+    </script>
+</apex:page>

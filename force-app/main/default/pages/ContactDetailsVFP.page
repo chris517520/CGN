@@ -1,0 +1,60 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" title="Contact Details" controller="ContactDetailsCtrl" >
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}" />
+        <apex:include pageName="CignaCommonCSS" />
+        <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    </head>
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            DisplayCon();
+        });
+
+        function DisplayCon() {
+            ContactDetails.DisplayContactDetails();
+        }
+        function DisplayContent(){
+            var content = $("input[id$='contentText']").val();
+            console.log('#####' + content);
+            $("span[id*='contentHTML']").html(content);
+        }
+    </script>
+        
+        
+
+    <apex:actionStatus id="loader-icon">
+        <apex:facet name="start">
+            <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                &nbsp;
+            </div>
+            <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                    <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                    <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                </div>
+            </div>
+        </apex:facet>
+    </apex:actionStatus>
+    <apex:form id="myform">
+        <apex:outputPanel id="param-panel">
+            <apex:inputText id="contentText" value="{!content}" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" />
+        </apex:outputPanel>
+        <apex:actionFunction name="DisplayContactDetails" action="{!DisplayContactDetails}" namespace="ContactDetails" oncomplete="DisplayContent();" status="loader-icon" reRender="conblock,contentText" />
+
+        <apex:pageBlock title="Contact Details" id="conblock">
+            <apex:pageBlockSection columns="1">
+                <apex:outputText label="{!$Label.Con_Send_Date_Time}" value="{0,Date ,yyyy/MM/dd h:mm a}">
+                    <apex:param value="{!send}" />
+                </apex:outputText>
+                <apex:outputText label="{!$Label.Con_Send_To}" value="{!sendTo}" />
+                <apex:outputText label="{!$Label.Con_Subject}" value="{!subject}" />
+                <apex:outputText label="{!$Label.Con_Recipient}" value="{!recipient}" />
+                <apex:outputText label="{!$Label.Con_Content}" value="" id="contentHTML"/>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        <apex:inputhidden id="ssn" value="{!ssn}" />
+    </apex:form>
+</apex:page>

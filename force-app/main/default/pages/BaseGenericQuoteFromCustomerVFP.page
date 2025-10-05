@@ -1,0 +1,812 @@
+<!--Please change apex page title-->
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" controller="GenericQuoteFromCustomerCtrl" title="Quote From Customer">
+    <head>  
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>     
+        <!-- TO BE REMOVED (if put in the template page) -->
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+        <style>
+            
+            @media 
+            only screen and (max-width: 760px),
+            (min-device-width: 768px) and (max-device-width: 1024px)  {
+            
+               .nav-pills:active{
+                color: #fff !important;
+                background-color: #2E2E2E !important;   
+               }
+        
+                .myTitle
+                {
+                  font-weight: bold;  
+                }
+                .myTable
+                {
+                    border-top:0px !important;
+                }
+                .bs .nav-pills>li.active>a, .bs .nav-pills>li.active>a:focus, .bs .nav-pills>li.active>a:hover {
+                  color: #FFF !important;
+                  background-color: #2E2E2E !important;
+                }
+                .bs .nav-pills>li>a:hover {
+                  color: #FFF !important;
+                  background-color: #BDBDBD !important;
+                }
+                .bs .nav-pills>li>a{
+                  color: #2E2E2E !important;
+                  background-color: #FFF !important;
+                }
+                
+                .desktop-search-btn-div {
+                    padding: 10px;
+                }
+
+                .listcontent-header {
+                  padding-bottom: 5px !important;
+                }
+        
+                .listcontent  {
+                  padding-top: 5px !important;
+                  padding-bottom: 5px !important;
+                  line-height: 1.0; 
+                }
+
+                .serve-List{ 
+                  padding-top:10px;
+ 
+                }
+
+                .subtable-text{        
+                  font-size:14px !important;
+                }
+
+            }
+    
+            
+            @media (min-width: 768px) { 
+                .fundName {
+                    height: 52px;
+                }
+                
+                .withdrawTablePlanName {
+                    height: 38px;
+                }
+
+                .serve-List{ 
+                  padding-right: 40px;
+                  padding-top:10px;
+                }
+
+                .subtable-text{     
+                  font-size:14px !important;
+                }
+
+            }
+              
+              .desktop-search-btn-div {
+                  padding-right:0px;
+              }
+              
+              .desktop-search-btn-div div.desktop-action-btn{
+                    padding-top: 10px;
+                    padding-bottom: 10px;
+              }
+              
+              div#overlay {
+                display: none;
+                z-index: 10;
+                background: #D9D9D6;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                text-align: center;
+              }
+              div#specialBox {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 150px auto 0px auto;
+                width: 80%;
+                height: 50%;
+                background: #FFF;
+                color: #000;
+                left: 10%;
+                padding:20px;
+                border-radius:5px;
+                
+                
+              }
+              #closeOverlay {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+              }
+            
+              #tccontent {
+                padding:10px;
+                color:#000;
+                font-size:12px;
+                width: 100%;
+                height: 95%;
+                overflow-y:auto;
+              } 
+              
+              .content-active {
+                color:#39B54A;
+              }
+              
+              .fundTable th {
+                  font-size:12px;
+                  padding-bottom:3px !important;
+              }
+              
+              .fundTable td {
+                  padding-top:0 !important;
+                  padding-bottom:0 !important;
+              }
+              
+              .switchInTable td {
+                  font-size:14px;
+                  padding-bottom:3px !important;
+                  vertical-align: middle !important;
+              }
+              
+              /**
+              input.amountInput {
+                   margin-top:-10px;
+              }*/
+              
+              .fontSize12 {
+                  font-size:12px;
+              }
+              
+              .fontSize14 {
+                  font-size:14px;
+              }
+              
+              div.errorDiv {
+              }
+              
+              label.error {
+                  font-size:11px;
+              }
+              
+              label.cusError {
+                  font-size:14px;
+                  color: red;
+              }
+              
+              .fontWeightNormal label{
+                  font-weight: normal;
+              }
+              
+              .wrapErrorRow label.error {
+                   white-space: pre-wrap;      /* CSS3 */   
+                   white-space: -moz-pre-wrap; /* Firefox */    
+                   white-space: -pre-wrap;     /* before Opera 7 */   
+                   white-space: -o-pre-wrap;   /* Opera 7 */    
+                   word-wrap: break-word;      /* IE */
+              }
+              
+              .wrapErrorRow th {
+                   vertical-align: top !important;
+              }
+              
+              .grey-bottom {
+                  border-bottom:2px solid #f2f2f2;
+              }
+              
+              .bs .form-field-style-select {
+                  border:0px;
+                  border-bottom:1px solid #58595B;
+                  background: url('{!$Resource.select_arrow_style}') no-repeat 98% 50%;
+                  background-size: 7px 7px;
+                  padding-right:20px;
+                  -moz-appearance: none; 
+                  -webkit-appearance: none; 
+                  appearance: none;
+                  width: 100%;
+                  //box-shadow: none !important;
+                  border-radius: 0px;
+                  //color: #58595B;
+              }
+              
+              
+              .hidden-input-field{
+                  height:0px; 
+                  width:0px; 
+                  border:0px !important;
+                  webkit-appearance: none;
+              }
+              
+              .content-ellipsis {
+                    overflow: hidden;
+                    word-wrap: break-word;
+                    white-space: normal;
+                    <!--white-space:nowrap;
+                    text-overflow: ellipsis;-->
+                    max-width: 500px !important;
+              }
+              
+              .form-field-text-style {
+                    height: 34px;
+                    padding: 6px 12px;
+                    line-height: 1.42857143 !important;
+               }
+            
+        </style>
+        <apex:define name="additionalLibraries">
+             <!--additional css, bootstrap, jquery,js libraries-->
+             <apex:includeScript value="{!URLFOR($Resource.signature_pad_1_5)}" />
+             <!-- CR-56_Link_20220214 -->
+             <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+             <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+             <apex:outputPanel rendered="{!userLanguage == 'zh_TW'}" layout="none">
+                 <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+             </apex:outputPanel>
+             <!-- Date Picker -->
+             <link rel="stylesheet" href="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/jquery-ui.min.css')}" />
+             <!--CR-56_Link_20220214-->
+             <script type="text/javascript" src="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/jquery-ui-1.13.min.js')}"></script>
+             <script type="text/javascript" src="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/datepicker-zh-TW.js')}"></script>
+        </apex:define>
+        <script>
+            var noSearchValueErrMsg = '{!$Label.Error_Input_Criteria}';
+            var quotechanged=false;
+            $(document).ready(function(){        
+    
+               if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                      $('#action-bar').css('position', 'absolute');
+                      //$('#mobile-app-padding').css('display', 'block');
+                      $("div[id*='mobile-app-padding']").css('display', 'block');
+               }
+               styleTableRowColor();
+                
+              quotechanged=false;
+            }); 
+            
+             function styleTableRowColor() {
+                 var srlist = document.getElementsByClassName("quotelistcontent");
+                 var flip = 0;
+                 for(var i = 0; i < srlist.length; i++){
+                     var item = srlist[i];
+                     if (flip == 0) {
+                         item.style.backgroundColor = '#f2f2f2';
+                         flip = 1;
+                     }
+                     else if ($(item).is(':first-child')) {
+                         item.style.backgroundColor = '#f2f2f2';
+                     }
+                     else{
+                         flip = 0;
+                     }
+                 }
+            }
+
+          
+            function SelectQuote(obj){
+                if (  $(obj).hasClass('cigna-question-checkbox') ){
+                    quotechanged=true;
+                    if ($(obj).is(':checked') ){
+                     //   $(obj).parent().parent().parent().css('backgroundColor', '#f2f2f2');
+                      return true;
+                    }else{
+                   //     $(obj).parent().parent().parent().css('backgroundColor', '#fff');
+                     return false;
+                    }
+                }
+            }
+
+            function SelectQuoteAll(obj){ 
+                if ($(obj).is(':checked') ){
+                    $(obj).parent().parent().siblings().find('input').each(function(idx, elem){
+                       $(elem).prop('checked', true);
+                       SelectQuote(elem);
+                  });
+                  searchAgentClick();
+                }else{
+                   $(obj).parent().parent().siblings().find('input').each(function(idx, elem){
+                       $(elem).prop('checked', false);
+                       SelectQuote(elem);
+                  });
+                }                
+            }
+
+            function SearchQuote(){
+              QuoteSearchAPEX();
+            }
+
+            function selectThis(obj){               
+                if ($(obj).find('input.cigna-question-checkbox').is(":checked")) {
+                    $(obj).find('input.cigna-question-checkbox').prop("checked", false);                                
+                }
+                else {
+                    $(obj).find('input.cigna-question-checkbox').prop("checked", true);
+                }
+                SelectQuote($(obj).find('input.cigna-question-checkbox')[0]); 
+                searchAgentClick();
+            }
+
+            function selectThisRadio(obj){               
+               $(obj).find('input')[0].click();
+            }
+            
+        </script> 
+    </head>
+    <div id="container">
+    <apex:form id="policyAssignmentForm">
+        <!-- Start of Assignment Form -->  
+        <div class="bs content-step" data-step="1" id="assign-step">
+            
+   
+            <div style="padding-top:10px;" />
+       
+                
+            <!-- Start of Assignment Tab -->
+            <div id="assignment">        
+                <div class="bs col-xs-12"> <!-- col-sm-10 col-sm-offset-1  -->
+                    <div class="bs-xs-12" style="padding-top:20px;"/>
+                    <div class="bs col-xs-12 content-highlight cigna-fg-blue-light">{!$Label.Step_1}</div>
+                
+                    <div class="bs col-xs-12">
+                        {!$Label.AppLink_Please_choose_the_quote_from_customers}
+                    </div>
+
+
+                    
+                     <apex:outputPanel layout="block" id="aquote-assign" html-data-id="quote-assign" styleClass="bs cigna-fg-gray-dark col-xs-12">
+                        <div class="bs row col-xs-12" style="padding-bottom:15px;">
+                            <div class="bs col-sm-12 col-xs-12" style="padding: 20px 0px 20px 0px;">
+                                <div class="bs col-sm-6 col-xs-12" style="padding-bottom:20px;">
+                                  <!--
+                                    <apex:selectList value="{!assignAgentSearchType}" size="1" styleClass="bs form-field-style-select cigna-fg-gray-dark">
+                                        <apex:selectOption itemValue="" itemLabel="{!$Label.Select_Search_Type}"/>
+                                        <apex:selectOption itemValue="{!$Label.Agent_Name}" itemLabel="{!$Label.Agent_Name}"/>
+                                        <apex:selectOption itemValue="{!$Label.Agent_Code}" itemLabel="{!$Label.Agent_Code}"/>
+                                    </apex:selectList>
+                                  -->
+                                   
+                                  <apex:inputText style="font-size:1em; height:35px; width:95%" styleClass="bs form-field-style cigna-fg-gray-dark" value="{!assignQuoteSearchType}" disabled="true"/> 
+                                </div>   
+                            
+                                <div class="bs col-sm-6 col-xs-12">
+                                      <apex:inputText style="font-size:1em; height:35px; width:95%" styleClass="bs form-field-style cigna-fg-gray-dark" value="{!quoteSearchText}"/><i class="ci-hk-search cigna-fg-orange-dark text-center onclick-pointer" onclick="SearchQuote();" style="width:5%" aria-hidden="true"/>
+                                </div>
+                            </div> 
+                        </div>
+                        
+                        <apex:actionFunction id="action-function-quote-search" name="QuoteSearchAPEX" action="{!SearchQuoteAPEX}" status="loader-icon" rerender="aquote-assign" oncomplete="quotechanged=false;styleTableRowColor();" />
+                        
+                        <apex:outputPanel id="quoteSearchResultList" > 
+                            <!-- Start of Agent List -->
+                            <div id="quote-assign-list" style="padding-bottom:20px;">   
+                               <div class="bs row listcontent-header" style="{!IF(quoteList.size == 0, 'display:none;', '')}">
+                                    <div class="bs col-sm-1 hidden-xs">
+                                      <input type="checkbox" id='selectall-quote-assign-web'
+                                             class="bs cigna-question-checkbox" onchange="SelectQuoteAll(this);"/>
+                                             <label for="selectall-quote-assign-web"></label>
+                                    </div>
+                                    <div class="bs col-sm-4 hidden-xs">{!$Label.AppLink_Applicant}</div>
+                                    <div class="bs col-sm-3 hidden-xs">{!$Label.Product}</div>
+                                    <div class="bs col-sm-3 hidden-xs">{!$Label.AppLink_Date_of_Submission}</div>
+                                    <div class="bs col-xs-12 visible-xs hidden-sm">                                      
+                                      <input type="checkbox"  id="selectall-quote-assign-mob"
+                                             class="bs cigna-question-checkbox" onchange="SelectQuoteAll(this);"/>
+                                             <label for="selectall-quote-assign-mob"></label>
+                                             {!$Label.Select_All}
+                                    </div>
+                               </div>
+                               <div class="bs row listcontent-header" style="{!IF(quoteList.size != 0, 'display:none;', '')}">
+                                    <div class="bs col-xs-12 text-center">
+                                        <i class="fa fa-smile-o cigna-fg-black" aria-hidden="true"></i>
+                                        {!$Label.AppLink_No_quotes_for_assignment}
+                                    </div>
+                               </div>
+                               <apex:outputPanel id="quote-to-assign-list-panel">
+                                   <apex:repeat value="{!quoteList}" var="quote">
+
+                                     <div class="bs row listcontent onclick-pointer quotelistcontent" id="quote-div-{!quote.txn.Id}" onclick="selectThis(this);searchAgentClick();">
+                                        <div class="bs table-row col-xs-1 col-sm-1" style="padding:0px !important;">
+                                            <div class="bs col-xs-12 col-sm-12 content-highlight table-cell">
+                                                <apex:inputCheckbox id="select-quote-assign" value="{!quote.Selected}" styleClass="bs cigna-question-checkbox"  /> 
+                                                <apex:outputLabel for="select-quote-assign" />
+                                            </div>
+                                        </div>
+                                        <div class="bs table-row col-xs-11 col-sm-4" style="padding:0px !important;" onclick="selectThis(this);">   
+                                            <div class="bs col-xs-6 visible-xs table-cell">{!$Label.AppLink_Applicant}</div>
+                                            <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!quote.txn.Customer_Name__c}</div>
+                                        </div>
+                                        <div class="bs table-row col-xs-11 col-xs-offset-1 col-sm-3 col-sm-offset-0" style="padding:0px !important;"  >    
+                                            <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Product}</div>
+                                            <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!quote.txn.Custom_Product_Name__c}</div>
+                                        </div>
+                                        <div class="bs table-row col-xs-11 col-xs-offset-1 col-sm-3 col-sm-offset-0" style="padding:0px !important;" >    
+                                            <div class="bs col-xs-6 visible-xs table-cell">{!$Label.AppLink_Date_of_Submission}</div>
+                                            <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                              <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                                                  <apex:param value="{!quote.txn.App_Link_Submitted_Date__c}" /> 
+                                              </apex:outputText>
+                                             
+                                            </div>
+                                        </div>
+                                     </div>
+                                     
+                                   </apex:repeat>
+                                   <!--
+                                   <apex:inputHidden value="{!agentToAssignId}" id="select-agent-assign"  />
+                                   <apex:input id="Required-select-agent-assign" styleClass="hidden-input-field" />
+                                          -->
+                               </apex:outputPanel>
+                           </div>
+                           <!-- End of Agent List -->
+                        </apex:outputPanel>   
+                        
+                        <script>
+                            //$('input.cigna-question-radio').change(Cigna.PolicyAssignment.onRadioChange);
+                        </script>      
+                    </apex:outputPanel>
+                    
+                    
+                    
+                    <div class="bs col-xs-12 content-highlight cigna-fg-blue-light" style="margin-top:21px;">{!$Label.Step_2}</div>
+                
+                    <div class="bs col-xs-12">
+                        {!$Label.AppLink_Please_assign_new_agent_for_the_selected_quote}
+                    </div>
+                    
+                    <!-- Start of Search Agent to Assign -->
+                    <apex:outputPanel layout="block" id="assign-new-agent" html-data-id="assign-new-agent" styleClass="bs cigna-fg-gray-dark col-xs-12">
+                        <div class="bs row col-xs-12" style="padding-bottom:15px;">
+                            <div class="bs col-sm-12 col-xs-12" style="padding: 20px 0px 20px 0px;">
+                                <div class="bs col-sm-6 col-xs-12" style="padding-bottom:20px;">
+                                    <apex:selectList id="agentSearchType" value="{!assignAgentSearchType}" size="1" styleClass="bs form-field-style-select cigna-fg-gray-dark">
+                                        <apex:selectOption itemValue="" itemLabel="{!$Label.Select_Search_Type}"/>
+                                        <apex:selectOption itemValue="{!$Label.Agent_Name}" itemLabel="{!$Label.Agent_Name}"/>
+                                        <apex:selectOption itemValue="{!$Label.Agent_Code}" itemLabel="{!$Label.Agent_Code}"/>
+                                    </apex:selectList>
+                                </div>   
+                            
+                                <div class="bs col-sm-6 col-xs-12">
+                                      <apex:inputText id="agentSearchText" style="font-size:1em; height:35px; width:95%" styleClass="bs form-field-style cigna-fg-gray-dark" value="{!assignAgentSearchText}"/><i class="ci-hk-search cigna-fg-orange-dark text-center onclick-pointer" onclick="searchAgentClick();" style="width:5%" aria-hidden="true"/>
+                                </div>
+                            </div> 
+                        </div>
+                        
+                        <apex:actionFunction id="action-function-agent-search" name="assignAgentSearch" action="{!assignAgentSearch}" status="loader-icon" rerender="assign-new-agent,ErrorMessagePanel" oncomplete="styleTableRowColor();quotechanged=false;" />
+                <!--        <apex:actionFunction name="renderServeList" action="{!retrieveServeList}" status="loader-icon" rerender="assign-new-agent" oncomplete="selectAgentCheckbox();styleTableRowColor();" />
+                -->
+                        
+                        <apex:outputPanel id="agentSearchResultList" rendered="{!showAgentToAssign}"> 
+                            <!-- Start of Agent List -->
+                            <div id="agent-to-assign-list" style="padding-bottom:20px;">  
+                               <div class="bs row listcontent-header" style="{!IF(agentList.size == 0, 'display:none;', '')}">
+                                    <div class="bs col-sm-1 hidden-xs"></div>
+                                    <div class="bs col-sm-4 hidden-xs">{!$Label.Agent_Name}</div>
+                                    <div class="bs col-sm-3 hidden-xs">{!$Label.Agent_Code}</div>
+                                    <div class="bs col-sm-3 hidden-xs">{!$Label.Broker_Account}</div>
+                               </div>
+                               <div class="bs row listcontent-header" style="{!IF(agentList.size != 0, 'display:none;', '')}">
+                                    <div class="bs col-xs-12 text-center">
+                                        <i class="fa fa-smile-o cigna-fg-black" aria-hidden="true"></i>
+                                        {!$Label.No_Agent_Found}
+                                    </div>
+                               </div>
+                               <apex:outputPanel id="agent-to-assign-list-panel">
+                                   <apex:repeat value="{!agentList}" var="agent">
+                                     <div class="bs row listcontent " id="assign-agent-div-{!agent.agentUser.Id}" >
+                                        <div class="col-xs-12 col-sm-12 onclick-pointer" onclick="selectThisRadio(this);">
+                                          <div class="bs table-row col-xs-1 col-sm-1" style="padding:0px !important;" >
+                                              <div class="bs col-xs-12 col-sm-12 content-highlight table-cell">
+                                                  <input type="radio" id="select-agent-assign-{!agent.agentUser.Id}" value="{!agent.agentUser.Id}" name="select-agent-assign" 
+                                                         class="bs cigna-question-radio" onchange="changeSelectedAgent(this);" 
+                                                         /> 
+                                                  <label for="select-agent-assign-{!agent.agentUser.Id}"></label>
+                                              </div>
+                                          </div>
+                                          <div class="bs table-row col-xs-11 col-sm-4" style="padding:0px !important;">   
+                                              <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Agent_Name}</div>
+                                              <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!agent.agentUser.Name}</div>
+                                          </div>
+                                          <div class="bs table-row col-xs-11 col-xs-offset-1 col-sm-3 col-sm-offset-0" style="padding:0px !important;">    
+                                              <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Agent_Code}</div>
+                                              <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!agent.agentUser.Agent_Code__c}</div>
+                                          </div>
+                                          <div class="bs table-row col-xs-11 col-xs-offset-1 col-sm-3 col-sm-offset-0" style="padding:0px !important;">    
+                                              <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Broker_Account}</div>
+                                              <div class="bs col-xs-6 col-sm-10 content-highlight table-cell">{!agent.agentUser.Account.Name}</div>
+                                              <div class="bs col-sm-2 table-cell">
+                                                <apex:outputPanel layout="block" rendered="{!agent.serveList !=null && agent.servelist.size>0}">
+                                                  <i aria-hidden="true" class="ci-hk-arrow-28" onclick="ToggleServeList(this);"></i>
+                                                </apex:outputPanel>
+                                              </div>
+
+                                          </div>
+                                        </div>
+                                        
+                                        <div class="col-xs-11 col-sm-11 serve-List col-sm-offset-1 col-xs-offset-1" id="serve-List-{!agent.agentUser.Id}" style="{!if(agent.agentUser.id ==agentToAssignId,'','display:none;')}">
+                                    
+                                            <div class="bs row listcontent-header" style="background:#f2f2f2;{!IF(agent.serveList==null || agent.serveList.size == 0, 'display:none;','')}">                                                 
+                                                <div class="bs col-sm-4 hidden-xs subtable-text">{!$Label.AppLink_Applicant}</div>
+                                                <div class="bs col-sm-4 hidden-xs subtable-text">{!$Label.AppLink_Existing_Policy}</div>
+                                                <div class="bs col-sm-4 hidden-xs subtable-text">{!$Label.AppLink_Effective_Date}</div>
+                                           </div>
+                             
+                                            <apex:repeat value="{!agent.serveList}" var="item">
+                                              <div class="bs row listcontent onclick-pointer " style="background:#f2f2f2;">
+                                                  <div class="bs table-row col-xs-12 col-sm-4  " style="padding:0px !important;">   
+                                                      <div class="bs col-xs-6 visible-xs table-cell subtable-text">{!$Label.AppLink_Applicant}</div>
+                                                      <div class="bs col-xs-6 col-sm-12 content-highlight table-cell subtable-text">{!item.holderName}</div>
+                                                  </div>
+                                                  <div class="bs table-row col-xs-12 col-sm-4  " style="padding:0px !important;">    
+                                                      <div class="bs col-xs-6 visible-xs table-cell subtable-text">{!$Label.AppLink_Existing_Policy}</div>
+                                                      <div class="bs col-xs-6 col-sm-12 content-highlight table-cell subtable-text">{!item.policyNumber}</div>
+                                                  </div>
+                                                  <div class="bs table-row col-xs-12   col-sm-4 col-sm-offset-0" style="padding:0px !important;">    
+                                                      <div class="bs col-xs-6 visible-xs table-cell subtable-text">{!$Label.AppLink_Effective_Date}</div>
+                                                      <div class="bs col-xs-6 col-sm-12 content-highlight table-cell subtable-text">
+                                                                      {!item.effDate}                                 
+                                                      </div>
+                                                  </div>
+                                              </div>
+
+                                            </apex:repeat>
+                                          
+                                        </div>  
+                                        
+                                     </div>
+                                     
+                                   </apex:repeat>
+                                   
+                                   <apex:inputHidden value="{!agentToAssignId}" id="select-agent-assign"  />
+                                   <apex:input id="Required-select-agent-assign" styleClass="hidden-input-field" />
+                                          
+                               </apex:outputPanel>
+                           </div>
+                           <!-- End of Agent List -->
+                        </apex:outputPanel>   
+                        
+                          
+                    </apex:outputPanel>
+                    <!-- End of Search Agent to Assign -->
+                    
+                    
+                    <!-- Error Message -->
+                    <div id="scrollToErrorMessagePanel">
+                        <apex:outputPanel id="ErrorMessagePanel" styleClass="bs col-xs-12">
+                            <div id="selectQuoteErrorDiv" class="errorDiv" style="display:none;">
+                                <label class="cusError" id="selectQuoteErrorMsg" >{!$Label.AppLink_Please_select_at_least_one_quote}</label>
+                            </div>
+
+                            <div id="selectSeachTypeErrorDiv" class="errorDiv" style="display:none;">
+                                <label class="cusError" id="selectSearchTypeErrorMsg" >{!$Label.AppLink_Please_select_a_search_type}</label>
+                            </div>
+                            
+                            <div id="quoteChangedErrorDiv" class="errorDiv" style="display:none;">
+                                <label class="cusError" id="quoteChangedErrorMsg" >{!$Label.AppLink_Quote_change_search_agent_again}</label>
+                            </div>
+
+
+                            <div id="selectAgentErrorDiv" class="errorDiv" style="display:none;">
+                                <label class="cusError" id="selectAgentErrorMsg" >{!$Label.Please_select_at_least_one_agent}</label>  
+                            </div>
+                            
+                            <div id="assignedErrorDiv" class="errorDiv" style="{!IF(isAssignSuccess , 'display:none;', '')}">
+                                <label class="cusError" id="assignedErrorMsg" >{!assignErrorMessage}</label>
+                            </div>
+                            <div class="bs col-sm-12 col-xs-12"><div class="bs col-sm-12 col-xs-12" style="padding-bottom:100px;"/></div>
+
+
+                             <script>
+                                //$('input.cigna-question-radio').change(Cigna.PolicyAssignment.onRadioChange);
+                                function assignRequestFinish() {
+                                    if("{!isAssignSuccess}" == 'true'){
+                                        $('#assign-step').hide();
+                                        $('#confirmationPage').show();
+                                        $('#confirmbtnxs').show();
+                                        $('#firstbtnxs').hide();
+                                    } else {
+                                        //$('#assignedErrorMsg').text("{!assignErrorMessage}");
+                                        $('#assignedErrorDiv').show();
+                                    }
+                                }
+                            </script>   
+                        </apex:outputPanel>
+                    </div> 
+                </div>
+                
+                
+                <div class="bs col-sm-12 col-xs-12">
+                
+                    <div style="padding:20px;"></div>
+                    <!--desktop action button-->
+                    <div id="firstbtnsm" class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="assignActionJS();">
+                        {!$Label.Submit}
+                    </div>
+                        
+                    <!--mobile action button-->    
+                
+                    <div id="mobile-app-padding" class="bs row" style="display: none;">
+                        <div class="bs col-xs-12" style="padding-bottom: 100px;"></div>
+                    </div>
+                    
+                   <!-- <div id="action-bar" class="bs visible-xs cigna-floating-bottom-panel" style="left:0px;">
+                        <div id="firstbtnxs" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark onclick-pointer" onclick="assignActionJS();">
+                            <a class="action-btn cigna-fg-white" role="button"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span><br/><span id="firstbtnxstext">{!$Label.Submit}</span></a>
+                        </div>
+                    </div>-->
+                </div>
+                
+            </div>
+            <!-- End of Assignment Tab -->
+            
+             
+            
+             
+        </div>
+        <!-- End of Assignment Form -->
+        
+        <!-- Start of Confirmation Page -->
+        <div class="bs content-step col-xs-12 form-field" data-step="2" style="display:none; padding-top:20px !important;" id="confirmationPage"> <!--  display:none; -->
+            <div class="bs col-xs-12 col-sm-6 col-sm-offset-3">
+                <div class="col-xs-12 col-sm-12" style="text-align:center;">
+                    <i class="fa fa-check-circle-o content-active" style="font-size:50px;" aria-hidden="true"></i>
+                </div>
+                <div style="padding-top:70px;text-align:center;"> <!-- class="col-xs-12 col-sm-12"  -->
+                    <!-- daft add label -->
+                    <apex:outputText value="{!$Label.AppLink_The_requested_assignment_has_been_made}" escape="false" />
+                </div>
+            </div>  
+            <div class="bs col-xs-3 hidden-xs" />
+            <div class="bs col-xs-12 ">
+                <div style="padding:20px;"></div>
+                <!--desktop action button-->
+                <div id="confirmbtnsm" class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="Cigna.Util.navigateToVFP('GenericQuoteFromCustomerVFP', null, null, true);">
+                    {!$Label.AppLink_Return_to_Quote_From_Customer}
+                </div>
+                    
+                <!--mobile action button-->    
+                
+                <div id="mobile-app-padding" class="bs row" style="display:none; padding-bottom:100px;">
+                    <div class="bs col-xs-12"></div>
+                </div>
+                
+               
+                
+            </div>
+        </div>
+        <!-- End of Confirmation Page -->
+        
+        <apex:actionFunction action="{!assignAction}" name="assignActionApex" status="loader-icon" reRender="ErrorMessagePanel" oncomplete="assignRequestFinish();"/>
+        
+    </apex:form>       
+    </div>
+    <script>
+        function assignActionJS(){
+        //  alert ('quotechanged '+quotechanged);
+            if (validateForm()){
+                assignActionApex();
+            }else{
+                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                    var container = $('div'),
+                    scrollTo = $('#scrollToErrorMessagePanel');
+                    container.scrollTop(
+                        9999
+                    );
+                    //scrollTo.offset().top - container.offset().top + container.scrollTop()
+
+                }else{
+                    $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                }
+
+            }
+        }
+
+        function searchAgentClick(){
+          console.log('isQuoteSelected='+isQuoteSelected()+'====checkAgentSearchInfo='+checkAgentSearchInfo());
+          if ( isQuoteSelected() && checkAgentSearchInfo()){
+            assignAgentSearch();
+          }
+        }
+
+        function checkAgentSearchInfo(){
+            var st = $("input[id*='agentSearchText']").val();
+            if ( st.trim()!='' &&   $("select[id*='agentSearchType']").val() ==''){
+              $('#selectSeachTypeErrorDiv').show();
+              return false;
+            }else{
+              $('#selectSeachTypeErrorDiv').hide();
+              return true;
+            }
+        }
+
+        function isQuoteSelected() {
+          var no_of_selected_quote = 0;
+          $("input[id$='select-quote-assign']").each(function(idx, elem){
+              if ($(elem).is(':checked') ){
+                no_of_selected_quote++;
+              }
+          });
+         // alert (no_of_selected_quote);
+          if (no_of_selected_quote==0 ){
+                $('#selectQuoteErrorDiv').show();
+                return false;
+          }
+          else {
+              $('#selectQuoteErrorDiv').hide();
+              return true;
+          }
+        
+          
+        }
+
+        function changeSelectedAgent (obj){
+      //    alert ('in');
+            if (!checkSelectedQuoteChange() ){
+              $("input:hidden[id$='select-agent-assign']").val($(obj).val());
+         
+             if ($(obj).is(':checked') ){
+                $(".serve-List-").hide();
+                var targetID = 'serve-List-'+$(obj).val();
+                console.log ('targetID:'+targetID);
+                $("#"+targetID).show();
+              //  renderServeList ();
+             }
+           } 
+        }
+
+        function selectAgentCheckbox(){
+            var selectedID =  $("input:hidden[id$='select-agent-assign']").val();
+            $('#select-agent-assign-'+selectedID).attr('checked', 'checked');
+          //  alert ('called checked');
+        }
+
+        function isAgentSelected(){
+            if ($("input:hidden[id$='select-agent-assign']").val()==null || $("input:hidden[id$='select-agent-assign']").val()=='' ){
+               $('#selectAgentErrorDiv').show();
+               return false;                
+            }
+            else {
+                $('#selectAgentErrorDiv').hide();
+                return true;
+            } 
+        }
+
+        function checkSelectedQuoteChange(){
+            if (quotechanged ){
+               $('#quoteChangedErrorDiv').show();
+               return true;                
+            }
+            else {
+                $('#quoteChangedErrorDiv').hide();
+                return false;
+            } 
+        }
+        
+        function validateForm() {
+            return !checkSelectedQuoteChange() && isQuoteSelected() && isAgentSelected();
+        }
+
+        
+        function ToggleServeList(obj)   {
+          if ( $(obj).hasClass("ci-hk-arrow-27") ){
+            
+            $(obj).removeClass("ci-hk-arrow-27");
+            $(obj).addClass("ci-hk-arrow-28");
+         //   alert ('a');
+            $(obj).parent().parent().parent().parent().next().hide();
+         //    $(obj).parent().parent().parent().parent().parent().find('.serve-List')[0].hide();
+         //   stb.hide();
+          }else{
+            
+            $(obj).removeClass("ci-hk-arrow-28");
+            $(obj).addClass("ci-hk-arrow-27");
+        //    alert ('b');
+            $(obj).parent().parent().parent().parent().next().show();
+        //     $(obj).parent().parent().parent().parent().parent().find('.serve-List')[0].show();
+           
+          }
+        
+        }     
+    </script>
+</apex:page>

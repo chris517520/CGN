@@ -1,0 +1,422 @@
+<apex:page controller="CustomerPolicyChangePDFController" id="page" renderAs="pdf" docType="html-5.0" standardStylesheets="false" applyHtmlTag="false" applyBodyTag="false" showHeader="false" sidebar="false" language="zh_TW" cache="false">
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <style type="text/css" media="print">
+        @page {
+            size: A4;
+            @top-left {
+                content: element(header);
+                verticle-align: top;
+            }
+            @bottom-center {
+                content: element(footer);
+            }
+            margin-left: 1.0cm;
+            margin-top: 4.0cm;
+            margin-bottom: 2.0cm;
+            margin-right: 1.0cm;
+        }       
+            
+        body, div, p {
+            font-family: "Arial Unicode MS";
+            font-size: 8pt;
+        }
+            
+        div.header {
+            display: block;
+            height:4cm;
+            padding-left: 0.25cm;
+            position: running(header);
+        }
+            
+        div.header img {
+            width: 20mm;
+            height: 20mm;
+        }
+        div.footer {
+            display: block;
+            padding: 5px;
+            position: running(footer);
+            text-align: center;
+        }       
+       .page-break {
+            display:block;
+            page-break-after:always;
+        }
+       .clear-margin-padding {
+            margin: 0 auto;
+            padding: 0;
+        }
+       .pagenumber:before {
+            content: counter(page);
+       }
+       .pagecount:before {
+            content: counter(pages);
+       }
+       tr {
+            height:30px;
+       }
+       .customli{type:"I";}
+       div.content{
+            font-family: Arial Unicode MS;
+            font-size: 8pt;
+            fill-opacity:.5; 
+            stroke:black; 
+            stroke-width:2;
+            /** does not work **/
+            word-wrap: break-word;
+            word-break: break-all;
+            /** does not work end **/
+       }
+       .title {
+            font-size: 10pt;
+            text-align: left;
+            float: right;
+            font-weight: bold;
+       }   
+       .title_pc {
+            font-size: 8pt;
+            text-align: left;
+            font-weight: bold;
+       } 
+       .header-bar {
+            font-size: 14pt;
+            font-weight: bold;
+        }      
+       .Tablebackgroundcolor {
+            background-color: rgb(24, 140, 204);
+            background-repeat: no-repeat;
+            border-collapse: collapse; 
+            border: none; 
+            width: 100%; 
+            padding:10px;
+        }
+       .CustomTable {
+            border-collapse: collapse; 
+            border: none; 
+            width: 100%;
+            padding:10px;
+        }        
+       .CustomTd { 
+           border: solid #000 1px;
+           width: 70%;
+           padding:10px;
+           font-weight: bold;
+           vertical-align: top;
+       }
+       .CustomTd_title { 
+           border: solid #000 1px;
+           width: 30%;
+           padding:10px;
+           font-weight: bold;
+           vertical-align: top;
+       }
+       .CustomColspanTd { 
+           border: solid #000 1px; 
+           padding:10px;
+       }            
+    </style>    
+</head>
+    <div class="header">
+        <br/>
+        <div style="width:720px;">
+            <div style="width: 100%; float:left;">
+                <div style="width: 60%; float:left;">
+                    <apex:outputText value="Private & Confidential  私人及機密"></apex:outputText> 
+                </div>
+                <div style="width: 40%; float:left;">
+                    <div style="width: 40%; float:left;">
+                        <apex:image url="{!$Resource.Icon_For_Form}" width="70px" /> 
+                    </div>
+                    <div style="width: 60%; float:left;">
+                        <apex:outputText escape="false" value="{!$Label.Cigna_Address_en_2_line}"/><br/><br/>
+                        Tel: 2560 1990 <apex:outputText value=" Fax: 2560 3605" rendered="{!policyChangeRequestInfo.IsGerneralPolicy__c}"/> <br/>
+                        www.cigna.com.hk
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> 
+    <div class="footer">
+        <div style="font-size: 10pt; float:right;"> <span class="pagenumber"/> / <span class="pagecount"/> </div>
+    </div>  
+<body>  
+<apex:form id="form" style="width: 100%;">
+    <table align="center" border="0" cellspacing="0" cellpadding="8" class="CustomTable">
+    <tbody>
+        <tr>
+            <td width="100%" colspan="5" style="text-align: right;">
+                Ref. 參考:<apex:outputText value="&nbsp; &nbsp; &nbsp; &nbsp; " style="text-decoration: underline;" escape="false" />(for office use內部專用)
+            </td>
+        </tr>
+        <tr>
+            <td colspan="5" width="100%" style="font-size: 12pt;">
+                 <apex:outputText value="Policy Change Form – Request for Policy & Medical Report Copy" escape="false"/>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" width="80%" style="font-size: 12pt;">保單更改–申請保單副本或/及醫療文件副本</td>
+            <td width="20%">&nbsp;</td>
+        </tr>
+        <tr>
+            <td width="50%" colspan="3">
+                <apex:outputText value="Source" />
+                <apex:outputText value="來源：" />
+                &nbsp;
+                <apex:image url="{!IF(isCustomerUser&&NOT(isBrokerUser),$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12"/>
+                <apex:outputText style="width: 100px;" value="Customer Portal" />
+                <apex:outputText style="width: 100px;" value="客戶" />
+                &nbsp;
+                <apex:image url="{!IF(isBrokerUser&&NOT(isCustomerUser),$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12"/>
+                <apex:outputText style="width: 100px;" value="Broker Portal" />
+                <apex:outputText style="width: 100px;" value="經紀" />
+            </td>
+            <td width="50%" colspan="2">&nbsp;</td>
+        </tr>
+     </tbody>
+     </table>
+     
+     <table align="center" border="0" cellspacing="0" cellpadding="2" class="CustomTable" width="100%">
+     <tbody>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomTd" colspan="2" width="100%">
+                  <span style="color:white;">Personal Particulars</span><br/>
+                  <span style="color:white;">個人資料</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title" width="30%">
+                  Submission Date<br/>
+                  申請日期<br/>
+                  (YYYY/MM/DD)
+              </td>
+              <td class="CustomTd" width="70%" align="left" valign="top">
+                  <apex:outputText value="{0,date,yyyy/MM/dd}">
+                      <apex:param value="{! Today() }" />
+                  </apex:outputText>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Name of Policy Holder<br/>
+                  保單持有人姓名
+              </td>
+              <td class="CustomTd" align="left" valign="top"><apex:outputField value="{!policyChangeRequestInfo.Policy_Holder_Name__c}"/></td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Policy No. <br/>
+                  保單編號
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Policy_No__c}"/>
+              </td>
+          </tr>
+     </tbody>
+     </table>
+     <apex:outputPanel rendered="{!isBrokerUser}">
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr>
+              <td class="CustomTd_title">
+                  Broker Name<br/>
+                  經紀公司
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Broker_Name__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Financial Consultant Name<br/>
+                  財務顧問姓名
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Financial_Consultant_Name__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Financial Consultant Code<br/>
+                  財務顧問編號
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Financial_Consultant_Code__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Financial Consultant Contact No.<br/>
+                  財務顧問電話號碼
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Financial_Consultant_Contact_No__c}"/>
+              </td>
+          </tr>
+     </tbody>
+     </table>
+     </apex:outputPanel>  
+
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">(A)  Duplicate Policy</span><br/>
+                  <span style="color:white;">保單副本</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Duplicate Policy <br/>
+                  保單副本
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!IF(policyChangeRequestInfo.Duplicate_Policy__c, 'Yes<br/>是','No<br/>否')}" escape="false"/>
+              </td>
+          </tr>
+          <tr>
+             <td class="CustomColspanTd" colspan="2">
+             <div style="width:100% ;word-break:break-all">
+                 I/We hereby certify that the above document has been lost, mislaid or destroyed.<br/>
+                    本人/吾等謹此聲明上述之文件已遭遺失或損毁。
+                 <p>Note 註: A handling fee will be charged for each request 申請費用如下:<br/>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; For duplicate policy 保單副本：HKD150.00 per policy/每份
+                 </p>
+                 Cheque should be made payable to {!entityNameEng}, please write down the policy number at the back of the cheque and submit the cheque by mail to {!$Label.Cigna_Address_en}. <br/>
+                   請將劃線支票抬頭「{!entityNameChn}」寄交本公司。請於支票背面寫上保單編號並郵寄至{!$Label.Cigna_Address_zh}。
+                  
+              </div>
+              </td>
+          </tr>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">(B)  Copy for the Policy's Medical Documents</span><br/>
+                  <span style="color:white;">保單醫療文件副本</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Medical Report <br/>
+                  醫療報告
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!IF(policyChangeRequestInfo.Medical_report__c, 'Yes<br/>是','No<br/>否')}" escape="false"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Date of examination <br/>
+                  檢驗日期
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{0,date,yyyy/MM/dd}">
+                      <apex:param value="{!policyChangeRequestInfo.Medical_Report_Date_of_Examination__c}" />
+                  </apex:outputText>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Attending Physician Statement <br/>
+                  主診醫生報告
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!IF(policyChangeRequestInfo.Attending_Physician_Statement__c, 'Yes<br/>是','No<br/>否')}" escape="false"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Date of examination <br/>
+                  檢驗日期
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{0,date,yyyy/MM/dd}">
+                      <apex:param value="{!policyChangeRequestInfo.Attending_Physician_Date_of_Examination__c}" />
+                  </apex:outputText>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Others<br/>
+                  其他
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!IF(policyChangeRequestInfo.Others_Document__c, 'Yes<br/>是','No<br/>否')}" escape="false"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Please Specify<br/>
+                  請註明
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Others__c}" />
+              </td>
+          </tr>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">Delivery Instruction</span><br/>
+                  <span style="color:white;">投遞指示</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Delivery Method <br/>
+                  投遞方式
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!CASE( policyChangeRequestInfo.Delivery_Instruction__c, 
+                                      'By Agent/Broker','By Agent/Broker <br/> 以代理／經紀人' , 
+                                      'By Surface Mail to Policy Address','By Surface Mail to Policy Address <br/> 以平郵寄至保單地址' , ''
+                                           )}" escape="false" />
+              </td>
+          </tr>
+
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">Declaration &amp; Authorization</span><br/>
+                  <span style="color:white;">聲明及授權</span>
+              </td>
+          </tr>
+          <tr>
+             <td class="CustomColspanTd" colspan="2">
+                 <div style="width:100% ; word-wrap: break-word;word-break: break-all;">
+                     <!--JOBR-184: JOBR-199/226 updated by Kermit at 20221012-->
+                     <!--<apex:include pageName="DeclarationFormVFP"/>-->
+                     <c:DeclarationFormComponent isContainGIPolicy="{!policyChangeRequestInfo.IsGerneralPolicy__c}" isContainLifePolicy="{!policyChangeRequestInfo.IsLifePolicy__c}"/>
+                 </div>
+             </td>
+          </tr>
+     </tbody>
+     </table>
+     <apex:outputPanel rendered="{!isBrokerUser}">
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>          
+          <tr>
+              <td class="CustomTd_title" align="left" valign="top" heigth="200">
+                  Signature<br/>
+                  簽署
+              </td>
+              <td class="CustomTd" align="left" height="200">
+                  <div style="width: 100%;">
+                      <div style="width: 100%;heigth:90%;text-align:left;">
+                          <apex:image id="theImage" value="{!PDFSignatureField}" width="450px"/>
+                      </div>
+                      <div style="width: 100%;heigth:10%">
+                          <br/>
+                          <apex:outputText value="Name of Policy Holder 保單持有人姓名: {!policyChangeRequestInfo.Policy_Holder_Name__c}"/> <br/>
+                          <apex:outputText value="Date Signed 簽署日期 (YYYY/MM/DD): {0,date,yyyy/MM/dd}">
+                              <apex:param value="{! Today() }" />
+                          </apex:outputText>
+                      </div>
+                  </div>
+              </td>
+          </tr>         
+     </tbody>
+    </table>
+    </apex:outputPanel>
+    </apex:form>
+</body> 
+</html>
+</apex:page>

@@ -1,0 +1,140 @@
+<apex:page docType="html-5.0"  showHeader="false" title="{!transField['whats_app'][$Label.Header_Language_Code_Current]}" controller="WhatsAppController" language="{!JSINHTMLENCODE($CurrentPage.Parameters.lang)}" cache="false">
+    <head>
+    	<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap.min.js')}"/>
+        <apex:include pageName="CignaUtilJS"/>
+
+        <style>
+        	span[id$="cigna-error"] span div.message{
+                border: none;
+                //background-color: #cc0000;
+                background-color: #fff;
+                //background-color: transparent;
+                opacity: .9;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td img{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell div span{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell{
+                //color: #fff;
+                //color: #F68621;
+                color:red;
+                font-family: "Gotham SSm A", "Gotham SSm B";
+            }
+            
+            span[id$="cigna-error"] .messageText::before{
+                content: "\f071\20";
+                font: normal normal normal 14px/1 FontAwesome;
+                font-size: inherit;
+                text-rendering: auto;
+                -webkit-font-smoothing: antialiased;
+                padding-right: 7px;
+            }
+            .inputfieldstyle{
+                box-shadow: none !important;
+                border-radius: 0px !important;
+                -webkit-box-shadow: none !important;
+                -moz-box-shadow: none !important;
+                border:0px !important;
+                border-bottom:1px solid #FFF !important;
+                background: transparent !important;
+                color: #FFF !important;
+            }
+        </style>
+        <script>
+        	function validation(){             
+                $("[id$='Validate']").prop('disabled', true);
+            }
+            function redirectToESales() {
+                var requestURL = $('input[type=hidden][id$=requestURL]').val();
+                console.log('requestURL:'+requestURL);
+                if (requestURL == '') {
+                    return null;
+                }else{
+                    Cigna.Util.navigateToVFP(requestURL, null, null, true, false);
+                }
+            }
+        </script>
+    </head>
+    <apex:composition template="CustomerUnauthorizedPageTemplateNoCache">
+        <apex:define name="body">
+        	<!-- <apex:actionStatus id="loader-icon">
+                <apex:facet name="start">
+                   <div class="bs col-xs-12 col-lg-12 loading-div" style="padding: 0px;">
+                      <span class="loading-helper"></span>
+                      <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                      <span class="sr-only">Loading...</span>
+                   </div>
+                </apex:facet>
+            </apex:actionStatus> -->
+            <apex:actionStatus id="loader-icon">
+	           <apex:facet name="start">
+	                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+	                     &nbsp;
+	                 </div>
+	                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+	                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+	                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+	                        <span style="display: inline-block; padding: 10px 0px;">Please Wait...</span>
+	                    </div>
+	                 </div>
+	            </apex:facet>
+	        </apex:actionStatus>
+        	<apex:actionFunction name="isValidUser" action="{!isValidUser}" reRender="errorPanelWhatsapp,param-panel" oncomplete="redirectToESales()" status="loader-icon" />
+
+	        <apex:outputPanel id="errorPanelWhatsapp">
+	            <div class="col-xs-12 col-md-12">
+	                <apex:pageMessages id="cigna-error"/>
+	            </div>
+	        </apex:outputPanel>
+	        <div id="param-panel" style="display: none;">
+	            <apex:outputPanel id="param-panel">
+	                <apex:inputHidden value="{!requestURL}" id="requestURL"/>
+	            </apex:outputPanel>
+	        </div>
+
+	        <apex:outputPanel id="validatePanel" rendered="{!showButton}">
+                <div class="col-xs-12 col-md-12">
+                    <h4>{!transField['whatsappIdentity'][$Label.Header_Language_Code_Current]}</h4>
+                    <apex:outputPanel >
+                        <p>
+                            <h5>
+                                <div>{!transField['whatsappReminder'][$Label.Header_Language_Code_Current]}<br/><br/></div>
+                                <div>{!transField['whatsappReminderSecond'][$Label.Header_Language_Code_Current]}<br/><br/></div>
+                                <div>{!transField['whatsappReminderThird'][$Label.Header_Language_Code_Current]}<br/></div>
+                            </h5>
+                        </p>
+                    </apex:outputPanel>
+                </div>
+
+	            <div class="form-group col-xs-12 col-md-12">
+	                <div  id="input-id-div">
+	                    <apex:inputText value="{!hKID}" id="idNo" html-placeholder="{!$Label.HKID_Passport_number}" styleClass="form-control"/>
+	                    <!-- <span class="helptext-icon input-group-addon" id="help" data-toggle="tooltip" title="{!$Label.Registration_ID_Help_Text}" style="display:none;"> 
+	                        <i class="fa fa-question-circle-o" aria-hidden="true"></i>
+	                    </span>  -->                          
+	                </div>
+	            </div>
+
+	            <div class="form-group col-xs-12 col-md-12">
+	                {!$Label.Date_of_Birth}
+	            </div>
+	        
+	            <div class="form-inline col-xs-12 col-md-12" style="padding-bottom:30px;">
+	                <apex:input type="tel" style="width:33%;" value="{!ddDOB}" id="ddDOB" html-placeholder="{!$Label.DD}" html-maxlength="2" styleClass="form-control inputs col-xs-4 col-md-4 inputfieldstyle"/><apex:input type="tel" style="width:33%;" value="{!mmDOB}" id="mmDOB" html-placeholder="{!$Label.MM}" html-maxlength="2" styleClass="form-control inputs col-xs-4 col-md-4 inputfieldstyle" /><apex:input type="tel" style="width:33%;" value="{!yyyyDOB}" id="yyyyDOB" html-placeholder="{!$Label.YYYY}" html-maxlength="4" styleClass="form-control inputs col-xs-4 col-md-4 inputfieldstyle" />
+	            </div>
+	        
+	            <div class="col-xs-12 col-md-12" style="display: {!IF(showButton,'','none')}">
+	            	<button type="button" class="btn btn-primary" data-dismiss="modal" onclick="isValidUser()">{!$Label.Confirm}</button>
+	            </div>
+	        </apex:outputPanel>
+	    </apex:define>
+	</apex:composition>
+</apex:page>

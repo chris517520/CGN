@@ -1,0 +1,911 @@
+<apex:page sidebar="false" showHeader="false" controller="BrokerLandingPageCtrl" action="{!forwardToCustomAuthPage}" >
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+        <apex:include pageName="CignaCommonCSS" />
+        <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <style>
+        
+        #bodyTable,
+        #bodyTable>tbody,
+        #bodyTable>tbody>tr,
+        .noSidebarCell {
+            display: block;
+        }
+        
+        #bodyTable,
+        .bodyDiv {
+            max-width: 100%
+        }
+        
+        #bodyTable {
+            padding-bottom: 0px;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 8px 5px 8px 5px;
+            color: white;
+        }
+        
+        .quick-link-div {
+            width: 100%;
+            font-weight: bold !important;
+        }
+        
+        .quick-link-content {
+            position: relative;
+            top: 30%;
+        }
+        
+        .quick-link-icon {
+            margin: 0px 10px;
+        }
+        
+        .cigna-notification-alert {
+            font-size: 26px;
+        }
+        
+        .cigna-quick-link-menu {
+            opacity: 1;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 0px !important;
+            z-index: 10;
+            text-align: center;
+        }
+        
+        @media (max-width: 767px) {
+            .cigna-quick-link-label {
+                white-space: normal !important;
+            }
+            .quick-link-content {
+                top: 15%;
+            }
+            .quick-link-icon {
+                font-size: 24px;
+            }
+            .quick-link-div {
+                text-align: center !important;
+                border-radius: 0px !important;
+                border: 1px solid #ddd;
+                display: table-cell;
+                //vertical-align: middle;
+                padding: 10px;
+                font-size: 13px !important;
+                height: 80px;
+            }
+            .header {
+                font-size: 12px;
+                padding: 5px 1px;
+            }
+            
+        }
+        
+        @media (min-width: 768px) {
+            .cigna-quick-link-label {
+                display: inline;
+            }
+            .quick-link-div {
+                font-size: 18px !important;
+                height: 70px;
+            }
+
+        }
+        
+        a.nostyle:link {
+            text-decoration: inherit;
+            color: inherit;
+            cursor: auto;
+        }
+        
+        a.nostyle:visited {
+            text-decoration: inherit;
+            color: inherit;
+            cursor: auto;
+        }
+        
+        .owl-pagination {
+            position: absolute;
+            top: 0;
+            left: 50%;
+        }
+        
+        .owl-controls {
+            margin-top: 0px !important;
+        }
+        
+        .owl-pagination .owl-page {
+            position: relative;
+            left: -50%;
+        }
+        
+        .owl-buttons {
+            position: absolute;
+            top: 0;
+            left: 50%;
+        }
+        
+        .owl-buttons > div {
+            left: -50%;
+            position: relative;
+        }
+        
+        .owl-theme .owl-controls .owl-page span {
+            background-color: #eee;
+        }
+        
+        .owl-banner-desc {
+            position: absolute;
+            color: #fff;
+            top: 0;
+            width: 100%;
+            margin-top: 25px;
+            text-align: center;
+        }
+            
+        .bs .owl-item img {
+            -webkit-filter: brightness(0.8);
+            filter: brightness(0.8);
+        }
+        
+        .owl-banner-desc > div {
+            width: 70%;
+            margin: 0 auto;
+            padding-top: 10px;
+        }
+        
+        .owl-banner-desc > div > h3 {
+            /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+            font-family: "ValueSerifBold", Arial;
+            font-style: normal;
+            font-weight: 500;
+        }
+        #copyright_footer div {
+            padding: 5px;
+        }
+        .shortcut-icon {
+            font-size: 13px !important;
+            -webkit-border-radius: 1100%;
+            -moz-border-radius: 100%;
+            -o-border-radius: 100%;
+            border-radius: 100%;
+            border: 2px solid #777;
+            color: #777;
+            text-align: center;
+            /* display: table-cell !important; */
+            vertical-align: middle;
+            padding-top: 3px;
+            width: 22px;
+            height: 22px;
+            margin-top: 10px;
+        }
+        /*
+        #reallocationOverlayApp{
+            position: fixed;
+            top: 0px;
+            bottom: 0px;
+            right: 0px;
+            left: 0px;
+        }
+        */
+        .fixed{
+            position: fixed;
+            top: 0px;
+            bottom: 0px;
+            right:0px;
+            left:0px;
+        }
+        
+        #reallocationSpecialBoxApp {
+            display: none;
+            position: absolute;
+            /*z-index: 11;*/
+            /*margin: auto;*/
+            margin-top: 30px !important;
+            width: 90%;
+            height: 70%;
+            min-height: 100px;
+            background: #FFF;
+            color: #000;
+            left: 5%;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        #reallocationCloseOverlayApp,#downtimeMessageCloseOverlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        #reallocationOverlayApp { 
+            display: none;
+            z-index: 10;
+            background: #D9D9D6;
+            /*position: fixed;*/
+            width: 100%;
+            height: 0;
+            /*height: 100%;*/
+            /*top: 0px;
+            left: 0px;*/
+            text-align: center;
+            display:none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        #reallocationtccontent{
+            padding:10px;
+            color:#000;
+            font-size:12px;
+            width: 100%;
+            height: 95%;
+            overflow-y:auto;
+        }
+        <!-- Kit's -->
+        #downtimeMessageOverlay{
+            display: none;
+            z-index: 10;
+        	background: rgba(217,217,217,0.8);
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0px;
+            left: 0px;
+            text-align: center;
+            opacity:0.7;
+         }
+         #downtimeMessageBox{
+            display: none;
+            position: absolute;
+            z-index: 11;
+            margin: 24px auto;
+            width: 40%;  /*Autumn_JR1902_20210409*/
+            max-height: 70%; /*Autumn JR1902*/
+            overflow-y: auto;
+            background: #FFF;
+            color: #000;
+            left: 30%;
+            padding: 20px;
+            border-radius: 5px;
+         }
+         #downtimeMessageOverlay .checkboxLabel{display:inline-block;font-size:12px;vertical-align:top;margin-top:2px;margin-left:4px}
+         #downtimeMessageOverlay .content{ height:80%;overflow-y:auto}
+        </style>
+        <apex:stylesheet value="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.carousel.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.theme.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.transitions.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+        <style>
+             $('html').css('position', 'fixed').css('overflow', 'auto').css('width', '100%').css('height', '100%');
+             $('body').css('position', 'fixed').css('overflow-x', 'scroll').css('width', '100%').css('height', '100%');
+                
+        </style>
+    </head>
+    <apex:form >
+        <apex:actionFunction name="getTotalPendingMemo" action="{!calculatePendingMemo}" rerender="out" status="myStatus"/>
+        <apex:actionFunction name="getTotalSavedForm" action="{!calculateSavedForm}" rerender="savedformOutput,savedQuoteOutput" status="newStatus,quoteStatus" />
+        <div id="main-content-div">
+            
+            <div class="bs row">
+                
+                <div class="bs col-xs-12 cigna-bg-blue-dark" style="padding:0;">
+                    
+                    <table class="bs col-xs-12 cigna-bg-blue-dark">
+                        <tr>
+                            <td class="bs col-xs-4 col-sm-3">
+                                <div class="bs col-xs-12 col-sm-12 col-sm-offset-1 cigna-bg-blue-dark header onclick-pointer" 
+                                     style="vertical-align: middle;" 
+                                     onclick="Cigna.Util.navigateToVFP('PendingMemoListVFP');">
+                                    {!$Label.Pending_Memo}
+                                </div>
+                            </td>
+                            <td class="bs col-xs-4 col-sm-4">
+                                <div class="bs col-xs-12 col-sm-12 cigna-bg-blue-dark header onclick-pointer" 
+                                     style="vertical-align: middle;" 
+                                     onclick="Cigna.Util.navigateToVFP('SavedFormVFP');">
+                                    {!$Label.Saved_Forms}
+                                </div>
+                            </td>
+                            <td class="bs col-xs-4 col-sm-3">
+                                <div class="bs col-xs-12 col-sm-12 cigna-bg-blue-dark header onclick-pointer" 
+                                        style="vertical-align: middle;" 
+                                        onclick="Cigna.Util.navigateToVFP('SavedFormVFP?tab=quote');">
+                                    {!$Label.Saved_Quote}
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="bs col-xs-12 col-sm-12 col-sm-offset-1 cigna-bg-blue-dark header onclick-pointer" 
+                                     style="vertical-align: middle;" 
+                                     onclick="Cigna.Util.navigateToVFP('PendingMemoListVFP');">
+                                    <div class="cigna-notification-alert">
+                                        <apex:outputPanel id="out">
+                                            <apex:actionStatus id="myStatus">
+                                                <apex:facet name="start">
+                                                    <i class="spinner-icon fa fa-spinner fa-pulse fa-fw"></i>
+                                                </apex:facet>
+                                                <apex:facet name="stop">{!totalPendingMemo}</apex:facet>
+                                            </apex:actionStatus>
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="bs col-xs-12 col-sm-12 cigna-bg-blue-dark header onclick-pointer" 
+                                     style="vertical-align: middle;" 
+                                     onclick="Cigna.Util.navigateToVFP('SavedFormVFP');">
+                                    <div class="cigna-notification-alert">
+                                        <apex:outputPanel id="savedformOutput">
+                                            <apex:actionStatus id="newStatus">
+                                                <apex:facet name="start">
+                                                    <i class="spinner-icon fa fa-spinner fa-pulse fa-fw"></i>
+                                                </apex:facet>
+                                                <apex:facet name="stop">{!totalSavedForm}</apex:facet>
+                                            </apex:actionStatus>
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="bs col-xs-12 col-sm-12 cigna-bg-blue-dark header onclick-pointer" 
+                                     style="vertical-align: middle;" 
+                                     onclick="Cigna.Util.navigateToVFP('SavedFormVFP?tab=quote');">
+                                    <div class="cigna-notification-alert">
+                                        <apex:outputPanel id="savedQuoteOutput">
+                                            <apex:actionStatus id="quoteStatus">
+                                                <apex:facet name="start">
+                                                    <i class="spinner-icon fa fa-spinner fa-pulse fa-fw"></i>
+                                                </apex:facet>
+                                                <apex:facet name="stop">{!totalSavedQuote}</apex:facet>
+                                            </apex:actionStatus>
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                </div>
+            </div>
+            
+            <div class="bs row carousel-div" style="position: relative; top: 45%; text-align:center;">
+                <div id="promotion-carousel-mobile" class="bs promotion-carousel" style="width: 100%;">
+                    <div id="owl-promotion-mobile" class="owl-carousel owl-theme" style="width: 1px;min-width: 100%;overflow:hidden;">
+                        <apex:repeat value="{!productList}" var="product">
+                            <div class="item">
+                                <img class="lazyOwl img-responsive visible-xs visible-sm" style="width: 100%;" data-src="{!$Site.Prefix}/servlet/servlet.FileDownload?file={!product.mobileBannerId}" />
+                                <apex:image styleClass="visible-md visible-lg" value="{!$Site.Prefix}/servlet/servlet.FileDownload?file={!product.desktopBannerId}" width="100%" />
+                                <div class="bs owl-banner-desc">
+                                    <div>
+                                        <h3>{!product.product.Name__c}</h3>
+                                    </div>
+                                    <!-- Rancho_JOBR105_20220401 - upgrade broker portal banner description -->
+                                    <div style="{!IF(product.product.Use_Banner_Description__c, 'display: none;', '')}">{!product.product.Short_Description__c}</div>
+                                    <div style="{!IF(product.product.Use_Banner_Description__c, '', 'display: none;')}">{!IF($Label.Header_Language_Code_Current == 'zh_TW', product.product.Banner_Description_CH__c, product.product.Banner_Description_EN__c)}</div>
+                                    <!-- indicate if it is needed to open href in a new tab -->
+                                    <div style="{!IF(product.isWelcome||product.isPromotion,'display:none','')}">
+                                        <button data-product="{!product.product.Product_Code__c}" class="bs btn cigna-fg-white cigna-bg-green-medium learn-more-btn" style="{!IF(product.product.Is_External_Page__c,'display:none','')}">{!$Label.Learn_More}</button>
+                                        <button data-href="{!product.externalHref}" class="bs btn cigna-fg-white cigna-bg-green-medium learn-more-btn external-page" style="{!IF(product.product.Is_External_Page__c,'','display:none')}">{!IF(ISBLANK(product.buttonLabel), $Label.Learn_More, product.buttonLabel)}</button>
+                                    </div>
+                                    <div style="{!IF(!product.isPromotion,'display:none','')}">
+                                        <button data-product="{!product.product.Product_Code__c}" class="bs btn cigna-fg-white cigna-bg-green-medium more-promotion-btn">{!$Label.More_Promotion}</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </apex:repeat>
+                    </div>
+                    <div class="bs cigna-quick-link-menu ">
+                        <!-- hidden-sm hidden-md hidden-lg style="display: table; table-layout: fixed; width: 100%;"-->
+                        <!-- <div style="display: table-row;"> -->
+                        <div class="bs hidden-xs col-sm-2 cigna-bg-white quick-link-div" />
+                        <div class="bs col-xs-6 col-sm-4 cigna-bg-white cigna-fg-blue-dark quick-link-div onclick-pointer" onclick="Cigna.Util.navigateToVFP('ProductDeckVFP');">
+                            <div class="quick-link-content">
+                                <span class="glyphicon glyphicon-cd quick-link-icon" />
+                                <div class="cigna-quick-link-label">{!$Label.Products_Sales}</div>
+                            </div>
+                        </div>
+                        <div class="bs col-xs-6 col-sm-4 cigna-bg-white cigna-fg-blue-dark quick-link-div onclick-pointer" onclick="openPortfolio();">
+                            <div class="quick-link-content">
+                                <span class="ci-hk-notes quick-link-icon" />
+                                <!-- window.open('https://webportaluat.cigna.com.hk/hkwp/CAIS/sfLogin.do?actionParam=login&CSI_PARAM=Q1NJRD1oa3dwX3Rlc3RfY2NzMiZhZ2VudENvZGU9RkMwMDAxJmFnZW50Um9sZT1DQ1MmY29tcGFueUNvZGU9Q0lHTkE= -->
+                                <div class="cigna-quick-link-label">{!portfolioLabel}
+                                    <!-- <a href="https://webportaluat.cigna.com.hk/hkwp/CAIS/sfLogin.do?actionParam=login&CSI_PARAM=Q1NJRD1oa3dwX3Rlc3RfY2NzMiZhZ2VudENvZGU9RkMwMDAxJmFnZW50Um9sZT1DQ1MmY29tcGFueUNvZGU9Q0lHTkE=" class="nostyle">VUL Illustration System</a> -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bs hidden-xs col-sm-2 cigna-bg-white quick-link-div" />
+                        <div class="bs hidden-xs col-sm-2 cigna-bg-white quick-link-div" />
+                        <div class="bs col-xs-6 col-sm-4 cigna-bg-white cigna-fg-blue-dark quick-link-div onclick-pointer" onclick="Cigna.Util.navigateToVFP('PolicyChangeVFP');">
+                            <div class="quick-link-content">
+                                <span class="glyphicon glyphicon-pencil quick-link-icon" />
+                                <div class="cigna-quick-link-label">{!$Label.Policy_Change}</div>
+                            </div>
+                        </div>
+                        <div class="bs col-xs-6 col-sm-4 cigna-bg-white cigna-fg-blue-dark quick-link-div onclick-pointer" onclick="Cigna.Util.navigateToVFP('MyClaimVFP');">
+                            <div class="quick-link-content">
+                                <span class="glyphicon glyphicon-heart-empty quick-link-icon" />
+                                <div class="cigna-quick-link-label">{!$Label.Claims}</div>
+                            </div>
+                        </div>
+                        <div class="bs hidden-xs col-sm-2 cigna-bg-white quick-link-div" />
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="bs row">
+                <div id="copyright_footer" class="bs col-xs-12 col-sm-12 cigna-bg-white" style="color: #58595b;font-size: 8px;padding-bottom: 20px;">
+                    <div style="width:100%;">
+                        <div id="Copyright" style="text-align:center;color:#58595b;">{!$Label.Broker_Landing_Page_Footer_Copyright}</div>
+                        <div style="text-align:center; display: none;" id="mobile_footer">
+                            <a href="javascript:void(0);" onclick="reallocationToggleOverlayApp();">{!$Label.Terms_and_Conditions}</a>
+                            <!--<a style="padding-left:10px;" onclick="sforce.one.navigateToURL('https://www.cigna.com.hk/en/');" target="_blank">{!$Label.Footer_Tutorial}</a>-->
+                            <br/>
+                            <a onclick="sforce.one.navigateToURL('https://www.facebook.com/CignaHK/');" target="_blank"><i class="fa fa-facebook shortcut-icon" aria-hidden="true"></i></a>
+                            <a style="padding-left:10px;" onclick="sforce.one.navigateToURL('https://www.youtube.com/user/hkcigna');" target="_blank"><i class="fa fa-youtube-play shortcut-icon" aria-hidden="true"></i></a>
+                        </div>
+                        
+                    </div> 
+                </div>
+            </div>
+            
+        </div>
+        <div class="bs row">
+            <div id="reallocationOverlayApp" class="bs col-xs-12">
+                <div id="reallocationSpecialBoxApp">
+                    <a href="#"><div id="reallocationCloseOverlayApp" onclick="reallocationToggleOverlayApp();"><i class="fa fa-close fa-2x" aria-hidden="true"></i></div></a>
+                    <h4>{!$Label.Terms_and_Conditions}</h4>
+                    <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                    <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'zh_TW'}">
+                        <div id="reallocationtccontent" style="text-align:left">
+                            Terms and Conditions for Internet Services<br/><br/>
+    
+                            1. Application and Service<br/><br/>    
+                                    
+                            1.1 These Terms and Conditions shall, unless otherwise determined by CIGNA, apply to all services provided by CIGNA to you via Internet from time to time (“Services”).<br/><br/>   
+                                    
+                            1.2 CIGNA shall be entitled from time to time to impose any limit whether in transaction amount, operating procedures or otherwise on the use of any Services and such limit shall be determined by CIGNA at its discretion.<br/><br/>  
+                                    
+                            2. Registration<br/><br/>   
+                                    
+                            2.1 CIGNA may issue an identification number (“PIN”) to you. To apply for the Services, you have to register at our website by (i) quoting the PIN, (ii) producing such other information as may be requested by CIGNA.<br/><br/>   
+                                    
+                            2.2 After successful registration, you should set up your own Username (“Username”) and Password (“Password”) in such form as prescribed by CIGNA.<br/><br/>    
+                                    
+                            2.3 You warrant that all information provided by you to CIGNA is provided voluntarily and that such information is true, correct and complete in all respects. You have to inform us forthwith if there is any change of your information.<br/><br/>    
+                                    
+                            3. Instruction<br/><br/>    
+                                    
+                            3.1 CIGNA will rely upon and act in accordance with instructions given to us through Internet in connection with any Services offered to you if the person giving the instruction can quote your Username and Password.<br/><br/>   
+                                    
+                            3.2 CIGNA shall not be under any duty to verify the identity of the person sending instructions on your behalf. Any translation or Services effected pursuant to such instructions referred to in paragraph 3.1 above shall be binding upon you whether the instructions were made with or without your authority, knowledge or consent.<br/><br/>  
+                                    
+                            3.3 CIGNA may refuse to accept any instruction upon such grounds as we deem fit.<br/><br/>  
+                                    
+                            3.4 Any transaction effected pursuant to an instruction given to CIGNA may be considered concluded only if CIGNA has confirmed the same to you. <br/><br/>  
+                                    
+                            3.5 You undertake to: (a) keep your PIN, Username and Password secret and safe; and (b) inform CIGNA as soon as reasonably practicable if you know or suspect that, any unauthorized person knows your PIN, Username or Password.<br/><br/>     
+                                    
+                            3.6 You shall hold CIGNA harmless and indemnify CIGNA against all actions, proceedings, demands, claims, liabilities, damages, losses, costs and expenses howsoever arising, directly or indirectly, out of the Services or transactions effected in accordance with any instruction referred to in paragraph 3.1 above. This indemnity shall continue notwithstanding any maturity or expiry or termination of your policy(ies).<br/><br/>     
+                                    
+                            4. Warranties<br/><br/>     
+                                    
+                            4.1 You warrant to CIGNA that:<br/><br/>    
+                                    
+                            (a) You shall not gain access to any Services in any country or jurisdiction where the offering of the same by CIGNA is not lawful or where these Terms and Conditions may not be enforceable by us against you. If you access this site from outside Hong Kong, you do so on your own responsibility and are responsible for ensuring compliance with all laws in the place where you are located.<br/><br/>   
+                                
+                            (b) You shall not, and shall not attempt to, reverse engineer, decompose, disassemble or otherwise tamper with any software relating to any Services.<br/><br/>     
+                                    
+                            (c) You shall ensure that the browser cache memory shall be cleared as soon as you logout each time after having gained access to any Services through use of computer and you shall exit the browser immediately after each use of any Services through use of computer.<br/><br/>         
+                                    
+                            5. Disclaimers<br/><br/>    
+                                    
+                            5.1 Owing to unpredictable traffic congestion, openness and public nature of the Internet and other reasons, the Internet may not be a reliable medium of communication and that such unreliability is beyond the control of CIGNA. This may subject transactions to delays in transmission, incorrect data transmission, delays in execution, misunderstanding and errors in any communication between CIGNA and you, transmission blackouts, interruptions and so on.<br/><br/>   
+                                    
+                            5.2 CIGNA cannot and does not guarantee or warrant that files available for downloading from this site are free of viruses, worms, Trojan horses or other code that has contaminating or destructive properties. CIGNA shall assume no responsibility, and shall not be liable for, any damages to, or viruses that may infect, your computer equipment or other property as a result of your access to, use of, or browsing in this website or your downloading of any materials, data, text, images, video or audio from this website.<br/><br/>  
+                                    
+                            5.3 This website may be linked to other websites which are not maintained by CIGNA. CIGNA shall not be responsible for the contents of those websites. The inclusion of any link to such websites does not imply approval of or endorsement by CIGNA of the website or the contents thereof.<br/><br/>  
+                                    
+                            5.4 You agree by accessing this website that to the fullest extent permitted by law, under no circumstances or any theories of liability under international or civil, common or statutory law including but not limited to strict liability, negligence or other tort theories or contract, patent or copyright laws, will CIGNA be liable for damages of any kind occurring from the use of this website or any information or services obtained on this website including direct, indirect, consequential, incidental, or punitive damages (even if CIGNA has been advised of the possibility of such damages), to the fullest extent permitted by law.<br/><br/>    
+                                    
+                            6. Your Personal Information<br/><br/>  
+                                    
+                            6.1 You agree that CIGNA may use and/or disclose your personal information in accordance with :<br/><br/>   
+                            
+                            <!--Comment by Shengt for JOBR-235-->
+                            <!-- (a) <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!Privacy_statement_eng}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">Privacy Statement of Cigna</a> (as may be amended from time to time) which is posted on CIGNA.com.hk; and<br/><br/> -->
+                            (a) <a href="{!Privacy_statement_eng}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">Privacy Statement of Cigna</a> (as may be amended from time to time) which is posted on CIGNA.com.hk; and<br/><br/>    
+                                
+                                    
+                            (b) <a href="{!PersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">Cigna's Personal Information Collection Statement</a> issued from time to time.<br/><br/>  
+                                    
+                            7. Information on this Website<br/><br/>    
+                                    
+                            7.1 Any transaction effected by you through use of any Services shall be made solely upon exercise of your own judgment and at your own discretion notwithstanding any information, suggestion or documents CIGNA may have provided to you.<br/><br/>   
+                                    
+                            7.2 Any information, suggestion or recommendation communicated to you by CIGNA is based on information obtained from sources believed by CIGNA to be reliable, are for your own use and consideration only and will not constitute an offer to sell any investment to you.<br/><br/>    
+                                    
+                            7.3 CIGNA shall not be liable for any inaccuracy or incompleteness of any information provided by CIGNA or the performance or outcome of any transactions effected by you after receipt of such information.<br/><br/>  
+                                    
+                            7.4 Any price of funds or other similar information quoted to you is for your reference only and shall not be binding on CIGNA unless confirmed by CIGNA for a transaction.<br/><br/>   
+                                    
+                            8. Trademarks and Copyright<br/><br/>   
+                                    
+                            8.1 There are references throughout this website to various trademarks or service marks and these, whether registered or not, are the property of their respective owners. Images displayed on this website are the property of their respective owners.<br/><br/>  
+                                    
+                            8.2 Nothing contained on this website should be construed as granting, by implication, estoppel, or otherwise, any license or right to use any trademark or images displayed on this website without the written permission of the owners.<br/><br/>    
+                                    
+                            8.3 No materials or contents (including the text, images, audio and video) from this website may be copied, reproduced, republished, uploaded, posted, transmitted or distributed in any way without our permission.<br/><br/>  
+                                    
+                            9. Amendments<br/><br/>     
+                                    
+                            9.1 CIGNA may at any time delete, replace, add or change any term of these Terms and Conditions. You are advised to read these Terms and Conditions from time to time before utilizing any Services through Internet. You are deemed to have accepted and agreed to be bound by these Terms and Conditions and its revisions (if any) upon your utilizing any Services on this website.<br/><br/>   
+                                    
+                            9.2 CIGNA may at any time introduce any new Services or delete any existing Services without prior notice.<br/><br/>    
+                                    
+                            10. Governing Law and Prevailing Language<br/><br/>     
+                                    
+                            10.1 These Terms and Conditions shall be governed by and construed in accordance with the laws of the Hong Kong Special Administrative Region.<br/><br/>    
+                                    
+                            10.2 The English version of these Terms and Conditions shall prevail, if there is any inconsistency between the English and the Chinese versions.<br/><br/>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'en_US'}">
+                        <div id="reallocationtccontent" style="text-align:left">                
+                            網上服務的條款及細則<br/><br/> 
+    
+                            1. 使用與服務<br/><br/>  
+                                    
+                            1.1 除信諾另行決定外，此條款及細則適用於信諾不時於互聯網上提供予閣下之所有服務 (“服務”)。<br/><br/>     
+                                    
+                            1.2 信諾有權不時就交易金額、操作程式或在使用任何服務之細節加上任何限額或限制。信諾有酌情決定權對此等限額或限制作出更改。<br/><br/>    
+                                    
+                            2. 註冊<br/><br/> 
+                                    
+                            2.1 信諾可發出一個個人識別碼(“個人識別碼”)給予閣下。閣下申請服務時，必須於信諾的網站進行登記，並提供(i) 個人識別碼和 (ii)信諾要求的其他任何資料。<br/><br/>     
+                                    
+                            2.2 登記成功後，閣下應該根據信諾的訂明去建立自己的用户名稱（“用户名稱” ）和密碼（ “密碼” ）。<br/><br/>  
+                                    
+                            2.3 閣下保證向信諾提供的所有資料均為自願，而有關資料在任何方面均為真實、正確及完整。閣下的資料如有任何改變，必須立即通知信諾。<br/><br/>     
+                                    
+                            3. 指示   <br/><br/>
+                                    
+                            3.1 若任何人士通過互聯網給與信諾指示，並可提供閣下的用户名稱和密碼，信諾將根據並遵照該指示進行交易或提供服務給與閣下。   <br/><br/>
+                                    
+                            3.2 信諾將不會有任何責任核實於互聯網上以閣下名義給與信諾指示的人士的身分。根據上述第3.1條所給與信諾的指示所進行之交易或提供之服務，閣下無論是否知情、同意或已授權，將須要負上責任。<br/><br/>     
+                                    
+                            3.3 信諾可在其認為適當之情況下拒絕接納任何指示。<br/><br/>    
+                                    
+                            3.4 所有根據向信諾發出的指示所進行之交易，需由信諾向閣下確認後方視為完成交易。<br/><br/>     
+                                    
+                            3.5 閣下承諾：(a)確保閣下之個人識別碼、用户名稱和密碼保持機密及妥善保存；(b)若閣下得悉或懷疑有任何未獲授權之人士知悉閣下之個人識別碼、用户名稱或密碼，會於情況許可下盡快通知信諾。<br/><br/>    
+                                    
+                            3.6 對於信諾因應根據上述第3.1條所給與的指示所進行之交易或提供之服務，直接或間接地招致之一切申索、訴訟、要求、賠償、責任、損害、損失、費用和支出（不論其招致原因），閣下無條件及不可撤回地同意賠償信諾及使信諾免受損害。不論閣下的保單是否已屆成熟或期滿或終止，此彌償保證將繼續生效。<br/><br/>    
+                                    
+                            4. 保證   <br/><br/>
+                                    
+                            4.1 閣下向信諾保證如下：<br/><br/>    
+                                    
+                            (a) 閣下不會在任何禁止信諾提供有關服務或交易或對此條款及細則沒有法律效用的國家或司法管轄區使用任何服務。若閣下在香港以外的地方進入此網站，閣下須自行負上責任，確保遵從有關地方之法律；<br/><br/>         
+                                    
+                            (b) 閣下不會及不會試圖就與任何服務相關的電腦軟件進行還原工程、分拆或其他類型的干擾；<br/><br/>      
+                                    
+                            (c) 閣下承諾確保每次透過電腦使用完任何服務後盡快登出、關閉瀏覽器並把瀏覽器的記憶體內之資料清除。<br/><br/>    
+                                    
+                            5. 免責聲明<br/><br/>   
+                                    
+                            5.1 閣下明白到互聯網可能因為未能預測的擠塞、其開放和公開性質、和其他原因，導致互聯網未必是可靠的通訊媒介，而這種不可靠是在信諾可控制範圍之外。這些因素可導致交易傳送延誤、錯誤資料傳送、延誤執行指示、或閣下與信諾溝通上的誤解和錯誤等等。<br/><br/>   
+                                    
+                            5.2 信諾不能並不會擔保或保證在本網站以供下載的檔案，沒有受到病毒感染或存有受感染或破壞性物質。信諾不會就閣下連接、使用或瀏覽本網站、或由本網站下載任何資料、數據、文字、影像、視像或音效而對閣下的電腦設備或其他財產造成的損害或受病毒的影響而負上任何責任。<br/><br/>  
+                                    
+                            5.3 本網站可能會被接駁至不屬於信諾所運作的其他網站。信諾不會就此等網站的內容負上責任。接駁至此等網站並不代表信諾已批核或贊同此等網站或其內容。<br/><br/>     
+                                    
+                            5.4 閣下進入本網站，即表示閣下同意：在法律許可的最大範圍內，在任何情況下或根據國際法、民事法、普通法或法定規定下的任何法律責任理論（包括但不限於嚴格法律責任、疏忽或其他侵權法理論或合約法、專利法或版權法）信諾均不就以下損害賠償負責：因使用本網站或在本網站上取得的任何資訊或服務發生的任何類別損害賠償，包括直接的、間接的、相應的、附帶的或懲罰性的損害賠償（即使信諾已獲悉可能有該等損害賠償）。<br/><br/>     
+                                    
+                            6. 個人資料<br/><br/>   
+                                    
+                            6.1 閣下同意信諾可按照下列文件中的規定，使用及/或透露閣下的個人資料：<br/><br/>     
+                             
+                            <!--Comment by Shengt for JOBR-235-->
+                            <!-- (a) 張貼在CIGNA.com.hk的<a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!Privacy_statement_chi}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">信諾的隱私聲明</a>（可作不定時之修正）;和<br/><br/> -->
+                            (a) 張貼在CIGNA.com.hk的<a href="{!Privacy_statement_chi}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">信諾的隱私聲明</a>（可作不定時之修正）;和<br/><br/>      
+                                    
+                            (b) 信諾不時發出的<a href="{!PersonalInformationCollectionStatement_chi}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">個人資料收集聲明</a>。<br/><br/> 
+                                    
+                            7. 本網站中的資料<br/><br/>    
+                                    
+                            7.1 儘管信諾向閣下提供任何資料、建議或文件，然而閣下完全明白閣下通過使用任何服務所進行的任何交易純粹按照閣下個人之判斷及酌情決定權所進行。<br/><br/>   
+                                    
+                            7.2 信諾傳達给閣下之任何資料或建議均源於信諾認為可靠的資料來源，並只供閣下使用及考慮，而不構成向閣下邀約出售任何投資。<br/><br/>     
+                                    
+                            7.3 閣下同意信諾毋須就信諾提供任何不準確或不全面的資料，或在收到該等資料後閣下進行任何交易的表現或結果而負上責任。<br/><br/>   
+                                    
+                            7.4 信諾提供給與閣下有關的基金價格或其他類似的資料只供閣下參考，除非信諾確認交易，信諾不會受此約束。<br/><br/>  
+                                    
+                            8. 商標和版權<br/><br/>  
+                                    
+                            8.1 本網站中所提述的各個商標或服務商標（不論是否已註冊），均屬於其各有關擁有人的財產。本網站中所顯示的圖像均屬其各有關擁有人的財產。 <br/><br/> 
+                                    
+                            8.2 本網站所載任何內容均不應詮釋為批予閣下，無論是暗示、不容反悔或其他形式之任何特許或權利，在未得有關擁有人的書面批准的情况下，以使用本網站上顯示的任何商標或圖像。<br/><br/>  
+                                    
+                            8.3 在未得到信諾准許的情況下，閣下不得將此網站所載的資料及內容(包括文字、影像、音效及視像)以任何方式複印、複製、出版、上載、刊登、傳送或發放。<br/><br/>    
+                                    
+                            9. 修訂<br/><br/>     
+                                    
+                            9.1 信諾可在任何時間刪除、替換、添加或更改此條款及細則。在利用及使用任何服務之前，信諾建議閣下先閱讀此條款及細則。當在此網站上使用任何服務，閣下將會被視作已接受並同意接受此條款及細則及其修訂（如有的話）。<br/><br/>  
+                                    
+                            9.2 信諾可在任何時候提出任何新的服務或刪除任何現有的服務，毋須事先通知。<br/><br/>    
+                                    
+                            10. 管轄法律和語言<br/><br/>   
+                                    
+                            10.1 此條款及細則均受香港特別行政區之法律所管治及據其解釋。<br/><br/>  
+                                    
+                            10.2 此條款及細則以英文版為準。<br/><br/> 
+                        </div>  
+                    </apex:outputPanel>
+                </div>
+            </div>
+        	<!-- DownTime Message Popup Window(add by kit) --> 
+            <div id="downtimeMessageOverlay" class="bs col-xs-12">
+                <div id="downtimeMessageBox">
+                	<a href="#">
+                        <div id="downtimeMessageCloseOverlay">
+                            <i class="fa fa-close fa-2x" aria-hidden="true" onclick="closeDownTimeMessageOverlay()"></i>
+                        </div>
+                    </a>
+                    <!-- Autumn_JR1902_20210409 -->
+                    <apex:repeat value="{!portalMessageList}" var="portalMessage">
+                        <!-- English -->
+                        <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'zh_TW'}" layout="block" title="{!portalMessage.English_Subject__c}" style="text-align: left;">
+                                <div>
+                                    <apex:outputText style="font-weight:bold;" value="{!portalMessage.English_Subject__c}" lang="en">
+                                    </apex:outputText>
+                                    <apex:outputText style="margin-left: 1rem;color: #999999;font-size: 8px;line-height: 1;" value="{0, date, dd/MM/yyyy}"><apex:param value="{!portalMessage.Start_Time__c}" /></apex:outputText>
+                                </div>
+                                <div style="margin-top: 1rem;">
+                                    <apex:outputText style="font-size: small;" escape="false" value="{!portalMessage.English_Message__c}" lang="en">
+                                    </apex:outputText>
+                                </div>
+                                <br/>
+                        </apex:outputPanel>
+                        <!-- Chinese -->
+                        <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'en_US'}" layout="block" title="{!portalMessage.Chinese_Subject__c}" style="text-align: left;">
+                                <div>
+                                    <apex:outputText style="font-weight:bold;" value="{!portalMessage.Chinese_Subject__c}" lang="zh">
+                                    </apex:outputText>
+                                    <apex:outputText style="margin-left: 1rem;color: #999999;font-size: 8px;line-height: 1;" value="{0, date, dd/MM/yyyy}"><apex:param value="{!portalMessage.Start_Time__c}" /></apex:outputText>
+                                </div>
+                                <div style="margin-top: 1rem;">
+                                    <apex:outputText style="font-size: small;" escape="false" value="{!portalMessage.Chinese_Message__c}" lang="zh">
+                                    </apex:outputText>
+                                </div>
+                                <br/>
+                        </apex:outputPanel>
+                        <p></p>
+                    </apex:repeat>
+     				<apex:inputCheckbox id="downtimeMessageCheckbox"/>
+                    <apex:outputText styleClass="checkboxLabel" rendered="{!$Label.Header_Language_Code == 'zh_TW'}" value="Do not show again"></apex:outputText>
+                    <apex:outputText styleClass="checkboxLabel" rendered="{!$Label.Header_Language_Code == 'en_US'}" value="不再顯示此信息"></apex:outputText>
+                    <apex:actionFunction action="{!setUserNotReceiveTime}" name="setUserNotReceiveTime"></apex:actionFunction>
+                </div>
+            </div>
+        </div>
+    </apex:form>
+    <!-- CR-56_Link_20220214 -->
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.carousel_new.min.js')}"/>
+    <script>
+    
+    var upperStatHeight = $('.cigna-bg-blue-dark').outerHeight();
+    
+    function moveFooter() {
+
+        var targetHeight = window.screen.height;
+        
+        if(Cigna.Util.isIOS() && (orientation == 90 || orientation == -90)){
+            targetHeight = window.screen.width;
+        }
+        
+        if(upperStatHeight > $('.cigna-bg-blue-dark').outerHeight()){
+            upperStatHeight = $('.cigna-bg-blue-dark').outerHeight();
+        }
+
+        var menuHeight = targetHeight * 0.15;
+
+        if (Cigna.Util.isIOS()) {
+
+            menuHeight = 90;
+        }
+
+        var updatedHeight = (targetHeight - upperStatHeight - menuHeight);
+        
+        $('.carousel-div').css('height', updatedHeight + "px");
+        $('#owl-promotion-mobile').css('max-height', updatedHeight + "px");
+
+        
+        var sliderHeightDiff = $('.carousel-div').offset().top + $('.carousel-div').outerHeight();
+        
+        var footerHeightDiff = $('.cigna-quick-link-menu').offset().top + $('.cigna-quick-link-menu').outerHeight();
+
+        updatedHeight = updatedHeight - (sliderHeightDiff - footerHeightDiff);
+        
+        $('.carousel-div').css('height', updatedHeight + "px");
+        $('#owl-promotion-mobile').css('max-height', updatedHeight + "px");
+        
+    }
+
+    $(document).ready(function() {
+        
+        $("#owl-promotion-mobile").owlCarousel({
+            slideSpeed: 300,
+            paginationSpeed: 300,
+            singleItem: true,
+            itemsTabletSmall: false,
+            navigation: true,
+            lazyLoad: true,
+            itemsScaleUp: true,
+            responsive: true,
+            autoPlay: false,
+            pagination: false,
+            navigationText: [
+                '<i class="fa fa-chevron-left" aria-hidden="true"></i>',
+                '<i class="fa fa-chevron-right" aria-hidden="true"></i>'
+            ]
+        });
+        
+        $("#owl-promotion-mobile").css("overflow", "hidden");
+        
+        
+        console.log(window.navigator.userAgent.toLowerCase());
+
+        if (!Cigna.Util.isSalesforce1() ) {
+        
+            
+            if(Cigna.Util.isIOS() || Cigna.Util.isAndroid()){
+               
+                moveFooter();
+    
+                jQuery(window).on("orientationchange", function(event) {
+        
+                    moveFooter();
+        
+                });
+                
+                $("#mobile_footer").show();
+                
+            } else {
+                
+                $(window).on('resize', function(){
+                    $("#owl-promotion-mobile").css("max-height", ($(window).height() - 200) + "px");
+                });
+                    
+                $("#owl-promotion-mobile").css("max-height", ($(window).height() - 200) + "px");
+                $("#copyright_footer").hide();
+            }
+            
+        } else {
+            
+            moveFooter();
+    
+            jQuery(window).on("orientationchange", function(event) {
+                moveFooter();
+            });
+            
+            $("#mobile_footer").show();
+
+        }
+        
+        getTotalPendingMemo();
+        getTotalSavedForm();
+        
+        
+        
+       //CR-56_Link_20220214
+       $('.learn-more-btn').on("click",goToGetProtected);
+        $('.more-promotion-btn').on("click",goToPromotion);
+        
+        //get downtimeMessage(add by kit) 
+        showDownTimeOverlay(); 
+    });
+    
+    function openPortfolio(){
+        if({!isAltruist}){
+            var url = 'https://webportaluat.cigna.com.hk/hkwp/CAIS/sfLogin.do';
+            if ( Cigna.Util.isSalesforce1() || $(window).width() <= 992 ){
+                sforce.one.navigateToURL(url);
+            }else{
+                window.open(url);
+            }
+        }else{
+            Cigna.Util.navigateToVFP('CustomizeSearchPolicyPageVFP');
+        }
+    }
+    
+    function goToGetProtected(evt){
+        var product = $(this).data('product');
+        // Rancho_JOBR105_20220401 - open herf in a new tab if has external page
+        if($(this).hasClass('external-page')){
+            console.log('external-page-href',$(this).data('href'));
+            var url = $(this).data('href');
+            window.open(url);
+        }else{
+            Cigna.Util.navigateToVFP('GetProtectedVFP?pc='+product);
+            sessionStorage.setItem('get-protected-back-url',window.location.href);
+        }
+        evt.preventDefault();
+    }
+
+    function goToPromotion(evt){
+        Cigna.Util.navigateToVFP('PromotionVFP');
+        evt.preventDefault();
+    }
+    
+    function reallocationToggleOverlayApp(){
+        
+        var menuHeight = window.screen.height * 0.15;
+
+        if (Cigna.Util.isIOS()) {
+
+            menuHeight = 58;
+        }
+        
+        var overlay = document.getElementById('reallocationOverlayApp');
+        var specialBox = document.getElementById('reallocationSpecialBoxApp');
+        if(overlay.style.display == "block"){
+            $("html, body").css("background-color", "#FFFFFF");
+            $("#reallocationOverlayApp").css("height", "0");
+            
+            overlay.style.display = "none";
+            specialBox.style.display = "none";
+            
+            $("#main-content-div").show();
+        } else {
+            
+            $("#main-content-div").hide();
+            $("#reallocationOverlayApp").css("height", (window.screen.height - menuHeight) + "px");
+            $("html, body").css("background-color", "#D9D9D6");
+            
+            overlay.style.display = "block";
+            specialBox.style.display = "block";
+            
+        }
+        
+    }
+    
+    //start add by kit
+    function toggleDowntimeMessageOverlay(){
+    	var overlay = document.getElementById('downtimeMessageOverlay');
+        var specialBox = document.getElementById('downtimeMessageBox');
+        overlay.style.opacity = 1;
+        if (overlay.style.display == "block") {
+        	overlay.style.display = "none";
+            specialBox.style.display = "none";
+            $(".menuButton").css("z-index","99");
+            sessionStorage.setItem("isBrokerCancel",true);
+        } else {
+            overlay.style.display = "block";
+            specialBox.style.display = "block";
+            $(".menuButton").css("z-index","9");
+       }
+    }
+    
+    function showDownTimeOverlay(){ 
+        if(sessionStorage.getItem("isBrokerCancel")==="true"){ return }
+    	//Autumn_JR1902_20210409 
+        if('{!portalMessageList}'){
+            toggleDowntimeMessageOverlay();
+        }
+    }
+    
+    function closeDownTimeMessageOverlay(){
+    	//Do not show again
+    	if($("input[id*='downtimeMessageCheckbox']")[0].checked){
+    		setUserNotReceiveTime();
+            toggleDowntimeMessageOverlay();
+       	}
+        else{
+        	toggleDowntimeMessageOverlay();
+        }
+     }
+    </script>
+</apex:page>

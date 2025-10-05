@@ -1,0 +1,242 @@
+<apex:page docType="html-5.0" showHeader="false" sidebar="false" standardController="Appian_Request__c" extensions="AppianReuqestSubmitCtrl" tabStyle="Case">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <style>
+            .block-header{
+                color: #000 !important;
+                font-size: 14px !important;
+                font-weight: bold !important;
+                font-family: Arial,Helvetica,sans-serif !important;
+                padding-top:20px !important;
+                padding-bottom:5px !important;
+            }
+            .customer-profile-summary{
+                width:100% !important; 
+                padding:0 !important ; 
+                    
+            }
+            .customer-profile-gorup{
+                 padding:0 25px;
+                 width:90%;
+                 float:left;
+             } 
+             .customer-profile-policy{
+                 padding:0;
+                 width:98%;
+                 float:left;
+             } 
+            
+            .customer-profile-policy-loading{
+                 padding:0;
+                 width:98%;
+                 float:left;
+                 color:#a8a8a8 !important;
+            }
+             
+            .column-header{
+                font-weight: bold !important;
+                padding:3px 10px !important;
+                font-size: 12px !important;
+               
+            }
+            .column-content{
+                padding:3px 10px !important;
+                font-size: 12px !important;
+            }
+            
+            .customer-profile-table{
+                display: table;  
+            }
+            .customer-profile-table-row{
+                display: table-row;    
+            }
+                         
+            .customer-profile-group-header{
+                display: table-cell;
+                font-weight:bold;
+                border:1px solid #ececec !important;
+                padding:5px;
+                width:15%;                
+            }
+            .customer-profile-group-cell{
+                display: table-cell;
+                border:1px solid #ececec !important;
+                padding:5px;
+                width:15%;
+                word-break: break-word;
+             }
+             
+             .customer-profile-ind-detail-header{
+                display: table-cell;
+                font-weight:bold;
+                border:1px solid #ececec !important;
+                background:#fbfbfb !important;
+                padding:5px;
+                width:7%;   
+                word-break: break-word;             
+            }
+            .customer-profile-ind-detail-cell{
+                display: table-cell;
+                border:1px solid #ececec !important;
+                padding:5px;
+                width:7%;
+                word-break: break-word;
+             }
+             
+             .customer-profile-group-detail-header{
+                display: table-cell;
+                font-weight:bold;
+                border:1px solid #ececec !important;
+                background:#fbfbfb !important;
+                padding:5px;
+                width:7%;   
+                word-break: break-word;             
+            }
+            .customer-profile-group-detail-cell{
+                display: table-cell;
+                border:1px solid #ececec !important;
+                padding:5px;
+                width:7%;
+                word-break: break-word;
+            }
+            
+            .customer-profile-family-header{
+                display: table-cell;
+                font-weight:bold;
+                border:1px solid #ececec !important;
+                background:#fbfbfb !important;
+                padding:5px;
+                width:15%;   
+                word-break: break-word;             
+            }
+            .customer-profile-family-cell{
+                display: table-cell;
+                border:1px solid #ececec !important;
+                padding:5px;
+                width:15%;
+                word-break: break-word;
+             }
+             
+             .customer-profile-policy-change-header{
+                display: table-cell;
+                font-weight:bold;
+                border:1px solid #ececec !important;
+                background:#fbfbfb !important;
+                padding:5px;
+                width:14%;   
+                word-break: break-word;             
+            }
+            .customer-profile-policy-change-cell{
+                display: table-cell;
+                border:1px solid #ececec !important;
+                padding:5px;
+                width:14%;
+                word-break: break-word;
+             }
+             
+            .fill-left{
+                 padding-left:0 !important;
+            } 
+            .onclick-pointer{ 
+                cursor: pointer;     
+            }      
+            span[id$="cigna-error"] span div.message{
+                border:0px;
+                background-color: transparent;
+                opacity: .9;
+                margin-bottom:10px;
+                margin-top:5px;
+                margin-left:0px;
+                width:100%;
+                //font-weight:bold;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td img{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell div span{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell{
+                color:red;
+                font-family: Arial,Helvetica,sans-serif;
+            }
+            
+            span[id$="cigna-error"] .messageText::before{
+                content: "\f071\20";
+                font: normal normal normal 14px/1 FontAwesome;
+                font-size: 91%;
+                text-rendering: auto;
+                -webkit-font-smoothing: antialiased;
+            }      
+        </style>
+    </head>
+    <apex:define name="additionalLibraries">
+         <meta name="viewport" content="width=device-width, initial-scale=1" />
+         <apex:stylesheet value="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+         <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap_ns.css')}" />
+         <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+         <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+         <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+     </apex:define>
+     <script> 
+            $(document).ready(function(){
+                 //CustomerProfileAF.getPersonBasic();
+            });
+            
+     </script>
+    
+    <apex:form id="customer-profile-form">
+        
+        <apex:actionFunction action="{!getPersonBasic}" name="getPersonBasic" namespace="CustomerProfileAF" status="loader-icon-summary" reRender="customer-profile-summary-panel" />     
+                                 
+        <!--<apex:outputPanel id="error-message-panel">
+            <apex:pageMessages escape="false"></apex:pageMessages> 
+        </apex:outputPanel>-->
+        <apex:actionStatus id="loader-icon-summary">
+                <apex:facet name="start">
+                   <div class="customer-profile-policy-loading" style="padding: 0px;">
+                      <span class="loading-helper"></span>
+                      <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                      <span class="sr-only">Loading...</span>
+                   </div>
+                </apex:facet>
+        </apex:actionStatus>
+        <apex:outputPanel id="customer-profile-summary-panel">
+            <apex:pageBlock title="Submit Appian Request" id="delCase">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton styleClass="bs btn btn-primary pull-left" value="Cancel" action="{!onCancel}" />
+                    <apex:commandButton styleClass="bs btn btn-primary pull-left" 
+                                            action="{!submitAppianRequest}" 
+                                            value="Confirm" />
+                </apex:pageBlockButtons>
+                <apex:pageMessages id="cigna-error"/>
+                <apex:pageBlockSection columns="1">
+                
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="{!$ObjectType.Appian_Request__c.fields.Name.label}" for="CaseNumber" />
+                        <apex:outputField id="caseId" value="{!appian.Name}" />
+                    </apex:pageBlockSectionItem>
+                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="{!$ObjectType.Appian_Request__c.fields.Category__c.label}" for="caseSubject" />
+                        <apex:outputField id="caseSubject" value="{!appian.Category__c}" />
+                    </apex:pageBlockSectionItem>
+                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="{!$ObjectType.Appian_Request__c.fields.Request_Type__c.label}" for="caseSubject" />
+                        <apex:outputField id="caseSubject" value="{!appian.Request_Type__c}" />
+                    </apex:pageBlockSectionItem>
+                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="{!$ObjectType.Appian_Request__c.fields.Comments__c.label}" for="caseSubject" />
+                        <apex:outputField id="caseSubject" value="{!appian.Comments__c}" />
+                    </apex:pageBlockSectionItem>
+                    
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+        </apex:outputPanel>
+    </apex:form>
+</apex:page>

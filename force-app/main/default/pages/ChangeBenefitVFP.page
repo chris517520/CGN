@@ -1,0 +1,741 @@
+<apex:page standardController="Policy_Change_Request__c" extensions="ManagePolicyChangeCRTL" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+    
+        <style>
+            .form-toggle-tab {
+                padding: 10px;
+                border-bottom: 1px solid #f2f2f2;
+                font-weight: bold;
+            }
+            
+            .form-toggle-content {
+                padding: 10px 0px 10px 0px;
+            }
+            
+            .short-form-field{
+                width: 30% !important;
+                text-align: center;
+            }
+            
+            select{
+                width: 100%;
+            }
+            
+            ul{
+                margin: 2px 0;
+            }
+            
+            li{
+                margin: 5px 0;
+            }
+            
+        </style>
+        <script>
+            //GL31 jack add
+            function setAvailRiderMap() {
+                console.log('setAvailRiderMap');
+                setAvailableRiderMap();
+            }
+            function checkAssess() {
+                let riderSet = new Set()
+                let result = false;
+                $('[id*="assessRider"]').each(function () { 
+                    console.log(this.innerHTML) ;
+                    riderSet.add(this.innerHTML);
+                });
+                let optionMap = new Map();
+                let allDelete = true;
+                $("[id*='R-Required-Rider-Option']").each(function (idx, elem) {
+                    console.log('$(elem).val()'+ $(elem).val());
+                    if ($(elem).val() == 'Add') {
+                        allDelete = false;
+                    }
+                    optionMap.set(idx, $(elem).val());
+                })
+                if(allDelete){
+                    return true;
+                }
+                console.log('allDelete'+ allDelete);
+                console.log('optionMap:'+ optionMap);
+                $("[id*='R-Required-Rider-BenefitName']").each(function (idx, elem) {
+                    console.log($(elem).val());
+                    console.log('optionMap.get(idx)' + optionMap.get(idx));
+                    if(optionMap.get(idx) == 'Add'){
+                        if (riderSet.has($(elem).val())) {
+                            result = true;
+                        }
+                    }
+                });
+                console.log(result);
+                return result;
+            }
+            // function assessValidate(value) {
+            //     console.log('value:'+value);
+            // }
+        </script>
+        <apex:define name="additionalLibraries">
+             <!--additional css, bootstrap, jquery,js libraries-->
+             <!-- CR-56_Link_20220214 -->
+		     <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+             <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+             <apex:outputPanel rendered="{!userLanguage == 'zh_TW'}" layout="none">
+                 <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+             </apex:outputPanel>
+        </apex:define>
+    </head>
+
+    <div class="bs">
+        <div id="form-container" class="bs container">
+        
+            <!--Form Information-->
+            <apex:form id="change-benefit">
+                <apex:outputPanel rendered="{!hasBenefit}">
+                    <div id="benefit-change-of-sum-insured-panel" class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light onclick-pointer">{!$Label.Benefit_Change_of_Sum_Insured}<i class="fa fa-chevron-down pull-right" aria-hidden="true"></i></div>
+                    <div id="benefit-change-of-sum-insured-info" class="bs col-sm-12 col-xs-12 form-toggle-content" style="{!IF(ListBenefitSumInsured.size > 0, 'display:block;', 'display:none;')}">
+                    
+                        <div class="bs row">
+                            <div class="bs row listcontent-header hidden-xs">
+                               <div class="bs col-sm-6">{!$Label.Benefit_name_code}</div>
+                               <div class="bs col-sm-2">{!$Label.Policy_Currency}</div>
+                               <div class="bs col-sm-3">{!$Label.Benefit_Sum_Insured_Benefit_Level_To}</div>
+    
+                            </div>
+                        <apex:outputPanel id="BenefitSumInsuredSection">
+                            <apex:variable value="{!0}" var="rowNum"/>
+                            <apex:repeat value="{!ListBenefitSumInsured}" var="sumInsured">
+                                <div class="bs row listcontent">
+                                <div class="bs col-xs-offset-11 col-xs-1 visible-xs" >
+                                    <span id="removeSumInsured-btn" class="glyphicon glyphicon-minus-sign fa-lg onclick-pointer"  onclick="removeRowBenefitSumInsured({!rowNum},'{!sumInsured.Id}')"  style="{!IF(ListBenefitSumInsured.size == 1, 'display:none;', 'display:block;')}"/>
+                                </div>
+                                    <div class="bs table-row col-xs-12 col-sm-6" style="padding:0px !important;">
+                                       <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Benefit_name_code}</div>
+                                       <div class="bs col-xs-6 col-sm-12 table-cell">
+                                           <apex:selectList id="SI-Required-SumInsured-BenefitOption" styleClass="bs form-field-style-select cigna-fg-gray-dark onclick-pointer"
+                                                         size="1" value="{!sumInsured.Benefit_Name_Code__c}" onchange="getBenefitSumInsuredFrom({!rowNum})">
+                                               <apex:selectOptions value="{!availBenefitSumInsuredOptions}" />
+                                           </apex:selectList>
+                                       </div>
+                                    </div>
+                                    <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                       <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Currency}</div>
+                                       <div class="bs col-xs-6 col-sm-12 table-cell"><apex:inputField id="SI-Required-SumInsured-FromCurrency" value="{!sumInsured.Sum_Insured_From_Currency__c}" styleclass="form-field-style-select" /></div>
+                                    </div>
+                                    <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                       <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Benefit_Sum_Insured_Benefit_Level_To}</div>
+                                       <div class="bs col-xs-6 col-sm-12 table-cell"><apex:inputField id="SI-Required-SumInsured-LevelTo" value="{!sumInsured.Sum_Insured_To__c}" styleclass="form-field-style" /></div>
+                                    </div>
+                                    <div class="bs table-row col-sm-1 hidden-xs" style="padding:0px !important;">
+                                       <div class="bs col-sm-12 table-cell">
+                                           <span class="glyphicon glyphicon-minus-sign fa-lg onclick-pointer" onclick="removeRowBenefitSumInsured({!rowNum},'{!sumInsured.Id}')" style="{!IF(ListBenefitSumInsured.size == 1, 'display:none;', 'display:block;')}"/>
+                                       </div>
+                                    </div>
+                                </div>
+                                <apex:variable value="{!rowNum + 1}" var="rowNum"/>
+                            </apex:repeat>
+                            <div class="bs col-sm-offset-11 col-sm-1 col-xs-offset-11 col-xs-1">
+                                <span id="addSumInsured-btn" class="glyphicon glyphicon-plus-sign fa-lg onclick-pointer" onclick="addRowBenefitSumInsured()" style="{!IF(ListBenefitSumInsured.size == (availBenefitSumInsuredOptions.size-1), 'display:none;', 'display:block;')}"/>
+                            </div>
+                        </apex:outputPanel>
+                        <apex:actionFunction name="addRowBenefitSumInsured" action="{!addRowBenefitSumInsured}" rerender="BenefitSumInsuredSection, BenefitValidationJS"/>
+                        <apex:actionFunction name="clearBenefitSumInsured" action="{!clearBenefitSumInsured}" rerender="BenefitSumInsuredSection, BenefitValidationJS"/>
+                        
+                        <apex:actionFunction name="getBenefitSumInsuredFrom" action="{!getBenefitSumInsuredFrom}" rerender="BenefitSumInsuredSection, BenefitValidationJS" >
+                            <apex:param name="rowIndex" value="" assignTo="{!rowIndex}"/>
+                        </apex:actionFunction>
+                        
+                        
+                        <apex:actionFunction name="removeRowBenefitSumInsured" action="{!removeRowBenefitSumInsured}" rerender="BenefitSumInsuredSection, BenefitValidationJS" >
+                            <apex:param name="rowIndex" value="" assignTo="{!rowIndex}"/>
+                            <apex:param name="deleteReqDetailId" value="" assignTo="{!deleteBenefitDetailId}"/>
+                        </apex:actionFunction>
+                        
+                        </div>
+                        
+                    </div>
+                </apex:outputPanel>
+                <!-- GL31 jack add -->
+                <apex:actionFunction name="setAvailableRiderMap" action="{!setAvailableRiderMap}" rerender="assessAvailableRider,BenefitRiderSection" status="loader-icon"/>
+                <apex:actionFunction name="refreshBenefitRiderSection" rerender="BenefitRiderSection" status="loader-icon"/>
+                <!-- <apex:actionFunction name="assessValidation" action="{!assessValidation}" rerender="" status="loader-icon">
+                    <apex:param name="selectedRider" value=""/>
+                </apex:actionFunction> -->
+                <apex:outputPanel style="margin-bottom: 10px;" layout="block">
+                    <apex:repeat var="question" value="{!assessmentQuestionList}">
+                        <c:EsaleCheckboxes idPrefix="{!question.questionId}" esaleQuestion="{!question}" onchange="setAvailRiderMap"/>
+                    </apex:repeat>
+                </apex:outputPanel>
+                <apex:outputPanel id="assessAvailableRider" style="margin-bottom: 10px;" layout="block">
+                    <div class="bs col-sm-12 cigna-fg-blue-light" style="font-weight: bold;">{!transField['Available_Rider'][$Label.Header_Language_Code_Current]}</div>
+                    <apex:repeat value="{!assessRiderMap}" var="riderCode">
+                        <div class="bs row">
+                            <div id="assessRider" class="bs col-sm-12" style="padding-left: 45px;">{!assessRiderMap[riderCode]}{!riderSperator}{!riderCode}</div>
+                        </div>
+                    </apex:repeat>
+                </apex:outputPanel>
+
+                <div id="benefit-add-del-rider-panel" class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light onclick-pointer">{!$Label.Benefit_Add_Delete_Rider}<i class="fa fa-chevron-down pull-right" aria-hidden="true"></i></div>
+                <div id="benefit-add-del-rider-info" class="bs col-sm-12 col-xs-12 form-toggle-content" style="{!IF(ListBenefitRider.size > 0, 'display:block;', 'display:none;')}">
+                
+                        <div class="bs row">
+                            <div class="bs row listcontent-header hidden-xs">
+                               <div class="bs col-sm-3">{!$Label.Benefit_Action}</div>
+                               <div class="bs col-sm-8">{!$Label.Benefit_name_code}</div>
+                            </div>
+                        <apex:outputPanel id="BenefitRiderSection">
+                            <apex:variable value="{!0}" var="rowNum"/>
+                            <apex:repeat value="{!ListBenefitRider}" var="rider">
+                                <div  class="bs row listcontent">
+                                    <div class="bs col-xs-offset-11 col-xs-1 visible-xs" >
+                                        <span id="removeRider-btn" class="glyphicon glyphicon-minus-sign fa-lg onclick-pointer"  onclick="removeRowBenefitRider({!rowNum}, '{!rider.Id}')" style="{!IF(ListBenefitRider.size == 1, 'display:none;', 'display:block;')}"/>
+                                    </div>
+                                    <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                       <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Benefit_Action}</div>
+                                       <div class="bs col-xs-6 col-sm-12 table-cell"><apex:inputField id="R-Required-Rider-Option" value="{!rider.Add_Delete_Rider__c}" styleclass="form-field-style-select" onchange="showNote();refreshBenefitRiderSection();" /></div><!-- GL31 jack add -->
+                                    </div>
+                                    <div class="bs table-row col-xs-12 col-sm-8" style="padding:0px !important;">
+                                       <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Benefit_name_code}</div>
+                                       <div class="bs col-xs-6 col-sm-12 table-cell">
+                                            <!-- GL31 jack add -->
+                                           <apex:selectList rendered="{!rider.Add_Delete_Rider__c='Delete'}" id="R-Required-Rider-BenefitName-d" value="{!rider.Rider_Benefit_Name_Code__c}" multiselect="false" size="1" styleclass="form-field-style">
+                                                <apex:selectOptions value="{!existRiderOption}" /> 
+                                            </apex:selectList>
+                                            <apex:selectList rendered="{! !(rider.Add_Delete_Rider__c='Delete')}" id="R-Required-Rider-BenefitName" value="{!rider.Rider_Benefit_Name_Code__c}" multiselect="false" size="1" styleclass="form-field-style">
+                                                <apex:selectOptions value="{!riderOption}" /> 
+                                            </apex:selectList>
+                                           <!-- <apex:inputField id="R-Required-Rider-BenefitName" value="{!rider.Rider_Benefit_Name_Code__c}" styleclass="form-field-style" /> -->
+                                        </div>
+                                    </div>
+                                    <div class="bs table-row col-sm-1 hidden-xs" style="padding:0px !important;">
+                                        <div class="bs col-sm-12 table-cell">
+                                           <span class="glyphicon glyphicon-minus-sign fa-lg onclick-pointer" onclick="removeRowBenefitRider({!rowNum}, '{!rider.Id}')" style="{!IF(ListBenefitRider.size == 1, 'display:none;', 'display:block;')}"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <apex:variable value="{!rowNum + 1}" var="rowNum"/>
+                            </apex:repeat> 
+                            <div class="bs col-sm-offset-11 col-sm-1 col-xs-offset-11 col-xs-1">
+                                <span id="addRider-btn" class="glyphicon glyphicon-plus-sign fa-lg onclick-pointer" onclick="addRowBenefitRider()"/>
+                            </div> 
+                        </apex:outputPanel>
+                        
+                        <apex:actionFunction name="addRowBenefitRider" action="{!addRowBenefitRider}" rerender="BenefitRiderSection, BenefitValidationJS"/>
+                        <apex:actionFunction name="clearBenefitRider" action="{!clearBenefitRider}" rerender="BenefitRiderSection, BenefitValidationJS"/>
+
+                        <apex:actionFunction name="removeRowBenefitRider" action="{!removeRowBenefitRider}" rerender="BenefitRiderSection, BenefitValidationJS" >
+                            <apex:param name="rowIndex" value="" assignTo="{!rowIndex}"/>
+                            <apex:param name="deleteBenefitDetailId" value="" assignTo="{!deleteBenefitDetailId}"/>
+                        </apex:actionFunction>
+                    </div>
+                    
+                    <div class="bs row" style="padding-top:20px;">
+                        <apex:outputPanel rendered="{!isLife}">
+                            <div id="Rider-Note" class="bs col-sm-12 col-xs-12" style="display:none;">
+                                <div class="form-note">{!$Label.Benefit_Add_Delete_Rider_Remark}</div>
+                            </div>
+                        </apex:outputpanel>
+                    </div>
+                    
+                </div>
+                <apex:outputPanel rendered="{!isIlas}">
+                    <div id="benefit-additional-contribution-panel" class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light onclick-pointer">{!$Label.Benefit_Additional_Contribution}<i class="fa fa-chevron-down pull-right" aria-hidden="true"></i></div>
+                    <div id="benefit-additional-contribution-info" class="bs col-sm-12 col-xs-12 form-toggle-content" style="{!IF(Request.Additional_Contribution__c != '', 'display:block;', 'display:none;')}">
+                    
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-3">{!$Label.Benefit_Additional_Contribution}</div>
+                            <div class="bs col-sm-9">
+                                <apex:inputField id="AC-Required-Addition-Contribution-Option" value="{!Request.Additional_Contribution__c}" styleclass="form-field-style-select" onchange="changeAdditionalContributionDetails(this.value)" /> 
+                            </div>
+                        </div>
+                        
+                        
+                        <div id="benefit-additional-contribution-single" class="bs row benefit-additional-contribution-content">
+                            <div class="bs col-sm-12 col-xs-12">
+                                <div class="bs row">
+                                    <div class="bs col-sm-12 col-xs-12">
+                                        <div class="form-note">{!$Label.Benefit_Additional_Contribution_Single_Note}</div>
+                                        <br/>
+                                    </div>
+                                </div>
+                                <div class="bs row">
+                                    <div class="bs col-sm-3">{!$Label.Currency}</div>
+                                    <div class="bs col-sm-9"><apex:inputField id="ACS-Required-Single-Currency-Number" value="{!Request.Single_Currency__c}" styleclass="form-field-style-select" onchange="changeCurrency(this.value);"/></div>
+                                </div>
+                                
+                                
+     
+                                <div class="bs row">
+                                    <div class="bs row listcontent-header hidden-xs">
+                                       <div class="bs col-sm-8">{!$Label.Name_of_Investment_Choice}</div>
+                                       <div class="bs col-sm-3">{!$Label.Amount}</div>
+                                    </div>
+                                    
+                                <apex:outputPanel id="BenefitSingleSection">
+                                    <apex:variable value="{!0}" var="rowNum"/>
+                                    <apex:repeat value="{!ListBenefitSingle}" var="single">    
+                                        <div class="bs row listcontent">
+                                            <div class="bs col-xs-offset-11 col-xs-1 visible-xs" >
+                                                <span id="removeSingle-btn" class="glyphicon glyphicon-minus-sign fa-lg onclick-pointer"  onclick="removeRowBenefitSingle({!rowNum},'{!single.Id}')" style="{!IF(ListBenefitSingle.size == 1, 'display:none;', 'display:block;')}"/>
+                                            </div>
+                                            <div class="bs table-row col-xs-12 col-sm-8" style="padding:0px !important;">
+                                               <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Name_of_Investment_Choice}</div>
+                                               <div class="bs col-xs-6 col-sm-12 table-cell">
+                                                  <apex:selectList id="ACS-Required-Single-FundOption" styleClass="bs form-field-style-select cigna-fg-gray-dark onclick-pointer" size="1" value="{!single.Single_Name_of_Investment_Choice__c}">
+                                                      <apex:selectOptions value="{!availFundOptions}" />
+                                                  </apex:selectList>
+                                               </div>
+                                            </div>
+                                            <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                               <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Amount}</div>
+                                               <div class="bs col-xs-6 col-sm-12 table-cell"><apex:inputField id="ACS-Required-Single-Amount-Number" styleClass="form-field-style" value="{!single.Amount__c}"/></div>
+                                            </div>
+                                            <div class="bs table-row col-sm-1 hidden-xs" style="padding:0px !important;">
+                                                <div class="bs col-sm-12 table-cell">
+                                                   <span class="glyphicon glyphicon-minus-sign fa-lg onclick-pointer" onclick="removeRowBenefitSingle({!rowNum},'{!single.Id}')" style="{!IF(ListBenefitSingle.size == 1, 'display:none;', 'display:block;')}" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <apex:variable value="{!rowNum + 1}" var="rowNum"/>
+                                    </apex:repeat> 
+                                    <div class="bs col-sm-offset-11 col-sm-1 col-xs-offset-11 col-xs-1">
+                                        <span id="addSingle-btn" class="glyphicon glyphicon-plus-sign fa-lg onclick-pointer" onclick="addRowBenefitSingle()" style="{!IF(ListBenefitSingle.size == 8, 'display:none;', 'display:block;')}"/>
+                                    </div> 
+                                </apex:outputPanel>
+                                <apex:actionFunction name="addRowBenefitSingle" action="{!addRowBenefitSingle}" rerender="BenefitSingleSection, BenefitValidationJS"/>
+    
+                                <apex:actionFunction name="removeRowBenefitSingle" action="{!removeRowBenefitSingle}" rerender="BenefitSingleSection, BenefitValidationJS" >
+                                    <apex:param name="rowIndex" value="" assignTo="{!rowIndex}"/>
+                                    <apex:param name="deleteReqDetailId" value="" assignTo="{!deleteBenefitDetailId}"/>
+                                </apex:actionFunction>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                        
+                        
+                        <div id="benefit-additional-contribution-regular" class="bs row benefit-additional-contribution-content">
+                            <div class="bs col-sm-12 col-xs-12">
+                                <div class="bs row">
+                                    <div class="bs col-sm-12 col-xs-12">
+                                        <div class="form-note">{!$Label.Benefit_Additional_Contribution_Regular_Note}</div>
+                                        <br/>
+                                    </div>
+                                </div>
+                                <div class="bs row" style="padding-bottom:15px;">
+                                        <div class="bs col-sm-3">{!$Label.Currency}</div>
+                                        <div class="bs col-sm-9"><apex:inputField id="ACR-Required-Regular-Currency-Number" value="{!Request.Regular_Currency__c}" styleclass="form-field-style-select" onchange="changeCurrency(this.value);"/></div>
+                                </div>
+                                <div class="bs row" style="padding-bottom:15px;">
+                                    <div class="bs col-sm-6 col-xs-6">{!$Label.Benefit_Current_Contribution_Amount_From}</div>
+                                    <div class="bs col-sm-6 col-xs-6"><apex:inputField id="ACR-Required-Regular-Amount-From-Number" styleClass="form-field-style" value="{!Request.Current_Contribution_Amount_From__c}"/></div>
+                                </div>
+                                <div class="bs row" style="padding-bottom:15px;">
+                                    <div class="bs col-sm-6 col-xs-6">{!$Label.Benefit_New_Contribution_Amount_To}</div>
+                                    <div class="bs col-sm-6 col-xs-6"><apex:inputField id="ACR-Required-Regular-Amount-To-Number" styleClass="form-field-style" value="{!Request.New_Contribution_Amount_To__c}"/></div>
+                                </div>
+                            </div>
+                            
+                            
+                                <div class="bs row listcontent-header hidden-xs">
+                                   <div class="bs col-sm-8">{!$Label.Name_of_Investment_Choice}</div>
+                                   <div class="bs col-sm-3">{!$ObjectType.Policy_Change_Request_Detail__c.fields.Allocation__c.Label}</div>
+                                </div>
+                                <apex:outputPanel id="BenefitRegularSection">
+                                    <apex:variable value="{!0}" var="rowNum"/>
+                                    <apex:repeat value="{!ListBenefitRegular}" var="Regular">    
+                                        <div class="bs row listcontent">
+                                            <div class="bs col-xs-offset-11 col-xs-1 visible-xs" >
+                                                <span id="removeRegular-btn" class="glyphicon glyphicon-minus-sign fa-lg onclick-pointer"  onclick="removeRowBenefitRegular({!rowNum},'{!Regular.Id}')" style="{!IF(ListBenefitRegular.size == 1, 'display:none;', 'display:block;')}"/>
+                                            </div>
+                                            <div class="bs table-row col-xs-12 col-sm-8" style="padding:0px !important;">
+                                               <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Name_of_Investment_Choice}</div>
+                                               <div class="bs col-xs-6 col-sm-12 table-cell">
+                                                  <apex:selectList id="ACR-Required-Regular-FundOption" styleClass="bs form-field-style-select cigna-fg-gray-dark onclick-pointer" size="1" value="{!Regular.Name_of_Investment_Choice_Regular__c}">
+                                                      <apex:selectOptions value="{!availFundOptions}" />
+                                                  </apex:selectList>
+                                               </div>
+                                            </div>
+                                            <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                               <div class="bs col-xs-6 visible-xs table-cell">{!$ObjectType.Policy_Change_Request_Detail__c.fields.Allocation__c.Label}</div>
+                                               <div class="bs col-xs-6 col-sm-12 table-cell"><apex:inputField id="ACR-Required-Regular-Allocation-Digit" html-maxlength="3" styleClass="form-field-style" value="{!Regular.Allocation__c}"/></div>
+                                            </div>
+                                            <div class="bs table-row col-sm-1 hidden-xs" style="padding:0px !important;">
+                                                <div class="bs col-sm-12 table-cell">
+                                                   <span class="glyphicon glyphicon-minus-sign fa-lg onclick-pointer" onclick="removeRowBenefitRegular({!rowNum},'{!Regular.Id}')" style="{!IF(ListBenefitRegular.size == 1, 'display:none;', 'display:block;')}"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <apex:variable value="{!rowNum + 1}" var="rowNum"/>
+                                    </apex:repeat> 
+                                    
+                                    <div id="Allocation-Total-errMsg" class="col-xs-offset-6 col-xs-6 col-sm-offset-8 col-sm-4 error" style="display:none; padding:10px;">
+                                        {!$Label.ErrMsg_total_100}
+                                    </div> 
+                                    <div class="bs col-sm-offset-11 col-sm-1 col-xs-offset-11 col-xs-1">
+                                        <span id="addRegular-btn" class="glyphicon glyphicon-plus-sign fa-lg onclick-pointer" onclick="addRowBenefitRegular()" style="{!IF(ListBenefitRegular.size == 8, 'display:none;', 'display:block;')}"/>
+                                    </div> 
+                                </apex:outputPanel>
+                                <apex:actionFunction name="addRowBenefitRegular" action="{!addRowBenefitRegular}" rerender="BenefitRegularSection, BenefitValidationJS"/>
+        
+                                <apex:actionFunction name="removeRowBenefitRegular" action="{!removeRowBenefitRegular}" rerender="BenefitRegularSection, BenefitValidationJS" >
+                                    <apex:param name="rowIndex" value="" assignTo="{!rowIndex}"/>
+                                    <apex:param name="deleteReqDetailId" value="" assignTo="{!deleteBenefitDetailId}"/>
+                                </apex:actionFunction>
+                            </div>
+                        </div>
+                    </apex:outputpanel>
+                                
+                <apex:actionFunction name="SavePolicyChange" action="{!SavePolicyChange}" status="loader-icon" oncomplete="refreshEsignature()" />
+                <apex:actionFunction name="SaveAndQuit" action="{!SavePolicyChange}" status="loader-icon" oncomplete="Cigna.Util.navigateToVFP('PolicyChangeVFP');" rerender="false"/>
+            </apex:form>
+            <script>
+                /*Document Ready*/              
+                
+                //CR-56_Link_20220214
+                $("#benefit-change-of-sum-insured-panel").on("click",function() {
+                    if($("#benefit-change-of-sum-insured-info").is(':visible')){
+                    
+                        var isBlankSumInsured = 0;
+                        $("input[id*='SumInsured-']").each(function(idx, elem){
+                                if($(elem).val() != ''){
+                                    isBlankSumInsured += 1;
+                                }
+                        });
+                        
+                        $("select[id*='SumInsured-']").each(function(idx, elem){
+                                if($(elem).val() != ''){
+                                    isBlankSumInsured += 1;
+                                }
+                        });
+                        
+                        if(isBlankSumInsured == 0){
+                           $("#benefit-change-of-sum-insured-info").hide(changeSection(this));
+                           clearBenefitSumInsured();
+                        }
+                    
+                    }else{
+                        $("#benefit-change-of-sum-insured-info").show(changeSection(this));
+                        addRowBenefitSumInsured();
+                    }
+                });
+                
+                //CR-56_Link_20220214
+                $("#benefit-add-del-rider-panel").on("click",function() {
+                                    
+                    if($("#benefit-add-del-rider-info").is(':visible')){
+                    
+                        var isBlankRider = 0;
+                        $("input[id*='Rider-']").each(function(idx, elem){
+                                if($(elem).val() != ''){
+                                    isBlankRider += 1;
+                                }
+                        });
+                        
+                        $("select[id*='Rider-']").each(function(idx, elem){
+                                if($(elem).val() != ''){
+                                    isBlankRider += 1;
+                                }
+                        });
+                        
+                        if(isBlankRider == 0){
+                           $("#benefit-add-del-rider-info").hide(changeSection(this));
+                           clearBenefitRider();
+                        }
+                    
+                    }else{
+                        $("#benefit-add-del-rider-info").show(changeSection(this));
+                        addRowBenefitRider();
+                    }
+                    
+                });
+                
+               //CR-56_Link_20220214
+                $("#benefit-additional-contribution-panel").on("click",function() {
+                    $("#benefit-additional-contribution-info").toggle(null, null, changeSection(this));
+                });
+                
+                $('input.cigna-question-radio').on("change",onRadioChange);
+                
+                
+                var additionalContributionChoice = '{!Request.Additional_Contribution__c}';
+    
+                if(additionalContributionChoice.includes("Single")){
+                    $('#benefit-additional-contribution-single').show();
+                    $('#benefit-additional-contribution-regular').hide();
+                }else if(additionalContributionChoice.includes("Regular")){
+                    $('#benefit-additional-contribution-regular').show();
+                    $('#benefit-additional-contribution-single').hide();
+                }else{
+                    $('.benefit-additional-contribution-content').hide();
+                }
+                
+                 function onRadioChange(evt) {
+                  var val = $(this).val();
+                  var parent = $(this).parent();
+             
+                  $(parent).siblings('input[type="hidden"]').val(val);
+                }
+                
+                function changeSection(section){
+                    
+                    var icon = $(section).find('i');
+                    
+                    if(icon.hasClass("fa-chevron-down")){
+                        icon.removeClass("fa-chevron-down").addClass("fa-chevron-up");
+                    }else if(icon.hasClass("fa-chevron-up")){
+                        icon.removeClass("fa-chevron-up").addClass("fa-chevron-down");
+                    }
+                }
+                
+                function changeAdditionalContributionDetails(choice){
+                    
+                    $('.benefit-additional-contribution-content').hide();
+                    
+                    if(choice.includes("Single")){
+                        $('#benefit-additional-contribution-single').show();
+
+                    }else if(choice.includes("Regular")){
+                        $('#benefit-additional-contribution-regular').show();
+
+                    }
+                    
+                }
+
+                
+                function showNote(){
+                    var show = 0;
+                    $("select[id*='Required-Rider-Option']").each(function(idx, elem){
+                        if ($(elem).val() == 'Add'){
+                            show += 1;
+                        }
+                    });
+                    
+                   if(show != 0 ){
+                        $('#Rider-Note').show();
+                        
+                   }else{
+                        $('#Rider-Note').hide();
+                   }
+                }
+
+
+            </script>
+            
+            <apex:outputpanel id="BenefitValidationJS">
+                <script>
+                    /*Validation*/
+                    
+                    $("form[id*='change-benefit']").validate();
+
+                    
+                    var Benefit = Benefit || {};
+                    Benefit.Validate = function(){
+
+                
+                        function formValidation(){
+                        
+                             if ($("#benefit-additional-contribution-info").is(':visible')){
+                            
+                                checkReqiredSectionFields('AC-');
+                            
+                            }
+                            
+                            if ($("#benefit-change-of-sum-insured-info").is(':visible')){
+                            
+                                checkReqiredSectionFields('SI-');
+                            
+                            }
+                            
+                            if ($("#benefit-add-del-rider-info").is(':visible')){
+                            
+                                checkReqiredSectionFields('R-');
+                            
+                            }
+                            
+                            if ($("#benefit-additional-contribution-single").is(':visible')){
+                            
+                                checkReqiredSectionFields('ACS-');
+                            
+                            }
+                            
+                            if ($("#benefit-additional-contribution-regular").is(':visible')){
+                            
+                                checkReqiredSectionFields('ACR-');
+                            
+                            }
+                           
+                            //CR-56_Link_20220214
+                            $("input[id*='Regular-Allocation-Digit']").on("blur",function(){
+                                checkAllocationTotal();
+                            });
+                        }
+                        
+                        
+                        function checkReqiredSectionFields(section){
+                        
+                            $("select[id*='" + section + "Required-']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    required : true
+                                });
+                            });
+                            
+                            $("input[id*='" + section + "Required-']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    required : true
+                                });
+                            });
+
+                        }
+                        
+                        function checkAllocationTotal(){
+                            var allocationTotal = 0;
+                            $("input[id*='Regular-Allocation-Digit']").each(function(idx, elem){
+                                allocationTotal += parseInt($(elem).val());
+                            });
+                            
+                           if(allocationTotal =='100'){
+                                $('#Allocation-Total-errMsg').hide();
+                                return true;
+                                
+                           }else{
+                               $('#Allocation-Total-errMsg').show();
+                                return false;
+                           }
+                        }
+                        
+                        
+                        function changeValidate(){
+                            if($("#benefit-change-of-sum-insured-info").is(':visible') || $("#benefit-additional-contribution-info").is(':visible') || $("#benefit-add-del-rider-info").is(':visible')){
+                                 return true;
+                            }else{
+                                return false;
+                            }
+                        }
+                        
+                        return {
+                            formValidation : formValidation,
+                            checkAllocationTotal : checkAllocationTotal,
+                            changeValidate: changeValidate
+                        }
+                        
+                    }();
+                    
+                    
+                    
+                    
+                    /*$("input[id*='Regular-Allocation-Digit']").blur(function(){
+                            Benefit.Validate.checkAllocationTotal();
+                    });*/
+                    
+                    
+                    var currencyVal = $("select[id*='-Currency-Number']").val();
+                    
+                    $("input[id*='-Number']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            number: true
+                        });
+                    });
+
+                    function changeCurrency(currencyVal){
+                        if(currencyVal =='HKD'){
+                        
+                            $("input[id*='-Amount']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    min: 1600
+                                });
+                            });
+                        
+                        }else if (currencyVal =='USD'){
+                        
+                            $("input[id*='-Amount']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    min: 200
+                                });
+                            });
+
+    
+                        }else{
+                        
+                            $("input[id*='-Amount']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    min: 0
+                                });
+                            });
+                        
+                        
+                        }
+                    }
+                    
+                    changeCurrency(currencyVal);
+                    
+                    
+                    $("input[id*='Regular-Allocation-Digit']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            min: 1
+                        });
+                    });
+
+    
+                    $("input[id*='-Digit']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            digits: true
+                        });
+                    });
+                    
+    
+                    function checkFundReallocationDuplicate(value, element) {
+                        var pass = true;
+                        $("select[id*='FundOption']").each(function( index ) {
+                            if (!$(this).is($(element))){
+                                if (value == $(this).val() && $(this).val() !='') {
+                                    pass = false;
+                                    return false;
+                                }
+                            }
+                        });
+                        
+                        return pass;
+                    }
+                    
+                    
+                    function checkBenefitDuplicate(value, element) {
+                        var pass = true;
+                        $("select[id*='BenefitOption']").each(function( index ) {
+                            if (!$(this).is($(element))){
+                                if (value == $(this).val() && value !='') {
+                                    pass = false;
+                                    return false;
+                                }
+                            }
+                        });
+                        
+                        return pass;
+                    }
+    
+                    
+                    jQuery.validator.addMethod("noDuplicateReallocationFund", function(value, element) {
+                        return checkFundReallocationDuplicate(value, element);
+                    }, "{!$Label.Error_Message_Not_Select_Same_Fund_Twice}");
+                    
+                    jQuery.validator.addMethod("noDuplicateBenefit", function(value, element) {
+                        return checkBenefitDuplicate(value, element);
+                    }, "{!$Label.Err_Msg_No_Same_Benefit_Name}");
+                    
+                    $("select[id*='FundOption']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            noDuplicateReallocationFund : true
+                        });
+                    });
+                    
+                    $("select[id*='BenefitOption']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            noDuplicateBenefit : true
+                        });
+                    });
+
+                </script>
+            </apex:outputpanel>
+        </div>
+    </div>
+</apex:page>

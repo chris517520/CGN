@@ -1,0 +1,413 @@
+<apex:page showHeader="false" applyHtmlTag="false" renderAs="pdf" controller="GOPMedApproveLetterController">
+
+    <apex:stylesheet value="{!$Resource.PDFDocumentStyle}" />
+    
+    <c:PDFHeaderFooter type="footer" position="center">
+        <div class="footer" style="text-align: center; font-size: 7pt; color: #333}">
+            <div style="border-top: .25pt solid #666; font-family: Arial Unicode MS;">
+                Confidential, unpublished property of Cigna. Do not duplicate or distribute. Use and distribution limited solely to authorized personnel.<br/>
+                Cigna Worldwide General Insurance Company Limited 信諾環球保險有限公司
+            </div>
+        </div>
+    </c:PDFHeaderFooter>
+
+    
+    <div style="width: 100%">
+        <div style="text-align: center;">
+            <apex:outputPanel style="font-family: Helvetica, sans-serif;font-size:0.95em;">
+                <b>Letter of Guarantee relating to application for Cashless Medical Service (CMS)</b>
+            </apex:outputPanel>
+            <div>
+                &nbsp;
+            </div>
+            <div style="font-family: Arial Unicode MS;">
+                <b>有關 免找數醫療服務(CMS)申請</b>
+            </div>
+        </div>
+    </div>
+    <div style="position:absolute;right:0;top:0;width:10%;float:right">
+        <apex:image url="{!$Resource.Cigna_Logo}" width="70" height="70"/>
+    </div>
+    <hr />
+    <!-- <div style="text-align: center;font-size:14.5px;">
+        <b>Contact For revalidation – Email:</b> Please reply to approval email<br/>
+    </div> -->
+    <div>&nbsp;</div>
+    <apex:outputPanel rendered="{!hospitalClinic}">
+        <div style="text-align: center;font-size:15.5px;">
+            <b style="font-family: Helvetica, sans-serif;"><u>Letter to Hospital/ Clinic</u></b>
+        </div>
+        <div>&nbsp;</div>
+        <div style="text-align: center;font-size:15.5px;font-family: Arial Unicode MS;">
+            <b><u>致醫院/診所的信件</u></b>
+        </div>
+    </apex:outputPanel>    
+    <apex:outputPanel rendered="{!doctor}">
+        <div style="text-align: center;font-size:15.5px;">
+            <b style="font-family: Helvetica, sans-serif;"><u>Letter to Attending Doctor</u></b>
+        </div>
+        <div>&nbsp;</div>
+        <div style="text-align: center;font-size:15.5px;font-family: Arial Unicode MS;">
+            <b><u>致主診醫生的信件</u></b>
+        </div>
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!member}">
+        <div style="text-align: center;font-size:15.5px;">
+            <b style="font-family: Helvetica, sans-serif;"><u>Letter to Person Insured</u></b>
+        </div>
+        <div>&nbsp;</div>
+        <div style="text-align: center;font-size:15.5px;font-family: Arial Unicode MS;">
+            <b><u>致受保人的信件</u></b>
+        </div>
+    </apex:outputPanel>  
+    <div>&nbsp;</div>
+    
+    <apex:outputPanel id="information">
+        <table style="width: 100%">
+            <tbody>
+                <tr>
+                    <td>
+                        <span style="font-family: Helvetica, sans-serif;">
+                            <u>
+                                Date of Letter
+                                <span style="font-family: Arial Unicode MS;">信件日期:</span>
+                            </u>
+                            {!issueDate}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span style="font-family: Helvetica, sans-serif;">
+                            <u>
+                                Reference number of application for CMS 
+                                <span style="font-family: Arial Unicode MS;">申請個案編號:  </span>
+                            </u>
+                            {!caseNo}
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div>&nbsp;</div>
+
+        <table style="width: 100%">
+            <tbody>
+                <tr>
+                    <td><u><b style="font-family: Helvetica, sans-serif;">Policy's Particulars</b> <span style="font-family: Arial Unicode MS;">保單資料</span></u></td>
+                </tr>
+                <tr><td>&nbsp;</td></tr>
+                <tr>
+                    <td>
+                        <span style="font-family: Helvetica, sans-serif;">
+                            <u>
+                                Name of insurance plan
+                                <span style="font-family: Arial Unicode MS;">保單名稱: </span>
+                            </u>
+                            {!productName}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span style="font-family: Helvetica, sans-serif;">
+                            <u>
+                                Policy number
+                                <span style="font-family: Arial Unicode MS;">保單號碼:</span>
+                            </u>
+                            {!memberShipNo}
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div>&nbsp;</div>
+
+        <table style="width: 100%">
+            <tbody>
+                <tr>
+                    <td><u><b style="font-family: Helvetica, sans-serif;">Person Insured’s Particulars</b>
+                        <span style="font-family: Arial Unicode MS;">受保人資料</span></u>
+                    </td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td style="width:50%; font-family: Helvetica, sans-serif;">Person Insured's Name <span style="font-family: Arial Unicode MS;">受保人姓名:</span>{!memberName}</td>
+                    <td style="width:50%; font-family: Helvetica, sans-serif;">Person Insured's HKID <span style="font-family: Arial Unicode MS;">受保人香港身分證:</span>{!patientHKID}</td>
+                </tr>
+            </tbody>
+        </table>
+        <div>&nbsp;</div>
+        <div>&nbsp;</div>
+        
+        <table style="width: 100%">
+            <tbody>
+                <tr>
+                    <td><u><b style="font-family: Helvetica, sans-serif;">Treatment Details<span style="font-family: Arial Unicode MS;">治療詳情</span></b></u></td>
+                </tr>
+                <tr><td>&nbsp;</td></tr>
+                <tr>
+                    <td style="font-family: Helvetica, sans-serif;">Diagnosis<span style="font-family: Arial Unicode MS;">診斷:</span></td>
+                </tr>
+                <tr>
+                    <td colspan="2"> 
+                        <ol>
+                            <apex:repeat value="{!diagnosis}" var="diagCode" id="newDiagRepeat">
+                                <li style="font-family: Helvetica, sans-serif;font-weight:normal;">{!diagCode}</li>
+                            </apex:repeat>
+                        </ol>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-family: Helvetica, sans-serif;">Procedure(s)<span style="font-family: Arial Unicode MS;">治療程序:</span></td>
+                </tr>
+                <tr>
+                    <td colspan="2"> 
+                        <ol>
+                            <apex:repeat value="{!procedures}" var="procedure" id="newProceduresRepeat">
+                                <li style="font-family: Helvetica, sans-serif;font-weight:normal;">{!procedure}</li>
+                            </apex:repeat>
+                        </ol>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:50%; font-family: Helvetica, sans-serif;">Admission date<span style="font-family: Arial Unicode MS;">入院日期:</span><span style="font-weight:normal;"> {!admissionDate}</span></td>
+                    <td style="width:50%; font-family: Helvetica, sans-serif;">Hospital<span style="font-family: Arial Unicode MS;">醫院</span>/Clinic<span style="font-family: Arial Unicode MS;">診所:</span><span style="font-weight:normal;">{!hospital}</span></td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="font-family: Helvetica, sans-serif;">Booked class of ward<span style="font-family: Arial Unicode MS;">病房級別:</span><span style="font-weight:normal;">{!ward}</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <div>&nbsp;</div>
+        <div style="page-break-inside: avoid;">
+        <table style="width: 100%; font-family: Helvetica, sans-serif;">
+            <tbody>
+                <tr>
+                    <td><u><b>Physicians’ Particulars<span style="font-family: Arial Unicode MS;">醫生資料</span></b></u></td>
+                </tr>
+                <tr><td>&nbsp;</td></tr>
+                <tr>
+                    <td style="width:50%; ">Surgeon’s name<span style="font-family: Arial Unicode MS;">醫生姓名:</span> <span style="font-weight:normal;">{!doctorName}</span></td>
+                    <td style="width:50%; ">Email address<span style="font-family: Arial Unicode MS;">電郵地址:</span> <span style="font-weight:normal;">{!email}</span></td>
+                </tr>
+                <tr>
+                    <td style="width:50%; ">Tel. number<span style="font-family: Arial Unicode MS;">電話號碼:</span> <span style="font-weight:normal;">{!tel}</span></td>
+                    <td style="width:50%; ">Fax number<span style="font-family: Arial Unicode MS;">傳真號碼:</span> <span style="font-weight:normal;">{!fax}</span></td>
+                </tr>
+                <!-- <tr>
+                    <td style="width:50%; ">Daily doctor’s attendance fee<span style="font-family: Arial Unicode MS;">每日巡房費:</span> {!inpatientFee}</td>
+                    <td style="width:50%; ">Anesthetist fee<span style="font-family: Arial Unicode MS;">麻醉科醫生費:</span> {!anesthetistFee}</td>
+                </tr> -->
+            </tbody>
+        </table>
+        </div>
+    </apex:outputPanel>
+    <div>&nbsp;</div>
+    <div>&nbsp;</div>
+    <div>&nbsp;</div>
+    
+    <apex:outputPanel >
+        <div style="page-break-inside: avoid; font-family: Helvetica, sans-serif;">
+            <span><u><b>Result of CMS Application <span style="font-family: Arial Unicode MS;">申請結果</span></b></u></span><br />
+            <br />
+            
+            <span style="font-weight:normal;">
+                We refer to the Pre-approval Application Form for Cashless Medical Service completed by the above-mentioned Person Insured and abovementioned Physicians which was received by Cigna Worldwide General Insurance Company Limited (“Cigna” or “we / us”) on {!openCaseDate} (“Pre-approval Form”).
+            </span>
+            <br />
+            <br />
+            <apex:outputPanel rendered="{!!member}">
+                <span style="font-weight:normal;">
+                    Considering the Pre-approval Form, and subject to the terms and conditions of Cashless Medical Service [as stated in the Pre-approval Form] and the "Important Information" section in this letter, we will pay to the above-mentioned Hospital/Clinic the reasonable cost(s) in connection with the following surgery(ies)/treatment(s)/investigation(s) to be conducted on the Person Insured up to the amount of the approved cost stated below. 
+                </span>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!member}">
+                <span>
+                    Considering the Pre-approval Form and subject to the terms and conditions of Cashless Medical Service [as stated in the Pre-approval Form] and the "Important Information" section in this letter, we will pay to the above-mentioned Hospital/Clinic in connection with the below surgery(ies)/treatment(s)/investigation(s) to be conducted on the Person Insured.
+                </span>
+            </apex:outputPanel>
+            <br />
+            <br />
+            
+            <span style="font-family: Arial Unicode MS; white-space: nowrap;">
+                根據信諾環球保險有限公司（「信諾環球」或「我們」）於 {!openCaseDate} 收到的由上述被保險人和上述
+            </span> 
+            <span style="font-family: Arial Unicode MS;">
+                醫生填寫的CMS申請表（「申請表」）。
+            </span>
+
+            <apex:outputPanel rendered="{!!member}">
+                <p style="font-family: Arial Unicode MS;">
+                    考慮到申請表的內容並受限於本信中「重要資訊」部分，我們將如下表所示的批核金額，向上述醫院 / 診所支付與受保人進行以下手術 / 治療/檢驗有關的合理費用。
+                </p>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!member}">
+                <p style="font-family: Arial Unicode MS;">
+                    考慮到申請表的內容並受限於本信中「重要資訊」部分，我們將向上述醫院 / 診所支付與受保人進行以下手術 / 治療 / 檢驗有關的費用。
+                </p>
+            </apex:outputPanel>
+            <br />
+            <br />
+            Approved items <span style="font-family: Arial Unicode MS;">已批核項目: </span>
+            <br /><br /><br />
+
+            <!-- Investigation for variables needed here START -->
+            <apex:outputPanel >
+                <apex:outputText style="font-family: Helvetica, Arial Unicode MS;" value="{!approvedItems}" escape="false"></apex:outputText>
+            </apex:outputPanel>
+            <!-- <table border="1px" cellspacing="0">
+                <tr>
+                    <th>Surgery/ treatment/ investigation required<span style="font-family: Arial Unicode MS;">所需手術/治療/檢驗</span></th>
+                    <th>Requested cost<br /><span style="font-family: Arial Unicode MS;">要求金額</span><br /> (HKD)</th>
+                    <th>Approved cost<br /><span style="font-family: Arial Unicode MS;">已批核金額</span><br /> (HKD)</th>
+                </tr>
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:repeat value="{!coverageDetails}" var="cpt">
+                <tr>
+                    <td>{!cpt.GOP_CPT_Description__c}</td>
+                    <td>Total<span style="font-family: Arial Unicode MS;">總數:</span>{!cr.GOP_Surgical_Fees__c}</td>
+                    <td>Total<span style="font-family: Arial Unicode MS;">總數:</span>{!cr.GOP_Total_Approved_Fees__c}</td>
+                </tr>
+                    <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                </apex:repeat>
+            </table> -->
+            <!-- Investigation for variables needed here END -->
+
+            <br /><br /><br />
+            <span style="font-family: Helvetica, sans-serif;">
+                If the final costs of the surgery(ies)/treatment(s)/investigation(s) exceed the approved amount mentioned above, the abovementioned Hospital/Clinic will collect such excessive amount from the Person Insured directly.
+            </span>
+            <br />
+            <span style="font-family: Arial Unicode MS;">
+                上述醫院/診所會直接向受保人收取上述超出已批核金額的餘額額(截至上述信件日期) 。 
+            </span>
+            <br />
+            <!-- <p>
+                The Hospital/Clinic will contact Cigna for revalidation if the accumulative expenses exceed HK$<apex:outputText value="{0, number}"><apex:param value="{!gopCreditLimit}" /></apex:outputText>, or if the confinement is longer than the estimated length of stay specified under the "Treatment Details" section.
+            </p>
+
+            <p style="font-family: Arial Unicode MS;">
+                如累計住院費用超過 HK$<apex:outputText value="{0, number}"><apex:param value="{!gopCreditLimit}" /></apex:outputText>或長於預計住院日數，醫院/診所將聯絡信諾環球更新 CMS 審批內容。
+            </p> -->
+            <!--
+            <apex:outputPanel rendered="{!!clinic}">
+                <p>
+                In order to settle the final cost charged for the confinement, the abovementioned Hospital/Clinic will collect the following sums from the Person Insured directly 
+                <span style="font-family: Arial Unicode MS;">上述醫院/診所會直接向受保人收取以下款項:</span>
+            </p>
+
+            <table>
+                <tr style="list-style-type: lower-roman;">
+                    <td>
+                        <ol style="list-style-type: lower-roman;">
+                            
+                            <li style="margin-bottom: 10px;">
+                                <span style="white-space:nowrap;">The annual deductible under the Policy as of the abovementioned Date of Letter 
+                                    <span style="font-family: Arial Unicode MS;">保單內年度自付費餘</span>
+                                </span>    
+                                <div style="height: 3px;"></div>
+                                <span style="font-family: Arial Unicode MS;">額(截至上述信件日期) i.e. 即HK$<apex:outputText value="{0, number}"><apex:param value="{!deductAmount}" /></apex:outputText> 
+                                        
+                                        
+                                        and及
+                                        
+                                </span>    
+                            </li>
+                            
+                            <li style="margin-bottom: 10px;">
+                                Any amount charged for the above surgery(ies)/treatment(s)/investigations(s) exceeding the above 
+                                <br/>
+                                <span style="white-space:nowrap;">approved cost as of the abovementioned Date of Letter
+                                    <span style="font-family: Arial Unicode MS;">上述手術/治療/檢驗超出已批核金額的餘額
+                                        <br/>(截至上述信件日期) i.e. 即 HK$ <apex:outputText value="{0, number}"><apex:param value="{!shortfallAmount}" /></apex:outputText>
+                                        
+                                        <apex:outputText rendered="{!hospitalClinicHKSH || memberHKSH}">
+                                        and及
+                                        </apex:outputText>
+                                        
+                                    </span>
+                                </span>
+                            </li>
+                            <apex:outputText rendered="{!hospitalClinicHKSH}">
+                                <li style="margin-bottom: 5px;">
+                                    <span style="white-space:nowrap;">20% of the final cost charged for the confinement after deducting i. and ii.
+                                        <span style="font-family: Arial Unicode MS;">已扣減(i)及(ii)的最終費用<br/>的20%.</span>
+                                    </span>
+                                </li>
+                            </apex:outputText>
+                            <apex:outputText rendered="{!memberHKSH}">
+                                <li style="margin-bottom: 5px;">
+                                    <span style="white-space:nowrap;">If the abovementioned Hospital/Clinic is a Designated Healthcare Service Provider (as defined in the <br/>Policy), 20% of the final cost charged for the confinement after deducting i. and ii. above.
+                                        <span style="font-family: Arial Unicode MS;">已扣減(i)及<br/>(ii)的最終費用的20%，因保單只保障指定醫療服務提供者(於保單內定義)所產生的可獲賠償費<br/>用的80%</span>
+                                    </span>
+                                </li>
+                            </apex:outputText>
+                        </ol>
+                    </td>
+                </tr>
+            </table>
+            </apex:outputPanel>
+            -->
+        </div>
+    </apex:outputPanel>
+    
+    <div>&nbsp;</div><div>&nbsp;</div>
+    
+    <apex:outputPanel rendered="{!doctor}">
+        <div style="page-break-inside: avoid; font-family: Helvetica, sans-serif">
+            <div><b><u>Important Information</u></b></div>
+            <ol>
+                <li style="margin-bottom: 10px;">This letter is valid for 30 days from the abovementioned Date of Letter unless otherwise specified. The surgery(ies)/treatment(s)/investigation(s) mentioned above shall be conducted within 30 days after the Date of Letter.</li>
+                <li style="margin-bottom: 10px;">In case of discrepancies between the English version and the Chinese version of this letter, the English version shall apply and prevail.</li>
+            </ol>
+        </div>
+            <br />
+            <div style="page-break-inside: avoid;">
+            <div style="font-family: Arial Unicode MS;"><u>重要資訊</u></div>
+            <ol style="font-family: Arial Unicode MS;">
+                <li style="margin-bottom: 15px;">除另有規定外，本函自上述信件日期起 30 天內有效。</li>
+                <li style="margin-bottom: 15px;">此信函備有中英文版本，如內容有異，以英文版本為準。</li>
+            </ol>
+            </div>
+    </apex:outputPanel>
+
+    <apex:outputPanel rendered="{!!doctor}">
+        <div style="page-break-inside: avoid; font-family: Helvetica, sans-serif;">
+            <div><b><u>Important Information</u></b></div>
+            <ol>
+                <li style="margin-bottom: 10px;">Cigna has the sole and absolute discretion in relation to all matters arising from or in connection with this CMS application, and that in the event of disputes, the decision of Cigna shall be final, conclusive and binding.</li>
+                <li style="margin-bottom: 10px;">Decisions for this CMS application are made based on information provided by the Person Insured and/or Policyholder about the Person Insured’s medical condition, the information provided in the Pre-approval Form, the terms and conditions of the Policy and other related information available at the time of the assessment of this CMS application. If any information provided to Cigna is incorrect or incomplete which resulted in Cigna approving this CMS application, the Person Insured shall be liable to compensate Cigna against all losses suffered by Cigna.</li>
+                <li style="margin-bottom: 10px;">All decisions made for this CMS application are based on the information provided in the Pre-approval Form and other related information available at the time of this case's assessment.</li>
+                <li style="margin-bottom: 10px;">This letter is valid for 30 days from the abovementioned Date of Letter unless otherwise specified. The surgery(ies)/treatment(s)/investigation(s) mentioned above shall be conducted within 30 days after the Date of Letter.</li>
+                <li style="margin-bottom: 10px;">If the medical expense exceeds the applicable benefit limit(s) under the Policy or otherwise is not eligible for reimbursement under the Policy, the Person Insured shall promptly reimburse Cigna of the shortfall amounts in full. Cigna shall have the right to charge any such shortfall amounts through direct debit from the authorized credit card account of the Person Insured provided in the Pre-approval Form. For details, please refer to the Policy and the Pre-approval Form.</li>
+                <li style="margin-bottom: 10px;">Cigna has the sole and absolute right to amend, vary, suspend and/or cancel any Cashless Medical Service from time to time and at any time without prior notice.</li>
+                <li style="margin-bottom: 10px;">In case of discrepancies between the English version and the Chinese version of this letter, the English version shall apply and prevail.</li>
+            </ol>
+        </div>
+            <br />
+            <div style="page-break-inside: avoid;">
+            <div style="font-family: Arial Unicode MS;"><u>重要資訊</u></div>
+            <ol style="font-family: Arial Unicode MS;">
+                <li style="margin-bottom: 15px;"><span style="white-space:nowrap;">申請表和本函均不應被理解為信諾環球承擔責任。實際符合資格或應付金額均以最終理賠決定為<div style="height:2px;"></div>準。所有應付權益均須取決於保單內的條款及細則，包括但不限於不保事項。</span></li>
+                                                                                   
+                <li style="margin-bottom: 15px;"><span style="white-space:nowrap;">信諾環球對於由本 CMS 申請引起或與之相關的所有事宜擁有唯一且絕對決定權，如有爭議，信<div style="height:2px;"></div>諾環球的決定將為最終決定。</span></li>
+                
+                <li style="margin-bottom: 15px;">本 CMS的所有決定均基於申請表中提供的資訊以及評估本個案時的相關可用資訊。</li>
+                
+                <li style="margin-bottom: 15px;">除另有規定外，本函自上述信件日期起 30 天內有效。</li>
+                                                                                                                                                                                                 
+                <li style="margin-bottom: 15px;"><span style="white-space:nowrap;">如果信諾環球已結算或被要求結算超出保單中適用的權益限額或不符合保單索償資格的任何費用<div style="height:2px;"></div>，受保人於收到相關通知後，應立即向信諾環球支付全數差額。在不影響前述規定的情況下，信<div style="height:2px;"></div>諾環球有權將其根據保單應向受保人支付的任何金額與差額進行抵銷。詳情請參閱保單及申請表<div style="height:2px;"></div>。</span></li>
+                
+                <li style="margin-bottom: 15px;">信諾環球擁有隨時修改、變更、暫停和/或取消任何CMS的唯一且絕對權利，恕不另行通知。</li>
+                
+                <li style="margin-bottom: 15px;">此信函備有中英文版本，如內容有異，以英文版本為準。</li>
+            </ol>
+            </div>
+    </apex:outputPanel>
+
+
+    
+</apex:page>

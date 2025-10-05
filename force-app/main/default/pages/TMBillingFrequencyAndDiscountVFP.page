@@ -1,0 +1,133 @@
+<apex:page standardController="Campaign" extensions="TMBillingFrequencyAndDiscountCtrl"  title="Billing Frequency And Discount">
+    
+           <apex:form id="TMBillingFrequencyAndDiscount">
+               <apex:actionFunction namespace="BillingFrequency" action="{!updateFrequency}" name="updateFre" />   
+               <apex:actionFunction namespace="BillingFrequency" action="{!cancalFrequency}" name="cancelFre" />   
+               <apex:actionFunction namespace="BillingFrequency" action="{!EditFrequency}" name="EditFre" />   
+               <!--<apex:actionFunction namespace="BillingFrequency" name="refresh" action="{!init}" rendered="hidden-Annual, hiddenMonth, hiddenQuater, hiddenSemiAnnual, hiddenSingle, TMBillingFrequencyAndDiscountApex"/>-->
+               
+               <!--<apex:inputHidden id="hiddenAnnual" value="{!isAnnual}" />
+               <apex:inputHidden id="hiddenMonth" value="{!isMontly}" />
+               <apex:inputHidden id="hiddenQuater" value="{!isQuaretly}" />
+               <apex:inputHidden id="hiddenSemiAnnual" value="{!isSemiAnnually}" />
+               <apex:inputHidden id="hiddenSingle" value="{!isSinglePremium}" />-->
+               <apex:inputHidden id="isEditFlag" value="{!isEdit}" rendered="true"/>
+               <apex:inputHidden id="isNullValue" value="{!isNullValue}" rendered="true"/>
+               <apex:inputHidden id="isEditStatus" value="{!isEditStatus}" rendered="true"/>
+               
+               <apex:outputPanel id="TMBillingFrequencyAndDiscountApexEdit" rendered="{! isEdit || isNullValue && isEdit}">
+               
+                  <apex:pageBlock mode="maindetail">
+                      <apex:pageBlockSection columns="2">
+                          <!-- Annual -->         
+                          <apex:pageblockSectionItem >   
+                              <apex:outputPanel >
+                                  <apex:outputLabel value="{!$Label.TM_BillingFre_Annual}"/>
+                                  <apex:inputCheckbox value="{!isAnnual}" onchange="BillingFrequency.refresh()"/>
+                              </apex:outputPanel>
+                              <apex:inputField id="Annual" value="{!newCam.BF_Annual__c}"/>
+                          </apex:pageblockSectionItem>
+                          <!-- Montly -->
+                          <apex:pageblockSectionItem >
+                              <apex:outputPanel >
+                                  <apex:outputLabel value="{!$Label.TM_BillingFre_Montly}"/>
+                                  <apex:inputCheckbox value="{!isMontly}" onchange="BillingFrequency.refresh()"/>
+                              </apex:outputPanel>
+                              <apex:inputField id="Montly" value="{!newCam.BF_Month__c }"/>
+                          </apex:pageblockSectionItem>
+                          <!-- Quaretly -->
+                          <apex:pageblockSectionItem >                              
+                              <apex:outputPanel >
+                                  <apex:outputLabel value="{!$Label.TM_BillingFre_Quaretly}"/>
+                                  <apex:inputCheckbox value="{!isQuaretly}" onchange="BillingFrequency.refresh()"/>
+                              </apex:outputPanel>
+                              <apex:inputField id="Quaretly" value="{!newCam.BF_Quater__c }"/>
+                          </apex:pageblockSectionItem>
+                          <!-- Semi Annually -->
+                          <apex:pageblockSectionItem >
+                              <apex:outputPanel >
+                                  <apex:outputLabel value="{!$Label.TM_BillingFre_SemiAnnually}"/>
+                                  <apex:inputCheckbox value="{!isSemiAnnually}" onchange="BillingFrequency.refresh()"/>
+                              </apex:outputPanel>
+                              <apex:inputField id="SemiAnnually" value="{!newCam.BF_Semi_Annual__c }"/>
+                          </apex:pageblockSectionItem>
+                          <!-- Single Premium -->
+                          <apex:pageblockSectionItem >
+                              <apex:outputPanel >
+                                  <apex:outputLabel value="{!$Label.TM_BillingFre_SemiPremium}"/>
+                                  <apex:inputCheckbox value="{!isSinglePremium}" onchange="BillingFrequency.refresh()"/>
+                              </apex:outputPanel>
+                              <apex:inputField id="SemiPremium" value="{!newCam.BF_Single__c }" />
+                          </apex:pageblockSectionItem>
+                      </apex:pageBlockSection>
+                  
+                  </apex:pageBlock>
+               </apex:outputPanel>  
+               
+               <apex:outputPanel id="TMBillingFrequencyAndDiscountApexShow" rendered="{! !isEdit && !isNullValue}" >
+               
+                   <apex:pageBlock mode="maindetail">
+                      <apex:pageBlockSection columns="2">
+                          <!-- Annual -->         
+                          <apex:pageblockSectionItem >  
+                              <apex:outputPanel >
+                                  <apex:outputLabel value="{!$Label.TM_BillingFre_Annual}"/>
+                                  <apex:outputPanel rendered="{!isAnnual}"><img width="21" height="16" title="Checked" class="checkImg" alt="Checked" src="/img/checkbox_checked.gif" /></apex:outputPanel>
+                                  <apex:outputPanel rendered="{! !isAnnual}"><img width="21" height="16" title="Not Checked" class="checkImg" alt="Not Checked" src="/img/checkbox_unchecked.gif" /></apex:outputPanel>
+                              </apex:outputPanel>
+                              <apex:outputField value="{!newCam.BF_Annual__c}"/>
+                          </apex:pageblockSectionItem>
+                          <!-- Montly -->
+                          <apex:pageblockSectionItem >
+                              <apex:outputPanel >
+                                  <apex:outputLabel value="{!$Label.TM_BillingFre_Montly}"/>
+                                  <apex:outputPanel rendered="{!isMontly}"><img width="21" height="16" title="Checked" class="checkImg" alt="Checked" src="/img/checkbox_checked.gif" /></apex:outputPanel>
+                                  <apex:outputPanel rendered="{! !isMontly}"><img width="21" height="16" title="Not Checked" class="checkImg" alt="Not Checked" src="/img/checkbox_unchecked.gif" /></apex:outputPanel>
+                              </apex:outputPanel>
+                              <apex:outputField value="{!newCam.BF_Month__c }"/>
+                          </apex:pageblockSectionItem>
+                          <!-- Quaretly -->
+                          <apex:pageblockSectionItem >   
+                              <apex:outputPanel >      
+                                  <apex:outputLabel value="{!$Label.TM_BillingFre_Quaretly}"/>
+                                  <apex:outputPanel rendered="{!isQuaretly}"><img width="21" height="16" title="Checked" class="checkImg" alt="Checked" src="/img/checkbox_checked.gif" /></apex:outputPanel>
+                                  <apex:outputPanel rendered="{! !isQuaretly}"><img width="21" height="16" title="Not Checked" class="checkImg" alt="Not Checked" src="/img/checkbox_unchecked.gif" /></apex:outputPanel>
+                              </apex:outputPanel>
+                              <apex:outputField value="{!newCam.BF_Quater__c }"/>
+                          </apex:pageblockSectionItem>
+                          <!-- Semi Annually -->
+                          <apex:pageblockSectionItem >
+                              <apex:outputPanel >
+                                  <apex:outputLabel value="{!$Label.TM_BillingFre_SemiAnnually}"/>
+                                  <apex:outputPanel rendered="{!isSemiAnnually}"><img width="21" height="16" title="Checked" class="checkImg" alt="Checked" src="/img/checkbox_checked.gif" /></apex:outputPanel>
+                                  <apex:outputPanel rendered="{! !isSemiAnnually}"><img width="21" height="16" title="Not Checked" class="checkImg" alt="Not Checked" src="/img/checkbox_unchecked.gif" /></apex:outputPanel>
+                              </apex:outputPanel>
+                              <apex:outputField value="{!newCam.BF_Semi_Annual__c }"/>
+                          </apex:pageblockSectionItem>
+                          <!-- Single Premium -->
+                          <apex:pageblockSectionItem >
+                              <apex:outputPanel >
+                                  <apex:outputLabel value="{!$Label.TM_BillingFre_SemiPremium}"/>
+                                  <apex:outputPanel rendered="{!isSinglePremium}"><img width="21" height="16" title="Checked" class="checkImg" alt="Checked" src="/img/checkbox_checked.gif" /></apex:outputPanel>
+                                  <apex:outputPanel rendered="{! !isSinglePremium}"><img width="21" height="16" title="Not Checked" class="checkImg" alt="Not Checked" src="/img/checkbox_unchecked.gif" /></apex:outputPanel>
+                              </apex:outputPanel>
+                              <apex:outputField value="{!newCam.BF_Single__c }" />
+                          </apex:pageblockSectionItem>
+                      </apex:pageBlockSection>
+                  </apex:pageBlock>
+                                    
+               </apex:outputPanel>
+                  
+                  <div style="text-align:center">
+                      <apex:outputPanel id="ErrMsg" rendered="{! isNullValue }">
+                          <b><apex:outputText value="{! Msg}" style="color:red"/></b>
+                      </apex:outputPanel>
+                      <br/>
+                      <apex:commandButton value="{!$Label.TM_BillingFre_Edit}" onclick="BillingFrequency.EditFre(); return false;" rendered="{! !isAgent && !isEdit }" reRender="isEditStatus, isNullValue, isEditFlag, TMBillingFrequencyAndDiscountApexEdit, TMBillingFrequencyAndDiscountApexShow"/>
+                      <apex:commandButton value="{!$Label.TM_BillingFre_Update}" onclick="BillingFrequency.updateFre(); return false;" rendered="{! isEdit}" reRender="isEditStatus, isNullValue, isEditFlag, TMBillingFrequencyAndDiscountApexEdit, TMBillingFrequencyAndDiscountApexShow"/>
+                      <apex:commandButton value="{!$Label.TM_BillingFre_Cancel}" onclick="BillingFrequency.cancelFre(); return false;" rendered="{! isEdit}" reRender="isEditStatus, isNullValue, isEditFlag, TMBillingFrequencyAndDiscountApexEdit, TMBillingFrequencyAndDiscountApexShow"/>
+                  </div> 
+                  
+           </apex:form>   
+    
+</apex:page>

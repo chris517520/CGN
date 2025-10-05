@@ -1,0 +1,1138 @@
+<!--Please change apex page title-->
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" Controller="PolicyChangeController" title="{!$Label.Policy_Change}">
+   <head>
+      <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+      <style>
+         @media 
+         only screen and (max-width: 760px),
+         (min-device-width: 768px) and (max-device-width: 1024px)  {
+         .nav-pills:active{
+             color: #fff !important;
+             background-color: #2E2E2E !important;   
+         }
+         .myTitle
+         {
+             font-weight: bold;  
+         }
+         .myTable{
+             border-top:0px !important;
+         }
+         .bs .nav-pills>li.active>a, .bs .nav-pills>li.active>a:focus, .bs .nav-pills>li.active>a:hover {
+             color: #FFF !important;
+             background-color: #2E2E2E !important;
+         }
+         .bs .nav-pills>li>a:hover {
+             color: #FFF !important;
+             background-color: #BDBDBD !important;
+         }
+         .bs .nav-pills>li>a{
+             color: #2E2E2E !important;
+             background-color: #FFF !important;
+         }
+         }
+         .progress-bar-font{
+             font-size:0.6em;
+         }
+         .bartab-padding{
+             padding-left:0px !important; 
+             padding-right:0px !important;
+         }
+         <!--[HKITSFDC-44] S-->
+         .active-bar-tab, .inactive-bar-tab{
+         	width: 25% !important; 
+         }
+         <!--[HKITSFDC-44] E-->
+      </style>
+      <script>
+         $(document).ready(function(){
+               PolicyChangeAF.init(); 
+          }); 
+          
+          
+          function initDisplay(){
+              /*Single Select Policy Change Color*/  
+              //CR-56_Link_20220214
+              $('.policyHolder-single').on("click",function(){
+                  $(this).siblings('.policyHolder-single').removeClass('cigna-fg-orange-dark');
+                  $(this).addClass('cigna-fg-orange-dark');
+              });
+          
+             if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                    //$('#action-bar').css('position', 'absolute');
+                    //$('#mobile-app-padding').css('display', 'block');
+             }
+                  
+              
+              if (Cigna.Util.isBrokerPortal()){
+                  $("#selectholder").hide();
+                  $('#container').removeClass();
+                  $("#changebtnsm").attr("onclick","showSelectHolder()");
+                  $("#changebtnxs").attr("onclick","showSelectHolder()");
+                  $("#bartab").css("paddingLeft", "15px");
+                  $("#bartab").css("paddingRight", "15px");
+                  //Nicole_20200417_SPS-428
+                  $("#changebtnxs-app").attr("onclick","showSelectHolder()");
+                  
+                  $('#brkresult').show();
+                  $('#BrkSaveList').show();
+                  $('#BrkAllList').show();
+                  $('#BrkInProgressList').hide();
+                  $('#BrkCompletedList').hide();
+                  $('#cusresult').hide();
+                  $('#CusSaveList').hide();
+                  $('#CusAllList').hide();
+                  $('#CusInProgressList').hide();
+                  $('#CusCompletedList').hide();
+          
+              }else{
+                  $("#changebtnsm").show();
+                  $("#changebtnxs").show();
+                  $('#mobile-app-padding').show();
+                  $("#selectholder").hide();
+                  $('#brkresult').hide();
+                  $('#BrkSaveList').hide();
+                  $('#BrkAllList').hide();
+                  $('#BrkInProgressList').hide();
+                  $('#BrkCompletedList').hide();
+                  $('#cusresult').show();
+                  $('#CusSaveList').show();
+                  $('#CusAllList').show();
+                  $('#CusInProgressList').show();
+                  $('#CusCompletedList').show();
+              }
+              
+             var currentBackId = '{!backId}';
+             if(currentBackId) {
+                
+                 /*$('#changebtnsm').hide();
+                 $('#changebtnxs').hide();
+                 $('#mobile-app-padding').hide();
+                 $("#bartab").hide();
+                 $('#brkresult').hide();
+                 $("#selectholder").show(); */
+                 showSelectHolder();
+                    
+             }
+         
+                  
+               /**grey separator**/
+               var srlist = document.getElementsByClassName("listcontent");
+               for(var i=0; i < srlist.length; i++){
+                   if(i % 2==0){
+                       var item = srlist[i];
+                       item.style.backgroundColor = '#f2f2f2';
+                   }
+               }
+               
+               if (Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                   $('#bartab').removeClass('row').addClass('bartab-padding');
+               }
+                
+                //CR-56_Link_20220214
+                if( '{!JSINHTMLENCODE(fromTab)}' == 'inprogress' ){
+                     $('#inprogressTab').trigger('click');
+                 }else if('{!JSINHTMLENCODE(fromTab)}'=='completed'){
+                     $('#completedTab').trigger('click');
+                 }else{
+                     $('#allTab').trigger('click');
+                 }
+                 
+                 
+               
+           }
+          
+          function getURLParameter(name) {
+          
+              return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1].replace(/\+/g, '%20')) || null;
+          }
+          
+          $("[id$='policyChange']").addClass('active'); // <-- change the id to the active tab
+          
+          var selectItems = document.getElementsByClassName("inactive-bar-tab");
+          var startItems = document.getElementsByClassName("active-bar-tab");
+          
+          function selectedTab(item){
+            this.clear();
+            item.style.backgroundColor = '#00A9E0';
+           }
+          
+           function clear(){
+            for(var i=0; i < selectItems.length; i++){
+             var item = selectItems[i];
+             item.style.backgroundColor = '#004986';
+            }
+           for(var i=0; i < startItems.length; i++){
+             var item = startItems[i];
+             item.style.backgroundColor = '#004986';
+            }
+          
+           }
+           
+          
+          function showSelectHolder(){
+          
+              $("#selectholder").show();
+              $("#changebtnsm").hide();
+              $("#changebtnxs").hide();
+              $("#mobile-app-padding").hide();
+              $("#brkresult").hide();
+              $("#bartab").hide();
+              
+              //Nicole_20200417_SPS-428
+              $("#changebtnxs-app").hide();
+              
+              refreshComponent();
+              
+          }
+          
+          
+           /*Back Function*/
+           function backPolicyChange(){
+               
+               $("#selectholder").hide();
+               $("#changebtnsm").show();
+               $("#changebtnxs").show();
+               $("#brkresult").show();
+               $("#bartab").show();
+               $('.policyHolder-single').removeClass('cigna-fg-orange-dark');
+               holderId = '';
+               
+               //Nicole_20200417_SPS-428
+               $("#changebtnxs-app").show();
+           }
+          var currentTab = 'all';
+          var navigationLink = 'PolicyChangeSubmitVFP?tab=all&';
+
+          function displayList(status){
+          $('#CusCompletedList').hide();
+              currentTab = status;
+              navigationLink = 'PolicyChangeSubmitVFP?' + 'tab=' + status + '&';
+              if(status=='all'){
+                  $('#CusSaveList').show();
+                  $('#CusAllList').show();
+                  $('#CusInProgressList').hide();
+                  $('#CusCompletedList').hide();
+                  $('#BrkSaveList').show();
+                  $('#BrkAllList').show();
+                  $('#BrkInprogressList').hide();
+                  $('#BrkCompletedList').hide();
+                  $('#RecordMsgCompleted').hide();
+                  //BEGIN HKITSFDC-44
+                  $('#BrkCancelList').hide();
+                  $('#CusCancelList').hide();
+                  $('#RecordMsgCancel').hide();
+          		  //END HKITSFDC-44	
+                  
+              }else if(status=='inprogress'){
+                  $('#CusAllList').hide();
+                  $('#CusInProgressList').show();
+                  $('#CusSaveList').show();
+                  $('#CusCompletedList').hide();
+                  $('#BrkSaveList').show();
+                  $('#BrkAllList').hide();
+                  $('#BrkInprogressList').show();
+                  $('#BrkCompletedList').hide();
+                  //BEGIN HKITSFDC-44
+                  $('#BrkCancelList').hide();
+                  $('#CusCancelList').hide();
+                  $('#RecordMsgCancel').hide();
+          		  //END HKITSFDC-44	
+                  
+              }else if(status=='completed'){
+                  $('#CusAllList').hide();
+                  $('#CusInProgressList').hide();
+                  $('#CusSaveList').hide();
+                  $('#CusCompletedList').show();
+                  $('#BrkSaveList').hide();
+                  $('#BrkAllList').hide();
+                  $('#BrkInprogressList').hide();
+                  $('#BrkCompletedList').show();
+                  $('#RecordMsgCompleted').show();
+                  //BEGIN HKITSFDC-44
+                  $('#BrkCancelList').hide();
+                  $('#CusCancelList').hide();
+                  $('#RecordMsgCancel').hide();
+          		  //END HKITSFDC-44	
+              }
+              //BEGIN HKITSPDC-44
+              else if(status=='cancel'){
+                  $('#CusAllList').hide();
+                  $('#CusInProgressList').hide();
+                  $('#CusSaveList').hide();
+                  $('#CusCompletedList').hide();
+                  $('#BrkSaveList').hide();
+                  $('#BrkAllList').hide();
+                  $('#BrkInprogressList').hide();
+                  $('#BrkCompletedList').hide();
+                  $('#RecordMsgCompleted').hide();
+                  $('#BrkCancelList').show();
+                  $('#CusCancelList').show();
+                  $('#RecordMsgCancel').show();
+              }
+              //END HKITSPDC-44
+          }
+          
+          /**Delete Policy Change**/    
+          var deletePCId='';
+          
+          function removePc(id){
+            deletePCId=id;
+            
+            $('#overlay').css('opacity', '0.95');
+            $('#overlay').toggle();
+            $('#delConfirmBox').toggle();
+          }
+          
+          
+          function confirmDel(choice){
+              if(choice=='true'){
+                 removePolicyChange(deletePCId);
+              }
+              
+              $('#overlay').hide();
+              $('#delConfirmBox').hide();
+          }
+          
+           // 20200306 - minghua - ILAS
+          function deleteDraftFund(policyId) {
+            deletePCId=policyId;
+            $('#overlayDraftFund').css('opacity','0.95');
+            $('#overlayDraftFund').show();
+            $('#delConfirmBoxDraftFund').show();
+          }
+          function confirmDelDraftFund(option){
+              if(option =='Y'){
+                  removePolicyChange(deletePCId);
+              }
+              $('#overlayDraftFund').hide();
+              $('#delConfirmBoxDraftFund').hide();
+          }
+
+          function proceedToNextStep(){
+         
+              var holderIdPassing = $("input[id*='holderIdPassNextPage']").val();
+              var holderNamePassing = $("input[id*='holderNamePassNextPage']").val();
+              var holderEmailPassing = $("input[id*='holderEmailPassNextPage']").val();
+              Cigna.Util.navigateToVFP( navigationLink +'phid='+ holderIdPassing + '&phname=' + holderNamePassing + '&phemail=' + holderEmailPassing + '&pclist=true');
+          
+          }
+                   
+          function showSearchResultList(){
+             displayList(currentTab);
+          }
+          function SearchPolicyChangefunction(){
+             SearchPolicyChange(currentTab);
+          }
+          
+          function initPagination(status){
+              //alert('initPagination=status=='+status);
+              //initDisplayPagination(status);
+              if(Cigna.Util.isCustomerPortal()){
+                  initDisplayPagination(status);
+              }else if(Cigna.Util.isBrokerPortal()){
+                  SearchPolicyChange(status);
+              }
+
+          }
+
+          //JR1840 jack add
+          var pcid;
+          var phid;
+          function getEncryptedCriteria(pcidParam,phidParam){
+               console.log('getEncryptedCriteria begin');
+               pcid = pcidParam;
+               phid = phidParam;
+               PolicyChangeAF.getEncryptedString();
+               console.log('getEncryptedCriteria end');
+          }
+          function goToPage(){
+            console.log('goToPage begin');
+            var encryptedSearchCriteria = $('[id$="encryptedSearchCriteria"]').val();
+            if(encryptedSearchCriteria){
+               encryptedSearchCriteria = '&'+'{!URLParamName}'+'='+ encryptedSearchCriteria
+            }else{
+               encryptedSearchCriteria ='';
+            }
+            console.log('pcid:'+pcid+' phid '+phid+' encryptedSearchCriteria '+encryptedSearchCriteria);
+            Cigna.Util.navigateToVFP(navigationLink + 'pcid='+pcid+'&phid='+phid + encryptedSearchCriteria, null, null, true);
+          }
+      </script>
+   </head>
+   <apex:define name="additionalLibraries">
+      <!--additional css, bootstrap, jquery,js libraries-->
+      <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+   </apex:define>
+   <div id="container" class="bs container-fluid">
+      <apex:form >
+         <!--BEGIN HKITSFDC-44 --> 
+         <!--<apex:actionFunction name="init" action="{!init}" namespace="PolicyChangeAF" reRender="PolicyChangeListPanel, bottomReadyJS, policyChangeRecordMsgAll, policyChangeRecordMsgAllBroker, policyChangeRecordMsgProgress, policyChangeRecordMsgCompleted, policyChangeRecordErrMsgAllBroker" status="loader-icon" oncomplete="initDisplay();" />
+         <apex:actionFunction name="initDisplayPagination" action="{!initDisplayPagination}" status="loader-icon" reRender="CusCompletedList, CusInprogressList, CusSaveList, CusAllList, greySeparatorJS" >
+         -->
+		 <apex:actionFunction name="init" action="{!init}" namespace="PolicyChangeAF" reRender="PolicyChangeListPanel, bottomReadyJS, policyChangeRecordMsgAll, policyChangeRecordMsgAllBroker, policyChangeRecordMsgProgress, policyChangeRecordMsgCompleted, policyChangeRecordErrMsgAllBroker, policyChangeRecordMsgCancel" status="loader-icon" oncomplete="initDisplay();" />
+         <apex:actionFunction name="initDisplayPagination" action="{!initDisplayPagination}" status="loader-icon" reRender="CusCancelList, CusCompletedList, CusInprogressList, CusSaveList, CusAllList, greySeparatorJS" >    
+         <!--END HKITSFDC-44 -->
+             <apex:param name="status" value="" assignTo="{!tabStatus}" />
+         </apex:actionFunction>
+         <apex:actionFunction name="refreshComponent" status="loader-icon" reRender="compGreySeparatorJS"/>
+         <!-- JR1840 JACK ADD -->
+         <apex:actionFunction namespace="PolicyChangeAF" name="getEncryptedString" action="{!getEncryptedString}" reRender="encryptedSearchCriteria" oncomplete="goToPage();"/>
+         <apex:inputHidden id="encryptedSearchCriteria" value="{!encryptedSearchCriteria}" />
+         <!--desktop action button-->
+         <div class="bs hidden-xs col-sm-12" style="padding:15px;">
+            <div id="changebtnsm" class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="Cigna.Util.navigateToVFP( navigationLink , null, null, true)">
+               {!$Label.Make_A_Change_In_Policy}
+            </div>
+         </div>
+         <div id ="bartab" class="bs row">
+            <table class="bs bar-tab-container col-sm-12 col-xs-12">
+               <tr>
+                  <td id="allTab" class="bs active-bar-tab onclick-pointer" onclick="selectedTab(this);displayList('all');initPagination('all');" >
+                     {!$Label.All}
+                  </td>
+                  <td id="inprogressTab" class="bs inactive-bar-tab onclick-pointer" onclick="selectedTab(this);displayList('inprogress');initPagination('inprogress');">
+                     {!$Label.In_Progress}
+                  </td>
+                  <td id="completedTab" class="bs inactive-bar-tab onclick-pointer" onclick="selectedTab(this);displayList('completed');initPagination('completed');">
+                     {!$Label.Completed}
+                  </td>
+                  <!--[HKITSFDC-44]  S--> 
+                  <td id="cancelTab" class="bs inactive-bar-tab onclick-pointer" onclick="selectedTab(this);displayList('cancel');initPagination('cancel');">
+                     {!$Label.Cancel}
+                  </td> 
+                  <!--[HKITSFDC-44]  E--> 
+               </tr>
+            </table>
+         </div>
+         <!--custom alert-->
+         <div id="overlay" class="overlay" style="display:none;">
+            <!--del msg-->  
+            <div id="delConfirmBox" class="ConfirmBox">
+               <div id="delmsg" class="alertmsg">
+                  {!$Label.Are_you_sure_to_delete_the_policy_change} 
+               </div>
+               <div class="bs col-xs-6 col-sm-6">
+                  <i class="glyphicon glyphicon-ok-sign oksign onclick-pointer" onclick="confirmDel('true')"></i>
+               </div>
+               <div class="bs col-xs-6 col-sm-6">
+                  <i class="glyphicon glyphicon-remove-sign cancelsign onclick-pointer" onclick="confirmDel('false')"></i>
+               </div>
+            </div>
+         </div>
+         
+         <!-- 20200306 - minghua - ILAS -->
+         <div id="overlayDraftFund" class="overlay" style="display:none;">
+          <div id="delConfirmBoxDraftFund" class="ConfirmBox">
+              <div id="delmsgDraftFund" class="alertmsg">
+                  {!$Label.Pol_Are_you_sure_to_delete_the_policy}
+              </div>
+              <div class="bs col-xs-6 col-sm-6">
+              <i class="glyphicon glyphicon-ok-sign oksign onclick-pointer" onclick="confirmDelDraftFund('Y')"></i>
+              </div>
+              <div class="bs col-xs-6 col-sm-6">
+              <i class="glyphicon glyphicon-remove-sign cancelsign onclick-pointer" onclick="confirmDelDraftFund('N')"></i>
+              </div>
+          </div>  
+         </div>
+
+         <!--Select policy holder alert msg-->
+         <div id="overlayAlert" class="overlay" style="display:none;">
+            <div id="alertSelectHolder" class="ConfirmBox">
+               <div id="delmsg" class="alertmsg">
+                  {!$Label.Please_select_policy_holder} 
+               </div>
+               <div class="bs col-xs-12 col-sm-12 cigna-fg-orange-dark onclick-pointer" onclick="closeSelectHolderAlert()">
+                  {!$Label.Close}
+               </div>
+            </div>
+         </div>
+         <!--Delete Action Function-->
+         <apex:actionFunction name="removePolicyChange" action="{!removePolicyChange}" rerender="saveCusList, saveBrkList" status="loader-icon" oncomplete="initPagination();" >
+            <apex:param name="id" value="" assignTo="{!removePolicyChangeId}" />
+         </apex:actionFunction>
+         <!-------------------------->
+         <!--Customer View-->
+         <apex:outputPanel id="PolicyChangeListPanel">
+            <div id="cusresult" class="bs row">
+               <div class="bs row listcontent-header hidden-xs">
+                  <div class="bs col-sm-3">{!$Label.Date}</div>
+                  <div class="bs col-sm-3">{!$Label.Policy_No}</div>
+                  <div class="bs col-sm-3">{!$Label.Change_Type}</div>
+                  <div class="bs col-sm-3">{!$Label.Status}</div>
+               </div>
+               <apex:outputpanel id="policyChangeRecordMsgAll" rendered="{!hasNoPolicyChange}" >
+                  <div class="bs row col-xs-12 col-sm-12 text-center" style="padding:20px;">
+                     <span class="fa fa-smile-o"/> {!$Label.You_dont_have_any_policy_change_record}
+                  </div>
+               </apex:outputpanel>
+               <apex:outputPanel id="saveCuslist">
+                   <apex:outputPanel id="greySeparatorJS">
+                      <script>
+                         /**grey separator**/
+                               var srlist = document.getElementsByClassName("listcontent");
+                                   for(var i=0; i < srlist.length; i++){
+                                       if(i % 2 == 0){
+                                           var item = srlist[i];
+                                           item.style.backgroundColor = '#f2f2f2';
+                                       }
+                                   }
+                      </script>
+                  </apex:outputPanel>
+                  <!--Cus All List-->
+                  <div id="CusSaveList" style="display:none;">
+                      <apex:outputPanel id="CusSaveList">
+                         <apex:repeat value="{!listSavePolicyChange}" var="pc" >
+                            <div  class="bs row listcontent">
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-12 col-sm-12 content-highlight table-cell">
+                                     <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                        <apex:param value="{!pc.PolicyChangeDate}"/>
+                                     </apex:outputText>
+                                     <!-- 20200306 - minghua - ILAS -->
+                                    <apex:outputPanel rendered="{!pc.OldStatus != 'Draft'}">
+                                      <i class="ci-hk-pencil pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="Cigna.Util.navigateToVFP(navigationLink + 'pcid={!pc.PolicyChangeId}', null, null, true)" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!pc.OldStatus == 'Draft'}">
+                                      <i class="ci-hk-pencil pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="Cigna.Util.navigateToVFP('CusFundManagementVFP?policyNumber={!pc.PolicyNo}&requestId={!pc.PolicyChangeId}', null, null, true,false)" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                  </div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_No}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyNo}</div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Change_Type}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyChangeType}</div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Status}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyStatus}
+                                    <!-- 20200306 - minghua - ILAS -->
+                                    <apex:outputPanel rendered="{!pc.OldStatus != 'Draft'}">
+                                      <i class="ci-hk-delete hidden-xs pull-right cigna-fg-blue-medium onclick-pointer" onclick="removePc('{!pc.PolicyChangeId}')" aria-hidden="true" style="padding-left:20px;"/>
+                                      <i class="ci-hk-pencil hidden-xs pull-right cigna-fg-blue-medium onclick-pointer" onclick="Cigna.Util.navigateToVFP(navigationLink + 'pcid={!pc.PolicyChangeId}', null, null, true)" aria-hidden="true"  ></i>
+                                      <i class="ci-hk-delete pull-right visible-xs cigna-fg-blue-medium onclick-pointer" style="padding-top:3px;" onclick="removePc('{!pc.PolicyChangeId}')" aria-hidden="true"/>
+                                     </apex:outputPanel>
+                                     <apex:outputPanel rendered="{!pc.OldStatus == 'Draft'}">
+                                      <i class="ci-hk-delete hidden-xs pull-right cigna-fg-blue-medium onclick-pointer" onclick="deleteDraftFund('{!pc.PolicyChangeId}')" aria-hidden="true" style="padding-left:20px;"/>
+                                      <i class="ci-hk-pencil hidden-xs pull-right cigna-fg-blue-medium onclick-pointer" onclick="Cigna.Util.navigateToVFP('CusFundManagementVFP?policyNumber={!pc.PolicyNo}&requestId={!pc.PolicyChangeId}', null, null, true,false)" aria-hidden="true"  ></i>
+                                      <i class="ci-hk-delete pull-right visible-xs cigna-fg-blue-medium onclick-pointer" style="padding-top:3px;" onclick="deleteDraftFund('{!pc.PolicyChangeId}')" aria-hidden="true"/>
+                                     </apex:outputPanel>
+                                  </div>
+                               </div>
+                            </div>
+                         </apex:repeat>
+                     </apex:outputPanel>
+                  </div>
+                  <!--Cus All-->
+                  <div id="CusAllList" style="display:none;">
+                      <apex:outputPanel id="CusAllList">
+                         <apex:repeat value="{!listAllPolicyChangebyAPI}" var="pc">
+                            <div  class="bs row listcontent">
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-12 col-sm-12 content-highlight table-cell">
+                                     <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                        <apex:param value="{!pc.PolicyChangeDate}"/>
+                                     </apex:outputText>
+                                     <!--<i class="fa fa-chevron-right pull-right visible-xs cigna-fg-blue-medium" aria-hidden="true"></i>-->
+                                  </div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_No}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyNo}</div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Change_Type}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyChangeType}</div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Status}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                     {!pc.PolicyStatus}
+                                     <!-- <i class="fa fa-chevron-right pull-right hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>-->
+                                  </div>
+                               </div>
+                            </div>
+                         </apex:repeat>
+                            <div style="padding:20px;" class="bs col-sm-6 col-sm-offset-3 col-xs-6 col-xs-offset-3 text-center">
+                              <apex:outputPanel rendered="{!If(hasAllListPrevious,true,false)}"><span class="ci-hk-arrow-29 cigna-fg-orange-dark onclick-pointer" style="padding-right:10px;" aria-hidden="true" onclick ="handlePrevPage('all')"/></apex:outputPanel>
+                              <apex:outputText value="{!$Label.pagination}">
+                                 <apex:param value="{!currentAllPage}" />
+                                 <apex:param value="{!totalAllPage}" />
+                              </apex:outputText>
+                              <apex:outputPanel rendered="{!If(hasAllListNext,true,false)}"><span class="ci-hk-arrow-31 cigna-fg-orange-dark onclick-pointer" style="padding-left:10px;" aria-hidden="true" onclick ="handleNextPage('all')" /></apex:outputPanel>
+                            </div>
+                        </apex:outputPanel>
+                  </div>
+                  <!--Cus In Progress-->
+                  <div id="CusInProgressList" style="display:none;">
+                      <apex:outputPanel id="CusInprogressList">
+                         <apex:outputpanel id="policyChangeRecordMsgProgress" rendered="{!hasNoProgressPolicyChange}" >
+                            <div class="bs row col-xs-12 col-sm-12 text-center" style="padding:20px;">
+                               <span class="fa fa-smile-o"/> {!$Label.You_dont_have_any_policy_change_record}
+                            </div>
+                         </apex:outputpanel>
+                         <apex:repeat value="{!listInProgressPolicyChangebyAPI}" var="pc">
+                            <div  class="bs row listcontent">
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-12 col-sm-12 content-highlight table-cell">
+                                     <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                        <apex:param value="{!pc.PolicyChangeDate}"/>
+                                     </apex:outputText>
+                                     <!--<i class="fa fa-chevron-right pull-right visible-xs cigna-fg-blue-medium" aria-hidden="true"></i>-->
+                                  </div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_No}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyNo}</div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Change_Type}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyChangeType}</div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Status}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                     {!pc.PolicyStatus}
+                                     <!-- <i class="fa fa-chevron-right pull-right hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>-->
+                                  </div>
+                               </div>
+                            </div>
+                         </apex:repeat>
+                     <!--policy change In Progress list pagination-->
+                    <div style="padding:20px;" class="bs col-sm-6 col-sm-offset-3 col-xs-6 col-xs-offset-3 text-center">
+                      <apex:outputPanel rendered="{!If(hasInprogressListPrevious,true,false)}"><span class="ci-hk-arrow-29 cigna-fg-orange-dark onclick-pointer" style="padding-right:10px;" aria-hidden="true" onclick ="handlePrevPage('inprogress')"/></apex:outputPanel>
+                      <apex:outputText value="{!$Label.pagination}">
+                         <apex:param value="{!currentInprogressPage}" />
+                         <apex:param value="{!totalInprogressPage}" />
+                      </apex:outputText>
+                      <apex:outputPanel rendered="{!If(hasInprogressListNext,true,false)}"><span class="ci-hk-arrow-31 cigna-fg-orange-dark onclick-pointer" style="padding-left:10px;" aria-hidden="true" onclick ="handleNextPage('inprogress')" /></apex:outputPanel>
+                    </div>
+                    </apex:outputPanel>
+                  </div>
+                  <!--Cus Completed List-->
+                  <div id="CusCompletedList" style="display:none;">
+                      <apex:outputPanel id="CusCompletedList">
+                         <apex:outputpanel id="policyChangeRecordMsgCompleted" rendered="{!hasNoCompletedPolicyChange}" >
+                            <div class="bs row col-xs-12 col-sm-12 text-center" id="RecordMsgCompleted" style="padding:20px;">
+                               <span class="fa fa-smile-o"/> {!$Label.You_dont_have_any_policy_change_record}
+                            </div>
+                         </apex:outputpanel>
+                         <apex:repeat value="{!listCompletedPolicyChangebyAPI}" var="pc">
+                            <div class="bs row listcontent">
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-12 col-sm-12 content-highlight table-cell">
+                                     <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                        <apex:param value="{!pc.PolicyChangeDate}"/>
+                                     </apex:outputText>
+                                     <!-- <i class="fa fa-chevron-right pull-right visible-xs cigna-fg-blue-medium" aria-hidden="true"></i>-->
+                                  </div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_No}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyNo}</div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Change_Type}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyChangeType}</div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Status}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                     {!pc.PolicyStatus}
+                                     <!--<i class="fa fa-chevron-right pull-right hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>-->
+                                  </div>
+                               </div>
+                            </div>
+                         </apex:repeat>
+                     
+                         <!--policy change completed list pagination-->
+                        <div style="padding:20px;" class="bs col-sm-6 col-sm-offset-3 col-xs-6 col-xs-offset-3 text-center">
+                          <apex:outputPanel rendered="{!If(hasCompletedListPrevious,true,false)}"><span class="ci-hk-arrow-29 cigna-fg-orange-dark onclick-pointer" style="padding-right:10px;" aria-hidden="true" onclick ="handlePrevPage('completed')"/></apex:outputPanel>
+                          <apex:outputText value="{!$Label.pagination}">
+                             <apex:param value="{!currentCompletedPage}" />
+                             <apex:param value="{!totalCompletedPage}" />
+                          </apex:outputText>
+                          <apex:outputPanel rendered="{!If(hasCompletedListNext,true,false)}"><span class="ci-hk-arrow-31 cigna-fg-orange-dark onclick-pointer" style="padding-left:10px;" aria-hidden="true" onclick ="handleNextPage('completed')" /></apex:outputPanel>
+                        </div>
+                        </apex:outputPanel>
+                      </div>
+               	  <!--[HKITSFDC-44] Cus Cancel List [S]-->
+                  <div id="CusCancelList" style="display:none;">
+                      <apex:outputPanel id="CusCancelList">
+                         <apex:outputpanel id="policyChangeRecordMsgCancel" rendered="{!hasNoCancelPolicyChange}" >
+                            <div class="bs row col-xs-12 col-sm-12 text-center" id="RecordMsgCancel" style="padding:20px;">
+                               <span class="fa fa-smile-o"/> {!$Label.You_dont_have_any_policy_change_record}
+                            </div>
+                         </apex:outputpanel>
+                         <apex:repeat value="{!listCancelPolicyChangebyAPI}" var="pc">
+                            <div class="bs row listcontent">
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-12 col-sm-12 content-highlight table-cell">
+                                     <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                        <apex:param value="{!pc.PolicyChangeDate}"/>
+                                     </apex:outputText>
+                                  </div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_No}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyNo}</div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Change_Type}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyChangeType}</div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Status}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                     {!pc.PolicyStatus}
+                                  </div>
+                               </div>
+                            </div>
+                         </apex:repeat>
+                     
+                         <!--policy change cancel list pagination-->
+                        <div style="padding:20px;" class="bs col-sm-6 col-sm-offset-3 col-xs-6 col-xs-offset-3 text-center">
+                          <apex:outputPanel rendered="{!If(hasCancelListPrevious,true,false)}"><span class="ci-hk-arrow-29 cigna-fg-orange-dark onclick-pointer" style="padding-right:10px;" aria-hidden="true" onclick ="handlePrevPage('cancel')"/></apex:outputPanel>
+                          <apex:outputText value="{!$Label.pagination}">
+                             <apex:param value="{!currentCancelPage}" />
+                             <apex:param value="{!totalCancelPage}" />
+                          </apex:outputText>
+                          <apex:outputPanel rendered="{!If(hasCancelListNext,true,false)}"><span class="ci-hk-arrow-31 cigna-fg-orange-dark onclick-pointer" style="padding-left:10px;" aria-hidden="true" onclick ="handleNextPage('cancel')" /></apex:outputPanel>
+                        </div>
+                      </apex:outputPanel>
+                  </div>
+                  <!--[HKITSFDC-44] Cus Cancel List [E]--> 
+                </apex:outputPanel>
+            </div>
+            <!--End of Customer View-->  
+            <!--Pagination Function-->
+            <!-- BEGIN HKITSFDC-44 -->
+            <!--<apex:actionFunction name="handleNextPage" action="{!handleNextPage}" status="loader-icon" reRender="CusCompletedList, CusInprogressList, CusSaveList, CusAllList, greySeparatorJS">-->
+            <apex:actionFunction name="handleNextPage" action="{!handleNextPage}" status="loader-icon" reRender="CusCancelList, CusCompletedList, CusInprogressList, CusSaveList, CusAllList, greySeparatorJS">
+            <!--END HKITSFDC-44 -->
+                <apex:param name="status" value="" assignTo="{!tabStatus}"/>
+            </apex:actionFunction>
+			<!-- BEGIN HKITSFDC-44 -->
+            <!--<apex:actionFunction name="handlePrevPage" action="{!handlePrevPage}" status="loader-icon" reRender="CusCompletedList, CusInprogressList, CusSaveList, CusAllList, greySeparatorJS">-->
+            <apex:actionFunction name="handlePrevPage" action="{!handlePrevPage}" status="loader-icon" reRender="CusCancelList, CusCompletedList, CusInprogressList, CusSaveList, CusAllList, greySeparatorJS">    
+            <!--END HKITSFDC-44 -->
+                <apex:param name="status" value="" assignTo="{!tabStatus}"/>
+            </apex:actionFunction>
+            
+            
+            
+              
+            <!--Broker View-->
+            <div id="brkresult" style="display:none;">
+               <apex:actionFunction name="SearchPolicyChange" action="{!SearchPolicyChange}" status="loader-icon" oncomplete="showSearchResultList()" rerender="greySeparatorJS,resultListBrk,brkresult,BrkSaveList,BrkAllListresultListBrk,BrkCompletedList,BrkInprogressList,saveBrkList,BrkAllList,policyChangeRecordMsgAllBroker">
+                   <apex:param name="status" value="" assignTo="{!tabStatus}" />
+               </apex:actionFunction>
+               <div class="bs col-sm-12 col-xs-12" style="padding: 20px 0px 20px 0px;">
+                  <div class="bs col-sm-5 col-xs-12 " style="padding-bottom:20px;">
+                     <apex:SelectList size="1" value="{!SearchType}" styleClass="bs form-field-style-select cigna-fg-gray-dark" style="font-size:1em; height:35px;" >
+                        <apex:selectOptions value="{!SearchCriteria}"  />
+                     </apex:SelectList>
+                  </div>
+                  <div class="bs col-sm-6 col-xs-10">
+                     <apex:input style="font-size:1em; height:35px; width:95%" styleClass="bs form-field-style cigna-fg-gray-dark" value="{!SearchInput}"/>
+                  </div>
+                  <div class="bs col-sm-1 col-xs-2">
+                      <i class="fa fa-search cigna-fg-orange-dark text-center onclick-pointer" onclick="SearchPolicyChangefunction()" style="width:5%" aria-hidden="true"/>
+                  </div>
+               </div>
+               <apex:outputPanel layout="block" id="policyChangeRecordErrMsgAllBroker" rendered="{!showTooManyRecordError}">
+                    <div class="bs col-sm-12 col-xs-12 text-center" style="color: red; padding-bottom:20px;">
+                        {!errorMessage}
+                    </div>
+                </apex:outputPanel>
+               <!--<div class="bs col-sm-12 col-xs-12" style="padding: 0px 0px 20px 0px;">
+                  <div id="seach-button" onclick="SearchPolicyChange()" class="bs col-sm-2 col-sm-offset-5 col-xs-4 col-xs-offset-4 onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn">
+                     {!$Label.Search}
+                  </div>
+                  </div>-->
+               <div class="bs row listcontent-header hidden-xs">
+                  <div class="bs col-sm-2">{!$Label.Date}</div>
+                  <div class="bs col-sm-2">{!$Label.Policy_Holder_ID}</div>
+                  <div class="bs col-sm-2">{!$Label.Policy_Holder_Name}</div>
+                  <div class="bs col-sm-2">{!$Label.Policy_No}</div>
+                  <div class="bs col-sm-2">{!$Label.Change_Type}</div>
+                  <div class="bs col-sm-2">{!$Label.Status}</div>
+               </div>
+
+               <apex:outputPanel id="resultListBrk">
+               <apex:outputpanel id="policyChangeRecordMsgAllBroker" rendered="{!hasNoPolicyChange}" >
+                  <div class="bs row col-xs-12 col-sm-12 text-center" style="padding:20px;">
+                     <span class="fa fa-smile-o"/> {!$Label.You_dont_have_any_policy_change_record}
+                  </div>
+               </apex:outputpanel>
+                  <script>
+                     /**grey separator**/
+                       var srlist = document.getElementsByClassName("listcontent");
+                           for(var i=0; i < srlist.length; i++){
+                               if(i % 2==0){
+                                   var item = srlist[i];
+                                   item.style.backgroundColor = '#f2f2f2';
+                               }
+                           }
+                  </script>
+                  <!--Save List-->
+                  <apex:outputPanel id="saveBrkList">
+                     <div id="BrkSaveList">
+                        <apex:repeat value="{!listSearchSavePolicyChange}" var="pc">
+                           <div  class="bs row listcontent">
+                              <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                 <div class="bs col-xs-12 col-sm-12 content-highlight table-cell">
+                                    <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                       <apex:param value="{!pc.PolicyChangeDate+offset}"/>
+                                    </apex:outputText>
+                                    <i class="ci-hk-pencil pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="getEncryptedCriteria('{!pc.PolicyChangeId}','{!pc.PolicyHolderId}');" aria-hidden="true"></i><!-- JR1840 JACK ADD -->
+                                 </div>
+                              </div>
+                              <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                 <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Holder_ID}</div>
+                                 <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyHolderId}</div>
+                              </div>
+                              <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                 <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Holder_Name}</div>
+                                 <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyHolderName}</div>
+                              </div>
+                              <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                 <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_No}</div>
+                                 <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyNo}</div>
+                              </div>
+                              <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                 <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Change_Type}</div>
+                                 <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyChangeType}</div>
+                              </div>
+                              <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                 <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Status}</div>
+                                 <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyStatus}
+                                    <i class="ci-hk-pencil  hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="getEncryptedCriteria('{!pc.PolicyChangeId}','{!pc.PolicyHolderId}');" aria-hidden="true" style="padding-left:5px;"></i><!-- JR1840 JACK ADD -->
+                                    <i class="ci-hk-delete  pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="removePc('{!pc.PolicyChangeId}')" aria-hidden="true"/>
+                                    <i class="ci-hk-delete  pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="removePc('{!pc.PolicyChangeId}')" aria-hidden="true"/>
+                                 </div>
+                              </div>
+                           </div>
+                        </apex:repeat>
+                     </div>
+                  </apex:outputPanel>
+                  <!--All list-->
+                  <div id="BrkAllList" style="display:none;">
+                  <apex:outputpanel id="BrkAllList">
+                     <apex:repeat value="{!listSearchAllPolicyChange}" var="pc">
+                        <div  class="bs row listcontent">
+                           <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                              <div class="bs col-xs-12 col-sm-12 content-highlight table-cell">
+                                 <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                    <apex:param value="{!pc.PolicyChangeDate+offset}"/>
+                                 </apex:outputText>
+                                 <!-- <i class="fa fa-chevron-right pull-right visible-xs cigna-fg-blue-medium" aria-hidden="true"></i>-->
+                              </div>
+                           </div>
+                           <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                              <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Holder_ID}</div>
+                              <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyHolderId}</div>
+                           </div>
+                           <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                              <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Holder_Name}</div>
+                              <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyHolderName}</div>
+                           </div>
+                           <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                              <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_No}</div>
+                              <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyNo}</div>
+                           </div>
+                           <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                              <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Change_Type}</div>
+                              <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyChangeType}</div>
+                           </div>
+                           <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                              <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Status}</div>
+                              <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                 {!pc.PolicyStatus}
+                                 <!-- <i class="fa fa-chevron-right pull-right hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>-->
+                              </div>
+                           </div>
+                        </div>
+                     </apex:repeat>
+                     <div style="padding:20px;" class="bs col-sm-6 col-sm-offset-3 col-xs-6 col-xs-offset-3 text-center">
+                         <apex:outputPanel rendered="{!If(hasAllListPrevious,true,false)}"><span class="ci-hk-arrow-29 cigna-fg-orange-dark onclick-pointer" style="padding-right:10px;" aria-hidden="true" onclick ="handlePrevPageBroker('all')"/></apex:outputPanel>
+                         <apex:outputText value="{!$Label.pagination}">
+                              <apex:param value="{!currentAllPage}" />
+                              <apex:param value="{!totalAllPage}" />
+                         </apex:outputText>
+                         <apex:outputPanel rendered="{!If(hasAllListNext,true,false)}"><span class="ci-hk-arrow-31 cigna-fg-orange-dark onclick-pointer" style="padding-left:10px;" aria-hidden="true" onclick ="handleNextPageBroker('all')" /></apex:outputPanel>
+                      </div>
+                  </apex:outputpanel>
+                  </div>
+                  
+                  <!--In progress List-->  
+                  <div id="BrkInprogressList" style="display:none;">
+                  <apex:outputpanel id="BrkInprogressList">
+                      <apex:outputpanel id="policyChangeRecordMsgProgressBroker" rendered="{!hasNoProgressPolicyChange}" >
+                          <div class="bs row col-xs-12 col-sm-12 text-center" style="padding:20px;">
+                              <span class="fa fa-smile-o"/> {!$Label.You_dont_have_any_policy_change_record}
+                          </div>
+                      </apex:outputpanel>
+
+                     <apex:repeat value="{!listSearchInProgressPolicyChange}" var="pc">
+                        <div  class="bs row listcontent">
+                           <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                              <div class="bs col-xs-12 col-sm-12 content-highlight table-cell">
+                                 <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                    <apex:param value="{!pc.PolicyChangeDate+offset}"/>
+                                 </apex:outputText>
+                                 <!-- <i class="fa fa-chevron-right pull-right visible-xs cigna-fg-blue-medium" aria-hidden="true"></i>-->
+                              </div>
+                           </div>
+                           <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                              <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Holder_ID}</div>
+                              <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyHolderId}</div>
+                           </div>
+                           <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                              <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Holder_Name}</div>
+                              <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyHolderName}</div>
+                           </div>
+                           <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                              <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_No}</div>
+                              <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyNo}</div>
+                           </div>
+                           <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                              <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Change_Type}</div>
+                              <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyChangeType}</div>
+                           </div>
+                           <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                              <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Status}</div>
+                              <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                 {!pc.PolicyStatus}
+                                 <!-- <i class="fa fa-chevron-right pull-right hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>-->
+                              </div>
+                           </div>
+                        </div>
+                     </apex:repeat>
+                     <!--policy change In Progress list pagination-->
+                     <div style="padding:20px;" class="bs col-sm-6 col-sm-offset-3 col-xs-6 col-xs-offset-3 text-center">
+                         <apex:outputPanel rendered="{!If(hasInprogressListPrevious,true,false)}"><span class="ci-hk-arrow-29 cigna-fg-orange-dark onclick-pointer" style="padding-right:10px;" aria-hidden="true" onclick ="handlePrevPageBroker('inprogress')"/></apex:outputPanel>
+                         <apex:outputText value="{!$Label.pagination}">
+                            <apex:param value="{!currentInprogressPage}" />
+                            <apex:param value="{!totalInprogressPage}" />
+                         </apex:outputText>
+                         <apex:outputPanel rendered="{!If(hasInprogressListNext,true,false)}"><span class="ci-hk-arrow-31 cigna-fg-orange-dark onclick-pointer" style="padding-left:10px;" aria-hidden="true" onclick ="handleNextPageBroker('inprogress')" /></apex:outputPanel>
+                     </div>
+                   </apex:outputpanel>                  
+                   </div>
+                  <!--Completed List-->  
+                  <div id="BrkCompletedList">
+                  <apex:outputPanel id="BrkCompletedList">
+                      <apex:outputpanel id="policyChangeRecordMsgCompletedBroker" rendered="{!hasNoCompletedPolicyChange}" >
+                            <div class="bs row col-xs-12 col-sm-12 text-center" id="RecordMsgCompleted" style="padding:20px;">
+                               <span class="fa fa-smile-o"/> {!$Label.You_dont_have_any_policy_change_record}
+                            </div>
+                      </apex:outputpanel>
+                      <apex:repeat value="{!listSearchCompletedPolicyChange}" var="pc">
+                        <div  class="bs row listcontent">
+                           <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                              <div class="bs col-xs-12 col-sm-12 content-highlight table-cell">
+                                 <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                    <apex:param value="{!pc.PolicyChangeDate+offset}"/>
+                                 </apex:outputText>
+                                 <!-- <i class="fa fa-chevron-right pull-right visible-xs cigna-fg-blue-medium" aria-hidden="true"></i>-->
+                              </div>
+                           </div>
+                           <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                              <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Holder_ID}</div>
+                              <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyHolderId}</div>
+                           </div>
+                           <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                              <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Holder_Name}</div>
+                              <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyHolderName}</div>
+                           </div>
+                           <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                              <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_No}</div>
+                              <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyNo}</div>
+                           </div>
+                           <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                              <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Change_Type}</div>
+                              <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyChangeType}</div>
+                           </div>
+                           <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                              <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Status}</div>
+                              <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                  {!pc.PolicyStatus}
+                                 <!--<i class="fa fa-chevron-right pull-right hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>-->
+                              </div>
+                           </div>
+                        </div>
+                     </apex:repeat>
+                     <!--policy change completed list pagination-->
+                     <div style="padding:20px;" class="bs col-sm-6 col-sm-offset-3 col-xs-6 col-xs-offset-3 text-center">
+                          <apex:outputPanel rendered="{!If(hasCompletedListPrevious,true,false)}"><span class="ci-hk-arrow-29 cigna-fg-orange-dark onclick-pointer" style="padding-right:10px;" aria-hidden="true" onclick ="handlePrevPageBroker('completed')"/></apex:outputPanel>
+                          <apex:outputText value="{!$Label.pagination}">
+                             <apex:param value="{!currentCompletedPage}" />
+                             <apex:param value="{!totalCompletedPage}" />
+                          </apex:outputText>
+                          <apex:outputPanel rendered="{!If(hasCompletedListNext,true,false)}"><span class="ci-hk-arrow-31 cigna-fg-orange-dark onclick-pointer" style="padding-left:10px;" aria-hidden="true" onclick ="handleNextPageBroker('completed')" /></apex:outputPanel>
+                     </div>
+                  </apex:outputPanel>
+                  </div>
+                   
+                  <!--BEGIN HKITSFDC-44    BRK Cancel List-->  
+                  <div id="BrkCancelList">
+                      <apex:outputPanel id="BrkCancelList">
+                          <apex:outputpanel id="policyChangeRecordMsgCancelBroker" rendered="{!hasNoCancelPolicyChange}" >
+                                <div class="bs row col-xs-12 col-sm-12 text-center" id="RecordMsgCancel" style="padding:20px;">
+                                   <span class="fa fa-smile-o"/> {!$Label.You_dont_have_any_policy_change_record}
+                                </div>
+                          </apex:outputpanel>
+                          <apex:repeat value="{!listSearchCancelPolicyChange}" var="pc">
+                            <div  class="bs row listcontent">
+                               <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                  <div class="bs col-xs-12 col-sm-12 content-highlight table-cell">
+                                     <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                        <apex:param value="{!pc.PolicyChangeDate+offset}"/>
+                                     </apex:outputText>
+                                  </div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Holder_ID}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyHolderId}</div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Holder_Name}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyHolderName}</div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_No}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyNo}</div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Change_Type}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!pc.PolicyChangeType}</div>
+                               </div>
+                               <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                  <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Status}</div>
+                                  <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                      {!pc.PolicyStatus}
+                                     <!--<i class="fa fa-chevron-right pull-right hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>-->
+                                  </div>
+                               </div>
+                            </div>
+                           </apex:repeat>
+                         <!--brk policy change cancel list pagination-->
+                         <div style="padding:20px;" class="bs col-sm-6 col-sm-offset-3 col-xs-6 col-xs-offset-3 text-center">
+                              <apex:outputPanel rendered="{!If(hasCancelListPrevious,true,false)}"><span class="ci-hk-arrow-29 cigna-fg-orange-dark onclick-pointer" style="padding-right:10px;" aria-hidden="true" onclick ="handlePrevPageBroker('cancel')"/></apex:outputPanel>
+                              <apex:outputText value="{!$Label.pagination}">
+                                 <apex:param value="{!currentCancelPage}" />
+                                 <apex:param value="{!totalCancelPage}" />
+                              </apex:outputText>
+                              <apex:outputPanel rendered="{!If(hasCancelListNext,true,false)}"><span class="ci-hk-arrow-31 cigna-fg-orange-dark onclick-pointer" style="padding-left:10px;" aria-hidden="true" onclick ="handleNextPageBroker('cancel')" /></apex:outputPanel>
+                         </div>
+                      </apex:outputPanel>
+                  </div> 
+                   <!--END HKITSFDC-44    BRK Cancel List-->  
+               </apex:outputPanel>
+               
+            </div>
+         </apex:outputPanel>
+         <!--Pagination Function-->
+            <!-- BEGIN HKITSFDC-44 -->
+            <!--<apex:actionFunction name="handleNextPageBroker" action="{!handleNextPageBroker}" status="loader-icon" reRender="greySeparatorJS,brkresult,BrkSaveList,BrkAllListresultListBrk,BrkCompletedList,BrkInprogressList,saveBrkList,BrkAllList">-->
+            <apex:actionFunction name="handleNextPageBroker" action="{!handleNextPageBroker}" status="loader-icon" reRender="greySeparatorJS,brkresult,BrkSaveList,BrkAllListresultListBrk,BrkCompletedList,BrkInprogressList,saveBrkList,BrkAllList,BrkCancelList">
+            <!-- END HKITSFDC-44 -->    
+                <apex:param name="status" value="" assignTo="{!tabStatus}"/>
+            </apex:actionFunction>
+          	<!-- BEGIN HKITSFDC-44 -->
+            <!--<apex:actionFunction name="handlePrevPageBroker" action="{!handlePrevPageBroker}" status="loader-icon" reRender="greySeparatorJS,brkresult,BrkSaveList,BrkAllListresultListBrk,BrkCompletedList,BrkInprogressList,saveBrkList,BrkAllList">-->
+            <apex:actionFunction name="handlePrevPageBroker" action="{!handlePrevPageBroker}" status="loader-icon" reRender="greySeparatorJS,brkresult,BrkSaveList,BrkAllListresultListBrk,BrkCompletedList,BrkInprogressList,saveBrkList,BrkAllList,BrkCancelList">    
+            <!-- END HKITSFDC-44 -->
+                <apex:param name="status" value="" assignTo="{!tabStatus}"/>
+            </apex:actionFunction>
+      </apex:form>
+      <!--make a policy change button-->
+      <!--mobile action button-->
+      <div id="mobile-app-padding" class="bs" style="display: none; padding-bottom: 150px;">
+         <div class="bs col-xs-12"></div>
+      </div>
+      <div id="action-bar" class="bs visible-xs cigna-floating-bottom-panel" style="left:0px;">
+         <div id="changebtnxs" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark onclick-pointer" onclick="Cigna.Util.navigateToVFP( navigationLink , null, null, true)">
+            <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-fix" aria-hidden="true"></span><br/>{!$Label.Make_A_Change_In_Policy}</a>
+         </div>
+      </div>
+      
+      <div id="selectholder" style="display:none;">
+         <div id="back" class="bs col-xs-12 col-sm-12" style="padding-top:15px">
+            <a onclick="backPolicyChange();" class="bs cigna-fg-orange-medium pull-left onclick-pointer" style="text-decoration: none;">
+            <i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}
+            </a>
+         </div>
+         <div id="progressbar" class="bs cigna-progress-bar">
+            <div class="bs cigna-progress-bar-inner">
+               <div id="progress-bar-info" class="bs active progress-bar-font">{!$Label.Information}</div>
+               <div id="progress-bar-att" class="bs progress-bar-font" >{!$Label.Attachment}</div>
+               <div id="progress-bar-detail" class="bs progress-bar-font" >{!$Label.change_details}</div>
+               <div id="progress-bar-esignature" class="bs progress-bar-font" >{!$Label.E_Signature}</div>
+            </div>
+         </div>
+        <apex:outputPanel id="selectHolderComponent" rendered="{!sitePrefix == '/broker'}">
+            <apex:outputPanel id="compGreySeparatorJS">
+                  <script>
+                     /**grey separator**/
+                           var srlist = document.getElementsByClassName("listcontent");
+                               for(var i=0; i < srlist.length; i++){
+                                   if(i % 2 == 0){
+                                       var item = srlist[i];
+                                       item.style.backgroundColor = '#f2f2f2';
+                                   }
+                               }
+                  </script>
+              <c:CommonSearchComp pageTypeName="BrkPolicyChangeVFP"/>
+            </apex:outputPanel>
+        </apex:outputPanel>
+         <div style="padding:20px;"></div>
+      </div>
+      
+     
+   </div>
+   <apex:outputPanel id="bottomReadyJS">
+      <script>
+
+         if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+         
+             /*$(document).ready(function(){
+             
+                 window.onkeydown = function(){ 
+                     window.focus();
+                 }
+                 
+                 var targetHeight = window.screen.height;
+                 var sfOneHeaderHeight = 44 + 20; 
+                 *window.parent.document.getElementsByClassName('oneHeader')[0].offsetHeight;*
+                 
+                 if($(window).width() > $(window).height()){
+                     targetHeight = window.screen.width;   
+                 }
+                 
+                 $('body').css('height', (targetHeight  - (targetHeight * 0.09)) + 'px');
+                 $('body').css('height', (targetHeight - sfOneHeaderHeight) + 'px');
+                 //Ray's Updates
+                 $('body').bind('touchmove', function(e){$('#action-bar').css('opacity', '0');});
+                 $('body').bind('touchend', function(e){setTimeout(function(){$('#action-bar').css('opacity', '1');}, 700);});
+                 $('html').css('position', 'fixed').css('overflow', 'auto').css('width', '100%').css('height', '100%');
+                 $('body').css('position', 'fixed').css('overflow-x', 'scroll').css('width', '100%').css('height', '100%');
+                 $('.mobile-app-padding').show();
+                 
+             });*/
+             
+             $('#mobile-app-padding').css('display', 'block');
+             
+             $("a").attr("target","");
+             
+             $('html').css('position', 'fixed').css('overflow', 'auto').css('width', '100%').css('height', '100%');
+             $('body').css('position', 'fixed').css('overflow-x', 'scroll').css('width', '100%').css('height', '100%');
+             
+             
+         }
+
+      </script>
+   </apex:outputPanel>
+</apex:page>

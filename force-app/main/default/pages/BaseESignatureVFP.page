@@ -1,0 +1,964 @@
+<apex:page sidebar="false" showHeader="false" controller="ESignatureCtrl">
+    <apex:includeScript value="{!URLFOR($Resource.signature_pad_1_5)}" />
+    
+    <apex:define name="additionalLibraries">
+        <!-- CR-56_Link_20220214 -->
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap3.4.1.css')}" />
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+        <apex:include pageName="CignaCommonCSS" />
+      <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+      <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <!-- Bootstrap Core CSS -->
+        <!-- CR-56_Link_20220214 -->
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-3.6.0.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-migrate-3.3.2.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap3.4.1.min.js')}"/>
+        <apex:include pageName="CignaUtilJS"/> 
+    </apex:define>
+    
+    <style>
+        @media (min-width: 768px) {
+            .signature-pad-body {
+                max-width: 1088px;
+                height: 300px;
+            }
+            .signature-pad {
+                max-width: 1088px;
+                height: 300px;
+                background-color: #fff;
+                border: 1px solid #ddd;
+            }
+         }
+         
+         @media (max-width: 767px) {
+            .signature-pad-body {
+                width: 100%;
+                height: 300px;
+            }
+            
+            .signature-pad {
+                width: 95%;
+                height: 300px;
+                background-color: #fff;
+                border: 1px solid #ddd;
+            }
+         }
+         
+        .esignature-sign-div {
+            margin-top:20px;
+            margin-bottom:20px;
+        }
+
+        
+        .signature-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .signature-pad-footer {
+            width: 100%;
+            height: 40px;
+        }
+        
+        
+        .loading-spinner{
+            top: 50%;
+            display: none;
+            position: absolute;
+            z-index: 11;
+        }
+        
+        .tcoverlay {
+                display: none;
+                z-index: 10;
+                background: #D9D9D6;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                //text-align: center;
+                // Zoe updated on 0411 BU-130
+            }
+        .tcpopup {
+            display: none;
+            position: absolute;
+            z-index: 11;
+            margin: 150px auto 0px auto;
+            width: 80%;
+            height: 50%;
+            background: #FFF;
+            color: #000;
+            left: 10%;
+            padding:20px;
+            border-radius:5px;
+            
+        }
+        .closeOverlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        
+        .tccontent {
+            padding:10px;
+            color:#000;
+            font-size:12px;
+            width: 100%;
+            height: 95%;
+            overflow-y:auto;
+        }
+        
+        .content-active {
+            color:#39B54A;
+        }
+        
+        .resultText{
+            widthtext-align: center;
+            display:inline-block;
+            margin:0 auto;
+            width:35%
+        }
+        /*20200306 - minghua - ILAS*/
+        label.cusError {
+              font-size:14px;
+              color: red;
+          }
+    </style>
+    <apex:form id="ESignatureFrm">
+        <apex:actionFunction action="{!submitESignature}" name="submitESignature" namespace="ESignature" oncomplete="updateRecord();">
+            <apex:param name="imgDataParam1" assignTo="{!imgDataList[0]}" value=""/>
+            <apex:param name="imgDataParam2" assignTo="{!imgDataList[1]}" value=""/>
+        </apex:actionFunction>
+        <apex:actionFunction action="{!updatePolicyChange}" name="updatePolicyChange" rerender="null" />
+        <apex:actionFunction action="{!updateGOP}" name="updateGOP" rerender="null" />
+        <apex:actionFunction action="{!updateClaim}" name="updateClaim" rerender="null" />
+        <apex:actionFunction action="{!updateRPQResult}" name="updateRPQResult" rerender="null" />
+        <!-- apex:actionFunction action="{!getAttachement}" name="getAttachement" rerender="true"/ -->
+        <br/>
+        <br/>
+        <br/>
+        
+        <!-- working -->
+        <!-- Page Message Start -->
+        <div id="successSignature" class="bs col-xs-12 col-sm-12" role="alert" style="display:none; background-color: transparent !important;">
+            <apex:outputPanel rendered="{!isClaim}" >
+                <div class="bs col-xs-12 col-sm-12 row hidden-xs nextStepBtn" style="padding-bottom: 120px; " >
+                </div>
+                <div class="col-xs-12 col-sm-12" style="text-align:center;">
+                    <i class="fa fa-check-circle-o content-active" style="font-size:50px;" aria-hidden="true"></i>
+                </div>
+                <div id="ack_Non_Fast_Track_With_DocuSign_Customer" class="col-xs-12 col-sm-12" style="padding-top:30px; text-align:center; color: #58595B;">
+                    <apex:outputText value="{!$Label.Ack_Non_Fast_Track_With_DocuSign_Customer}" escape="false" />  
+                </div>
+                <!-- mobile -->
+                <div id="action-bar" class="bs hidden-sm hidden-md hidden-lg cigna-floating-bottom-panel nextStepBtn" style="left:0px; " onclick="Cigna.Util.navigateToVFP('MyClaimSubmitVFP');">
+                    <div id="callAction1" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                        <a href="#"  class="action-btn cigna-fg-white" role="button"><span class="fa fa-pencil-square-o onclick-pointer" aria-hidden="true" style="padding-left:10px;"></span>{!$Label.MAKE_ANOTHER_CLAIM}</a>
+                    </div>
+                </div>
+                <div class="bs col-xs-12 col-sm-12"  style="margin-bottom: 60px"></div>
+                <!-- web -->
+                <div class="bs row hidden-xs nextStepBtn" style="padding-bottom: 20px; " onclick="Cigna.Util.navigateToVFP('MyClaimSubmitVFP');">
+                    <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3 "></div>
+                    <div id="callAction2" class="bs col-sm-6 col-md-6 col-xs-6 col-lg-6 onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn">
+                        <a href="#"  style="text-transform: none !important;"  class="action-btn cigna-fg-white" role="button">{!$Label.MAKE_ANOTHER_CLAIM}</a>
+                    </div>
+                    <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3"></div>
+                </div>
+                <div style="margin-bottom: 120px" />
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!(isPolicyChange && isCustomer && !isPolicyChangeBroker)}">
+                <div class="col-xs-12 col-sm-12" style="text-align:center;">
+                    <i class="fa fa-check-circle-o content-active" style="font-size:50px;" aria-hidden="true"></i>
+                </div>
+                <div class="col-xs-12 col-sm-12 text-center" style="padding-top:30px;">
+                    <apex:outputText value="{!$Label.Policy_Change_acknowledgement_message}" escape="false" />
+                </div>
+                
+                <!--desktop action button-->
+                <div class="bs col-xs-12 col-sm-12" style="padding:20px;"></div>
+                <div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="Cigna.Util.navigateToVFP('PolicyChangeSubmitVFP?pclist=true')">
+                    <span class="action-btn cigna-fg-white" role="button">{!$Label.Make_A_New_Request}</span>
+                </div>
+                <!--mobile action button-->
+                <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="Cigna.Util.navigateToVFP('PolicyChangeSubmitVFP?pclist=true')">
+                    <div  class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                        <span class="action-btn cigna-fg-white" role="button"><span class="ci-hk-fix" aria-hidden="true"></span><br/>{!$Label.Make_A_New_Request}</span>
+                    </div>
+                </div>
+            </apex:outputPanel>
+
+            <apex:outputPanel rendered="{!(isPolicyChange && isCustomer && isPolicyChangeBroker)}">
+                <div class="col-xs-12 col-sm-12" style="text-align:center;">
+                    <i class="fa fa-check-circle-o content-active" style="font-size:50px;" aria-hidden="true"></i>
+                </div>
+                <div class="col-xs-12 col-sm-12 text-center" style="padding-top:30px;">
+                    <apex:outputText value="{!$Label.Policy_Change_acknowledgement_message}" escape="false" />
+                </div>
+                
+                <!--desktop action button-->
+                <div class="bs col-xs-12 col-sm-12" style="padding:20px;"></div>
+                <div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="Cigna.Util.navigateToVFP('MyPolicyVFP')">
+                    <span class="action-btn cigna-fg-white" role="button">{!$Label.Return_to_My_Policy}</span>
+                </div>
+                <!--mobile action button-->
+                <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="Cigna.Util.navigateToVFP('MyPolicyVFP')">
+                    <div  class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                        <span class="action-btn cigna-fg-white" role="button"><span class="ci-hk-fix" aria-hidden="true"></span><br/>{!$Label.Return_to_My_Policy}</span>
+                    </div>
+                </div>
+            </apex:outputPanel>
+
+             
+            <apex:outputPanel rendered="{!(isPolicyChange && isBroker)}">
+                <div class="col-xs-12 col-sm-12" style="text-align:center;">
+                    <i class="fa fa-check-circle-o content-active" style="font-size:50px;" aria-hidden="true"></i>
+                </div>
+                <div class="col-xs-12 col-sm-12 text-center" style="padding-top:30px;">
+                <apex:outputPanel id="acknowledgementMsg">
+                    <apex:outputText value="{!$Label.Policy_Change_acknowledgement_broker}" escape="false">
+                        <apex:param value="{!userFullName}" /><!--broker's username-->
+                       <apex:param value="{!policyChangeHolder}" />
+                    </apex:outputText>
+                </apex:outputPanel>
+                </div>
+                <!--desktop action button-->
+                <div class="bs col-xs-12 col-sm-12" style="padding:20px;"></div>
+                <div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="Cigna.Util.navigateToVFP('PolicyChangeVFP?backId='+'{!policyChangeHolderId}')">
+                    <span class="action-btn cigna-fg-white" role="button">{!$Label.Make_A_New_Request}</span>
+                </div>
+                <!--mobile action button-->
+                <div class="bs row mobile-app-padding" style="display: none; padding-bottom: 200px;">
+                    <div class="bs col-xs-12"></div>
+                </div>
+                <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="Cigna.Util.navigateToVFP('PolicyChangeVFP?backId='+'{!policyChangeHolderId}')">
+                    <div  class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                        <span class="action-btn cigna-fg-white" role="button"><span class="fa fa-pencil-square-o" aria-hidden="true"></span><br/>{!$Label.Make_A_New_Request}</span>
+                    </div>
+                </div>
+            </apex:outputPanel>
+            <!-- ILAS jack add begin-->
+            <apex:outputPanel rendered="{!isRPQ}">
+                <div class="col-xs-12 col-sm-12 " style="text-align:center;">
+                    <i class="fa fa-check-circle-o content-active cigna-fg-green-medium" style="font-size:50px;" aria-hidden="true"></i>
+                </div>
+                <br /><br />
+                <div class="col-xs-12 col-sm-12" style="text-align:center;">
+                    <div class="resultText" >
+                        <apex:outputPanel id="RPQResultPanel">
+                            <div>
+                                <p>{!transField['Success']} </p>
+                                <p>{!transField['Status_upload_as_below']}</p>
+                                <p>{!transField['RPQ_Status']} {!RPQStatus}</p>
+                                <p>{!transField['RPQ_Effective_Date']} <apex:outputText value="{0,date, MM/dd/yyyy}"> <apex:param value="{!RPQEffectiveDate}" /> </apex:outputText></p>            
+                            </div>
+                        </apex:outputPanel>
+                    </div>
+                </div>
+                <apex:outputPanel styleClass="bs row" layout="block">
+                    <div id="action-bar-desktop" class="bs hidden-xs text-center">
+                        <apex:outputLink value="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!RPQAttachmentId}" styleClass="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" target="_blank">
+                            {!transField['Download_RPQ']}
+                        </apex:outputLink>
+                        
+                        <a id="eSales-home-btn2" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" 
+                           role="button" onclick="goHome();">
+                            {!$Label.Home}
+                        </a>
+                    </div>
+                    <apex:outputPanel >
+                        
+                        <div id="action-bar" class="bs cigna-floating-bottom-panel visible-xs">
+                            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                                <apex:outputLink value="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!RPQAttachmentId}" styleClass="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" target="_blank">
+                                    {!transField['Download_RPQ']}
+                                </apex:outputLink>
+                                
+                                <a id="eSales-home-btn2" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" 
+                                   role="button" onclick="goHome();">
+                                    {!$Label.Home}
+                                </a>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+            </apex:outputPanel>
+            <!-- ILAS jack add end-->
+            <apex:outputPanel rendered="{!(!isClaim && !isPolicyChange && !isRPQ)}">
+                <span class="glyphicon glyphicon glyphicon-ok" aria-hidden="true"></span>
+                {!$Label.E_Signature_Successfully_Submitted}
+            </apex:outputPanel>
+            
+        </div>
+        <!-- Page Messgae End -->
+        <!-- end working -->
+        
+        <div id="errorMessageDiv" class="bs" style="display:none">
+            <div class="col-xs-12 col-sm-12" style="text-align:center; {!IF(isInvalidToken || isRequestExpired || isAlreadySigned, '', 'display:none')}">
+                <i class="fa fa-check-circle-o content-active" style="font-size:50px;" aria-hidden="true"></i>
+            </div>
+            <!-- Rancho_CTUI226_20220706 - display error if the user is not related to the one time token -->
+            <div class="col-xs-12 col-sm-12" style="text-align:center; {!IF(isInvalidUser, '', 'display:none')}">
+                <i class="fa fa-times-circle-o content-active" style="font-size:50px;color: red;" aria-hidden="true"></i>
+            </div>
+            <div class="col-xs-12 col-sm-12 text-center" style="padding-top:30px; {!IF(isInvalidUser, '', 'display:none')}">
+                {!$Label.E_Signature_Invalid_Token_1}
+            </div>
+            <div class="col-xs-12 col-sm-12 text-center" style="padding-top:30px; {!IF(isInvalidToken, '', 'display:none')}">
+                {!$Label.E_Signature_Invalid_Token}
+            </div>
+            <div class="col-xs-12 col-sm-12 text-center" style="padding-top:30px; {!IF(isRequestExpired, '', 'display:none')}">
+                {!$Label.E_Signature_Request_Expired}
+            </div>
+            <div class="col-xs-12 col-sm-12 text-center" style="padding-top:30px; {!IF(isAlreadySigned, '', 'display:none')}">
+                {!$Label.E_Signature_Already_Signed}
+            </div>
+            
+        </div>
+        
+        <!-- 20200306 - minghua - ILAS -->
+        <apex:outputPanel rendered="{!isILASFund && !isAlreadySigned}">
+            <apex:inputHidden value="{!reasonCheckbox}" id="fund-reasonCheckbox" />
+            <apex:inputHidden value="{!reasonContent}" id="fund-ReasonContent" />
+            <div id="fund-details-div">
+                <div id="fund-switch-details-confirmation" style="{!IF(isFundSwitch,'','display:none;')}">
+                    <div class="bs col-xs-12 form-field">
+                        <div class="bs col-xs-12 cigna-fg-blue-light content-highlight">{!$Label.Confirmation_of_Fund_Switching}</div>
+                    </div>
+                    <div class="bs col-xs-12 form-field">
+                        <div class="bs col-xs-2 col-sm-1">{!$Label.X1}</div>
+                        <div class="bs col-xs-10 col-sm-11">{!$Label.Plan_Selected}</div>
+                        <div class="bs col-xs-10 col-xs-offset-2 col-sm-11 col-sm-offset-1 content-highlight">{!selectFundType}</div>
+                    </div>
+                    <div class="bs col-xs-12 form-field">
+                        <div class="bs col-xs-2 col-sm-1">{!$Label.X2}</div>
+                        <div class="bs col-xs-10 col-sm-11">{!$Label.Fund_s_to_sell}</div>
+                        <apex:repeat value="{!fundOutList}" var="fundWrapper">
+                            <div class="bs col-xs-10 col-xs-offset-2 col-sm-11 col-sm-offset-1 content-highlight form-field" 
+                                 style="{!IF(fundWrapper.amount != null && fundWrapper.amount != '' && fundWrapper.amount != '0', '', 'display:none;')}">
+                                <div class="bs row">
+                                    <div class="bs col-xs-12 cigna-fg-green-medium content-highlight">{!fundWrapper.productFullName}</div> 
+                                    <div class="bs col-xs-12 content-highlight">{!fundWrapper.amount}</div> 
+                                </div>
+                            </div>
+                        </apex:repeat>
+                    </div>
+                    <div class="bs col-xs-12 form-field">
+                        <div class="bs col-xs-2 col-sm-1">{!$Label.X3}</div>
+                        <div class="bs col-xs-10 col-sm-11">{!$Label.Fund_s_to_buy}</div>
+                        <apex:variable var="confirmSwitchInCount" value="{!1}" />
+                        <apex:repeat value="{!fundInList}" var="fund">
+                            <div class="bs col-xs-10 col-xs-offset-2 col-sm-11 col-sm-offset-1 content-highlight form-field">
+                                <div class="bs row">
+                                    <div class="bs col-xs-12 cigna-fg-green-medium content-highlight">{!confirmSwitchInCount}. {!fund.fundFullName}</div> 
+                                    <div class="bs col-xs-12 content-highlight">{!fund.amount}</div> 
+                                </div>
+                            </div>
+                            <apex:variable var="confirmSwitchInCount" value="{!confirmSwitchInCount + 1}" />
+                        </apex:repeat>
+                    </div>
+                </div>
+                <div id="fund-reallocation-details-confirmation" style="{!IF(!isFundSwitch,'','display:none;')}">
+                    <div class="bs col-xs-12 form-field">
+                        <div class="bs col-xs-12 cigna-fg-blue-light content-highlight">{!$Label.Confirmation_of_Fund_Reallocation}</div>
+                    </div>
+                    <div class="bs col-xs-12 form-field">
+                        <div class="bs col-xs-2 col-sm-1">{!$Label.X1}</div>
+                        <div class="bs col-xs-10 col-sm-11">{!$Label.Plan_Selected}</div>
+                        <div class="bs col-xs-10 col-xs-offset-2 col-sm-11 col-sm-offset-1 content-highlight">{!selectFundType}</div>
+                    </div>
+                    <div class="bs col-xs-12 form-field">
+                        <div class="bs col-xs-2 col-sm-1">{!$Label.X2}</div>
+                        <div class="bs col-xs-10 col-sm-11">{!$Label.Fund_s_to_buy}</div>
+                        <apex:variable var="confirmReallocationCount" value="{!1}" />
+                        <apex:repeat value="{!fundInList}" var="fund">
+                            <div class="bs col-xs-10 col-xs-offset-2 col-sm-11 col-sm-offset-1 content-highlight form-field">
+                                <div class="bs row">
+                                    <div class="bs col-xs-12 cigna-fg-green-medium content-highlight">{!confirmReallocationCount}. {!fund.fundFullName}</div> 
+                                    <div class="bs col-xs-12 content-highlight">{!fund.amount}</div> 
+                                </div>
+                            </div>
+                            <apex:variable var="confirmReallocationCount" value="{!confirmReallocationCount + 1}" />
+                        </apex:repeat>
+                    </div>
+                </div>
+                <div id="fund-show-warning-message" class="bs col-xs-12 form-field" style="{!IF(isShowWarningMessage,'','display: none;')}">
+                    <div class="bs col-xs-12 form-field">
+                        {!transField['Please_note_your_current']}{!latestRPQStatus}{!transField['which_is_lower_than']} <a class="cigna-fg-blue-medium onclick-pointer" onclick="onlineRPQ();">{!transField['Personal_Risk_Questionnaire']}</a> {!transField['refresh_your_risk_profile']}<br />
+                        <div style="text-align: center;" class="col-xs-12">{!transField['or']}</div>
+                        <div style="text-align: center;" class="col-xs-12"><a class="cigna-fg-blue-medium onclick-pointer" onclick="provideReason();">{!transField['continue_your_risk_profile']}</a></div>
+                    </div>
+                    <div class="bs col-xs-12 form-field" id="provideReason" style="display: none;">
+                        <span>{!transField['You_must_provide_your']}</span><br />
+                        <!--Nicole_ILAS CR_20201005-->
+                        <br/>
+                        <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'en_US'}">
+                            因所選擇的投資選項的風險水平高於您於本公司紀錄的風險水平，我們強烈建議您更新您的風險取向問卷。此投資選項之轉換或轉入可能並不符合您的最佳利益。然而，如果您仍意欲於風險水平不符的情況下進行此投資選項申請，您必須提供足夠及有效的理由以繼續此申請。
+                            <br/><br/>
+                            請注意下列解釋並不會被接受為有效理由而您的指示將不會被執行。於此情況下，我們將暫停有關申請以作進一步釐清，您可能因此蒙受財務上的影響。
+                            無效的理由例子：<br/>
+                            X&nbsp;&nbsp;&nbsp;「我不想更新風險取向問卷」（沒有解釋為何選擇風險水平不符的投資選項）<br/>
+                            X&nbsp;&nbsp;&nbsp;「此為個人投資決定」（沒有詳細說明有關決定）<br/>
+                            X&nbsp;&nbsp;&nbsp;&nbsp;任何其他沒有加以闡述有關決定的理由，或沒有表示理解及接受因選擇風險水平不符的投資選項而帶來的風險 <br/>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'zh_TW'}">
+                            We strongly advise you to update your Risk Profile Questionnaire since the risk level of selected fund(s) is higher than your risk profile at our record. Such fund switching or subscription may not be in your best interest. However, if you still wish switching to the unmatched fund choice(s), you must provide a valid and sufficient reason on why you still decide to proceed.
+                            <br/><br/>
+                            Please note that the following explanations will NOT be accepted and your instruction will NOT be proceeded. In that case, we will suspend the application for further clarification and there may be financial implications to you.
+                            Examples of invalid reasons:<br/>
+                            X&nbsp;&nbsp;&nbsp;“I don't want to perform the RPQ” (Not explaining on why the unmatched fund is selected)<br/>
+                            X&nbsp;&nbsp;&nbsp;“This is my own decision” (No detailed explanation on the decision)<br/>
+                            X&nbsp;&nbsp;&nbsp;&nbsp;Any other reason without elaboration on the investment decision and indication of understanding and accepting the risk of purchasing a fund with risk level higher than your own.<br/>
+                        </apex:outputPanel>
+                        <br/>    
+                        <apex:inputTextarea id="switchReasonMessage" style="height: 100px;" styleClass="form-field-style-textarea" />
+                    </div>
+                    <div id="fund-show-error-div" class="errorDiv form-field">
+                        <label class="cusError" id="fundErrorMes" ></label>
+                    </div>
+                    <div class="bs col-xs-1">
+                      <input type="checkbox" id="fund-switch-checkReason" name="fund-switch-checkReason" class="bs cigna-question-checkbox" />
+                      <label for="fund-switch-checkReason" style="display: inline !important;float:left;"></label>
+                    </div>
+                    <div class="bs col-xs-11 col-sm-11" style="text-align: left;">
+                      <div>
+                       {!transField['Risks_related_to_select_fund']}<br/>
+                       <br/>
+                        <apex:repeat value="{!mismatchFundList}" var="mismatchFund">
+                          <div>{!mismatchFund}</div>
+                        </apex:repeat>
+                        <br/>
+                       {!transField['I_understand_that_the']} {!transField['application_and_bear_the']}
+                      </div>
+                    </div>
+                </div>
+            </div>
+        </apex:outputPanel>
+
+        <apex:outputPanel styleClass="bs" rendered="{! !(isInvalidToken || isRequestExpired || isAlreadySigned)}">
+            <apex:variable value="{!1}" var="index"/>
+            <apex:repeat value="{!signatureList}" var="s">
+                <apex:outputPanel id="esignature-sign-div" styleClass="bs col-xs-12 {!IF(isOnlyOneSignature, 'col-sm-12', 'col-sm-6')} esignature-sign-div">
+                    <!-- Jack add ILAS-->
+                    <apex:outputPanel rendered="{!isRPQ}" style="color:#24A8EB;padding-left:15px;padding-bottom:15px;" layout="block">
+                        {!transField['view_your_lastest']}
+                        <apex:outputLink value="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!RPQAttachmentId}" target="_blank" style="color:#24A8EB;">
+                            {!transField['Risk_Profile_Questionnaire']}
+                        </apex:outputLink>
+                        <br /><br />
+                        <label class="cigna-fg-blue-medium">
+                            {!$Label.Sign_on_screen}
+                        </label>
+                    </apex:outputPanel>
+                    <!-- Jack add ILAS-->
+                    <apex:outputPanel rendered="{!IF(s.isShowTNC, 'true', 'false')}" styleClass="bs col-xs-12" layout="block">
+                        <div class="bs cigna-answer-wrapper">
+                            <p style="display: flex; ">
+                                <input type="checkbox" id="esignature-pics{!index}" name="dm-consent" class="bs cigna-question-checkbox" />
+                                <!-- old : <label for="esignature-pics{!index}" style="display: flex; "> -->
+                                <label for="esignature-pics{!index}" style="display: inline !important;float:left;"/>
+                                <label style="margin-left:10px;display: inline !important;">
+                                    <apex:outputText value="{!$Label[s.tncName]}" escape="false">
+                                    <apex:param value="{!picLink}" />
+                                    </apex:outputText>
+                                </label>
+                            </p>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!!ISNULL(attachmentURL)}">
+                        <style>
+                          @media (min-width:768px) and (max-width:1170px){
+                            .dy-col{   
+                              width:33.3% !important;             
+                            }
+                          }
+                          @media (min-width:1171px){
+                            .dy-col{    
+                              width:30% !important;                
+                            }
+                          }
+                          @media (max-width: 1170px) {
+                              .fw-filename{
+                                font-size: 12px;
+                                width:75%;
+                                padding:0px;
+                                margin:0px;
+                                text-align:center;
+                                vertical-align:middle !important;
+                                display: inline-block;
+                                padding-left: 6px;
+                                padding-right: 10px;
+                              }
+                            
+                          }
+                           @media (min-width: 1171px) {
+                            .fw-filename{
+                              font-size: 14px;
+                              width:75%;
+                              padding:0px;
+                              margin:0px;
+                              text-align:center;
+                              vertical-align:middle !important;
+                              display: inline-block;
+                              padding-left: 6px;
+                              padding-right: 11px;
+                            }
+                          }
+                          .fileWrapper {
+                              font-size:14px;
+                              font-weight: bold;
+                              padding-left: 0px;
+                              padding-right: 0px; 
+                              vertical-align: middle;          
+                              cursor:pointer;
+                              -moz-box-shadow:1px 3px 8px #919191; 
+                              -webkit-box-shadow:1px 3px 8px #919191; 
+                              box-shadow:1px 3px 8px #919191;
+                            }
+                          .fw-icon{
+                            width:25%;
+                            padding:0px;
+                            margin:0px;
+                            text-align:center;                           
+                            padding:0px;
+                            display: inline-block;
+                            vertical-align: middle;
+                            background-color: #9BC93B;
+                            float: left;
+                          }
+                          </style>
+                        <div class="bs col-xs-12">
+                        <apex:outputLink rendered="{!!ISNULL(attachmentURL)}" value="{!attachmentURL}" target="_blank">
+                            <div class='col-xs-11 col-sm-3 dy-col' style='padding:10px;'>
+                            <div class="fileWrapper col-xs-12 col-sm-12">
+                                 <div class="fw-icon">
+                                     <img src="{!URLFOR($Resource.efulfillment, 'icon.png')}" style='width:100%'/>
+                                 </div>
+                                 <div class="fw-filename">
+                                     <span class='txt-filename'>{!$Label.Application_Form}</span><br/>
+                                     <span style='font-size: 12px !important;color:gray'>{!externalData.Claim__r.Submission_Date__c}</span>    
+                                 </div>
+                            </div>
+                            </div>
+                        </apex:outputLink>
+                        </div>
+                    </apex:outputPanel>
+                    
+                    <div class="bs col-xs-12">
+                        <!--<p>{!$Label.Your_customer_can_sign_below}</p>-->
+                        <p>{!s.signatureTips }</p>
+                    </div>
+                    <div id="errEmptySignature{!index}" class="bs alert alert-danger errEmptySignature" role="alert" style="display:none;">
+                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                        {!$Label.Please_offer_your_signature_below}
+                    </div>
+                    <div id="errNotAcceptTNC{!index}" class="bs alert alert-danger errNotAcceptTNC" role="alert" style="display:none;">
+                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                        {!$Label.You_should_accepts_the_Terms_amp_Conditions_and_Personal_Information_Collectio}
+                    </div>
+                    <div id="signature-pad{!index}" class="signature-pad bs col-xs-12">
+                        <div class="signature-pad-body text-center">
+                            <canvas id="signatureCanvas{!index}" class="signature-canvas"></canvas>
+                        </div>
+                        <div class="signature-pad-footer text-right">
+                            <button type="button" id="btnClearSignature{!index}" onclick="Cigna.ESignatureComp.clearSignature({!index})" class="bs btn cigna-fg-white cigna-bg-orange-medium" data-action="clear">{!$Label.Clear}</button>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                
+                <apex:variable var="index" value="{!index + 1}" />
+            </apex:repeat>
+            
+            
+            <!-- Submit Button Start -->
+            <br/>
+            <br/><br/><br/>
+            <div id="submit-button-group" style="{!IF(signatureList.size > 0, '', 'display:none')}">
+                <!--desktop action button-->
+                <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>
+                <div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="Cigna.ESignatureComp.saveSignature();">
+                    <span class="action-btn cigna-fg-white" role="button">{!$Label.Submit}</span>
+                </div>
+                <!--mobile action button-->
+                <div class="bs row mobile-app-padding" style="display: none; padding-bottom: 200px;">
+                    <div class="bs col-xs-12"></div>
+                </div>
+                <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="Cigna.ESignatureComp.saveSignature();">
+                    <div  class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                        <span class="action-btn cigna-fg-white" role="button"><span class="fa fa-check-square-o" aria-hidden="true"></span><br/>{!$Label.Submit}</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Submit Button End  -->
+            
+        </apex:outputPanel>
+        
+        <!-- Start of Terms and Conditions -->
+        <div id="tc-overlay" class="tcoverlay" style="display:none;">
+            <div id="tc-popup" class="tcpopup">
+                <a href="#" class="onclick-pointer"><div class="glyphicon glyphicon-remove closeOverlay pull-right" onclick="toggleOverlay();"></div></a>
+                <h4>{!$Label.Terms_And_Conditions}</h4>
+                <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                <div class="tccontent">
+                    <apex:outputPanel id="tcPanel">
+                        <!-- GOP: If PH = Selected PI -->
+                        <!-- minghua - 20221013 - JOBR-184 - JOBR-233 -->
+                        <apex:outputText value="{!$Label.Submit_GOP_T_C_Selected_PI_is_PH_1}" escape="false" rendered="{!IsGOP&&(IsPIClaim||(!IsPIClaim&&!IsPIAge))&&isLife&&!isGI}">
+                            <apex:param value="{!$Label.Chubb_Life_Entity_Name}" />
+                        </apex:outputText>
+                        <apex:outputText value="{!$Label.Submit_GOP_T_C_Selected_PI_is_PH_1}" escape="false" rendered="{!IsGOP&&(IsPIClaim||(!IsPIClaim&&!IsPIAge))&&!isLife&&isGI}">
+                            <apex:param value="{!$Label.GI_Entity_Name}" />
+                        </apex:outputText>
+                        <apex:outputText value="{!$Label.Submit_GOP_T_C_Selected_PI_is_PH_1}" escape="false" rendered="{!IsGOP&&(IsPIClaim||(!IsPIClaim&&!IsPIAge))&&isLife&&isGI}">
+                            <apex:param value="{!$Label.Both_Life_And_GI_Entity_Name}" />
+                        </apex:outputText>
+
+                        <apex:outputText value="{!$Label.Submit_GOP_T_C_Selected_PI_is_PH_2}" escape="false" rendered="{!IsGOP&&(IsPIClaim||(!IsPIClaim&&!IsPIAge))&&isLife&&!isGI}">
+                            <apex:param value="{!$Label.Chubb_Life_Entity_Name}" />
+                        </apex:outputText>
+                        <apex:outputText value="{!$Label.Submit_GOP_T_C_Selected_PI_is_PH_2}" escape="false" rendered="{!IsGOP&&(IsPIClaim||(!IsPIClaim&&!IsPIAge))&&!isLife&&isGI}">
+                            <apex:param value="{!$Label.GI_Abbr_Name}" />
+                        </apex:outputText>
+                        <apex:outputText value="{!$Label.Submit_GOP_T_C_Selected_PI_is_PH_2}" escape="false" rendered="{!IsGOP&&(IsPIClaim||(!IsPIClaim&&!IsPIAge))&&isLife&&isGI}">
+                            <apex:param value="{!$Label.Both_Life_And_GI_Abbr_Name}" />
+                        </apex:outputText>
+
+                        <!-- GOP: If PH != Selected PI -->
+                        <apex:outputText value="{!$Label.Submit_GOP_T_C_Selected_PI_is_not_PH}" escape="false" rendered="{!IsGOP && !IsPIClaim && IsPIAge}"/>
+                        <!-- Claim: If PH = Selected PI -->
+                        <!--JOBR-184:commented by Kermit-->
+                        <!--<apex:outputText value="{!$Label.Submit_Claim_T_C_Selected_PI_is_PH_1}" escape="false" rendered="{!!IsGOP && (IsPIClaim || (!IsPIClaim && !IsPIAge))}"/>-->
+                        <!--<apex:outputText value="{!$Label.Submit_Claim_T_C_Selected_PI_is_PH_2}" escape="false" rendered="{!!IsGOP && (IsPIClaim || (!IsPIClaim && !IsPIAge))}"/>-->
+                        <!--JOBR-184:commented by Kermit-->
+                            <apex:outputText value="{!claimTnc}" escape="false" rendered="{!!IsGOP && (IsPIClaim || (!IsPIClaim && !IsPIAge))}"/>
+                        <!-- Claim: If PH != Selected PI -->
+                        <!--JOBR-184:commented by Kermit-->
+                        <!--<apex:outputText value="{!$Label.Submit_Claim_T_C_Selected_PI_is_not_PH}" escape="false" rendered="{!!IsGOP && !IsPIClaim && IsPIAge}"/>-->
+                        <!--JOBR-184:commented by Kermit-->
+                            <apex:outputText value="{!claimTnc}" escape="false" rendered="{!!IsGOP && !IsPIClaim && IsPIAge}"/>
+                    </apex:outputPanel>
+                    <!--Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.  Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed.
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.  Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed.
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.  Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed.
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.  Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed.
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.  Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed.-->
+                </div>
+            </div>
+        </div>
+        <!-- End of Terms and Conditions -->
+        <!-- Start of PIC -->
+        <div id="pic-overlay" class="tcoverlay" style="display:none;">
+            <div id="pic-popup" class="tcpopup">
+                <a href="#" class="onclick-pointer"><div class="glyphicon glyphicon-remove closeOverlay pull-right" onclick="toggleOverlayPIC();"></div></a>
+                <h4>{!$Label.Personal_Information_Collection_Statement}</h4>
+                <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                <div class="tccontent">
+                    <!-- <apex:outputText value="{!picString}" escape="false"/>
+                    <!--Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.  Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed.
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.  Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed.
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.  Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed.
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.  Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed.
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.  Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed.-->
+                </div>
+            </div>
+        </div>
+        <!-- End of PIC -->
+        <!--start of loading-->
+        <div id="overlay-loading" class="overlay" style="display:none; opacity:0.5;">
+            <div id="att-loading" class="bs col-xs-offset-3 col-xs-6 text-center loading-spinner">
+                <img class="bs" src="{!URLFOR($Resource.Spinners, 'slds_spinner.gif')}" width="70px" />
+            </div>
+        </div> 
+        <!--end of loading-->
+    </apex:form>
+    <script type="text/javascript">
+        // 20200306 - minghua - ILAS
+        function onlineRPQ(){
+            Cigna.Util.navigateToVFP('RPQSubmitVFP?ss={!customerUserId}&nn={!JSINHTMLENCODE(policyHolderSSNEncrypt)}', null, null, true);
+        }
+        function provideReason(){
+          var provideReason = document.getElementById('provideReason');
+          if (provideReason.style.display == 'none') {
+            $('#fund-show-error-div').hide();
+            $('#fundErrorMes').text('');
+            $('#provideReason').show();
+          }
+        }
+        function validString(inputStr){
+          var isOnlyChat = false;
+          inputStr = inputStr.trim();
+          if (inputStr) {
+            var REGEX =/[`~!@#$%^&*()_\-+=<>?:"{}|,.\/;'\\[\]·~！@#￥%……&*（）——\-+={}|《》？：“”【】、；‘'，。、]/im;
+            for (var i = 0; i < inputStr.length; i++) {
+              var temp = inputStr.charAt(i);
+              if(REGEX.test(temp)) {
+              }else{
+                console.log('find chat:'+temp);
+                isOnlyChat = true;
+                break;
+              }
+            }
+          }
+          return isOnlyChat;
+        }
+
+        function toggleOverlay(){
+            $('#tc-overlay').css('opacity', '0.95');
+            $('#tc-overlay').toggle();
+            $('#tc-popup').toggle();
+        }
+        
+        function toggleOverlayPIC(){
+            $('#pic-overlay').css('opacity','0.95');
+            $('#pic-overlay').toggle();
+            $('#pic-popup').toggle();
+        }
+        
+        function showLoading() {
+            $('#overlay-loading').fadeIn(100);
+            $('#att-loading').fadeIn(100);
+        }
+                
+        function finishSubmission() {
+            $('#att-loading').fadeOut(100);
+            $('#overlay-loading').fadeOut(100);
+        }
+        
+        function showErrorMessage() {
+            $('#errorMessageDiv').fadeIn(100);
+        }
+    </script>
+    <script type="text/javascript">
+    
+        showLoading();
+        window.setTimeout(function(){finishSubmission();showErrorMessage();}, 5000);
+        
+        var Cigna = Cigna || {};
+        Cigna.ESignatureComp = function(){
+            //var canvasId = "signatureCanvas";
+            var canvas = new Array();
+            var signaturePad = new Array();
+            var lastWidth, lastHeight;
+            //var isLocked = false;
+            var emptyCanvasImgData = new Array();
+            
+            //var OPTION_EMAIL = 0, OPTION_SIGN_NOW = 1;
+            
+            function init(canvasIndex) {
+                canvas[canvasIndex] = document.getElementById('signatureCanvas' + canvasIndex);
+                signaturePad[canvasIndex] = new SignaturePad(canvas[canvasIndex]);
+                lastWidth = -1;
+                window.addEventListener("resize", resizeCanvas);
+                //console.log('#btnClearSignature' + canvasIndex);
+                //console.log($('#btnClearSignature' + canvasIndex).length);
+                //CR-56_Link_20220214
+                $('#btnClearSignature' + canvasIndex).on("click",clearSignature(canvasIndex));
+            }
+            
+            function resizeCanvas() {
+                // When zoomed out to less than 100%, for some very strange reason,
+                // some browsers report devicePixelRatio as less than 1
+                // and only part of the canvas is cleared then.
+                if ($(window).width() != lastWidth) {
+                    forceResizeCanvas();
+                }
+            }
+            
+            function forceResizeCanvas() {
+                lastWidth = $(window).width();
+                var ratio =  Math.max(window.devicePixelRatio || 1, 1);
+                
+                for(var i = 1; i < canvas.length; i++){
+                    canvas[i].width = canvas[i].offsetWidth * ratio;
+                    canvas[i].height = canvas[i].offsetHeight * ratio;
+                    canvas[i].getContext("2d").scale(ratio, ratio);
+                    signaturePad[i].clear(); // otherwise isEmpty() might return incorrect value
+                    emptyCanvasImgData[i] = getSignatureImage(i);
+                }
+            }
+            
+            function clearSignature(canvasIndex) {
+                //console.log(signaturePad[canvasIndex]);
+                signaturePad[canvasIndex].clear();
+            }
+            
+
+            function saveSignature() {
+                /*if({!tncFlag} && $('.esignature-sign-div .cigna-question-checkbox').is(':checked') == false){
+                    $("#errNotAcceptTNC").show();
+                    return;
+                } else {
+                    $("#errNotAcceptTNC").hide();
+                }*/
+                console.log('Test BaseESignatureVFP.saveSignature');
+                // 20200306 - minghua - ILAS
+                var isILASFund = '{!isILASFund}';
+                var isCustomer = '{!isCustomer}';
+                console.log('isILASFund:'+isILASFund);
+                if (isILASFund == 'true' && isCustomer == 'true') {
+                    console.log('enter ILASFund');
+                    var showwaingmes = false;
+                    var checkTextarea = false;
+                    var textStr = '';
+                    var warningMessage = document.getElementById('fund-show-warning-message');
+                    var provideReason = document.getElementById('provideReason');
+                    $('#fund-show-error-div').hide();
+                    $('#fundErrorMes').text('');
+                    if(warningMessage.style.display != "none"){
+                        showwaingmes = true;
+                        console.log('enter warning-message');
+                    }
+
+                    if (showwaingmes) {
+                    if (provideReason.style.display == "none") {
+                        $('#fund-show-error-div').show();
+                        $('#fundErrorMes').text('{!transField["Please_click_Personal_Risk"]}');
+                        return;
+                    }
+                    textStr = $('textarea[id$=switchReasonMessage]').val();
+                    if (!validString(textStr)) {
+                      //show error message
+                      $('#fund-show-error-div').show();
+                      $('#fundErrorMes').text('{!transField["Please_enter_all_characters"]}{!transField["please_check_the_existing"]}');
+                      return;
+                    }
+
+                    if($('#fund-switch-checkReason').is(':checked')){
+                      console.log('show checkReason');
+                      checkTextarea = true;
+                    }else{
+                      //show error message
+                      $('#fund-show-error-div').show();
+                      $('#fundErrorMes').text('{!transField["Written_ACK"]}');
+                      return;
+                    }
+                  }
+                  $('input[type=hidden][id$=fund-reasonCheckbox]').val(checkTextarea);
+                  $('input[type=hidden][id$=fund-ReasonContent]').val(textStr);
+                }
+
+                if({!tncFlag}){
+                    var isChecked = true;
+                    $('.esignature-sign-div .cigna-question-checkbox').each(function(i){
+                        if($(this).is(':checked') == false){
+                            $(this).closest(".esignature-sign-div").find(".errNotAcceptTNC").show();
+                            isChecked = false;
+                        } else {
+                            $(this).closest(".esignature-sign-div").find(".errNotAcceptTNC").hide();
+                        }
+                    });
+                    if(!isChecked) return;
+                }
+                
+                var isEmpty = false;
+                $(".signature-canvas").each(function(i){
+                    if(Cigna.ESignatureComp.isEmptyCanvas(i+1)){
+                        $(this).closest(".esignature-sign-div").find(".errEmptySignature").show();
+                        isEmpty = true;
+                    } else {
+                        $(this).closest(".esignature-sign-div").find(".errEmptySignature").hide();
+                    }
+                });
+                if(isEmpty) return;
+                
+                ESignature.submitESignature(Cigna.ESignatureComp.getSignatureImage(1), Cigna.ESignatureComp.getSignatureImage(2));
+                //alert(Cigna.ESignatureComp.getSignatureImage());
+                //window.open(Cigna.ESignatureComp.getSignatureImage());
+                
+                // 20200306 - minghua - ILAS
+                $('#fund-details-div').hide();
+
+                $('#submit-button-group').hide(function(){
+                    $('.esignature-sign-div').fadeOut(function(){
+                        $('#successSignature').fadeIn(function(){
+                        });
+                    });
+                });
+            }
+            
+            function getSignatureImage(canvasIndex) {
+                if(signaturePad[canvasIndex] != undefined){
+                    return signaturePad[canvasIndex].toDataURL();
+                }
+            }
+            
+            function getPICS() {
+                return $('#esignature-sign-div #esignature-pics').is(':checked');
+            }
+            
+            function isEmptyCanvas(canvasIndex) {
+                return emptyCanvasImgData[canvasIndex] === getSignatureImage(canvasIndex);
+            }
+            
+            return {
+                init : init,
+                resizeCanvas : resizeCanvas,
+                forceResizeCanvas : forceResizeCanvas,
+                clearSignature : clearSignature,
+                saveSignature : saveSignature,
+                getSignatureImage : getSignatureImage, 
+                isEmptyCanvas : isEmptyCanvas,
+                getPICS : getPICS
+            }
+        }();
+        
+        <apex:variable value="{!1}" var="eIndex"/>
+        <apex:repeat value="{!signatureList}">
+            Cigna.ESignatureComp.init({!eIndex});
+            Cigna.ESignatureComp.forceResizeCanvas({!eIndex});
+            <apex:variable var="eIndex" value="{!eIndex + 1}" />
+        </apex:repeat>
+        function updateRecord(){
+            if({!isClaim} && {!!IsGOP}){
+            
+                updateClaim();
+                
+            }else if({!isPolicyChange}){
+                
+                updatePolicyChange();
+            
+            }else if({!IsGOP}){
+            
+                updateGOP();
+            }else if({!isRPQ}){
+                console.log('beforce update RPQ');
+                updateRPQResult();
+            }
+        }
+        
+        function goHome() {
+            var userAgent = window.navigator.userAgent.toLowerCase();
+            var sf1withoutBrowser = /salesforce1/i.test( userAgent );
+            
+            var sitePrefix = "{!$Site.Prefix}";
+            var url = "";
+            
+            if (Cigna.Util.isBrokerPortal()) {
+                url = sitePrefix + "/apex/BrkBrokerLandingVFP";
+            } else if (Cigna.Util.isCustomerPortal()) {
+                url = sitePrefix + "/apex/CustomerLandingPage";
+            } else {
+                var currentUrl = window.location.href.substring(window.location.href.lastIndexOf('/'));
+                if (currentUrl.toLowerCase().indexOf('/cus') == 0) {
+                    url = "/apex/CustomerLandingPage"; 
+                } else if (currentUrl.toLowerCase().indexOf('/brk') == 0) {
+                    url = "/apex/BrkBrokerLandingVFP";
+                } else {
+                    url = "/apex/CustomerLandingPage"; 
+                } 
+            }
+            
+            if (Cigna.Util.isSalesforce1()) {
+                if(sf1withoutBrowser){
+                    sforce.one.navigateToURL(url, true);
+                } else {
+                    window.location.href = url;
+                }    
+            } else {
+                window.location.href = url;
+            }
+        }
+    </script>
+    
+</apex:page>

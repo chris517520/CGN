@@ -1,0 +1,825 @@
+<!--Please change apex page id and Portal Template Page-->
+<apex:page docType="html-5.0" id="CustomerPortalTemplatePage" controller="TwoFAController" sidebar="false" showHeader="false" title="{!$Label.Login_Title}" applyBodyTag="false" applyHtmlTag="false" standardStylesheets="false" cache="false"> 
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <!-- CR-58 performance tuning: preload resoruce 2022-03-01 Zane -->
+        <link rel="preload" href="{!$Resource.Cigna_Logo_png}" as="image"/>
+        <!-- CR-58 performance tuning: pre connect next page 2022-03-01 Zane -->
+        <link rel="preconnect" href="{!$Site.Prefix}/setup/secur/RemoteAccessAuthorizationPage.apexp"/>
+
+        <apex:include pageName="DDDemoJS"/>
+        
+        <apex:include pageName="CignaUtilJS"/>
+        <style>
+
+            div#overlay, div#PICSoverlay {
+                display: none;
+                z-index: 10;
+                background: #D9D9D6;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                text-align: center;
+            }
+            div#specialBox, div#PICSBox {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 150px auto 0px auto;
+                width: 80%;
+                height: 70%;
+                background: #FFF;
+                color: #000;
+                left: 10%;
+                padding:20px;
+                border-radius:5px;
+                
+                
+            }
+            #closeOverlay, #closePICSOverlay {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
+
+            div#PICSoverlay ol {
+                padding-left: 0px;
+            }
+
+            #tccontent {
+                padding:10px;
+                color:#000;
+                font-size:12px;
+                width: 100%;
+                height: 95%;
+                overflow-y:auto;
+            }
+        
+            span[id$="cigna-error"] span div.message{
+                border: none;
+                //background-color: #cc0000;
+                background-color: #fff;
+                //background-color: transparent;
+                opacity: .9;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td img{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell div span{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell{
+                //color: #fff;
+                //color: #F68621;
+                color:red;
+                font-family: "Gotham SSm A", "Gotham SSm B";
+            }
+            
+            span[id$="cigna-error"] .messageText::before{
+                content: "\f071\20";
+                font: normal normal normal 14px/1 FontAwesome;
+                font-size: inherit;
+                text-rendering: auto;
+                -webkit-font-smoothing: antialiased;
+                padding-right: 7px;
+            }
+
+			 .loading-div{
+                position: fixed !important;
+                Color:red;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                font-size: 1em;
+                z-index: 999;
+                background: white;
+                vertical-align: middle;
+                text-align: center;
+                top: 0px;
+                left: 0px;
+             }
+
+			.loading-helper{
+                display: inline-block;
+    			height: 100%;
+    			vertical-align: middle;
+             }
+
+             /*CR-56_Link_20220214*/
+            .ui-tooltip {
+                background: black !important;
+                max-width: 250px !important;
+                width: 250px; 
+                min-width: 100px;
+                color: white !important;
+                z-index: 1070;
+                display: block;
+                text-align: center !important;
+                font-size: 12px !important;
+                border-radius: 5px !important;
+            }
+        </style>
+            
+        <script>
+            $(document).ready(function(){
+            
+				//CR-55 David - performance Tuning
+                //Add the image tag due to Salesforce limitation in apex:facet 
+             	$("<img id=\"cigna-loading\" class=\"cignaLogo\" src=\"{!URLFOR($Resource.Cigna_Logo_png)}\" style=\"height: 120px;top:auto;position: relative;\"/>").insertAfter(".loading-helper");              
+             	initTwoFA();
+				
+                //minghua - 20191119 - press Enter click verify button
+                //CR-56_Link_20220214
+                $("[id$=':registration-code']").on("keydown",function(event){
+                    var keyCode = event.keyCode;
+                    if(keyCode == 13){
+                        event.preventDefault();
+                        //CR-56_Link_20220214
+                        $("[id$='verify-registration-code']").trigger("click");
+                    }
+                });
+
+                $("[title]").tooltip();
+                //CR-56_Link_20220214
+                $(".inputs").on("keyup",function () {
+                    if (this.value.length == this.maxLength) {
+                      var $next = $(this).next('.inputs');
+                      if ($next.length){
+                          $(this).next('.inputs').trigger("focus");
+                      }else{
+                          $(this).trigger("blur");
+                     }
+                    }
+                });               
+            });
+
+            function toggleOverlay(){
+                var overlay = document.getElementById('overlay');
+                var specialBox = document.getElementById('specialBox');
+                overlay.style.opacity = .95;
+                if(overlay.style.display == "block"){
+                    overlay.style.display = "none";
+                    specialBox.style.display = "none";
+                } else {
+                    overlay.style.display = "block";
+                    specialBox.style.display = "block";
+                }
+            }
+
+            function togglePICSOverlay(){
+                var overlay = document.getElementById('PICSoverlay');
+                var specialBox = document.getElementById('PICSBox');
+                overlay.style.opacity = .95;
+                if(overlay.style.display == "block"){
+                    overlay.style.display = "none";
+                    specialBox.style.display = "none";
+                } else {
+                    overlay.style.display = "block";
+                    specialBox.style.display = "block";
+                }
+            }
+        
+            function validation(){             
+                $("[id$='Validate']").prop('disabled', true);
+            }
+                                    
+            function disableResend(){             
+                $("[id$='re-send-registration-code']").prop('disabled', true);
+            }
+            
+            function enableResend(){             
+                $("[id$='re-send-registration-code']").prop('disabled', false);
+            }
+            
+            function disableVerify(){             
+                $("[id$='verify-registration-code']").prop('disabled', true);
+            }
+            function disableSubmit(){             
+                $("[id$='first-time-before-marketing-code']").prop('disabled', true);
+            }
+            
+            function enableVerify(){             
+                $("[id$='verify-registration-code']").prop('disabled', false);
+            }
+            
+            function disableRegistration(){             
+                $("[id$='register']").prop('disabled', true);
+            }
+                       
+            function logout() {
+                if (Cigna.Util.checkWebView()) {
+                    window.location = "https://localhost/logout.html";
+                } else {
+                    location.href = "{!$Label.Logout_URL}";
+                }
+            }
+        </script>
+    </head>
+
+    <!-- Start of the page template -->
+    <apex:composition template="CustomerUnauthorizedPageTemplateNoCache">
+              
+        <apex:define name="body">
+            <!-- 20220127 - minghua - SMT-124, add reRender id SMT_Panel-->
+        	<apex:actionFunction action="{!action}" name="initTwoFA" status="loader-icon" reRender="SMT_Panel,two_FA_Panel"/>
+        
+        	<apex:actionStatus id="loader-icon">
+                    <apex:facet name="start">
+                        <div class="bs col-xs-12 col-lg-12 loading-div" style="padding: 0px;">
+                            <span class="loading-helper"></span>
+ 
+                        </div>
+                    </apex:facet>
+           </apex:actionStatus>
+
+            <!--Nicole_SMT_20210423 start-->
+            <!-- 20220127 - minghua - SMT-124, add a reRender panel-->
+            <apex:outputPanel id="SMT_Panel">
+                <apex:outputPanel rendered="{!cannotLogin}">
+                    <div class="col-xs-12 col-md-12">
+                        <p>
+                            <!-- 20230919 - Owen - PI-122, add change the cant login error-->
+                            <h5><apex:outputText escape="false" value="{!transFieldSMT['Cannot_Login'][$Label.Header_Language_Code_Current]}"/> </h5>
+                            <!-- <h5>{!transFieldSMT['Cannot_Login'][$Label.Header_Language_Code_Current]}</h5> -->
+                        </p>
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel>
+            <apex:outputPanel id="two_FA_Panel" rendered="{!!cannotLogin}">
+            <!--Nicole_SMT_20210423 end-->
+            
+                    <apex:outputPanel id="errorPanel">
+                        <div class="col-xs-12 col-md-12">
+                            <apex:pageMessages id="cigna-error"/>
+                        </div>
+                    </apex:outputPanel>
+                    <!-- add bob jr1870 20201029 -->
+                    <apex:outputPanel id="verificationTitle">
+                        <apex:outputPanel rendered="{!(!firstTimeBeforeMarketingOptOut) && isActionDone}">
+                            <div class="col-xs-12 col-md-12">
+                                <h4><apex:outputText value="{!transField['Verifyisyou'][$Label.Header_Language_Code_Current]}" rendered="{!contains(transKey, '~Verifyisyou~')}"/></h4>
+                                <apex:outputPanel id="registerAs">
+                                        <p>
+                                            <h5>
+                                                <apex:outputText value="{!transField['ValidateRegistrationCodeReminder'][$Label.Header_Language_Code_Current]}" rendered="{!contains(transKey, '~ValidateRegistrationCodeReminder~')}"><apex:param value="{!registrationEmail}" /></apex:outputText>
+                                            </h5>
+                                        </p>
+                                </apex:outputPanel>
+                            </div>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+
+                    <!-- add bob jr1870 20201029 -->
+                    <apex:outputPanel id="marketingOptOutTitle">
+                        <apex:outputPanel rendered="{!firstTimeBeforeMarketingOptOut && isActionDone}">
+                            <div class="col-xs-12 col-md-12">
+                                <h4><apex:outputText value="{!$Label.marketingOptOutTitle}"/></h4>
+                            </div>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    
+                    <!-- add bob jr1870 20201029 -->
+                    <apex:outputPanel id="verificationCode" >
+                        <apex:outputPanel rendered="{!(!firstTimeBeforeMarketingOptOut) && isActionDone}">
+                                <div class="form-group col-xs-12 col-md-12">
+                                    <apex:outputText value="{!transField['VerificationCode'][$Label.Header_Language_Code_Current]}" rendered="{!contains(transKey, '~VerificationCode~')}"/>
+                                </div>
+                            
+                                <!-- <div class="form-group col-xs-12 col-md-12">
+                                        <div class="bs col-xs-7 col-md-7" style="padding:0 !important;">
+                                            <apex:inputText value="{!Code}" id="registration-code" html-placeholder="{!IF(contains(transKey, '~Code~'), transField['Code'][$Label.Header_Language_Code_Current],'Code')}" styleClass="form-control"/> 
+                                        </div>
+                                        <div class="bs col-xs-5 col-md-5" style="padding:0 !important;">
+                                            <apex:commandButton value="{!IF(contains(transKey, '~ResendTheCode~'), transField['ResendTheCode'][$Label.Header_Language_Code_Current],'Resend The Code')}" action="{!sendRegistrationCode}" reRender="RegStep1,errorPanel" id="re-send-registration-code" onclick="disableResend();" oncomplete="enableResend();" styleClass="bs btn btn-primary btn-block" />
+                                        </div>
+                                    
+                                </div> -->
+                            
+                                <div class="col-xs-12 col-md-12">
+                                     <apex:commandButton value="{!IF(contains(transKey, '~Verify~'), transField['Verify'][$Label.Header_Language_Code_Current],'Verify')}" action="{!login}" reRender="RegStep1,errorPanel,registerAs,marketing,verificationCode,verificationTitle,marketingOptOutTitle" id="verify-registration-code" onclick="disableVerify();"
+                                     oncomplete="enableVerify();" styleClass="bs btn btn-primary btn-block" />    
+                                </div>
+                            
+                                <!--div class="col-xs-12 col-md-12">
+                                    <BR/>
+                                    <apex:outputText value="{!transField['ResendReminder'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "ResendReminder"), true,false)}"/>
+                                </div-->
+                                
+                                <div class="col-xs-12 col-md-12">
+                                    <BR/>
+                                    <apex:outputLink value="/customer/secur/logout.jsp">
+                                    <apex:outputText value="{!transField['loginOthers'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, 'loginOthers'), true,false)}"/>
+                                    </apex:outputLink> 
+                                </div>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+
+                        <!-- add bob jr1870 20201029 -->
+                        <apex:outputPanel id="marketing">
+                            <apex:outputPanel rendered="{!firstTimeBeforeMarketingOptOut && isActionDone}">
+                                <div class="form-group col-xs-12 col-md-12">
+                                    <BR/>
+                                    <apex:outputText value="{!$Label.Marketing_Opt_Out_Title}"/>
+                                </div>
+                
+                                <div class="col-xs-12 col-md-12">
+                                    <BR/>
+                                    <input id="accept" type="checkbox" />
+                                    <!-- add by Jack on 2021-10-19 for project: SMT-110 -->
+                                    <!-- <label for="accept" class="control-label">{!$Label.Read_Accepted_Terms}<a onclick="toggleOverlay()">&nbsp;<b>{!$Label.Footer_Terms_Conditions}</b></a> -->
+                                    <!--Nicole_SMT_20210603 &nbsp;{!$Label.Accepted_And_Inform}&nbsp;</label><label>
+                                    &nbsp;<a onclick="togglePICSOverlay()"><b>{!$Label.Inform_Collection_Statement}</b></a>&nbsp;-->
+                                    <!-- {!$Label.Of_Cigna}</label> -->                                    
+                                    <label for="accept" class="control-label">{!transField['I_accepted'][$Label.Header_Language_Code_Current]}</label>
+                                    <label class="control-label" style="font-weight: normal;">{!$Label.TelaDoc_S}</label>
+                                    <apex:outputPanel rendered="{!JSINHTMLENCODE($Label.Header_Language_Code_Current) == 'en_US'||JSINHTMLENCODE($Label.Header_Language_Code_Current) ==''}">
+                                    	<a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!SMT_Teladoc_Privacy_Notice}" target="_blank">
+                                        <label class="control-label" style="cursor:pointer;text-decoration: underline;font-weight: normal;">{!$Label.Data_Privacy_Notice}</label>
+                                    	</a>                                    
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!JSINHTMLENCODE($Label.Header_Language_Code_Current) == 'zh_TW'}"> 
+                                        <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!SMT_Teladoc_Privacy_Notice_TC}" target="_blank">
+                                        <label class="control-label" style="cursor:pointer;text-decoration: underline;font-weight: normal;">{!$Label.Data_Privacy_Notice}</label>
+                                    	</a>
+                                    </apex:outputPanel>
+                                    <label class="control-label" style="font-weight: normal;">{!$Label.And_Lable}</label>
+                                    <apex:outputPanel rendered="{!JSINHTMLENCODE($Label.Header_Language_Code_Current) == 'en_US'||JSINHTMLENCODE($Label.Header_Language_Code_Current) ==''}">
+                                        <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!SMT_Teladoc_Terms_Conditions}" target="_blank">
+                                            <label class="control-label" style="cursor:pointer;text-decoration: underline;font-weight: normal;">{!$Label.Terms_and_Conditions}</label>
+                                        </a>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!JSINHTMLENCODE($Label.Header_Language_Code_Current) == 'zh_TW'}">
+                                        <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!SMT_Teladoc_Terms_Conditions_TC}" target="_blank">
+                                            <label class="control-label" style="cursor:pointer;text-decoration: underline;font-weight: normal;">{!$Label.Terms_and_Conditions}</label>
+                                        </a>
+                                    </apex:outputPanel>                                    
+                                    <!-- add by Jack on 2021-10-19 for project: SMT-110 -->
+                                </div>
+                                <!-- Start Special Centered Box -->
+                                <div id="overlay" style="display:none;">
+                                    <div id="specialBox">
+                                        <a href="#" style="color:#337ab7 !important;"><div id="closeOverlay" class="glyphicon glyphicon-remove" onclick="toggleOverlay();"></div></a>
+                                        <h4>{!$Label.Terms_and_Conditions}</h4>
+                                        <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                                        <div id="tccontent">
+                                            <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'zh_TW'}">
+                                                 <div id="reallocationtccontent" style="text-align:left">
+                                                 <b>Terms and Conditions for Internet Services</b><br/><br/>
+                                                 <b>1.  Application and Service</b><br/><br/>1.1 These Terms and Conditions shall, unless otherwise determined by Cigna, apply to all services provided by Cigna to you via Internet from time to time ("Services").<br/><br/>1.2 Cigna shall be entitled from time to time to impose any limit whether in transaction amount, operating procedures or otherwise on the use of any Services and such limit shall be determined by Cigna at its discretion.<br/><br/>
+                                                 <b>2.  Registration</b><br/><br/>2.1 You warrant that all information provided by you to Cigna is provided voluntarily and that such information is true, correct and complete in all respects. You have to inform us forthwith if there is any change of your information.<br/><br/>
+                                                 <b>3.  Instruction</b><br/><br/>3.1  Cigna will rely upon and act in accordance with instructions given to us through Internet in connection with any Services offered to you if the person giving the instruction can quote your Username and Password.<br/><br/>3.2 Cigna shall not be under any duty to verify the identity of the person sending instructions on your behalf. Any translation or Services effected pursuant to such instructions referred to in paragraph 3.1 above shall be binding upon you whether the instructions were made with or without your authority, knowledge or consent.<br/><br/>3.3 Cigna may refuse to accept any instruction upon such grounds as we deem fit.<br/><br/>3.4 Any transaction effected pursuant to an instruction given to Cigna may be considered concluded only if Cigna has confirmed the same to you.<br/><br/>3.5 You undertake to: (a) keep your PIN, Username and Password secret and safe; and (b) inform Cigna as soon as reasonably practicable if you know or suspect that, any unauthorized person knows your PIN, Username or Password.<br/><br/>3.6 You shall hold Cigna harmless and indemnify Cigna against all actions, proceedings, demands, claims, liabilities, damages, losses, costs and expenses howsoever arising, directly or indirectly, out of the Services or transactions effected in accordance with any instruction referred to in paragraph 3.1 above. This indemnity shall continue notwithstanding any maturity or expiry or termination of your policy(ies).<br/><br/>
+                                                 <b>4.  Warranties</b><br/><br/>4.1 You warrant to Cigna that:<br/><br/>  (a) You shall not gain access to any Services in any country or jurisdiction where the offering of the same by Cigna is not lawful or where these Terms and Conditions may not be enforceable by us against you. If you access this site from outside Hong Kong, you do so on your own responsibility and are responsible for ensuring compliance with all laws in the place where you are located.<br/><br/>  (b) You shall not, and shall not attempt to, reverse engineer, decompose, disassemble or otherwise tamper with any software relating to any Services.<br/><br/>  (c) You shall ensure that the browser cache memory shall be cleared as soon as you logout each time after having gained access to any Services through use of computer and you shall exit the browser immediately after each use of any Services through use of computer.<br/><br/>
+                                                 <b>5.  Disclaimers</b><br/><br/>5.1 Owing to unpredictable traffic congestion, openness and public nature of the Internet and other reasons, the Internet may not be a reliable medium of communication and that such unreliability is beyond the control of Cigna. This may subject transactions to delays in transmission, incorrect data transmission, delays in execution, misunderstanding and errors in any communication between Cigna and you, transmission blackouts, interruptions and so on.<br/><br/>5.2 Cigna cannot and does not guarantee or warrant that files available for downloading from this site are free of viruses, worms, Trojan horses or other code that has contaminating or destructive properties. Cigna shall assume no responsibility, and shall not be liable for, any damages to, or viruses that may infect, your computer equipment or other property as a result of your access to, use of, or browsing in this website or your downloading of any materials, data, text, images, video or audio from this website.<br/><br/>5.3 This website may be linked to other websites which are not maintained by Cigna. Cigna shall not be responsible for the contents of those websites. The inclusion of any link to such websites does not imply approval of or endorsement by Cigna of the website or the contents thereof.<br/><br/>5.4 You agree by accessing this website that to the fullest extent permitted by law, under no circumstances or any theories of liability under international or civil, common or statutory law including but not limited to strict liability, negligence or other tort theories or contract, patent or copyright laws, will Cigna be liable for damages of any kind occurring from the use of this website or any information or services obtained on this website including direct, indirect, consequential, incidental, or punitive damages (even if Cigna has been advised of the possibility of such damages), to the fullest extent permitted by law.<br/><br/>
+                                                 <!-- Comment by Shengt for JOBR-235 -->
+                                                 <!-- <b>6.  Your Personal Information</b><br/><br/>6.1 You agree that Cigna may use and/or disclose your personal information in accordance with :<br/><br/>  (a) <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!Privacy_statement_eng}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">Privacy Statement of Cigna</a> (as may be amended from time to time) which is posted on MyCigna.com.hk; and<br/><br/>  (b) <a href="{!PersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">Cigna's Personal Information Collection Statement</a> issued from time to time.<br/><br/> -->
+                                                 
+                                                 <b>6.  Your Personal Information</b><br/><br/>6.1 You agree that Cigna may use and/or disclose your personal information in accordance with :<br/><br/>  (a) <a href="{!Privacy_statement_eng}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">Privacy Statement of Cigna</a> (as may be amended from time to time) which is posted on MyCigna.com.hk; and<br/><br/>  (b) <a href="{!PersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">Cigna's Personal Information Collection Statement</a> issued from time to time.<br/><br/>
+                                                 <b>7.  Information on this Website</b><br/><br/>7.1 Any transaction effected by you through use of any Services shall be made solely upon exercise of your own judgment and at your own discretion notwithstanding any information, suggestion or documents Cigna may have provided to you.<br/><br/>7.2 Any information, suggestion or recommendation communicated to you by Cigna is based on information obtained from sources believed by Cigna to be reliable, are for your own use and consideration only and will not constitute an offer to sell any investment to you.<br/><br/>7.3 Cigna shall not be liable for any inaccuracy or incompleteness of any information provided by Cigna or the performance or outcome of any transactions effected by you after receipt of such information.<br/><br/>7.4 Any price of funds or other similar information quoted to you is for your reference only and shall not be binding on Cigna unless confirmed by Cigna for a transaction.<br/><br/>
+                                                 <b>8.  Trademarks and Copyright</b><br/><br/>8.1 There are references throughout this website to various trademarks or service marks and these, whether registered or not, are the property of their respective owners. Images displayed on this website are the property of their respective owners.<br/><br/>8.2 Nothing contained on this website should be construed as granting, by implication, estoppel, or otherwise, any license or right to use any trademark or images displayed on this website without the written permission of the owners.<br/><br/>8.3 No materials or contents (including the text, images, audio and video) from this website may be copied, reproduced, republished, uploaded, posted, transmitted or distributed in any way without our permission.<br/><br/>
+                                                 <b>9.  Amendments</b><br/><br/>9.1 Cigna may at any time delete, replace, add or change any term of these Terms and Conditions. You are advised to read these Terms and Conditions from time to time before utilizing any Services through Internet. You are deemed to have accepted and agreed to be bound by these Terms and Conditions and its revisions (if any) upon your utilizing any Services on this website.<br/><br/>9.2 Cigna may at any time introduce any new Services or delete any existing Services without prior notice.<br/><br/>
+                                                 <b>10.  Governing Law and Prevailing Language</b><br/><br/>10.1 These Terms and Conditions shall be governed by and construed in accordance with the laws of the Hong Kong Special Administrative Region.<br/><br/>10.2 The English version of these Terms and Conditions shall prevail, if there is any inconsistency between the English and the Chinese versions.<br/><br/>
+                                                 <b>Privacy Statement</b><br/><br/>PLEASE READ CAREFULLY.<br/><br/>We know that when you visit us at MyCigna.com.hk, you depend on us to be as diligent about protecting your privacy on-line as we've always been in our more traditional interactions with you. We also know that you rely on us to provide products and services that meet each of your unique needs. To do both, we need to gather and protect certain information about you.<br/><br/>
+                                                 <b>What kind of information does MyCigna.com.hk collect?</b><br/><br/>We've designed our Web site to capture two types of information: automatic tracking and individualized. The first allows us to see which topics interest you most; the second helps us service your accounts.<br/><br/>Automatic tracking information is gathered by following your "footsteps" through MyCigna.com.hk. The route you and other visitors choose tells us a little something about the people who visit our site. We use aggregate numbers to compile statistics, monitor trends and track site usage. We also use the information to make sure our technology is compatible with yours. We're then better able to offer products and services that match your needs.<br/><br/>Individualized information can be anything you've provided to MyCigna.com.hk that identifies you or your accounts. For example: Your name, identity card number, birth date, address and names of your dependents are types of individualized information. We use this information to service your accounts. It's our policy to send and receive individualized information through encrypted channels only.<br/><br/>To use our secure services, "cookies" must be enabled. Cookies are small pieces of software that remain activated during your session in a secure area, then are deactivated when you log off.<br/><br/>
+                                                 <b>What do you do with the information you collect about me?</b><br/><br/>We will not sell, rent or license your individualized information furnished by you to MyCigna.com.hk unless you authorize it. But we may need to use and/or transfer it within the Cigna family or to affiliate companies or with a third party vendor, within or outside Hong Kong, to perform administrative, technical, hosting, marketing or other functions that help us manage the site while providing service to you. Our third party vendors subscribe to the same privacy practices as MyCigna.com.hk.<br/><br/>Except as noted above, we will not release individualized information to any other party unless required to do so by government authorities or legal process or as otherwise permitted by law.<br/><br/>We will retain individualized information for a period necessary to attain the specified purposes.<br/><br/>
+                                                 <b>What if I need to correct or remove information about me?</b><br/><br/>You can contact our Privacy Data Protection Officer (Address: {!$Label.Cigna_Address_en}) by mail. Please do not e-mail individualized information unless you do so through a secure channel. We have a policy that prohibits us from communicating individualized information through non-secure e-mail.<br/><br/>
+                                                 <b>What if I don't want you to collect, use and distribute my information?</b><br/><br/>If you don't want MyCigna.com.hk to collect, use and distribute information about you, there are always traditional means of communication available to you. Simply pick up the phone or send your questions, comments and specific information by regular mail.<br/><br/>
+                                                 <b>About e-mail</b><br/><br/>From time to time we may send informational, educational or promotional materials to you at the e-mail address you've provided.<br/><br/>Please remember that e-mail messages can be viewed by other Internet users while in transit. If you have individualized information to communicate, please contact your local customer service representative or e-mail us a request for your customer service representative to contact you.<br/><br/>
+                                                 <b>How secure is MyCigna.com.hk?</b><br/><br/>Your individualized information at MyCigna.com.hk is protected from unauthorized access by a secure firewall and security infrastructure. When information is received, we employ extensive physical, electronic and procedural safeguards to maintain the security of your information. MyCigna.com.hk also conducts periodic reviews of its Web security to ensure that our electronic security safeguards remain up-to-date and effective.<br/><br/>
+                                                 <b>What about the links on your site? Are they secure?</b><br/><br/>Because we don't own or control all the sites linked from MyCigna.com.hk, we can't guarantee they're secure; therefore, we can not assume responsibility for all their privacy practices. If you enroll with a company that is not affiliated with MyCigna.com.hk or any Cigna company, we urge you to review the privacy policies of any of the Web sites you visit once you leave MyCigna.com.hk.<br/><br/>
+                                                 <b>I'm not a Hong Kong customer. How do I fit into your privacy policies?</b><br/><br/>Your continued use of MyCigna.com.hk from places or countries other than Hong Kong means that you are giving your consent to have your individualized information processed outside those places or countries in accordance with the protection described in this Privacy Statement.<br/><br/>
+                                                 <b>I've switched my coverage to another company. What will you do with my information?</b><br/><br/>We will continue to treat your individualized information with the same confidentiality and respect we extend to all our valuable customers.<br/><br/>
+                                                 <b>Why is this Privacy Statement important to me?</b><br/><br/>Your visit to MyCigna.com.hk and any dispute over privacy is subject to this Statement, <a href="{!PersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">Personal Information Collection Statement of Cigna Hong Kong</a> and our Legal Disclaimers/Conditions of Use including limitations of damages and the application of the laws of Hong Kong and exclusive jurisdiction of the courts of Hong Kong.<br/><br/>This statement is applicable only to information collected from you during your visit to MyCigna.com.hk. We will display a prominent notice on the MyCigna.com.hk home page whenever this Privacy Statement is updated or changed and you should check our Privacy Statement periodically. By choosing to continue usage of MyCigna.com.hk, you agree to the terms of the Privacy Statement.<br/><br/>If you have any questions of comments concerning this Statement, please contact us by postal mail at:<br/><br/><apex:outputText escape="false" value="{!$Label.Cigna_Address_en_2_line}"/><br/><br/><br/><br/>Last Updated: 31 Oct 2008
+                                                 </div>
+                                            </apex:outputPanel>
+                                            <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'en_US'}">
+                                                 <div id="reallocationtccontent" style="text-align:left">
+                                                 <b>網上服務的條款及細則</b><br/><br/>
+                                                 <b>1.  使用與服務</b><br/><br/>1.1 除信諾另行決定外，此條款及細則適用於信諾不時於互聯網上提供予閣下之所有服務 (“服務”)。<br/><br/>1.2 信諾有權不時就交易金額、操作程式或在使用任何服務之細節加上任何限額或限制。信諾有酌情決定權對此等限額或限制作出更改。<br/><br/>
+                                                 <b>2.  註冊</b><br/><br/>2.1 閣下保證向信諾提供的所有資料均為自願，而有關資料在任何方面均為真實、正確及完整。閣下的資料如有任何改變，必須立即通知信諾。<br/><br/>
+                                                 <b>3.  指示</b><br/><br/>3.1 若任何人士通過互聯網給與信諾指示，並可提供閣下的用户名稱和密碼，信諾將根據並遵照該指示進行交易或提供服務給與閣下。<br/><br/>3.2 信諾將不會有任何責任核實於互聯網上以閣下名義給與信諾指示的人士的身分。根據上述第3.1條所給與信諾的指示所進行之交易或提供之服務，閣下無論是否知情、同意或已授權，將須要負上責任。<br/><br/>3.3 信諾可在其認為適當之情況下拒絕接納任何指示。<br/><br/>3.4 所有根據向信諾發出的指示所進行之交易，需由信諾向閣下確認後方視為完成交易。<br/><br/>3.5 閣下承諾：(a)確保閣下之個人識別碼、用户名稱和密碼保持機密及妥善保存；(b)若閣下得悉或懷疑有任何未獲授權之人士知悉閣下之個人識別碼、用户名稱或密碼，會於情況許可下盡快通知信諾。<br/><br/>3.6 對於信諾因應根據上述第3.1條所給與的指示所進行之交易或提供之服務，直接或間接地招致之一切申索、訴訟、要求、賠償、責任、損害、損失、費用和支出（不論其招致原因），閣下無條件及不可撤回地同意賠償信諾及使信諾免受損害。不論閣下的保單是否已屆成熟或期滿或終止，此彌償保證將繼續生效。<br/><br/>
+                                                 <b>4.  保證</b><br/><br/>4.1 閣下向信諾保證如下：<br/><br/>  (a) 閣下不會在任何禁止信諾提供有關服務或交易或對此條款及細則沒有法律效用的國家或司法管轄區使用任何服務。若閣下在香港以外的地方進入此網站，閣下須自行負上責任，確保遵從有關地方之法律；<br/><br/>  (b) 閣下不會及不會試圖就與任何服務相關的電腦軟件進行還原工程、分拆或其他類型的干擾；<br/><br/>  (c) 閣下承諾確保每次透過電腦使用完任何服務後盡快登出、關閉瀏覽器並把瀏覽器的記憶體內之資料清除。<br/><br/>
+                                                 <b>5.  免責聲明</b><br/><br/>5.1 閣下明白到互聯網可能因為未能預測的擠塞、其開放和公開性質、和其他原因，導致互聯網未必是可靠的通訊媒介，而這種不可靠是在信諾可控制範圍之外。這些因素可導致交易傳送延誤、錯誤資料傳送、延誤執行指示、或閣下與信諾溝通上的誤解和錯誤等等。<br/><br/>5.2 信諾不能並不會擔保或保證在本網站以供下載的檔案，沒有受到病毒感染或存有受感染或破壞性物質。信諾不會就閣下連接、使用或瀏覽本網站、或由本網站下載任何資料、數據、文字、影像、視像或音效而對閣下的電腦設備或其他財產造成的損害或受病毒的影響而負上任何責任。<br/><br/>5.3 本網站可能會被接駁至不屬於信諾所運作的其他網站。信諾不會就此等網站的內容負上責任。接駁至此等網站並不代表信諾已批核或贊同此等網站或其內容。<br/><br/>5.4 閣下進入本網站，即表示閣下同意：在法律許可的最大範圍內，在任何情況下或根據國際法、民事法、普通法或法定規定下的任何法律責任理論（包括但不限於嚴格法律責任、疏忽或其他侵權法理論或合約法、專利法或版權法）信諾均不就以下損害賠償負責：因使用本網站或在本網站上取得的任何資訊或服務發生的任何類別損害賠償，包括直接的、間接的、相應的、附帶的或懲罰性的損害賠償（即使信諾已獲悉可能有該等損害賠償）。<br/><br/>
+                                                 <!-- Comment by Shengt for JOBR-235 -->
+                                                 <!-- <b>6.  個人資料</b><br/><br/>6.1 閣下同意信諾可按照下列文件中的規定，使用及/或透露閣下的個人資料：<br/><br/>  (a) 張貼在MyCigna.com.hk的<a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!Privacy_statement_chi}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">信諾的隱私聲明</a>（可作不定時之修正）;和<br/><br/>  (b) 信諾不時發出的<a href="{!PersonalInformationCollectionStatement_chi}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">個人資料收集聲明</a>。<br/><br/> -->
+                                                 
+                                                 <b>6.  個人資料</b><br/><br/>6.1 閣下同意信諾可按照下列文件中的規定，使用及/或透露閣下的個人資料：<br/><br/>  (a) 張貼在MyCigna.com.hk的<a href="{!Privacy_statement_chi}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">信諾的隱私聲明</a>（可作不定時之修正）;和<br/><br/>  (b) 信諾不時發出的<a href="{!PersonalInformationCollectionStatement_chi}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">個人資料收集聲明</a>。<br/><br/>
+                                                 <b>7.  本網站中的資料</b><br/><br/>7.1 儘管信諾向閣下提供任何資料、建議或文件，然而閣下完全明白閣下通過使用任何服務所進行的任何交易純粹按照閣下個人之判斷及酌情決定權所進行。<br/><br/>7.2 信諾傳達给閣下之任何資料或建議均源於信諾認為可靠的資料來源，並只供閣下使用及考慮，而不構成向閣下邀約出售任何投資。<br/><br/>7.3 閣下同意信諾毋須就信諾提供任何不準確或不全面的資料，或在收到該等資料後閣下進行任何交易的表現或結果而負上責任。<br/><br/>7.4 信諾提供給與閣下有關的基金價格或其他類似的資料只供閣下參考，除非信諾確認交易，信諾不會受此約束。<br/><br/>
+                                                 <b>8.  商標和版權 </b><br/><br/>8.1 本網站中所提述的各個商標或服務商標（不論是否已註冊），均屬於其各有關擁有人的財產。本網站中所顯示的圖像均屬其各有關擁有人的財產。<br/><br/>8.2 本網站所載任何內容均不應詮釋為批予閣下，無論是暗示、不容反悔或其他形式之任何特許或權利，在未得有關擁有人的書面批准的情况下，以使用本網站上顯示的任何商標或圖像。<br/><br/>8.3 在未得到信諾准許的情況下，閣下不得將此網站所載的資料及內容(包括文字、影像、音效及視像)以任何方式複印、複製、出版、上載、刊登、傳送或發放。<br/><br/>
+                                                 <b>9.  修訂 </b><br/><br/>9.1 信諾可在任何時間刪除、替換、添加或更改此條款及細則。在利用及使用任何服務之前，信諾建議閣下先閱讀此條款及細則。當在此網站上使用任何服務，閣下將會被視作已接受並同意接受此條款及細則及其修訂（如有的話）。<br/><br/>9.2 信諾可在任何時候提出任何新的服務或刪除任何現有的服務，毋須事先通知。<br/><br/>
+                                                 <b>10.  管轄法律和語言</b><br/><br/>10.1 此條款及細則均受香港特別行政區之法律所管治及據其解釋。<br/><br/>10.2 此條款及細則以英文版為準。<br/><br/>
+                                                 <b>私隱聲明</b><br/><br/>請詳細閱讀<br/><br/>
+                                                 <b>MyCigna.com.hk 收集哪一類資料?</b><br/><br/>本網站的設計是供本公司收集兩類資料：網站自行追測及紀錄和客戶自行提供的資料。第一類資料讓本公司瞭解閣下最感興趣的項目，第二類資料則讓本公司為閣下提供服務。<br/><br/>網站自行追測及紀錄的資料是根據閣下在 MyCigna.com.hk 瀏覽的「路徑」所收集的。根據閣下及其他人士的瀏覽路線，讓本公司了解多一些關於網站瀏覽人士的資料：本公司將以結合的數據進行統計、監察網站的趨勢及使用量。同時亦會使用這些資料以確保本公司的技術水平、產品及服務能配合閣下的需要。<br/><br/>客戶自行提供的資料指閣下提供予 MyCigna.com.hk 的所有資料，以證明閣下或閣下的賬戶，例如閣下的名字、身份証號碼、出生日期、地址、閣下家屬的姓名及其他的個人資料。本公司將利用這些資料為閣下提供服務。本公司的策略是透過加密保安系統傳送及收集個人資料。<br/><br/>在使用本公司的保安服務時，必須啟動「曲奇檔案」( Cookies )。曲奇檔案是微型的軟件，當閣下進入本公司保安地帶時，它便會啟動，而當閣下離開時，它便會停止運作。<br/><br/>
+                                                 <b>貴公司會如何處理向本人收集的資料?</b><br/><br/>本公司不會將閣下的資料以售賣、租借或授權方式發放給其他人。本公司可能進行行政、技術、主機租賃、市場推廣或其他工作時使用及/或傳送資料予信諾的聯營或分公司或第三者(在香港境內或境外)以助管理網站及為閣下提供服務。第三者亦需同時遵守 MyCigna.com.hk 的私隱聲明。<br/><br/>除上述外，本公司不會向其他人透露閣下的個人資料，唯在政府機構或法律程序或法律容許的情況下則例外。<br/><br/>本公司將保留有關的個人資料一段時間以作特定用途。<br/><br/>
+                                                 <b>若想更改或刪除本人的資料，應怎樣做?</b><br/><br/>閣下可以郵寄方式聯絡本公司的個人資料保護主任（地址：{!$Label.Cigna_Address_zh})。請勿以電郵方式傳送個人資料，唯透過保安渠道則例外。本公司的政策是禁止所有透過非安全的渠道傳送個人資料。<br/><br/>
+                                                 <b>若本人不欲貴公司收集、使用及派發本人的資料，應怎樣做？</b><br/><br/>若閣下不欲 MyCigna.com.hk 收集、使用及派發閣下的資料，閣下仍可選擇傳統的通訊途徑。閣下可致電或以郵寄方式傳送您的問題、意見或特別資料予本公司。<br/><br/>
+                                                 <b>關於電子郵件。</b><br/><br/>本公司將不定期傳送一些資料性、教育性或推廣性的資料至閣下的電郵地址。<br/><br/>注意，電郵所載的訊息在傳送過程中可能被其他網站用戶看到。閣下需要傳送個人資料，請聯絡閣下所在地的客戶服務代表，或以電郵方式通知本公司，以便安排客戶服務代表與閣下聯絡。<br/><br/>
+                                                 <b>MyCigna.com.hk 的保安程度如何？</b><br/><br/>由於本公司不能擁有或控制所有連結到 MyCigna.com.hk 的網站，我們不能保證那些網站是否安全，亦不能為它們私隱操守負上責任。若閣下所參與的公司並非 MyCigna.com.hk 的聯營公司，本公司謹此忠告閣下在離開 MyCigna.com.hk 後，必先細閱該網站的的私隱聲明。<br/><br/>
+                                                 <b>關於貴公司網站的連結，是否安全？</b><br/><br/>由於本公司不能擁有或控制所有連結到 MyCigna.com.hk 的網站，我們不能保證那些網站是否安全，亦不能為它們私隱操守負上責任。若閣下所參與的公司並非 MyCigna.com.hk 的聯營公司，本公司謹此忠告閣下在離開 MyCigna.com.hk 後，必先細閱該網站的的私隱聲明。<br/><br/>
+                                                 <b>本人並非香港人／客戶，如何配合貴公司的私隱政策？</b><br/><br/>若閣下於香港以外地方／國家繼續使用 MyCigna.com.hk ，表示閣下已根據私隱聲明條款同意閣下的個人資料在其他地方和國家被處理。<br/><br/>
+                                                 <b>本人的保險保障已經轉往另一間公司，貴公司將如何處理本人的個人資料？</b><br/><br/>我們將繼續以保密方式處理及尊重閣下的個人資料。<br/><br/>
+                                                 <b>為什麼私隱聲明對本人如此重要？</b><br/><br/>閣下瀏覽 MyCigna.com.hk時，任何有關私隱的爭拗均受私隱聲明、<a href="{!PersonalInformationCollectionStatement_chi}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">信諾香港的個人資料收集聲明</a>及本公司法律卸責聲明／使用條件限制，包括有限制的破壞及香港法律使用及專有司法權。<br/><br/>此私隱聲明只適用於當閣下瀏覽 MyCigna.com.hk 時收集的個人資料。當私隱聲明被更新或更改時，本公司將於 MyCigna.com.hk 當眼之處展示有關通知。閣下亦須定期查閱私隱聲明，當閣下選擇繼續使用 MyCigna.com.hk ，即代表同意此私隱聲明的條款。<br/><br/>如閣下有任何關於私隱聲明的問題或意見，請以郵寄方式聯絡我們：<br/><br/>{!$Label.Cigna_Address_zh}<br/><br/>多謝閣下閱讀此私隱聲明。<br/><br/><br/><br/>更新日期：2008年10月31日
+                                                 </div>
+                                            </apex:outputPanel>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Special Centered Box -->
+
+                                <!-- Start Special PICS Box -->
+                                <div id="PICSoverlay" style="display:none;">
+                                    <div id="PICSBox">
+                                        <a href="#" style="color:#337ab7 !important;"><div id="closePICSOverlay" class="glyphicon glyphicon-remove" onclick="togglePICSOverlay();"></div></a>
+                                        <h4>{!$Label.Personal_Information_Collection_Statement}</h4>
+                                        <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                                        <div id="tccontent">
+                                            <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'zh_TW'}">
+                                                 <div id="reallocationtccontent" style="text-align:left">
+                                                    <p>The protection of privacy in relation to personal information is the concern of Cigna. We respect personal information and are committed to fully
+                                                        implementing and complying with the Data Protection Principles and all relevant provisions of the Personal Data (Privacy) Ordinance (“the
+                                                        Ordinance”). </p>
+                                                        
+                                                        <p>
+                                                            <ol style="list-style-type: decimal;padding-left: 0px;">
+                                                                <li>
+                                                                    <p>Personal Information We Collect and/or Hold  </p>
+                                                                    
+                                                                    <p>The personal information that we collect and/or hold includes your personal identification information, contact information, policy details,
+                                                        transaction records, financial background and medical and health affairs. </p>
+                                                                </li>
+                                                                
+                                                                <li>  
+                                                                    <p>Importance of Information Collection </p> 
+                                                                    
+                                                                    <p>From time to time, it is necessary for you to supply Cigna with personal information. Cigna may not be able to issue policies, process claim
+                                                        applications or provide products or services to you if you fail to supply your information as requested by Cigna.</p>
+                                                                </li>
+                                                                
+                                                                <li>
+                                                                    <p>Purposes of Information Collection and Usage </p> 
+                                                                    <p>
+                                                                        Your personal information held by Cigna may be used for the following purposes:- 
+                                                                        <ol style="list-style-type: lower-roman;">
+                                                                            <li>processing and evaluating any applications or requests made by you for products or services; </li>
+                                                                            
+                                                                            <li>administration of insurance or financial or investment related products or services, including 
+                                                                            alterations, variations, cancellation or renewal of such products or services; </li>
+                                                                            
+                                                                            <li>processing, investigation or analysis of any claim applications made by, against or otherwise 
+                                                                            involving you in respect of any products or services; </li>
+                                                                            
+                                                                            <li>carrying out matching procedures; </li>
+                                                                            
+                                                                            <li>(with your consent – see section 7 below) direct marketing including but not limited to promoting, 
+                                                                            marketing or selling of Cigna or co-branded insurance or financial or investment related products or 
+                                                                            services by electronic or other means; </li>
+                                                                            
+                                                                            <li>making disclosure under and/or complying with any law, rules, regulations, codes of practice or 
+                                                                            guidelines binding on or applicable to Cigna or any of its group companies; </li>
+                                                                            
+                                                                            <li>evaluating the policy intended to be the subject of reinsurance by an actual or proposed re-insurer
+                                                                            of Cigna; </li>
+                                                                            
+                                                                            <li>conducting medical or health reference checks; </li>
+                                                                            
+                                                                            <li>conducting surveys, research and compiling statistics for insurance, financial or investment related 
+                                                                            purposes; and</li>
+                                                                            
+                                                                            <li>other purposes directly relating to any of the above. </li>
+                                                                        </ol>
+                                                                    </p>
+                                                                </li>
+                                                                
+                                                                
+                                                                <li>
+                                                                    <p>Transfer of Personal Information  </p>
+                                                                    
+                                                                    <p>
+                                                                        Your personal information held by Cigna will be kept confidential, but may be shared with the following 
+                                                                        individuals and/or entities, whether within or outside Hong Kong, for any of the purposes set out above:- 
+                                                                        <ol style="list-style-type: lower-roman;">
+                                                                            <li>any agent, contractor or third party service provider who provides administrative, data processing, 
+                                                                            customer service, call center, telecommunications, technology, fund management, debt collection, payment, 
+                                                                            anti-money laundering and other regulatory screenings, marketing, research, mailing, printing or other 
+                                                                            services to Cigna; </li>
+                                                                            
+                                                                            <li>any insurance intermediary acting on your behalf (in placing an insurance policy with Cigna, in 
+                                                                            handling insurance claims with Cigna or as notified by you to Cigna) (an "Insurance Intermediary") 
+                                                                            and (with your consent – see section 7 below) for its own direct marketing and business purposes, 
+                                                                            and such provision of your personal information may be for gain; </li>
+                                                                            
+                                                                            <li>any agent, contractor or third party service provider engaged by an Insurance Intermediary (as 
+                                                                            notified by such Insurance Intermediary to Cigna from time to time) to provide any services to the 
+                                                                            Insurance Intermediary in relation to the purposes set out under sections 3(i) and 3(ii) above; </li>
+                                                                            
+                                                                            <li>any branch, subsidiary, holding company, associated company or affiliates of Cigna for data 
+                                                                            processing and modeling; </li>
+                                                                            
+                                                                            <li>any financial institution or credit / charge card issuer related to your premium payment account; </li>
+                                                                            
+                                                                            <li>any actual or proposed re-insurer of Cigna; </li>
+                                                                            
+                                                                            <li>any person to whom Cigna is under an obligation to make disclosure under the requirement of any law, 
+                                                                            regulations, rules, codes of practice or guidelines binding on or applicable to Cigna or any of its group 
+                                                                            companies; </li>
+                                                                            
+                                                                            <li>any other person under a duty of confidentiality to Cigna which has undertaken to keep such information
+                                                                             confidential; </li>
+                                                                            
+                                                                            <li>any debt collection agencies; and</li>
+                                                                            
+                                                                            <li>any person who provides survey, research and statistics services. </li>
+                                                                        </ol>
+                                                                    </p>
+                                                                </li>
+                                                                
+                                                                <li>
+                                                                <p>Transfer of Information Outside Hong Kong  </p>
+                                                                
+                                                                <p>Cigna may from time to time transfer your personal information outside Hong Kong for different purposes 
+                                                                including processing or storage. </p>
+                                                                </li>
+                                                                
+                                                                <li>
+                                                                    <p>Data Access</p>
+                                                                    <p>
+                                                                        <ol style="list-style-type: upper-latin;">
+                                                                            <li>
+                                                                                Under and in accordance with the terms of the Ordinance, you have the right to:- 
+                                                                                <ol style="list-style-type: lower-roman;">
+                                                                                    <li>check whether Cigna holds data about you and seek access to such data; and</li>
+                                                                                    <li>require Cigna to correct any data relating to you which is inaccurate. </li>
+                                                                                </ol>
+                                                                            </li>
+                                                                            <li>
+                                                                                Cigna may charge a reasonable fee for the processing of any data access request. 
+                                                                            </li>
+                                                                            
+                                                                            <li>
+                                                                                Requests under section 6(I) should be addressed to the following: 
+                                                                                Cigna’s Data Protection Officer 
+                                                                                {!$Label.Cigna_Address_en}
+                                                                            </li>
+                                                                        </ol>
+                                                                    </p>
+                                                                </li>
+                                                                
+                                                                <li>
+                                                                
+                                                                    <p>Direct Marketing </p> 
+                                                                
+                                                                    <p>
+                                                                        With your consent (which includes an indication of no objection), Cigna may: 
+                                                                        <ol style="list-style-type: upper-latin;">
+                                                                            <li>use personal information, including your name, contact details (such as phone number, email 
+                                                                            address and mailing address), products and other services portfolio information, financial 
+                                                                            background and demographic data it holds about you for direct marketing purposes; </li>
+                                                                            
+                                                                            <li>conduct direct marketing in relating to the following classes of products and services that Cigna, 
+                                                                            our affiliates, our co-branding partners and our business partners may offer: 
+                                                                                <ol style="list-style-type: lower-roman">
+                                                                                    <li> insurance, financial or investment related  products and services; </li>
+                                                                                    
+                                                                                    <li> reward, loyalty, co-branding or privileges programs and related services and products on 
+                                                                                    health, wellness and medical, sporting activities and membership, entertainment, travel and 
+                                                                                    transportation, concierge, home care (including pet care), household, food and beverages, 
+                                                                                    apparel, jewelry, telecommunication, education, social networking and media; and</li>
+                                                                                
+                                                                                    <li>donations and contributions for charitable or non-profit making purposes; </li>
+                                                                                </ol>
+                                                                            </li>
+                                                                            <li>    provide the personal information described in section 7(I) to any agent or contractor for the 
+                                                                            purpose of carrying out direct marketing of the above products and/or services on behalf of Cigna; and</li>
+                                                                            
+                                                                            
+                                                                            <li> in addition to marketing the above products and services, share the personal information described in 
+                                                                            section 7(I), for gain, with any or all of the following persons for use in direct marketing, and Cigna 
+                                                                            requires your written consent (which includes an indication of no objection) for the purposes and will not 
+                                                                            do so without your written consent: 
+                                                                                <ol style="list-style-type: lower-roman">
+                                                                                    <li>any Insurance Intermediary acting on your behalf for its own direct marketing purposes in relation 
+                                                                                    to insurance, financial or investment related products or services, and business purposes; and</li>
+                                                                                    
+                                                                                    <li>any third party provider of any of the classes of products and/or services as described in section 7(II) 
+                                                                                    for direct marketing purposes in relation to such classes of products and/or services. </li>
+                                                                                </ol>
+                                                                            </li>
+                                                                        </ol>
+                                                                        
+                                                                        <p>If you do not consent to Cigna using and sharing your personal information for any of those purposes, 
+                                                                        you may exercise your opt-out right by notifying us, and we will not do so. You may also subsequently withdraw 
+                                                                        your consent by writing to Cigna’s Data Protection Officer at the above address. If you exercise your right to 
+                                                                        opt out of the use/share of your personal information for any of the above purposes, it will mean that Cigna, 
+                                                                        your Insurance Intermediary and/or third party service providers will not be able to send you any direct marketing, 
+                                                                        targeted or special offers in the future. </p>
+                                                                        
+                                                                        <p>Cigna will not use any personal data of minors for its own direct marketing purposes and/or share the personal 
+                                                                        data of minors with any third party for its direct marketing/business purposes. </p>
+                                                                    </p>
+                                                                </li>
+                                                            </ol>
+                                                        </p>
+                                                        <p>
+                                                        This Personal Information Collection Statement shall from the date hereinafter appearing be deemed an integral part of all contracts, 
+                                                        agreements and other binding arrangements which you have entered into or intend to enter into with Cigna. For any enquiries regarding 
+                                                        this Personal Information Collection Statement, please contact our Customer Services Hotline at 2560 1990. <br/>
+                                                        </p>
+                                                        <p>
+                                                        Release Date July 2019
+                                                        </p>
+                                                        <p>
+                                                        In case of discrepancies between the English and Chinese version, the English version shall apply and prevail.    
+                                                        </p> 
+                                                </div>
+                                            </apex:outputPanel>
+                                            <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'en_US'}">
+                                                 <div id="reallocationtccontent" style="text-align:left">
+                                                    <p>信諾重視保障個人資料私隱。我們尊重個人資料，並且全力執行及遵守保障資料原則，以及《個人資料(私隱)條例》（“私隱條例”） 的各項有關規定。</p>
+
+                                                    <p>
+                                                        <ol style="list-style-type: decimal;">
+                                                        
+                                                            <li>
+                                                                <p>我們收集及/或持有的個人資料範圍</p>
+                                                                
+                                                                <p>我們收集及/或持有的個人資料，包括閣下之個人識別資料、聯絡資料、保單詳情、交易記錄、財務背景、醫療及健康事項。</p>
+                                                                
+                                                            </li>
+                                                            <li>
+                                                                <p>收集個人資料的重要性</p>
+                                                                
+                                                                <p>閣下需要不時向信諾提供有關的個人資料。倘若閣下未能向信諾提供被要求的資料，信諾可能無法簽發保單、處理索償申請或<br/>
+                                                                提供產品或服務。</p>
+                                                            </li>
+                                                            <li>
+                                                                <p>收集個人資料的目的及用途</p>
+                                                                <p>
+                                                                    信諾所持有閣下的資料可能會被用於下列用途：
+                                                                    <ol style="list-style-type: lower-roman;">
+                                                                        <li>處理及評估閣下就產品或服務提出的任何申請或要求；</li>
+                                                                        <li>處理保險或財務或投資相關產品或服務之日常運作，包括更改、變動、取消或續期；</li>
+                                                                        <li>處理、調查或分析就產品或服務而由閣下或針對閣下提出的或者其他涉及閣下的任何索償申請；</li>
+                                                                        <li>進行核對程序；</li>
+                                                                        <li>（得到閣下的同意下 – 請看以下第7條）直接促銷，包括但不限於透過電子或其他模式作推廣、宣傳或銷售信諾或信諾聯合其它公司提供的<br/>
+                                                                            保險、財務或與投資相關之產品或服務；</li>
+                                                                        <li>遵守適用於信諾或其集團公司的法律、規則、規例、實務守則或指引，及就其要求作出披露；</li>
+                                                                        <li>讓信諾的確實或建議再保人，評估意圖再保的有關保單；</li>
+                                                                        <li>用作於醫療或健康參考；</li>
+                                                                        <li>用作於保險、財務或投資相關調查、研究及統計；及</li>
+                                                                        <li>與上述任何一項直接有關的其他用途。</li>
+                                                                    </ol>
+                                                                </p>
+                                                            </li>
+                                                            <li>
+                                                                <p>個人資料的轉移</p>
+                                                                
+                                                                <p>
+                                                                    信諾所持有閣下的資料會被絕對保密，但信諾可能會就上述任何目的把有關資料給予下列人士及／或實體（無論在香港境內還是境外）：
+                                                                    <ol style="list-style-type: lower-roman;">
+                                                                        <li>任何向信諾提供行政、資料處理、客戶服務、電話中心、電訊、資訊科技、基金管理、收債、繳費、反洗黑錢及其他法規的審查、<br/>
+                                                                            促銷、研究、郵寄、印刷或其他服務的代理、承辦商或第三者服務供應商；</li>
+                                                                        <li>任何代表閣下安排購買信諾提供的保單，或代表閣下處理對信諾的保險索償，或由閣下通知信諾作為代表閣下的保險中介人（“保險中介人”），<br/>
+                                                                            （在得到閣下的同意下 – 請看以下第7條）個人資料作其直接促銷或業務推廣的用途，並可能從而得益；</li>
+                                                                        <li>任何由保險中介人聘用的代理，承辦商或第三者服務供應商（由保險中介人不時通知信諾）以提供任何有關第3(i)及<br/>
+                                                                            及(ii)條所載用途之服務; </li>
+                                                                        <li>信諾的分行、附屬公司、控權公司、關聯公司或聯繫公司以用作資料處理和建立數據模型；</li>
+                                                                        <li>與閣下用作繳交保費戶口有關的金融機構或信用咭／記賬咭發咭人；</li>
+                                                                        <li>信諾的確實或建議再保人；</li>
+                                                                        <li>適用於及對信諾或任何其集團公司具法律、規則、規例、實務守則或指引約束力的規定下而信諾有責任對其作出披露的任何人；</li>
+                                                                        <li>其他對信諾資料有保密責任並承諾保密該等資料的人士；</li>
+                                                                        <li>任何收賬代理； 及</li>
+                                                                        <li>任何調查、研究及統計機構/人員。</li>
+                                                                    </ol>
+                                                                </p>
+                                                            </li>   
+                                                            
+                                                            <li>
+                                                                <p>轉移資料往香港以外地區</p>
+                                                                <p>信諾可能不時為不同目的（包括處理或儲存）將閣下的資料轉移往香港境外地區。</p>
+                                                            </li>     
+                                                                    
+                                                            <li>
+                                                                <p>資料查閱</p>
+                                                                <p>
+                                                                    <ol style="list-style-type: upper-roman">
+                                                                    <li>根據私隱條例中的條款，閣下有權：
+                                                                        <ol style="list-style-type: lower-roman">
+                                                                            <li>查詢信諾是否持有閣下的資料及查閱有關的資料；及</li>
+                                                                            <li>要求信諾改正有關閣下不準確的資料。</li>
+                                                                        </ol>
+                                                                    </li>
+                                                    
+                                                                    <li>信諾有權就處理任何查閱資料的要求收取合理費用。</li>
+                                                                    <li>
+                                                                        任何關於上述條款6I 的要求，應向下列人士提出：<br/>
+                                                                        信諾資料私隱主任 <br/>
+                                                                        {!$Label.Cigna_Address_zh}<br/>
+                                                                    </li>
+                                                                    </ol>
+                                                                </p>
+                                                            </li>
+                                                            
+                                                            <li>
+                                                                <p>直接促銷</p>
+                                                                <p>
+                                                                    在閣下同意下 (包括在沒有反對的情況下)，信諾可：
+                                                                    <ol style="list-style-type: upper-roman">
+                                                                        <li>使用閣下提供予信諾的個人資料，包括姓名、聯絡資料(例如:電話號碼、電郵地址及郵遞地址)、產品及服務組合資料、<br/>
+                                                                            財務背景及人口統計數據作直接促銷用途；及</li>
+                                                                        <li>
+                                                                            為信諾、信諾的聯繫公司、聯合品牌合作夥伴及商業合作夥伴所提供的以下各類產品及服務作直接促銷；
+                                                                            <ol style="list-style-type: lower-roman">
+                                                                                <li>保險、財務或投資相關產品或服務；</li>
+                                                                                <li>獎賞、忠誠計劃、聯合品牌或優惠計劃及其相關服務和產品：健康、保健及醫療、體育活動及會員服務、娛樂、<br/>
+                                                                                    旅遊及交通、禮賓、家居護理(包括寵物護理)、家居、餐飲、服裝、珠寶、電訊、教育、社交網絡及媒體；及</li>
+                                                                                <li>作慈善或非牟利用途的捐獻；</li>
+                                                                            </ol>
+                                                                        </li>
+                                                                        <li>代表信諾向任何代理或承辦商提供7(I)條所述的個人資料，作上述產品及服務的直接促銷用途；及</li>
+                                                                        <li>
+                                                                            <p>
+                                                                                除為上述產品及服務作促銷外，將第7(I)條所述的個人資料提供予任何或所有下列人士作直接促銷之用，並從而獲得利益，<br/>
+                                                                                信諾就此用途必須得到閣下的書面同意(包括在沒有反對的情況下)，在沒有閣下的書面同意下，信諾不會就此用途轉移閣<br/>
+                                                                                下的個人資料：
+                                                                                <ol style="list-style-type: lower-roman">
+                                                                                    <li>任何代表閣下的保險中介人作其直接促銷保險、財務或投資相關產品或服務之用途，及業務推廣之用途；及</li>
+                                                                                    <li>任何提供第7(II)條所述的產品及/或服務類別之第三者供應商作直接促銷該等類別的產品及/或服務之用途。</li>
+                                                                                </ol>
+                                                                            </p>
+                                                                        </li>
+                                                                    </ol>
+                                                                </p>
+                                                            </li>
+                                                        </ol>
+                                                    </p>
+                                                    <p>
+                                                    如閣下不同意信諾就以上兩點使用及/或轉移閣下的個人資料，閣下有權拒絕，只要通知我們，我們便不會使用及/或轉移閣下的個人資料作<br/>
+                                                    上述用途。閣下亦可隨時根據上述地址致函給我們的信諾資料私隱主任撤回閣下的同意意願。如閣下行使你的權利選擇拒絕閣下的個人資料<br/>
+                                                    被用於以上任何一項用途，這代表閣下將不會收到信諾、閣下的保險中介人及/或第三者服務供應商的任何直接促銷、針對性或特別優惠。
+                                                    </p>
+                                                    <p>
+                                                    信諾不會把任何未成年人的個人資料作直接促銷之用及/或轉交至任何第三者作直接促銷 / 業務推廣的用途。
+                                                    </p>
+                                                    <p>
+                                                    在此個人資料收集聲明發出的日期起，它將成為閣下與信諾或將與信諾訂定之所有合約、協議、及其他約束性安排之一部份。如有任何有關此<br/>
+                                                    個人資料收集聲明的查詢，請致電2560 1990與我們的客戶服務部聯絡。
+                                                    </p>
+                                                    <p>
+                                                    發出日期：二零一九年七月
+                                                    </p>
+                                                    <p>
+                                                    此聲明備有中英文版本，如內容有異，以英文版本為準。
+                                                    </p> 
+                                                </div>
+                                            </apex:outputPanel>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Special PICS Box -->
+                                <!--Nicole_SMT_20210603 <div class="col-xs-12 col-md-12" >
+                                    <BR/>
+                                    <apex:inputHidden id="marketingOptOut" value="{!marketingOptOut}"/>
+                                    <input id="marketing-opt-out" type="checkbox" onchange="popMarkOptVar(this)"/>
+                                    <label for="marketing-opt-out" style="display: inline-flex;">{!$Label.Do_not_Want_Marketing_Opt_Out}</label>
+                                </div>-->
+            
+                                <div class="col-xs-12 col-md-12">
+                                    <BR/>
+                                    <apex:commandButton value="{!$Label.Marketing_Opt_Out_Submit}" action="{!marketing}" reRender="verificationCode,marketing,verificationTitle,marketingOptOutTitle" id="first-time-before-marketing-code" onclick="disableSubmit();" disabled="false" 
+                                     oncomplete="enableVerify();" styleClass="bs btn btn-primary btn-block" />    
+                                </div>
+                                <script>
+                                    function popMarkOptVar(currentEle){
+                                        console.log("marketign opt out element:" + currentEle.checked);
+                                        
+                                        document.querySelector("input[id$=marketingOptOut]").value = currentEle.checked;
+                                    }
+                                    $("[id$='first-time-before-marketing-code']").prop('disabled', true);
+                                    //CR-56_Link_20220214
+                                    $("[id$='accept']").on("click",function(){
+                                       if ($("[id$='accept']").is(':checked')) {
+                                            $("[id$='first-time-before-marketing-code']").prop('disabled', false);
+                                       }else{
+                                            $("[id$='first-time-before-marketing-code']").prop('disabled', true);
+                                       }
+                                    });
+                                </script>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <!-- end bob 20201029 --> 
+                                                        
+                <!--Nicole_SMT_20210603-->        
+            </apex:outputPanel>
+            <!--Nicole_SMT_20210603-->
+            
+        </apex:define>
+        <!-- End of the main body -->
+
+    </apex:composition>
+
+</apex:page>

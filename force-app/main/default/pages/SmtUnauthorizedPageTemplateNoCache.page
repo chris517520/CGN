@@ -1,0 +1,610 @@
+<apex:page docType="html-5.0" showHeader="false" controller="SiteLoginController" title="{!$Label.site.login}" language="{!JSINHTMLENCODE($CurrentPage.Parameters.lang)}" cache="false">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+        <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <!-- <script type='text/javascript' src='{!$Setup.Portal_Settings__c.Live_Agent_JavaScript_URL__c}'></script> -->
+        <apex:includeScript value="{!$Resource.Cigna_Deployment}"/>
+        <!--Nicole_GS Login Performance_20200616-->
+        <!--<script type="text/javascript" src="{!URLFOR($Resource.App_Link_JS, 'js/applink.js')}"></script>-->
+        <apex:include pageName="applinkJS"/>
+        
+        <apex:include pageName="CignaUtilJS"/>
+
+        <style>
+            html {
+              height: 100%;
+            }
+            
+            html body {
+                height: 100%;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                font-family: "Gotham SSm A", "Gotham SSm B";
+                font-style: normal;
+                font-weight: 400;
+                color: #fff;
+            }
+
+            .bs a {
+                color: #fff !important;
+            }
+
+            html body .container-fluid.body-content {
+                width: 100%;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+
+            @media (max-width: 768px) {
+                body {
+                    background-size: cover;
+                    background-image: url('{!URLFOR($Resource.Cigna_Assets, 'login_mobile.jpg')}');
+                }
+            }
+            
+            @media (min-width: 769px) {
+                body {
+                    background-size: cover;
+                    background-image: url('{!URLFOR($Resource.Cigna_Assets, 'login_desktop2.jpg')}');
+                    background-position: center;
+                }
+            }
+            /* iPad Landscape */
+            @media only screen and (min-device-width: 481px) and (max-device-width: 1024px) and (orientation:portrait) {
+                body {
+                    background-size: cover;
+                    background-image: url('{!URLFOR($Resource.Cigna_Assets, 'login_mobile.jpg')}');
+                }
+            }
+            /* iPad Landscape */
+            @media only screen and (min-device-width: 481px) and (max-device-width: 1024px) and (orientation:landscape) {
+                body {
+                    background-size: cover;
+                    background-image: url('{!URLFOR($Resource.Cigna_Assets, 'login_desktop2.jpg')}');
+                    background-position: center;
+                }
+            }
+            
+            #login-panel {
+                position: relative;
+                padding: 10px 0 10px 0;
+            }
+            #login-panel-background {
+                position: fixed;
+                left: 0;
+                top: 0;
+                background: #666;
+                opacity: 0.1;
+                width: 100%;
+                height: 100%;
+                z-index: -100;
+                border-radius: 5px;
+            }
+
+            header {
+                //background-color: #4C4;
+                min-height: 50px;
+                width: 100%;
+            }
+            header div {
+                text-align:right;
+                padding-right:20px;
+            }
+
+            footer {
+                //background-color: #4C4;
+                min-height: 30px;
+                width: 100%;
+            }
+            footer div {
+                //text-align:right;
+                //padding-top: 20px;
+                //padding-right:20px;
+            }
+            footer div span {
+                 //margin-left: 5px;
+            }
+
+            .footer-right{
+                text-align:right;
+            }
+
+            .footer-left{
+                text-align:left;
+            }
+
+            .changeLanguage {
+                display: inline-block;
+                font-size: 12pt;
+                margin-left: 10px;
+            }
+
+            .LogoDiv {
+                text-align:center;
+                padding-bottom: 2cm;
+                margin: 15px;
+                margin-bottom: 160px;
+            }
+
+            .boxs{ margin:0 auto; height:70px; width:550px; background:#4089B2;
+                   padding-top:20px; overflow:hidden} 
+            .box-left{ float:left; width:350px; text-align:left} 
+            .box-right{ float:right; width:350px; text-align:right} 
+
+            .bs .btn {
+                background: #188CCC !important;
+                color: #fff !important;
+                border: 0 !important;
+            }
+
+            .bs .form-control:focus {
+                box-shadow: none !important;
+                border-bottom: 1px solid #eac048 !important;
+            }
+
+            .bs input[type="text"], .bs input[type="password"]  {
+                border: 0;
+                border-bottom: 1px solid #fff;
+                background: transparent;
+                width: 100%;
+                box-shadow: none !important;
+                border-radius: 0;
+                color: #fff;
+            }
+
+            .bs input.form-control::-webkit-input-placeholder {
+                color: #fff;
+            }
+
+            .bs input.form-control:-moz-placeholder {
+                color: #fff;
+            }
+
+            .bs input.form-control::-moz-placeholder {
+                color: #fff;
+            } 
+
+            .bs input.form-control:-ms-input-placeholder {
+                color: #fff;
+            }
+
+            /* Checkbox Style */
+            /* Base for label styling */
+            .bs [type="checkbox"]:not(:checked), .bs [type="checkbox"]:checked {
+                position: absolute;
+                left: -9999px;
+            }
+            .bs [type="checkbox"]:not(:checked) + label, .bs [type="checkbox"]:checked + label {
+            position: relative;
+                padding-left: 25px;
+                cursor: pointer;
+                font-weight: normal;
+            }
+
+            /* checkbox aspect */
+            .bs [type="checkbox"]:not(:checked) + label:before, .bs [type="checkbox"]:checked + label:before {
+                content: '';
+                position: absolute;
+                left:0;
+                width: 17px; height: 17px;
+                border: 1px solid #fff;
+                background: transparent;
+                border-radius: 3px;
+                box-shadow: inset 0 1px 3px rgba(0,0,0,.3)
+            }
+            /* checked mark aspect */
+            .bs [type="checkbox"]:not(:checked) + label:after, .bs [type="checkbox"]:checked + label:after {
+                content: '✓';
+                position: absolute;
+                left: 4px;
+                font-size: 18px;
+                line-height: 0.8;
+                color: #fff;
+                transition: all .1s;
+                top: 0;
+            }
+            /* checked mark aspect changes */
+            .bs [type="checkbox"]:not(:checked) + label:after {
+                opacity: 0;
+                transform: scale(0);
+            }
+            .bs [type="checkbox"]:checked + label:after {
+                opacity: 1;
+                transform: scale(1);
+            }
+            /* disabled checkbox */
+            .bs [type="checkbox"]:disabled:not(:checked) + label:before, .bs [type="checkbox"]:disabled:checked + label:before {
+                box-shadow: none;
+                border-color: #bbb;
+                background-color: #ddd;
+            }
+            .bs [type="checkbox"]:disabled:checked + label:after {
+                color: #999;
+            }
+            .bs [type="checkbox"]:disabled + label {
+                color: #aaa;
+            }
+            /* accessibility */
+            .bs [type="checkbox"]:checked:focus + label:before, .bs [type="checkbox"]:not(:checked):focus + label:before {
+                border: 1px dotted blue;
+            }
+
+            /* hover style just for information */
+            .bs label:hover:before {
+                border: 1px solid #eac048 !important;
+            }
+            
+            
+            .app-dialog{
+                width:100%;
+                display:none;
+                padding: 0;
+                background-color: #ffffff;
+                -moz-box-shadow: 0px 0px 7px #ccc;
+                -webkit-box-shadow: 0px 0px 7px #ccc;
+                box-shadow: 0px 0px 7px #ccc;
+                position: absolute;
+                bottom: 0;
+                text-align: center;
+            }
+            
+            .app-dialog .app-dialog-content{
+                padding: 5px 10px 10px 10px;
+            }
+            
+            .app-dialog .app-header{
+                padding-bottom: 15px;
+            }
+            
+            .app-dialog .app-icon{
+                margin-right: 5px;
+                border: 1px solid #ccc;
+                -moz-border-radius: 5px;
+                -webkit-border-radius: 5px;
+                border-radius: 5px;
+                float:left;
+                vertical-align: middle;
+            }
+            
+            .app-dialog .app-title{
+                float:left;
+                text-align: left;
+                padding: 2px;
+            }
+            
+            .app-dialog .app-title .desc{
+                color: #999;
+                font-size: 1em !important;
+            }
+            
+            .app-dialog .app-title .subject{
+                font-weight: bold;
+                color: #333;
+                font-size: 1.1em !important;
+            }
+            
+            .app-dialog .close{
+                border: 0;
+            }
+            
+            .app-dialog .open-button{
+                display:none;
+            }
+            .logo-background{
+                background: rgba(255,255,255,0.5);
+                position: absolute;
+                z-index: 4;
+                width: 10000px;
+                margin-left: -4000px;
+                height: 160px;
+                top: 0px;
+            }
+            .cignaLogo{
+                position: absolute;
+                vertical-align: middle;
+                text-align: center;
+                left: -5%;
+                top: 0px;
+                right: 0px;
+                bottom: 0px;
+                margin: 20px auto;
+                z-index: 5;
+            }
+            .smtLogo{
+                position: absolute;
+                top: 0px;
+                left: 125px;
+                right: 0px;
+                bottom: 0px;
+                margin: 20px auto;
+                z-index: 5;
+            }
+            
+            #fontBackground{
+                background: rgba(0,0,0,0.5);
+                position: fixed; 
+                z-index: -99;
+                width: 10000px;
+                margin-left: -4000px;
+                height: 100%;
+                top: 50px;
+                display:none;
+            }
+
+        </style>
+
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap_ns.css')}" />
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+        
+        <script>
+            //Nicole_SMT_20210514
+            var currentImage = getComputedStyle(document.body, "style").backgroundImage;
+            var customerKey = '{!JSINHTMLENCODE($CurrentPage.Parameters.customerKey)}';
+            if(customerKey !='' && customerKey !=null){
+                if(currentImage.indexOf('mobile')>0){
+                    document.body.style.backgroundImage="url('{!URLFOR($Resource.Cigna_Assets_SMT, 'Cigna_Assets_SMT/login_mobile.jpg')}')";
+                }else{
+                    document.body.style.backgroundImage="url('{!URLFOR($Resource.Cigna_Assets_SMT, 'Cigna_Assets_SMT/login_desktop2.jpg')}')";
+                }
+            }
+            
+            function changeLanguage(){  //added by Connor SMT
+                var lang= '{!$Label.Header_Language_Code}';
+                var cusKey = '{!JSINHTMLENCODE($CurrentPage.Parameters.customerKey)}';
+                var langInUrl = '{!JSINHTMLENCODE($CurrentPage.Parameters.lang)}';
+                if(cusKey!=''){   // for SMT
+                    if(langInUrl!='' || langInUrl == null || langInUrl == undefined){
+                        var re = new RegExp('(' + "lang" + '=)([^&]*)', 'gi');
+                        var nUrl = window.location.href.replace(re, "lang" + '=' +  '{!$Label.Header_Language_Code}'); 
+                        console.log('replaceParamVal:' + nUrl);
+                        window.location.href = nUrl;
+                    }else{
+                        window.location.href = window.location.href+ '&lang='+lang; 
+                    }
+                }else{   //original case
+                    window.location.href = '?lang='+lang; 
+                }            
+            }          
+
+            function closeAppDialog(){
+                $('.app-dialog').fadeOut();
+                sessionStorage.showAppOpen = 'false';
+            }
+
+            $(document).ready(function () {
+                $('a[data-applink]').applink();
+                $('a[data-applink]').click(function(){
+                    closeAppDialog();
+                });
+            });
+        
+        </script>
+        
+    </head>
+
+    <apex:define name="body">  
+        
+        <!-- Start Normal Page Content -->
+        <header>
+            <!-- 20200923 - minghua - WhatsApp request link -->
+            <div class="bs" style="{!IF(isSiteGuest,'display:none','')}">
+                
+                <span id="liveagent_button_online" style="display: none;cursor:pointer;" onclick="startLiveChat()">
+                    <a>
+                        <i class="ci-hk-chat ci-hk-lg"></i>&nbsp;
+                        <apex:outputText styleClass="hidden-xs" value="{!$Label.Header_Live_Chat}" />
+                    </a>
+                </span>
+                <span id="liveagent_button_offline" style="display: none;cursor:pointer;">
+                    <apex:outputLink value="/apex/{!$Label.LiveChatMessageToCasePageName}" target="_blank">
+                        <i class="ci-hk-chat ci-hk-lg"></i>&nbsp;
+                        <apex:outputText styleClass="hidden-xs" value="{!$Label.Header_Live_Chat}" />
+                    </apex:outputLink>
+                    <!--<a class="hidden-xs">{!$Label.Offline}</a>-->
+                </span>
+                
+                <span id="liveagent_button_online-app" style="display: none;cursor:pointer;">
+                    <!--<a href="{!$Setup.Portal_Settings__c.Live_Chat_Site_URL__c}/apex/LiveChatLandingVFP?bid={!$Label.Customer_Portal_Visitor_Live_Chat_Button_ID}&status=online&lang={!JSINHTMLENCODE($CurrentPage.Parameters.lang)}">
+                        <span class="fa fa-comment fa-2x"></span>
+                        <apex:outputText styleClass="hidden-xs" value="{!$Label.Header_Live_Chat}" />
+                    </a>-->
+                    <a href="#" onclick="startLiveChat();">
+                        <i class="ci-hk-chat ci-hk-lg"></i>&nbsp;
+                        <apex:outputText styleClass="hidden-xs" value="{!$Label.Header_Live_Chat}" />
+                    </a>
+                </span>
+                <span id="liveagent_button_offline-app" style="display: none;cursor:pointer;">
+                    <!--<apex:outputLink value="{!$Setup.Portal_Settings__c.Live_Chat_Site_URL__c}/apex/LiveChatLandingVFP?bid={!$Label.Customer_Portal_Visitor_Live_Chat_Button_ID}&status=offline&login=0&lang={!JSINHTMLENCODE($CurrentPage.Parameters.lang)}">
+                        <span class="fa fa-comment fa-2x"></span>
+                        <apex:outputText styleClass="hidden-xs" value="{!$Label.Header_Live_Chat}" />
+                    </apex:outputLink>-->
+                    <a href="#" onclick="Cigna.Util.navigateToVFP('LiveChatLandingVFP?bid={!$Label.Customer_Portal_Visitor_Live_Chat_Button_ID}&status=offline&login=0&lang={!JSINHTMLENCODE($CurrentPage.Parameters.lang)}', null, null, false, false)">
+                        <i class="ci-hk-chat ci-hk-lg"></i>&nbsp;
+                        <apex:outputText styleClass="hidden-xs" value="{!$Label.Header_Live_Chat}" />
+                    </a>
+                </span>
+                <span class="changeLanguage">
+                    <!--modified by Connor for SMT-->
+                    <a href="javascript:void(0);" onclick="changeLanguage();">{!$Label.Header_Change_Language}</a> 
+                    <!--a href="?lang={!$Label.Header_Language_Code}">{!$Label.Header_Change_Language}</a--> <!--commented by Connor-->
+                </span>
+            </div> 
+        </header>
+        <!--SMT-97_Tovid_20210803 add divid for scrollup  -start -->
+        <div id="bodyDiv" class="bs container-fluid body-content">  
+        <!--//SMT-97_Tovid_20210803 add divid for scrollup  -end -->  
+        <div id="fontBackground">&nbsp;</div>
+            <apex:form id="preForm">  
+                
+                <apex:outputPanel id="thePreFormPanel">
+                    <div id="login-panel" class="col-xs-10 col-xs-offset-1 col-md-4 col-md-offset-4">
+                        <div id="login-panel-background"/>                       
+                        <div class="LogoDiv" id="cigna-logo">
+                                <apex:outputPanel rendered="{!JSINHTMLENCODE($CurrentPage.Parameters.lang) == 'en_US'||JSINHTMLENCODE($CurrentPage.Parameters.lang) ==''}">
+                                    <apex:image id="cignaLogo" styleClass="cignaLogo"
+                                                value="{!URLFOR($Resource.SMT_Cigna_en_png)}" 
+                                                style="height: 120px;"
+                                    />  
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!JSINHTMLENCODE($CurrentPage.Parameters.lang) == 'zh_TW'}">
+                                    <apex:image id="cignaLogozh" styleClass="cignaLogo"
+                                                value="{!URLFOR($Resource.SMT_Cigna_zh_png)}" 
+                                                style="height: 120px;" 
+                                    />
+                                </apex:outputPanel>    
+                            <div class="logo-background"/>                           
+                        </div>                        
+                        <!-- Insert the body of the page -->
+                        <apex:insert name="body"/><br/>                       
+                    </div>                    
+                </apex:outputPanel>
+
+                <!-- <apex:outputPanel id="thePreFormPanelZh" rendered="{!$Label.Header_Language_Code == 'zh_TW'}">
+                    <div id="login-panel" class="col-xs-10 col-xs-offset-1 col-md-4 col-md-offset-4">
+                        <div id="login-panel-backgroundzh"/>                       
+                        <div class="LogoDiv" id="cigna-logozh">
+                         
+                                <apex:image id="cignaLogozh" styleClass="cignaLogo"
+                                            value="{!URLFOR($Resource.Cigna_Logo_smt_cn_png)}" 
+                                            style="height: 120px" 
+                                />
+                  
+                                <apex:image id="smtLogozh" styleClass="smtLogo"
+                                            value="{!URLFOR($Resource.SMT_Logo_png_zh)}" 
+                                            style="height: 85px" 
+                                />   
+                                               
+                            <div class="logo-background"/>                           
+                        </div>                        
+                        <apex:insert name="body"/><br/>                       
+                    </div>                    
+                </apex:outputPanel> -->
+                
+            </apex:form>
+        </div>
+        
+        <div id="open-app-dialog" class="bs row app-dialog">
+            <div class="bs col-xs-12 app-dialog-content">
+                <div class="bs row">
+                    <div class="bs col-xs-12">
+                        <button type="button" class="bs close" aria-label="Close" onclick="closeAppDialog();">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="bs row app-header">
+                    <div class="bs col-xs-12">
+                        <apex:image id="app-icon-image" styleClass="app-icon" value="{!$Resource.Cigna_App_Icon}" width="64" />
+                        <div class="app-title">
+                            <apex:outputText value="{!$Label.App_Title_Label}" escape="false" />
+                        </div>
+                    </div>
+                </div>
+                <div class="bs row">
+                    <div class="bs col-xs-12">
+                        <div id="open-android-app-button" class="open-button">
+                            <a class="bs btn btn-primary btn-block" href="https://play.google.com/store/apps/details?id=com.cignahk.mycignahk" data-applink="cignacustomerportal://app">{!$Label.App_Open_Button_Label}</a>
+                        </div>
+                        <div id="open-ios-app-button" class="open-button">
+                            <a class="bs btn btn-primary btn-block" href="https://itunes.apple.com/hk/app/mycigna-hk/id1202342855" data-applink="cignacustomerportal://app">{!$Label.App_Open_Button_Label}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Terms Dialog, when click live chat button, need to pop up this dialog -->
+        <div class="bs">
+            <div id="TermsDialog" class="bs modal fade" role="dialog" style="color:black">
+                <div class="modal-dialog">
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <!--<button type="button" class="close" data-dismiss="modal">&times;</button>-->
+                            <h4 class="modal-title">{!$Label.Please_accept_the_T_and_C_below_to_continue}</h4>
+                        </div>
+                        <div class="modal-body" style="height:300px;overflow:auto;">
+                            <p> {!$Label.T_C}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-primary" onclick="hideTermsDialog();startLiveChat();" type="button">{!$Label.Cobrowse_Initiating_Accept}</button>
+                            <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="hideTermsDialog();return false;">{!$Label.Cobrowse_Initiating_Decline}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End of Terms Dialog -->
+        
+        
+        <br/>
+        
+        <script type="text/javascript">
+            
+            function openTermsDialog(){
+                $('#TermsDialog').modal('hide');
+                $('#TermsDialog').modal({backdrop: 'static'});
+            }
+            
+            function hideTermsDialog(){
+                $('#TermsDialog').modal('hide');
+            }
+            
+            function startLiveChat(){
+                if(Cigna.Util.checkWebView()){
+                    liveagent.startChat('{!$Label.Customer_Portal_Visitor_Live_Chat_Button_ID}');
+                    //Cigna.Util.navigateToVFP('LiveChatLandingVFP?bid={!$Label.Customer_Portal_Visitor_Live_Chat_Button_ID}&status=online&lang={!JSINHTMLENCODE($CurrentPage.Parameters.lang)}', null, null, false, false);
+                } else {
+                    liveagent.startChat('{!$Label.Customer_Portal_Visitor_Live_Chat_Button_ID}');
+                }
+            
+                
+            }
+            
+            if(Cigna.Util.checkWebView() && Cigna.Util.isIOS()){
+                document.getElementsByTagName("body")[0].style.padding = "20px 0px 0px 0px";
+            }
+            
+            if (Cigna.Util.isCustomerPortal()) {
+                if (!window._laq) {
+                    window._laq = [];
+                }
+                
+                window._laq.push(function() {
+                
+                    if(Cigna.Util.checkWebView()){
+                    
+                        liveagent.showWhenOnline('{!$Label.Customer_Portal_Visitor_Live_Chat_Button_ID}', document.getElementById('liveagent_button_online-app'));
+                        liveagent.showWhenOffline('{!$Label.Customer_Portal_Visitor_Live_Chat_Button_ID}', document.getElementById('liveagent_button_offline-app'));
+                    
+                    }else{
+                    
+                        liveagent.showWhenOnline('{!$Label.Customer_Portal_Visitor_Live_Chat_Button_ID}', document.getElementById('liveagent_button_online'));
+                        liveagent.showWhenOffline('{!$Label.Customer_Portal_Visitor_Live_Chat_Button_ID}', document.getElementById('liveagent_button_offline'));
+                    
+                    }
+                
+                });
+    
+                liveagent.findOrCreate("Account").map("name", "Name", true, true, true).saveToTranscript('accountId').showOnCreate();
+                liveagent.init('{!$Setup.Portal_Settings__c.Live_Agent_Init_URL__c}', '{!$Setup.Portal_Settings__c.Live_Agent_Deployment_ID__c}', '{!LEFT($Organization.Id, 15)}');
+            }
+            //SMT-81_Tovid_20210803 adjust icon for mobile view -start
+            if(Cigna.Util.isMobile()){
+                console.log('testtest111');
+               var cignalogoDiv = $('#cigna-logo'); 
+                console.log(cignalogoDiv.width());
+               var cignalogList = $("[id$='cignaLogo']"); 
+               if(cignalogList.length > 0){
+                   cignalogList[0].style.height=cignalogoDiv.width()/3 + 'px';
+               }
+               var cignalogListZh = $("[id$='cignaLogozh']"); 
+               if(cignalogListZh.length > 0){
+                   cignalogListZh[0].style.height=cignalogoDiv.width()/3 + 'px';
+               }
+            }
+            //SMT-81_Tovid_20210803 adjust icon for mobile view -end
+        </script>
+    </apex:define>
+</apex:page>

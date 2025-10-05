@@ -1,0 +1,910 @@
+<apex:page standardController="Policy_Change_Request__c" extensions="ManagePolicyChangeCRTL" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+    
+        <style>
+            .form-toggle-tab {
+                padding: 10px;
+                border-bottom: 1px solid #f2f2f2;
+                font-weight: bold;
+            }
+            
+            .form-toggle-content {
+                padding: 10px 0px 10px 0px;
+            }
+            
+            .bs .cigna-answer-wrapper > p {
+                background: #fff;
+                float: left;
+                width:50%;
+            }
+    
+            .bs .cigna-answer-wrapper > p > label {
+                margin-left: 10px;
+                margin-top: 5px;
+                font-weight: normal;
+                padding: 5px;
+            }
+                        
+            .short-form-field{
+                width: 30% !important;
+                text-align: center;
+            }
+            
+            select{
+                width: 100%;
+            }
+            
+            ul{
+                margin: 2px 0;
+            }
+            
+            li{
+                margin: 5px 0;
+            }
+            
+            .hidden-input-field{
+                height:0px; 
+                width:0px; 
+                border:0px !important;
+                webkit-appearance: none;
+            }
+            
+           <!--For Terms and Conditions-->
+           .tcoverlay {
+                display: none;
+                z-index: 10;
+                background: #D9D9D6;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                text-align: center;
+            }
+            .tcpopup {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 150px auto 0px auto;
+                width: 80%;
+                height: 50%;
+                background: #FFF;
+                color: #000;
+                left: 10%;
+                padding:20px;
+                border-radius:5px;
+                
+            }
+            .closeOverlay {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
+            
+            .tccontent {
+                padding:10px;
+                color:#000;
+                font-size:12px;
+                width: 100%;
+                height: 95%;
+                overflow-y:auto;
+            }
+        </style>
+    
+        <apex:define name="additionalLibraries">
+             <!--additional css, bootstrap, jquery,js libraries-->
+             <!-- CR-56_Link_20220214 -->
+		     <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+             <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+             <apex:outputPanel rendered="{!userLanguage == 'zh_TW'}" layout="none">
+             <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+             </apex:outputPanel>
+        </apex:define>
+    </head>
+
+    <div class="bs">
+        <div class="bs container">
+        
+            <!--Form Information-->
+            <apex:form id="change-reinstatement">
+                <div id="reinstatement-occupation-panel" class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light onclick-pointer">
+                    {!$Label.Occupation_include_any_part_time_job} <i class="fa fa-chevron-down pull-right" aria-hidden="true"></i>
+                </div>
+                <div id="reinstatement-occupation-info" class="bs col-sm-12 col-xs-12 form-toggle-content" style="display:none;">
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">{!$ObjectType.Policy_Change_Request__c.fields.Industry__c.Label}</div>
+                        <div class="bs col-sm-9">
+                           <apex:inputField id="Required-occupation-industry" value="{!Request.Industry__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">{!$Label.Job_Duties}</div>
+                        <div class="bs col-sm-9">
+                           <apex:inputField id="Required-occupation-job-duties" value="{!Request.Reinstatement_1_Job_Duties__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-12 col-xs-12">{!$Label.Reinstatement_occupation_required_working}</div>
+                        <div class="bs col-sm-12 col-xs-12">
+                           <div class="bs cigna-answer-wrapper">
+                              <p>
+                                  <input type="radio" id="occupation-work-outside-yes"  name="occupation-work-outside" class="bs cigna-question-radio" onclick="changeYesNoValue(this)" />
+                                  <label for="occupation-work-outside-yes">{!$Label.Yes}</label>
+                              </p>
+                              <p>
+                                  <input type="radio" id="occupation-work-outside-no"  name="occupation-work-outside" class="bs cigna-question-radio" onclick="changeYesNoValue(this)" />
+                                  <label for="occupation-work-outside-no">{!$Label.No}</label>
+                              </p>
+                              <apex:inputHidden id="occupation-work-outside" value="{!Request.Reinstatement_2_Construction__c}"/>
+                              <apex:input id="Required-occupation-work-outside" styleClass="hidden-input-field" onfocus="hiddenonblur(this);" />
+                           </div>
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-12 col-xs-12">{!$Label.Reinstatement_occupation_monthly_income}</div>
+                        <div class="bs col-sm-12 col-xs-12">
+                            <apex:inputField id="Required-occupation-income" styleclass="form-field-style-select" value="{!Request.Reinstatement_Monthly_Income_Range__c}" />
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                
+                <div id="reinstatement-coverage-panel" class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light onclick-pointer">
+                    {!$Label.Coverage}<i class="fa fa-chevron-down pull-right" aria-hidden="true"></i>
+                </div>
+                <div id="reinstatement-coverage-info" class="bs col-sm-12 col-xs-12 form-toggle-content" style="display:none;">
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-12 col-xs-12">{!$Label.Reinstatement_coverage_existing_insurance}</div>
+                        <div class="bs col-sm-12 col-xs-12">
+                           <div class="bs cigna-answer-wrapper">
+                              <p>
+                                  <input type="radio" id="coverage-existing-insurance-yes" name="coverage-existing-insurance" class="bs cigna-question-radio"  onchange="changeExistingInsurance(this)" />
+                                  <label for="coverage-existing-insurance-yes">{!$Label.Yes}</label>
+                              </p>
+                              <p>
+                                  <input type="radio" id="coverage-existing-insurance-no" name="coverage-existing-insurance" class="bs cigna-question-radio" onclick="changeExistingInsurance(this)" />
+                                  <label for="coverage-existing-insurance-no">{!$Label.No}</label>
+                              </p>
+                              <apex:inputHidden id="coverage-existing-insurance" value="{!Request.Reinstatement_existing_insurance__c}"/>
+                              <apex:input id="Required-coverage-existing-insurance" styleClass="hidden-input-field" onfocus="hiddenonblur(this);"/>
+                           </div>
+                        </div>
+                    </div>
+                    <div id="coverage-existing-insurance-details">
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-3">{!$Label.Reinstatement_coverage_life}</div>
+                            <div class="bs col-sm-9">
+                               {!$Label.USD}&nbsp;<apex:inputField id="Currency-coverage-life" value="{!Request.Reinstatement_life__c}" styleclass="form-field-style short-form-field" /> {!$Label.Reinstatement_coverage_na}
+                            </div> 
+                        </div>
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-3">{!$Label.Reinstatement_coverage_critical_illness}</div>
+                            <div class="bs col-sm-9">
+                               {!$Label.USD}&nbsp;<apex:inputField id="Currency-coverage-critical-illness" value="{!Request.Reinstatement_critical_illness__c}" styleclass="form-field-style short-form-field" /> {!$Label.Reinstatement_coverage_na}
+                            </div> 
+                        </div>
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-3">{!$Label.Reinstatement_coverage_accident}</div>
+                            <div class="bs col-sm-9">
+                               {!$Label.USD}&nbsp;<apex:inputField id="Currency-coverage-accident" value="{!Request.Reinstatement_accident__c}" styleclass="form-field-style short-form-field" /> {!$Label.Reinstatement_coverage_na}
+                            </div> 
+                        </div>
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-3">{!$Label.Reinstatement_coverage_accidental_hospital_income}</div>
+                            <div class="bs col-sm-9">
+                               {!$Label.USD}&nbsp;<apex:inputField id="Currency-coverage-accidental-hospital-income" value="{!Request.Reinstatement_accidental_hospital_income__c}" styleclass="form-field-style short-form-field" /> {!$Label.Reinstatement_coverage_na}
+                            </div> 
+                        </div>
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-3">{!$Label.Reinstatement_coverage_hospital_income}</div>
+                            <div class="bs col-sm-9">
+                               {!$Label.USD}&nbsp;<apex:inputField id="Currency-coverage-hospital-income" value="{!Request.Reinstatement_hospital_income__c}" styleclass="form-field-style short-form-field" /> {!$Label.Reinstatement_coverage_na}
+                            </div> 
+                        </div>
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-3">{!$Label.Reinstatement_coverage_disability_income}</div>
+                            <div class="bs col-sm-9">
+                               {!$Label.USD}&nbsp;<apex:inputField id="Currency-coverage-disability-income" value="{!Request.Reinstatement_disability_income__c}" styleclass="form-field-style short-form-field" /> {!$Label.Reinstatement_coverage_na}
+                            </div> 
+                        </div>
+                    </div> 
+                </div>
+                
+                
+                <div id="reinstatement-body-build-panel" class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light onclick-pointer">
+                    {!$Label.Reinstatement_body_build}<i class="fa fa-chevron-down pull-right" aria-hidden="true"></i>
+                </div>
+                <div id="reinstatement-body-build-info" class="bs col-sm-12 col-xs-12 form-toggle-content" style="display:none;">
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">{!$Label.Reinstatement_body_build_height}</div>
+                        <div class="bs col-sm-2 col-xs-5">
+                             <apex:inputField id="Required-Number-body-build-height-unit" styleclass="form-field-style-select" value="{!Request.Height_Unit__c}"  onchange="changeHeightInput(this.value)"/>
+                        </div>
+                        <div class="bs col-sm-7 col-xs-7" id="height-cm">
+                            <apex:inputField id="Required-Number-body-build-height" value="{!Request.Height__c}" styleclass="form-field-style" html-maxlength="6" />
+                        </div>
+                        <div id="height-feet-inch" style="display:none;">
+                            <div class="bs col-sm-4 col-xs-4">
+                                <apex:inputField id="Required-Number-body-build-height-feet" value="{!Request.feet__c}" styleclass="form-field-style" html-maxlength="6" />
+                                <apex:outputText >{!$Label.eSales_Application_Feet}</apex:outputText>
+                            </div>
+                            <div class="bs col-sm-3 col-xs-3">
+                                <apex:inputField id="Required-Number-body-build-height-inch" value="{!Request.inch__c}" styleclass="form-field-style" html-maxlength="6" />
+                                <apex:outputText >{!$Label.eSales_Application_Inch}</apex:outputText>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">{!$Label.Reinstatement_body_build_weight}</div>
+                        <div class="bs col-sm-2 col-xs-5">
+                             <apex:inputField id="Required-Number-body-build-weight-unit" styleclass="form-field-style-select" value="{!Request.Weight_Unit__c}" />
+                        </div>
+                        <div class="bs col-sm-7 col-xs-7">
+                            <apex:inputField id="Required-Number-body-build-weight" value="{!Request.Weight__c}" styleclass="form-field-style" html-maxlength="6" />
+                        </div>
+                    </div>
+                </div>
+                
+                
+                <div id="reinstatement-medical-history-declaration1-panel" class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light onclick-pointer">
+                        {!$Label.Reinstatement_medical_info_part_1} <i class="fa fa-chevron-down pull-right" aria-hidden="true"></i>
+                </div>
+                <div id="reinstatement-medical-history-declaration1-info" class="bs col-sm-12 col-xs-12 form-toggle-content" style="display:none;">
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-12 col-xs-12">
+                            {!$Label.Reinstatement_medical_info_part_1_intro}
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-12 col-xs-12">                            
+                            {!$Label.Reinstatement_medical_info_part_1_received_counseling}
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-12 col-xs-12">{!$Label.Reinstatement_medical_info_part_1_chest_problem}</div>
+                        <div class="bs col-sm-12 col-xs-12">
+                           <div class="bs cigna-answer-wrapper">
+                              <p>
+                                  <input type="radio" id="medical-history-declaration1-breath-prob-yes" name="medical-history-declaration1-breath-prob" class="bs cigna-question-radio"  onchange="changeMedicalHistoryYesNoValue(this)" />
+                                  <label for="medical-history-declaration1-breath-prob-yes">{!$Label.Yes}</label>
+                              </p>
+                              <p>
+                                  <input type="radio" id="medical-history-declaration1-breath-prob-no" name="medical-history-declaration1-breath-prob" class="bs cigna-question-radio" onclick="changeMedicalHistoryYesNoValue(this)" />
+                                  <label for="medical-history-declaration1-breath-prob-no">{!$Label.No}</label>
+                              </p>
+                              <apex:inputHidden id="medical-history-declaration1-breath-prob" value="{!Request.Reinstatement_breath_problem__c}"/>
+                              <apex:input id="Required-medical-history-declaration1-breath-prob" styleClass="hidden-input-field" onfocus="hiddenonblur(this);"/>
+                           </div>
+                           <div id="medical-history-declaration1-breath-prob-area" class="bs" style="display:none;">
+                               <span>{!$Label.Reinstatement_provide_full_details_of_condition}</span>
+                               <apex:inputTextarea id="details-medical-history-declaration1-breath-prob" styleClass="form-field-style-textarea" value="{!Request.Reinstatement_breath_problem_details__c}" />
+                           </div>
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-12 col-xs-12"> {!$Label.Reinstatement_medical_info_part_1_heart_problem} </div>
+                        <div class="bs col-sm-12 col-xs-12">
+                           <div class="bs cigna-answer-wrapper">
+                              <p>
+                                  <input type="radio" id="medical-history-declaration1-heart-prob-yes" name="medical-history-declaration1-heart-prob" class="bs cigna-question-radio"  onchange="changeMedicalHistoryYesNoValue(this)" />
+                                  <label for="medical-history-declaration1-heart-prob-yes">{!$Label.Yes}</label>
+                              </p>
+                              <p>
+                                  <input type="radio" id="medical-history-declaration1-heart-prob-no" name="medical-history-declaration1-heart-prob" class="bs cigna-question-radio" onclick="changeMedicalHistoryYesNoValue(this)" />
+                                  <label for="medical-history-declaration1-heart-prob-no">{!$Label.No}</label>
+                              </p>
+                              <apex:inputHidden id="medical-history-declaration1-heart-prob" value="{!Request.Reinstatement_heart_problem__c}"/>
+                              <apex:input id="Required-medical-history-declaration1-heart-prob" styleClass="hidden-input-field" onfocus="hiddenonblur(this);"/>
+                           </div>
+                           <div id="medical-history-declaration1-heart-prob-area" class="bs" style="display:none;">
+                               <span>{!$Label.Reinstatement_provide_full_details_of_condition}</span>
+                               <apex:inputTextarea id="details-medical-history-declaration1-heart-prob" styleClass="form-field-style-textarea" value="{!Request.Reinstatement_heart_problem_details__c}" />
+                           </div>
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-12 col-xs-12">{!$Label.Reinstatement_medical_info_part_1_digestive_system_problem}</div>
+                        <div class="bs col-sm-12 col-xs-12">
+                           <div class="bs cigna-answer-wrapper">
+                              <p>
+                                  <input type="radio" id="medical-history-declaration1-digestive-system-prob-yes" name="medical-history-declaration1-digestive-system-prob" class="bs cigna-question-radio"  onchange="changeMedicalHistoryYesNoValue(this)" />
+                                  <label for="medical-history-declaration1-digestive-system-prob-yes">{!$Label.Yes}</label>
+                              </p>
+                              <p>
+                                  <input type="radio" id="medical-history-declaration1-digestive-system-prob-no" name="medical-history-declaration1-digestive-system-prob" class="bs cigna-question-radio" onclick="changeMedicalHistoryYesNoValue(this)" />
+                                  <label for="medical-history-declaration1-digestive-system-prob-no">{!$Label.No}</label>
+                              </p>
+                              <apex:inputHidden id="medical-history-declaration1-digestive-system-prob" value="{!Request.Reinstatement_digestive_sys_prob__c}"/>
+                              <apex:input id="Required-medical-history-declaration1-digestive-system-prob" styleClass="hidden-input-field" onfocus="hiddenonblur(this);"/>
+                           </div>
+                           <div id="medical-history-declaration1-digestive-system-prob-area" class="bs" style="display:none;">
+                               <span>{!$Label.Reinstatement_provide_full_details_of_condition}</span>
+                               <apex:inputTextarea id="details-medical-history-declaration1-digestive-system-prob" styleClass="form-field-style-textarea" value="{!Request.Reinstatement_digestive_sys_prob_details__c}" />
+                           </div>
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-12 col-xs-12">{!$Label.Reinstatement_medical_info_part_1_brain_problem}</div>
+                        <div class="bs col-sm-12 col-xs-12">
+                           <div class="bs cigna-answer-wrapper">
+                              <p>
+                                  <input type="radio" id="medical-history-declaration1-brain-prob-yes" name="medical-history-declaration1-brain-prob" class="bs cigna-question-radio"  onchange="changeMedicalHistoryYesNoValue(this)" />
+                                  <label for="medical-history-declaration1-brain-prob-yes">{!$Label.Yes}</label>
+                              </p>
+                              <p>
+                                  <input type="radio" id="medical-history-declaration1-brain-prob-no" name="medical-history-declaration1-brain-prob" class="bs cigna-question-radio" onclick="changeMedicalHistoryYesNoValue(this)" />
+                                  <label for="medical-history-declaration1-brain-prob-no">{!$Label.No}</label>
+                              </p>
+                              <apex:inputHidden id="medical-history-declaration1-brain-prob" value="{!Request.Reinstatement_brain_problem__c}"/>
+                              <apex:input id="Required-medical-history-declaration1-brain-prob" styleClass="hidden-input-field" onfocus="hiddenonblur(this);"/>
+                           </div>
+                           <div id="medical-history-declaration1-brain-prob-area" class="bs" style="display:none;">
+                               <span>{!$Label.Reinstatement_provide_full_details_of_condition}</span>
+                               <apex:inputTextarea id="details-medical-history-declaration1-brain-prob" styleClass="form-field-style-textarea" value="{!Request.Reinstatement_brain_problem_details__c}" />
+                           </div>
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-12 col-xs-12">{!$Label.Reinstatement_medical_info_part_1_cancer}</div>
+                        <div class="bs col-sm-12 col-xs-12">
+                           <div class="bs cigna-answer-wrapper">
+                              <p>
+                                  <input type="radio" id="medical-history-declaration1-cancer-prob-yes" name="medical-history-declaration1-cancer-prob" class="bs cigna-question-radio"  onchange="changeMedicalHistoryYesNoValue(this)" />
+                                  <label for="medical-history-declaration1-cancer-prob-yes">{!$Label.Yes}</label>
+                              </p>
+                              <p>
+                                  <input type="radio" id="medical-history-declaration1-cancer-prob-no" name="medical-history-declaration1-cancer-prob" class="bs cigna-question-radio" onclick="changeMedicalHistoryYesNoValue(this)" />
+                                  <label for="medical-history-declaration1-cancer-prob-no">{!$Label.No}</label>
+                              </p>
+                              <apex:inputHidden id="medical-history-declaration1-cancer-prob" value="{!Request.Reinstatement_cancer__c}"/>
+                              <apex:input id="Required-medical-history-declaration1-cancer-prob" styleClass="hidden-input-field" onfocus="hiddenonblur(this);"/>
+                           </div>
+                           <div id="medical-history-declaration1-cancer-prob-area" class="bs" style="display:none;">
+                               <span>{!$Label.Reinstatement_provide_full_details_of_condition}</span>
+                               <apex:inputTextarea id="details-medical-history-declaration1-cancer-prob" styleClass="form-field-style-textarea" value="{!Request.Reinstatement_cancer_details__c}" />
+                           </div>
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-12 col-xs-12">{!$Label.Reinstatement_medical_info_part_1_back_problem}</div>
+                        <div class="bs col-sm-12 col-xs-12">
+                           <div class="bs cigna-answer-wrapper">
+                              <p>
+                                  <input type="radio" id="medical-history-declaration1-back-prob-yes" name="medical-history-declaration1-back-prob" class="bs cigna-question-radio"  onchange="changeMedicalHistoryYesNoValue(this)" />
+                                  <label for="medical-history-declaration1-back-prob-yes">{!$Label.Yes}</label>
+                              </p>
+                              <p>
+                                  <input type="radio" id="medical-history-declaration1-back-prob-no" name="medical-history-declaration1-back-prob" class="bs cigna-question-radio" onclick="changeMedicalHistoryYesNoValue(this)" />
+                                  <label for="medical-history-declaration1-back-prob-no">{!$Label.No}</label>
+                              </p>
+                              <apex:inputHidden id="medical-history-declaration1-back-prob" value="{!Request.Reinstatement_back_problem__c}"/>
+                              <apex:input id="Required-medical-history-declaration1-back-prob" styleClass="hidden-input-field" onfocus="hiddenonblur(this);"/>
+                           </div>
+                           <div id="medical-history-declaration1-back-prob-area" class="bs" style="display:none;">
+                               <span>{!$Label.Reinstatement_provide_full_details_of_condition}</span>
+                               <apex:inputTextarea id="details-medical-history-declaration1-back-prob" styleClass="form-field-style-textarea" value="{!Request.Reinstatement_back_problem_details__c}" />
+                           </div>
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                <div id="reinstatement-medical-history-declaration2-panel" class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light onclick-pointer">
+                    {!$Label.Reinstatement_medical_info_part_2} <i class="fa fa-chevron-down pull-right" aria-hidden="true"></i>
+                </div>
+                <div id="reinstatement-medical-history-declaration2-info" class="bs col-sm-12 col-xs-12 form-toggle-content" style="display:none;">
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-12 col-xs-12">                            
+                            {!$Label.Reinstatement_medical_info_part_2_intro}
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-12 col-xs-12"><strong><u>{!$Label.Reinstatement_medical_info_part_2_apart_from_conditions}</u></strong>{!$Label.Reinstatement_medical_info_part_2_seek_medical_advise}</div>
+                        <div class="bs col-sm-12 col-xs-12">
+                           <div class="bs cigna-answer-wrapper">
+                              <p>
+                                  <input type="radio" id="medical-history-declaration2-awaiting-result-prob-yes" name="medical-history-declaration2-awaiting-result-prob" class="bs cigna-question-radio"  onchange="changeMedicalHistoryYesNoValue(this)" />
+                                  <label for="medical-history-declaration2-awaiting-result-prob-yes">{!$Label.Yes}</label>
+                              </p>
+                              <p>
+                                  <input type="radio" id="medical-history-declaration2-awaiting-result-prob-no" name="medical-history-declaration2-awaiting-result-prob" class="bs cigna-question-radio" onclick="changeMedicalHistoryYesNoValue(this)" />
+                                  <label for="medical-history-declaration2-awaiting-result-prob-no">{!$Label.No}</label>
+                              </p>
+                              <apex:inputHidden id="medical-history-declaration2-awaiting-result-prob" value="{!Request.Reinstatement_apart_from_con__c}"/>
+                              <apex:input id="Required-medical-history-declaration2-awaiting-result-prob" styleClass="hidden-input-field" onfocus="hiddenonblur(this);"/>
+                           </div>
+                           <div id="medical-history-declaration2-awaiting-result-prob-area" class="bs" style="display:none;">
+                               <span>{!$Label.Reinstatement_state_the_dianosis}</span>
+                               <apex:inputTextarea id="details-medical-history-declaration2-awaiting-result-prob" styleClass="form-field-style-textarea" value="{!Request.Reinstatement_apart_from_con_details__c}" />
+                           </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="reinstatement-family-history-declaration-panel" class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light onclick-pointer">
+                    {!$Label.Reinstatement_family_history_declaration} <i class="fa fa-chevron-down pull-right" aria-hidden="true"></i>
+                </div>
+                <div id="reinstatement-family-history-declaration-info" class="bs col-sm-12 col-xs-12 form-toggle-content" style="display:none;">
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-12 col-xs-12">
+                            <p>{!$Label.Reinstatement_family_history_declaration_members}</p>
+                            <br/>
+                            <ul>
+                                <li>{!$Label.Reinstatement_family_history_declaration_members_disease}</li>
+                            </ul>
+                        </div>
+                        <div class="bs col-sm-12 col-xs-12">
+                           <div class="bs cigna-answer-wrapper">
+                              <p>
+                                  <input type="radio" id="family-history-declaration-member-disease-yes" name="family-history-declaration-member-disease" class="bs cigna-question-radio"  onchange="changeMedicalHistoryYesNoValue(this)" />
+                                  <label for="family-history-declaration-member-disease-yes">{!$Label.Yes}</label>
+                              </p>
+                              <p>
+                                  <input type="radio" id="family-history-declaration-member-disease-no" name="family-history-declaration-member-disease" class="bs cigna-question-radio" onclick="changeMedicalHistoryYesNoValue(this)" />
+                                  <label for="family-history-declaration-member-disease-no">{!$Label.No}</label>
+                              </p>
+                              <apex:inputHidden id="family-history-declaration-member-disease" value="{!Request.Reinstatement_members_disease__c}"/>
+                              <apex:input id="Required-family-history-declaration-member-disease" styleClass="hidden-input-field" onfocus="hiddenonblur(this);"/>
+                           </div>
+                           <div id="family-history-declaration-member-disease-area" class="bs" style="display:none;">
+                               <span>{!$Label.Reinstatement_state_relationship}</span>
+                               <apex:inputTextarea id="details-family-history-declaration-member-disease" styleClass="form-field-style-textarea" value="{!Request.Reinstatement_members_disease_details__c}" />
+                           </div>
+                        </div>
+                    </div>
+                </div>
+                <!--remove TnC-->
+                <!--<div id="reinstatement-additional-declaration-panel" class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light onclick-pointer">
+                    {!$Label.Reinstatement_additional_declaration} <i class="fa fa-chevron-down pull-right" aria-hidden="true"></i>
+                </div>
+                <div id="reinstatement-additional-declaration-info" class="bs col-sm-12 col-xs-12 form-toggle-content" style="display:none;">
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-12 col-xs-12"> 
+                            <input type="checkbox" id="additional-declaration-checkbox" name="additional-declaration" class="cigna-question-checkbox" onchange="confirmDeclaration(this)"/><label for="additional-declaration-checkbox"></label><apex:outputText escape="false" value="{!$Label.Reinstatement_additional_declaration_message}" /> 
+                            <apex:inputHidden id="additional-declaration" value="{!Request.Reinstatement_additional_declaration__c}"/><br/>
+                            <apex:input id="Required-additional-declaration" styleClass="hidden-input-field" />
+                        </div>
+                    </div>
+                </div>
+                <div id="da-overlay" class="tcoverlay" style="display:none;">
+                    <div id="da-popup" class="tcpopup">
+                        <a href="#"><div class="glyphicon glyphicon-remove closeOverlay pull-right" onclick="toggleOverlay();"></div></a>
+                        <h4>{!$Label.Declaration_and_Authorization}</h4>
+                        <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                        <div class="tccontent">
+                        </div>
+                    </div>
+                </div>
+                <div id="pic-overlay" class="tcoverlay" style="display:none;">
+                    <div id="pic-popup" class="tcpopup">
+                        <a href="#"><div class="glyphicon glyphicon-remove closeOverlay pull-right" onclick="toggleOverlayPIC();"></div></a>
+                        <h4>{!$Label.Personal_Information_Collection_Statement_Title}</h4>
+                        <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                        <div class="tccontent">
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.  Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed.
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.  Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed.
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.  Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed.
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.  Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed.
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at porttitor sem.  Aliquam erat volutpat. Donec placerat nisl magna, et faucibus arcu condimentum sed.
+                        </div>
+                    </div>
+                </div>-->
+             
+
+                <apex:actionFunction name="SavePolicyChange" action="{!SavePolicyChange}" status="loader-icon" rerender="false" oncomplete="refreshAttlist()"/>
+                <apex:actionFunction name="SaveAndQuit" action="{!SavePolicyChange}" status="loader-icon" oncomplete="Cigna.Util.navigateToVFP('PolicyChangeVFP');" rerender="false"/>
+                
+                
+            </apex:form>
+            <script>
+            /*Document Ready*/
+                //CR-56_Link_20220214
+                $("#reinstatement-occupation-panel").on("click",function() {
+                    $("#reinstatement-occupation-info").toggle(null, null, changeSection(this));
+                });
+                
+                $("#reinstatement-coverage-panel").on("click",function() {
+                    $("#reinstatement-coverage-info").toggle(null, null, changeSection(this));
+                });
+                
+                $("#reinstatement-body-build-panel").on("click",function() {
+                    $("#reinstatement-body-build-info").toggle(null, null, changeSection(this));
+                });
+                
+                $("#reinstatement-medical-history-declaration1-panel").on("click",function() {
+                    $("#reinstatement-medical-history-declaration1-info").toggle(null, null, changeSection(this));
+                });
+                
+                $("#reinstatement-medical-history-declaration2-panel").on("click",function() {
+                    $("#reinstatement-medical-history-declaration2-info").toggle(null, null, changeSection(this));
+                });
+                
+                $("#reinstatement-family-history-declaration-panel").on("click",function() {
+                    $("#reinstatement-family-history-declaration-info").toggle(null, null, changeSection(this));
+                });
+                
+                $("#reinstatement-additional-declaration-panel").on("click",function() {
+                    $("#reinstatement-additional-declaration-info").toggle(null, null, changeSection(this));
+                });
+                
+                $('input.cigna-question-radio').on("change",onRadioChange);
+                
+                $("form[id*='change-reinstatement'] .form-toggle-tab").trigger('click');
+
+                $('html, body').animate({ scrollTop: 0 }, 0);
+    
+                $( "input:hidden[id*='medical-history-declaration2-']" ).each(function( index ) {
+                    
+                    var buttonId = this.id.substring(this.name.lastIndexOf(":")+1, this.id.length);
+                    var buttonName = this.name.substring(this.name.lastIndexOf(":")+1, this.name.length);
+    
+                    if($(this).val()=='YES'){
+                        $( "input:radio[id*='-yes'][name*='"+ buttonName + "']" ).prop('checked', 'true');
+                        $("input[id*= 'Required-" + buttonName + "']").val('selected');
+                        //validateDetails(buttonName); Part1
+                        
+                    }else if($(this).val()=='NO'){
+                        $( "input:radio[id*='-no'][name*='"+ buttonName + "']" ).prop('checked', 'true');
+                        $("input[id*= 'Required-" + buttonName + "']").val('selected');
+                    }else{
+                        $("input[id*= 'Required-" + buttonName + "']").val('');
+                    }
+                }); 
+                
+               $( "input:hidden[id*='medical-history-declaration1-']" ).each(function( index ) {
+                    
+                    var buttonId = this.id.substring(this.name.lastIndexOf(":")+1, this.id.length);
+                    var buttonName = this.name.substring(this.name.lastIndexOf(":")+1, this.name.length);
+    
+                    if($(this).val()=='YES'){
+                        $( "input:radio[id*='-yes'][name*='"+ buttonName + "']" ).prop('checked', 'true');
+                        $("input[id*= 'Required-" + buttonName + "']").val('selected');
+                        //validateDetails(buttonName); Part2
+                        
+                    }else if($(this).val()=='NO'){
+                        $( "input:radio[id*='-no'][name*='"+ buttonName + "']" ).prop('checked', 'true');
+                        $("input[id*= 'Required-" + buttonName + "']").val('selected');
+                    }else{
+                        $("input[id*= 'Required-" + buttonName + "']").val('');
+                    }
+                
+                }); 
+                
+                $( "input:hidden[id*='occupation-work-outside']" ).each(function( index ) {
+                    
+                    var buttonId = this.id.substring(this.name.lastIndexOf(":")+1, this.id.length);
+                    var buttonName = this.name.substring(this.name.lastIndexOf(":")+1, this.name.length);
+                    
+                    if($(this).val()=='YES'){
+                        $( "input:radio[id*='-yes'][name*='"+ buttonName + "']" ).prop('checked', 'true');
+                        $("input[id*= 'Required-" + buttonName + "']").val('selected');
+                        //validateDetails(buttonName); Part3
+                        
+                    }else if($(this).val()=='NO'){
+                        $( "input:radio[id*='-no'][name*='"+ buttonName + "']" ).prop('checked', 'true');
+                        $("input[id*= 'Required-" + buttonName + "']").val('selected');
+                    }else{
+                        $("input[id*= 'Required-" + buttonName + "']").val('');
+                    }
+                
+                });
+                
+                $( "input:hidden[id*='family-history-declaration']" ).each(function( index ) {
+                    
+                    var buttonId = this.id.substring(this.name.lastIndexOf(":")+1, this.id.length);
+                    var buttonName = this.name.substring(this.name.lastIndexOf(":")+1, this.name.length);
+    
+                    if($(this).val()=='YES'){
+                        $( "input:radio[id*='-yes'][name*='"+ buttonName + "']" ).prop('checked', 'true');
+                        $("input[id*= 'Required-" + buttonName + "']").val('selected');
+                        //validateDetails(buttonName); Part4
+                        
+                    }else if($(this).val()=='NO'){
+                        $( "input:radio[id*='-no'][name*='"+ buttonName + "']" ).prop('checked', 'true');
+                        $("input[id*= 'Required-" + buttonName + "']").val('selected');
+                    }else{
+                        $("input[id*= 'Required-" + buttonName + "']").val('');
+                    }
+                
+                }); 
+                
+                $( "input:hidden[id*='coverage-existing-insurance']" ).each(function( index ) {
+                    
+                    var buttonId = this.id.substring(this.name.lastIndexOf(":")+1, this.id.length);
+                    var buttonName = this.name.substring(this.name.lastIndexOf(":")+1, this.name.length);
+    
+                    if($(this).val()=='YES'){
+                        $( "input:radio[id*='-yes'][name*='"+ buttonName + "']" ).prop('checked', 'true');
+                        $("input[id*= 'Required-" + buttonName + "']").val('selected');
+                        //validateDetails(buttonName); Part5
+                        
+                    }else if($(this).val()=='NO'){
+                        $( "input:radio[id*='-no'][name*='"+ buttonName + "']" ).prop('checked', 'true');
+                        $("input[id*= 'Required-" + buttonName + "']").val('selected');
+                    }else{
+                        $("input[id*= 'Required-" + buttonName + "']").val('');
+                    }
+                
+                });
+                
+                //$( "input:hidden[id*='additional-declaration']" ).val()=='on' || 
+                if($( "input:hidden[id*='additional-declaration']" ).val()=='true'){
+                    $( "input:checkbox[id*='additional-declaration-checkbox']" ).prop('checked', 'true');
+                }
+                
+                
+                $( "input:radio[id*='-yes'][name*='coverage-existing-insurance']" ).each(function( index ) {
+                    var buttonId = this.id;
+                    var buttonName = this.name;
+                    
+                    if($(this).is(':checked')){
+                        $("#" + buttonName + "-details").show();
+                    }else{
+                        $("#" + buttonName + "-details").hide();
+                    }
+                    
+                });
+                
+                $( "input:radio[id*='-yes'][name*='medical-history-declaration1-']" ).each(function( index ) {
+                    var buttonId = this.id;
+                    var buttonName = this.name;
+                    
+                    if($(this).is(':checked')){
+                        $("#" + buttonName + "-area").show();
+                    }
+                    
+                });
+                
+                $( "input:radio[id*='-yes'][name*='medical-history-declaration2-']" ).each(function( index ) {
+                    var buttonId = this.id;
+                    var buttonName = this.name;
+                    
+                    if($(this).is(':checked')){
+                        $("#" + buttonName + "-area").show();
+                    }
+                    
+                });
+                
+                $( "input:radio[id*='-yes'][name*='family-history-declaration-']" ).each(function( index ) {
+                    var buttonId = this.id;
+                    var buttonName = this.name;
+                    
+                    if($(this).is(':checked')){
+                        $("#" + buttonName + "-area").show();
+                    }
+                    
+                });
+       
+                if( $("[id$='Required-Number-body-build-height-unit']").val() == 'feet'){
+                    $('#height-feet-inch').show();
+                    $('#height-cm').hide();
+                }else{
+                    $('#height-feet-inch').hide();
+                    $('#height-cm').show();  
+                }
+                 
+            function onRadioChange(evt) {
+              var val = $(this).val();
+              var parent = $(this).parent();
+         
+              $(parent).siblings('input[type="hidden"]').val(val);
+            }
+            
+            function changeHeightInput(input) {
+                if(input == 'feet'){
+                    $('#height-feet-inch').show();
+                    $('#height-cm').hide();
+                }else{
+                    $('#height-feet-inch').hide();
+                    $('#height-cm').show();  
+                }
+            
+            }
+            function changeSection(section){
+                
+                var icon = $(section).find('i');
+                
+                if(icon.hasClass("fa-chevron-down")){
+                    icon.removeClass("fa-chevron-down").addClass("fa-chevron-up");
+                }else if(icon.hasClass("fa-chevron-up")){
+                    icon.removeClass("fa-chevron-up").addClass("fa-chevron-down");
+                }
+            }
+            
+            function showDetailsTextArea(area){
+                $('#' + area).find('textarea').eq(0).val('');
+                $('#' + area).show();
+            }
+            
+            function hideDetailsTextArea(area){
+                $('#' + area).find('textarea').eq(0).val('');
+                $('#' + area).hide();
+            }
+            
+            function changeYesNoValue(input){
+            
+                var buttonId = input.id;
+                var buttonName = input.name;
+                
+                if(buttonId.indexOf('-yes') != -1){
+                    $('input:hidden[id*=' + buttonName + ']').val('YES');
+                    //validateDetails(buttonName); Part6
+
+                }else if(buttonId.indexOf('-no') != -1){
+                    $('input:hidden[id*=' + buttonName + ']').val('NO');
+                }
+                
+                //for validation
+                $('input[id*= Required-' + buttonName + ']').val('selected');
+                //CR-56_Link_20220214
+                $('input[id*= Required-' + buttonName + ']').trigger("focus");
+            }
+            
+            /*function confirmDeclaration(input){
+                
+                var buttonId = input.id;
+                var buttonName = input.name;
+            
+                if($('#' + buttonId).is(':checked')){
+                    $('input:hidden[id*=' + buttonName + ']').val(true);
+                    $('input[id*= Required-' + buttonName + ']').val('selected');
+                }else{
+                    $('input:hidden[id*=' + buttonName + ']').val(false);
+                    $('input[id*= Required-' + buttonName + ']').val('');
+                }
+
+            }*/
+            
+            
+            function changeMedicalHistoryYesNoValue(input){
+                
+                var buttonId = input.id;
+                var buttonName = input.name;
+                
+                
+                if(buttonId.indexOf('-yes') != -1){
+                    showDetailsTextArea(buttonName + "-area");
+                }else if(buttonId.indexOf('-no') != -1){
+                    hideDetailsTextArea(buttonName + "-area");
+                }
+                
+                changeYesNoValue(input);
+                
+            }
+            
+            function changeExistingInsurance(input){
+            
+                var buttonId = input.id;
+                var buttonName = input.name;
+                
+                if(buttonId.indexOf('-yes') != -1){
+                    
+                    $("#" + buttonName + "-details").find("input").val('');
+                    $("#" + buttonName + "-details").show();
+                }else if(buttonId.indexOf('-no') != -1){
+                    $("#" + buttonName + "-details").find("input").val('0');
+                    $("#" + buttonName + "-details").hide();
+                }
+                
+                changeYesNoValue(input);
+            
+            }
+            
+            function hiddenonblur(input){
+                var InputId = input.id;
+                //CR-56_Link_20220214
+                $("input[id*='" + InputId + "']").trigger("blur");
+            }
+            
+            
+            
+            function toggleOverlay(){
+                $('#da-overlay').css('opacity', '0.95');
+                $('#da-overlay').toggle();
+                $('#da-popup').toggle();
+            }
+            
+            function toggleOverlayPIC(){
+                $('#pic-overlay').css('opacity','0.95');
+                $('#pic-overlay').toggle();
+                $('#pic-popup').toggle();
+            }
+            
+            
+
+            var Reinstatement = Reinstatement || {};
+            Reinstatement.Validate = function(){
+            
+                function validateDetails(input){       
+                    $("textarea[id*='details-"+ input +"']").rules("add", {
+                        required: true
+                    });
+                }
+
+                function OnChangeValidation(){
+                
+                    $("form[id*='change-reinstatement']").validate(); 
+                    
+                    jQuery.validator.addMethod("positive", function(value, element) {
+                        return this.optional(element) || Cigna.ValidationUtil.isPositive(value);
+                    }, "{!$Label.Please_enter_valid_number}");  
+                    
+                    $("input[id*='Number-']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            digits: true,
+                            positive: true
+                        });
+                    });
+                    
+                     $("input[id*='Currency-']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            number: true,
+                            positive: true
+                        
+                        });
+
+                    });
+                
+                }
+                
+                function formValidation(){
+                    $("form[id*='change-reinstatement']").validate();                  
+
+                    $("input[id*='Required-']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            required: true
+                        });
+                    });
+                    
+                    $("select[id*='Required-']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            required: true
+                        });
+                    });
+                    
+                    $("checkbox[id*='Required-']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            required: true
+                        });
+                    });
+                    
+                    $("input[id*='Currency-']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            required:true
+                            //number: true,
+                            //positive: true
+                        
+                        });
+
+                    });
+                    
+                    $( "input:hidden" ).each(function( index ) {
+                    
+                        var buttonId = this.id.substring(this.name.lastIndexOf(":")+1, this.id.length);
+                        var buttonName = this.name.substring(this.name.lastIndexOf(":")+1, this.name.length);
+        
+                        if($(this).val()=='YES'){
+                            //$( "input:radio[id*='-yes'][name*='"+ buttonName + "']" ).prop('checked', 'true');
+                            //$("input[id*= 'Required-" + buttonName + "']").val('selected');
+                            validateDetails(buttonName); 
+                        }
+                    });
+                    
+                }
+                
+                return {
+                        formValidation : formValidation,
+                        OnChangeValidation : OnChangeValidation
+                    }
+            }();
+               
+                Reinstatement.Validate.OnChangeValidation();
+                
+            </script>
+        </div>
+    </div>
+</apex:page>

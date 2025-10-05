@@ -1,0 +1,335 @@
+<apex:page showHeader="false" applyHtmlTag="false" renderAs="pdf" controller="GOPApproveLLetterController"><!-- Rancho_HC201_20220222: enable css -->
+
+    <!-- Rancho_HC201_20220222: override footer -->
+    <!-- <apex:stylesheet value="{!URLFOR($Resource.GOPPDFStyle, 'footer.css')}"/> -->
+    <apex:stylesheet value="{!$Resource.PDFDocumentStyle}" />
+
+    <c:PDFHeaderFooter type="footer" position="center">
+        <div class="footer" style="text-align: center; font-size: 7pt; color: #333; {!if(allHospitalCollet || allCignaCollet, 'margin: 0pt 0 30pt 0;', 'margin: 0pt 0 -30pt 0;')}">
+            <apex:outputPanel rendered="{!(allHospitalCollet || allCignaCollet)}">
+                <br/>
+                <table width="100%" style="position: relative;top: 6px;font-size: small; color: #000000;padding-top: 1pt;">
+                    <tbody>
+                        <tr>
+                            <td style="width: 50%"><span style="font-size:11px;text-decoration: overline">Patient’s Signature (parent or guardian, if patient under age 18)</span></td>
+                            <td style="width: 50%"><span style="font-size:11px;text-decoration: overline;width: 50%">Date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <br/><br/>
+                <table width="100%" style="position: relative;left: -180px;bottom: 1px;font-size: small; color: #000000;padding-bottom: 1pt;">
+                    <tbody>
+                        <tr>
+                            <td style="width: 50%"><span style="font-size:11px;text-decoration: overline">Patient Full name in block letter &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </apex:outputPanel>
+            <div style="border-top: .25pt solid #666; font-family: 'Arial Unicode MS';">
+                Confidential, unpublished property of Cigna. Do not duplicate or distribute. Use and distribution limited solely to authorized personnel.<br/>
+                Cigna Worldwide General Insurance Company Limited 信諾環球保險有限公司
+            </div>
+        </div>
+    </c:PDFHeaderFooter>
+
+    <div style="width: 100%">
+        <div style="text-align: center;">
+            <apex:outputPanel rendered="{!(allHospitalCollet || allCignaCollet || allPatient)}">
+                <b>{!if(isLife,'','Cigna ')}Health Insurance Scheme Guarantee of Payment (GOP)</b> <br /> <!-- Lijun_JOBR222_20220929:change GOP Letter by isPolicyLife -->
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!allClinic}">
+                <b>{!if(isLife,'','Cigna ')}Health Insurance Scheme Guarantee of Payment (GOP)</b><br /><!-- Lijun_JOBR222_20220929:change GOP Letter by isPolicyLife -->
+            </apex:outputPanel>
+            <div style="font-size:14.5px;">
+                <b>For revalidation –</b>: Please reply to approval email  <u><span style="color:#0000ff;">preauthhk@cigna.com</span></u><br/>
+            </div>
+        </div>
+    </div>
+    <div style="position:absolute;right:0;top:0;width:10%;float:right">
+        <apex:image url="{!$Resource.Cigna_Logo}" width="50" height="50"/>
+    </div>
+    <hr />
+    
+    <apex:outputPanel id="information">
+        <!-- Kirk_HC201_20220513: enable css -->
+        <table style="width: 100%">
+            <tbody>
+                <tr>
+                    <td style="width: 50%"><u><b>Member's Particulars</b></u></td>
+                    <td style="width: 50%"><u><b>Issue Date</b></u>:{!issueDate}</td>
+                </tr>
+                <tr>
+                    <td style="width: 50%">&nbsp;</td>
+                    <td style="width: 50%">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td style="width: 50%">Member's Name:{!memberName}</td>
+                    <td style="width: 50%">Patient's HKID:{!patientHKID}</td>
+                </tr>
+
+                <tr>
+                    <td style="width: 50%">Membership No.:{!memberShipNo}</td>
+                    <td style="width: 50%">Case No.:{!caseNo}</td>
+                </tr>
+
+                <tr>
+                    <td style="width: 50%">&nbsp;</td>
+                    <td style="width: 50%">&nbsp;</td>
+                </tr>
+
+                <tr>
+                    <td style="width: 50%"><u><b>Treatment Details</b></u></td>
+                    <td style="width: 50%">&nbsp;</td>
+                </tr>
+            </tbody>
+        </table>
+        <br />
+        &nbsp;Diagnosis:
+        <ol>
+            <apex:repeat value="{!diagnosis}" var="diagCode" id="diagRepeat">
+                <li>{!diagCode}</li>
+            </apex:repeat>
+        </ol>
+
+        &nbsp;Procedures:
+        <ol>
+            <apex:repeat value="{!procedures}" var="procedure" id="ProceduresRepeat">
+                <li>{!procedure}</li>
+            </apex:repeat>
+        </ol>
+
+        <table width="100%">
+            <tbody>
+                <tr>
+                    <td style="width: 50%">Admission date:{!admissionDate}</td>
+                    <td style="width: 50%">Estimated length of stay:{!esStay}</td>
+                </tr>
+                <tr>
+                    <td style="width: 50%">Hospital:{!hospital}</td>
+                    <td style="width: 50%">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td style="width: 50%">Booked class of ward:{!ward}</td><!-- Kirk_HC201_20220513: enable css -->
+                    <td style="width: 50%">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td style="width: 50%">&nbsp;</td>
+                    <td style="width: 50%">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td style="width: 50%"><u><b>Doctor’s Particulars</b></u></td>
+                    <td style="width: 50%">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td style="width: 50%">&nbsp;</td>
+                    <td style="width: 50%">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td style="width: 50%">Doctor’s name:{!doctorName}</td>
+                    <td style="width: 50%">Daily doctor’s attendance fee:{!inpatientFee}</td>
+                </tr>
+                <tr>
+                    <td style="width: 50%">Tel. number:{!tel}</td>
+                    <td style="width: 50%">Email Address:{!email}</td>
+                </tr>
+                <tr>
+                    <td style="width: 50%">Fax number:{!fax}</td>
+                    <td style="width: 50%">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td style="width: 50%">&nbsp;</td>
+                    <td style="width: 50%">&nbsp;</td>
+                </tr>
+            </tbody>
+        </table>
+    </apex:outputPanel>
+    
+    <apex:outputPanel id="allCignaCollethospital" rendered="{!allCignaCollet}">
+        <!-- Rancho_HC201_20220222: add pagination if coverage details could not fully displayed in the first page -->
+        <div style="page-break-inside: avoid;">
+            <span><u><b>Coverage Details</b></u></span><br />
+            <br />
+            <span>The member’s medical card can be accepted at the treatment location stated above.</span><br />
+            <br />
+            <span>Credit limit:  HK$<apex:outputText value="{0, number}">
+                                        <apex:param value="{!gopCreditLimit}" />
+                                    </apex:outputText></span><br />
+            <span>Please call Cigna for revalidation if accumulative hospital expenses exceed HK$<apex:outputText value="{0, number}">
+                                        <apex:param value="{!gopCreditLimit}" />
+                                    </apex:outputText>.</span><br /><br/>
+            <span>Cigna will collect the balance of your annual deductible amount, i.e. HK$ <apex:outputText value="{0,number}"><apex:param value="{!deductAmount}"/></apex:outputText> as of today, from you after your discharge.</span><br/>
+            <span>Please also collect HK$<apex:outputText value="{0,number}"><apex:param value="{!shortfallAmount}"/></apex:outputText> as of the balance of outstanding amount from the member upon discharge.</span><br/><br/>
+            <span>Other information: {!otherInfor}</span><br/><br/>
+
+            <div>
+                <div style="font-size: small;"><b>Patient’s Signature and Release (parent or guardian, if patient is under age 18)</b>: I certify that the information supplied is true and correct. I authorize the release of all records or other information which may be necessary to determine benefits payable. The information provided on this form may be used and disclosed to other persons or entities, including my Plan sponsor, for the purpose of processing of this claim and performing health plan administration. <br /><br /><br /><br /><br /></div>
+                <!-- Rancho_HC201_20220222: put signature into footer -->
+                <!-- <div style="font-size: small;">
+                    <table width="100%">
+                        <tbody>
+                            <tr>
+                                <td style="width: 50%"><span style="text-decoration: overline">Patient’s Signature (parent or guardian, if patient under age 18)</span></td>
+                                <td style="width: 50%">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="text-decoration: overline;width: 50%">Date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div> -->
+            </div>
+        </div>
+    </apex:outputPanel>
+
+    <apex:outputPanel id="allHospitalCollethospital" rendered="{!allHospitalCollet}">
+        <!-- Rancho_HC201_20220222: add pagination if coverage details could not fully displayed in the first page -->
+        <div style="page-break-inside: avoid;">
+            <span><u><b>Coverage Details</b></u></span><br />
+            <br />
+            <span>The member’s medical card can be accepted at the treatment location stated above.</span><br />
+            <br />
+            <span>Credit limit:  HK$<apex:outputText value="{0, number}">
+                                        <apex:param value="{!gopCreditLimit}" />
+                                    </apex:outputText></span><br /><br />
+            <span>Please call Cigna for revalidation if accumulative hospital expenses exceed HK$<apex:outputText value="{0, number}">
+                                        <apex:param value="{!gopCreditLimit}" />
+                                    </apex:outputText>.</span><br /><br />
+
+            <span><b>Please collect HK$<apex:outputText value="{0,number}"><apex:param value="{!deductAmount}"/></apex:outputText> as of the balance of annual deductible from the member upon discharge.</b></span><br/><br/>
+            <span><b>Please also collect HK$<apex:outputText value="{0,number}"><apex:param value="{!shortfallAmount}"/></apex:outputText> as of the balance of outstanding amount from the member upon discharge.</b></span><br /><br/>
+
+            <span>Other information: {!otherInfor}</span><br/><br/>
+        </div>
+    </apex:outputPanel>
+
+    <apex:outputPanel id="allPatient" rendered="{!allPatient}">
+        <!-- Rancho_HC201_20220222: add pagination if coverage details could not fully displayed in the first page -->
+        <div style="page-break-inside: avoid;">
+            <span><u><b>Coverage Details</b></u></span><br />
+            <br />
+            <span>The above mentioned cost will be paid under the following benefits of your scheme.</span><br />
+            <br />
+            <table border="1px" cellspacing="0">
+                <tr>
+                    <th>Surgery/ treatment/ investigation</th>
+                    <th>Requested cost (HKD)</th>
+                    <th>Approved cost (HKD)</th>
+                </tr>
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:repeat value="{!coverageDetails}" var="cpt">
+                    <tr>
+                        <td>{!cpt.GOP_CPT_Description__c}</td>
+                        <!-- Rancho_HC201_20220222: display total fees -->
+                        <!-- <td>{!cpt.GOP_Surgical_Fees__c}</td>
+                        <td>{!cpt.GOP_Approved_Fee__c}</td> -->
+                        <td rowspan="{!rowspanSize}" style="{!if(rowNum==0, '', 'display:none')}">Total: {!cr.GOP_Surgical_Fees__c}</td>
+                        <td rowspan="{!rowspanSize}" style="{!if(rowNum==0, '', 'display:none')}">Total: {!cr.GOP_Total_Approved_Fees__c}</td>
+                    </tr>
+                    <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                </apex:repeat>
+            </table>
+            <br/>
+            <span>Credit limit:  HK$<apex:outputText value="{0, number}">
+                                        <apex:param value="{!gopCreditLimit}" />
+                                    </apex:outputText></span><br />
+            <span>The hospital will call Cigna for revalidation if accumulative hospital expenses exceed HK$<apex:outputText value="{0, number}">
+                                        <apex:param value="{!gopCreditLimit}" />
+                                    </apex:outputText>.</span><br /><br />
+
+            <span><b>Cigna/ Hospital will collect the balance of your annual deductible amount, i.e. HK$ <apex:outputText value="{0,number}"><apex:param value="{!deductAmount}"/></apex:outputText> as of today, from you after your discharge.</b></span><br/>
+            <span><b>Cigna/ Hospital will also collect the balance of outstanding amount, i.e. HK$ <apex:outputText value="{0,number}"><apex:param value="{!shortfallAmount}"/></apex:outputText> as of today, from you after your discharge.</b></span><br/><br/>
+            <span>Other information: {!otherInfor}</span><br/><br/>
+        </div>
+    </apex:outputPanel>
+
+    <apex:outputPanel id="allClinic" rendered="{!allClinic}">
+        <!-- Rancho_HC201_20220222: add pagination if coverage details could not fully displayed in the first page -->
+        <div style="page-break-inside: avoid;">
+            <span><u><b>Coverage Details</b></u></span><br />
+            <br />
+            <span>The above mentioned cost will be paid under the following benefits of the member’s scheme.</span><br />
+            <br />
+            <table border="1px" cellspacing="0">
+                <tr>
+                    <th width="50%" align="center">Surgery/ treatment/ investigation</th>
+                    <th width="25%" align="center">Requested cost (HKD)</th>
+                    <th width="25%" align="center">Approved cost (HKD)</th>
+                </tr>
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:repeat value="{!coverageDetails}" var="cpt">
+                    <tr>
+                        <td width="50%">{!cpt.GOP_CPT_Description__c}</td>
+                        <!-- Rancho_HC201_20220222: display total fees -->
+                        <!-- <td width="25%" align="center">{!cpt.GOP_Surgical_Fees__c}</td>
+                        <td width="25%" align="center">{!cpt.GOP_Approved_Fee__c}</td> --> 
+                        <td rowspan="{!rowspanSize}" style="{!if(rowNum==0, '', 'display:none')}">Total: {!cr.GOP_Surgical_Fees__c}</td>
+                        <td rowspan="{!rowspanSize}" style="{!if(rowNum==0, '', 'display:none')}">Total: {!cr.GOP_Total_Approved_Fees__c}</td>
+                    </tr>
+                    <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                </apex:repeat>
+            </table>
+            <br/>
+            <span>Credit limit:  HK$<apex:outputText value="{0, number}">
+                                        <apex:param value="{!gopCreditLimit}" />
+                                    </apex:outputText></span><br />
+            <span>The hospital will call Cigna for revalidation if accumulative hospital expenses exceed HK$<apex:outputText value="{0, number}">
+                                        <apex:param value="{!gopCreditLimit}" />
+                                    </apex:outputText>.</span><br/><br/>
+            <span>Other information: {!otherInfor}</span><br/><br/>
+        </div>
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!(allPatient || allHospitalCollet || allCignaCollet)}">
+        <div style="page-break-after: always"/>
+            <div>
+                <span><u><b>Important Information</b></u></span>
+                <ol>
+                    <li>Please note that all fees listed in this letter are treatment costs only and do not represent the actual claim settlement amount.</li>
+                    <li>All decisions made for this GOP are based on the information available at the time of this case&#39;s assessment.</li>
+                    <li>The GOP does not represent a final claim decision by Cigna.</li>
+                    <li>The final claim decision will depend on the information that Cigna finally receives (including the discharge reports and relevant documents provided by the hospital).</li>
+                    <li>This letter is valid for 30 days from the date of issuance unless otherwise specified.</li>
+                    <li>Any alteration on this letter without Cigna's approval will invalidate the GOP.</li>
+                    <li>For expenses not listed in this letter, please contact your attending doctor or hospital for further information.</li>
+                    <li>Hospital should collect the un-covered items stated on the exclusion listed as per policy. Should there is/are any uncovered item(s) billed to Cigna, Cigna has reserved a right to offset any refund or claim to the Policyholder against the outstanding shortfall incurred as a result of the use of the {!if(isLife,'','Cigna ')}Medical Plan.</li> <!-- Lijun_JOBR222_20220929:change GOP Letter by isPolicyLife -->
+                    <li>Cigna reserves the right to require the member to reimburse Cigna in full for all amounts paid by Cigna pursuant to the GOP provided and/or all liabilities incurred by Cigna arising out of the GOP provided, if Cigna subsequently finds or determines that the relevant treatment, medical procedure or medical expense falls into any exclusion under the policy or is not included in the policy coverage. </li>
+                </ol>
+                <span><u><b>Major Exclusions (For member’s reference only)*</b></u></span>
+                <ul>
+                    <li>Pre-existing medical conditions</li>
+                    <li>Any damage being caused by insured&#39;s suicide, attempted suicide or intentionally self-inflicted injuries</li>
+                    <li>Any damage being caused under the influence of alcohol or drugs</li>
+                    <li>Pregnancy, childbirth and miscarriage or abortion</li>
+                    <li>Sexually transmitted disease</li>
+                    <li>Infertility or sterilization</li>
+                    <li>Birth defect, congenital, development and hereditary conditions</li>
+                    <li>Cosmetic and elective surgery</li>
+                    <li>Sleep disorders including insomnia, snoring, sleep -related breathing problems or sleep studies</li>
+                    <li>Not medically necessary treatments</li>
+                    <li>Non-medical services, including but not limited to guest meals, radio, telephone, photocopy, taxes, medical report charges and personal items</li>
+                    <li>Dental and orthodontic services</li>
+                    <li>Routine medical examination or health screening checks</li>
+                </ul>
+                <span>*Above only lists out the major items of the exclusions. For full details, customer/ member is suggested to refer to the policy provisions.</span><br/><br/>
+            </div>
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!allHospitalCollet}">
+        <div>
+                <div style="font-size: small;"><b>Patient’s Signature and Release (parent or guardian, if patient is under age 18)</b>: I certify that the information supplied is true and correct. I authorize the release of all records or other information which may be necessary to determine benefits payable. The information provided on this form may be used and disclosed to other persons or entities, including my Plan sponsor, for the purpose of processing of this claim and performing health plan administration. <br /><br /></div>
+                <div style="font-size: small;">I acknowledge and agree that the GOP provided by the Cigna is be based on the preliminary information available to Cigna and does not represent final claim decision by Cigna.   I further acknowledge and agree that, in making the final claim decision, Cigna may take into account, among other information, the discharge reports and relevant documents provided by the relevant hospital to Cigna.<br /><br /></div>
+                <div style="font-size: small;">I agree to reimburse Cigna in full for all amounts paid by Cigna pursuant to the GOP provided and/or all liabilities incurred by Cigna arising out of the GOP provided, if Cigna subsequently finds or determines that the relevant treatment, medical procedure or medical expense falls into any exclusion under the policy or is not included in the policy coverage. <br /><br /><br /><br /><br /></div>
+                <!-- Rancho_HC201_20220222: put signature into footer -->
+                <!-- <div style="font-size: small;">
+                    <table width="100%">
+                        <tbody>
+                            <tr>
+                                <td style="width: 50%">&nbsp;</td>
+                                <td style="width: 50%">&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td style="width: 50%"><span style="text-decoration: overline">Patient’s Signature (parent or guardian, if patient under age 18)</span></td>
+                                <td style="width: 50%">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="text-decoration: overline;width: 50%">Date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div> -->
+        </div>
+    </apex:outputPanel>
+    
+</apex:page>

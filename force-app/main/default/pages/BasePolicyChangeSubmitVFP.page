@@ -1,0 +1,1809 @@
+<apex:page id="policychangesubmitpage" standardController="Policy_Change_Request__c" extensions="ManagePolicyChangeCRTL" docType="html-5.0" showHeader="false" title="Submit a Change">
+        <head>
+            <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>            
+            <!-- 20200306 - minghua - ILAS -->
+            <apex:include pageName="ClaimUtilJS"/>
+            
+            <style>
+                <!--addtional inline css-->
+                .content-question{
+                    font-size:16px;
+                    padding-top:10px;
+                    padding-bottom:10x;
+                }
+                .content-icon {
+                    font-size:20px;
+                    padding-right:10px !important;
+                    text-align:center;
+                    width:50px;
+                }
+                .content-active {
+                    color:#39B54A;
+                }
+                .content-inactive {
+                    color:#D9D9D6;
+                }
+                .content-choice{
+                    font-size:14px !important;
+                    padding-top:20px !important;
+                    padding-bottom:20px !important;
+                    border-bottom:1px solid #f2f2f2 !important;
+                }
+                .content-subchoice{
+                    padding-top:10px;
+                }
+                .bs .cigna-floating-bottom-panel { 
+                    position: fixed;
+                    bottom: 0;
+                    left:0;
+                    width: 100%;
+                }      
+                .content-step{
+                    color:#58595B;
+                    padding:10px;
+                }    
+                .policy-title{
+                    font-weight:bold !important;
+                    padding-bottom:5px;
+                }
+                .policy-detail{
+                    padding-left:50px;
+                }
+                .header-action{
+                    padding:10px;
+                }
+                <!--tooltips-->
+                .tooltip {
+                    position: relative;
+                    display: inline-block;
+                }
+                .tooltip .tooltiptext {
+                    visibility: hidden;
+                    width: 120px;
+                    background-color: black;
+                    color: #fff;
+                    text-align: center;
+                    border-radius: 6px;
+                    padding: 5px 0;
+                }
+                .tooltip:hover .tooltiptext {
+                    visibility: visible;
+                }
+                .tooltip-inner {
+                    /* Change the tooltip width here */
+                    max-width: 250px !important;
+                    /* If max-width does not work, try using width instead */
+                    width: 250px; 
+                    min-width: 100px;
+                }
+                .helptext-icon {
+                    background:none !important;
+                    border:none !important;
+                    border-radius:0px !important;
+                    font-size:14px !important;
+                }
+                
+                .loading-spinner{
+                    top: 50%;
+                    display: none;
+                    position: absolute;
+                    z-index: 11;
+                }
+                
+                .loading-label {
+                    font-weight: bold;
+                    font-size: 18px;
+                }
+
+                .uploaded-filelist{
+                    padding:10px; 
+                    background-color:#f2f2f2;
+                    text-overflow: ellipsis;
+                    overflow:hidden;
+                    white-space:nowrap;
+                    
+                }
+                
+                .progress-bar-font{
+                  font-size:0.6em;
+                }
+                
+                
+                 <!--Quick Fix T & C-->
+               .tcoverlay {
+                    display: none;
+                    z-index: 10;
+                    background: #D9D9D6;
+                    position: fixed;
+                    width: 100%;
+                    height: 100%;
+                    top: 0px;
+                    left: 0px;
+                    text-align: center;
+                }
+                .tcpopup {
+                    display: none;
+                    position: absolute;
+                    z-index: 11;
+                    margin: 150px auto 0px auto;
+                    width: 80%;
+                    height: 50%;
+                    background: #FFF;
+                    color: #000;
+                    left: 10%;
+                    padding:20px;
+                    border-radius:5px;
+                    
+                }
+                .closeOverlay {
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                }
+                
+                .tccontent {
+                    padding:10px;
+                    color:#000;
+                    font-size:12px;
+                    width: 100%;
+                    height: 95%;
+                    overflow-y:auto;
+                }
+
+                 /*CR-56_Link_20220214*/
+                .ui-tooltip {
+                    background: black !important;
+                    max-width: 250px !important;
+                    width: 250px; 
+                    min-width: 100px;
+                    color: white !important;
+                    z-index: 1070;
+                    display: block;
+                    text-align: center !important;
+                    font-size: 12px !important;
+                    border-radius: 5px !important;
+                }
+               
+            </style>
+            <!--for upload attachement-->
+            <script type="text/javascript">
+                var __sfdcSessionId = '{!GETSESSIONID()}';
+                var filesToUpload = '';  
+                var uploadedFile = 0;
+            </script>
+            <script src="/soap/ajax/32.0/connection.js" type="text/javascript"></script>
+            <!-------------------------->
+            <script>
+                var changeLanguageWarningRequired = true;
+                <!--addtional inline js-->
+                var currentChangeType = '';
+                var sitePrefix = '';
+                var thirdParty = '{!IsThirdParty}';
+                var policyChangeId = '{!JSINHTMLENCODE(policyChangeId)}';
+                $(document).ready(function(){
+                    //Nicole_Bypass Login_20201005
+                    var isCustomerSiteGuestUser = {!isCustomerSiteGuestUser};
+                    var isTokenValid = {!isTokenValid};
+                    if(isCustomerSiteGuestUser && !isTokenValid){
+                        $('.content-step[data-step="1"]').hide();  
+                        $("#save").hide();
+                        $("#back").hide();                     
+                        $("#token-invalid-message").show();
+                    }else{                   
+                        PolicyChangeAF.init();
+                    }
+                });
+
+                window.nextStep = function(step){
+
+                    var currentStepNum = $('.content-step:visible').data('step');
+                    var nextStepNum = 0;
+                    if(!step){
+                        if(currentStepNum == 4 && currentChangeType =='copyDoc'){
+                            nextStepNum = 6;
+                        }else{
+                            nextStepNum = currentStepNum + 1;
+                        }
+                    }else{
+                        nextStepNum = step;
+                    }
+                
+                    if ($('.content-step[data-step="' + nextStepNum + '"]').length > 0 && currentStepNum != 7 ) {
+                        $('.content-step:visible').fadeOut(function(){
+                            $('.content-step[data-step="' + nextStepNum + '"]').fadeIn();
+                        });
+                    }
+                
+                    if(nextStepNum>1){
+                        $("#save").show();
+                    }
+                    
+                    /*Save before att step*/
+                    if(nextStepNum == 3 || nextStepNum == 4 || (currentStepNum == 5 && step=='') ){
+                        InputCurrentStep(currentStepNum, thirdParty, selectedMemberName);
+                    }
+                    
+                    
+                    if(nextStepNum==4){
+                        refreshMobileNextFixJS();
+                    }
+                    
+                    if (nextStepNum==5){
+                        $("#info").removeClass('active');
+                        $("#att").addClass('bs active');
+                        $("#esign").removeClass('active');
+                    }
+                    
+                    if (nextStepNum==6){
+                        
+                        $("#info").removeClass('active');
+                        $("#att").removeClass('active');
+                        $("#esign").addClass('bs active');
+                        $("#save").hide();
+                        refreshEsignature();
+                        
+                    }
+                
+                    if (nextStepNum==7){
+                        $("#info").removeClass('active');
+                        $("#att").removeClass('active');
+                        $("#esign").removeClass('active');
+                        $("#save").hide();
+                        $("#back").hide();
+                    }
+                    
+                    //Nicole_Bypass Login_20200924
+                    if({!IsCustomerSiteGuestUser} && nextStepNum>2 && nextStepNum<7){
+                        $("#save").hide();
+                        if(nextStepNum>2 && nextStepNum<7){
+                            $("#back").show();
+                        }
+                    }
+                    
+                     $("html, body").animate({ scrollTop: 0 }, "fast");
+                
+                }
+
+                window.previousStep = function(){
+                
+                    var currentStepNum = $('.content-step:visible').data('step');
+                    var previousStepNum = currentStepNum - 1;
+                
+                    if (currentStepNum == 4 && currentChangeType!='personal'){
+                        previousStepNum = 2;
+                    }else{
+                        previousStepNum = currentStepNum - 1;
+                    }
+                
+                    if (currentStepNum > 1){
+                        if ($('.content-step[data-step="' + previousStepNum + '"]').length > 0) {
+                            $('.content-step:visible').fadeOut(function(){
+                                $('.content-step[data-step="' + previousStepNum + '"]').fadeIn();
+                            });
+                        }
+
+                        $("#info").addClass('active');
+                        $("#att").removeClass('bs active');
+                        $("#esign").removeClass('active');
+                    
+                        if(previousStepNum == 5){
+                           $("#info").removeClass('active');
+                           $("#att").addClass('bs active');
+                           $("#esign").removeClass('active');
+                        }
+                    
+
+                        if(previousStepNum > 1){
+                            $("#save").show();
+                        }else{
+                            $("#save").hide();
+                        }
+                
+                    }else if('{!JSINHTMLENCODE(fromPolicyChangelist)}'=='true' || '{!JSINHTMLENCODE(fromTab)}' !=''){
+                        var navigationlink = 'PolicyChangeVFP?tab='+ '{!JSINHTMLENCODE(fromTab)}';
+                        Cigna.Util.navigateToVFP(navigationlink);
+                    }else{
+                        history.go(-1);
+                    }
+                    
+                    //Nicole_Bypass Login_20200924
+                    if({!IsCustomerSiteGuestUser}){
+                        if(previousStepNum<=2) $("#back").hide();
+                        $("#save").hide();
+                    }
+                
+                }
+                
+                var isPolicySelected = false;
+                
+               
+                function selectType(type) {
+                    selectChangeType(type);
+                    currentChangeType = type;
+                    if (type == 'owner'){
+                        $('#esign').show();
+                        adjustProgressBar('add');
+                    }else{
+                        $('#esign').hide();
+                        adjustProgressBar('remove');
+                    }
+
+                    
+                    //isPolicySelected = false;
+                }
+                
+                // Rancho_PI117_20230817 - pass current clicked policy color to backend
+                function selectPolicy(policyno, element){
+                    console.log('current policy: '+policyno);
+                    console.log('current element: ',element);
+                    var color = '';
+                    // on() is always later than onclick and click
+                    // so if element color is gray currently, it means it is going to change to orange
+                    if (element && element.classList.contains('cigna-fg-gray-dark')) {
+                        color = 'orange';
+                    } else {
+                        color = 'gray';
+                    }
+                    console.log('current color: '+color);
+                    selectedPolicy(policyno, color);
+                        $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                }
+                
+                function checkIsSinglePolicy(){
+                    if(currentChangeType == 'renew' || currentChangeType == 'benefit' || currentChangeType == 'app'||currentChangeType == 'copyDoc'){
+                        nextStep('4');
+                    }
+
+                }
+                
+                var selectedMemberName = '';
+                function selectPolicyMember(id,name){
+                    selectedPolicyMember(id,name);
+                    selectedMemberName = name;
+                    //$("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                    window.nextStep();
+                }
+                
+                
+                function getCurrentStep(IsSaveQuit){
+                    var currentStepNum = $('.content-step:visible').data('step');
+                    if(IsSaveQuit){
+                        SaveAndQuitInputCurrentStep(currentStepNum, thirdParty, selectedMemberName);
+                    }else{
+                        InputCurrentStep(currentStepNum, thirdParty, selectedMemberName);
+                    }
+
+                }
+                
+                
+                function SaveQuit(){
+                    getCurrentStep(true);
+                }
+
+                
+                /*For upload attachment*/  
+                /*
+                function uploadFile(parentId, attType)
+                {
+                    showLoading();
+                
+                        $("#"+attType).each(function(){
+                
+                          filesToUpload=$(this)[0].files[0];
+                          
+                        });
+
+                        var reader = new FileReader();
+                
+                        // Keep a reference to the File in the FileReader so it can be accessed in callbacks
+                        reader.file = filesToUpload;
+                
+                        reader.onload = function(e)
+                        {                                                        
+                            var maxFileSize = 7340032;
+                            var passFileSize;
+                            var passFileType;
+                            
+                            if(this.file.size>maxFileSize){
+                                $("#errFileSize").show();
+                                passFileType = false;
+                            }else{
+                                passFileSize = 'true';
+                                $("#errFileSize").hide();
+                            }
+                        
+                            if(this.file.type!='application/vnd.openxmlformats-officedocument.wordprocessingml.document' && this.file.type!='application/msword' && this.file.type!='application/pdf' && this.file.type!='image/png' && this.file.type!='image/jpeg' && this.file.type!='image/tiff'){
+                                $("#errFileType").show();
+                            }else{
+                                passFileType  = 'true';
+                                $("#errFileType").hide();
+                            }
+                            
+                            if(passFileType=='true' && passFileSize=='true' && parentId && parentId!=undefined){
+                            
+                                var att = new sforce.SObject("Attachment");
+                                att.Name = attType+'_'+this.file.name;
+                                att.ContentType = this.file.type;
+                                att.ParentId = parentId;
+                
+                                var binary = "";
+                                var bytes = new Uint8Array(e.target.result);
+                                var length = bytes.byteLength;
+                
+                                for (var i = 0; i < length; i++)
+                                {
+                                    binary += String.fromCharCode(bytes[i]);
+                                }
+                
+                                att.Body = (new sforce.Base64Binary(binary)).toString();
+                
+                                sforce.connection.create([att],
+                                {
+                                    onSuccess : function(result, source)
+                                    {
+                                        if (result[0].getBoolean("success"))
+                                        {
+                                            console.log("new attachment created with id " + result[0].id);
+                                            finishSubmission();
+                                            refreshAttlist();
+                                            checkAtt();
+                                            $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                
+                                        }
+                                        else
+                                        {
+                                            console.log("failed to create attachment " + result[0]);
+                                            //alert("failed to create attachment " + result[0]);
+                                            finishSubmission();
+                                            
+                                        }
+                                    },
+                                    onFailure : function(error, source)
+                                    {
+                                        console.log("an error has occurred " + error);
+                                        //alert("an error has occurred " + error);
+                                        finishSubmission();
+                                    }
+                                });
+                            }else{
+
+                                finishSubmission();
+                            
+                            }
+                        };
+                        
+                        if(filesToUpload!='' || filesToUpload!='1' || filesToUpload.legth==0){
+                            reader.readAsArrayBuffer(filesToUpload);
+                            $("#errNoFile").hide();
+                        }else{
+                            finishSubmission();
+                            $("#errNoFile").show();
+                        }
+                } 
+                */
+                
+                function uploadFile(parentId, attType)
+                {
+                    showLoading();
+                
+                        $("#"+attType).each(function(){
+                
+                          filesToUpload=$(this)[0].files[0];
+                          
+                        });
+
+                        var reader = new FileReader();
+                
+                        // Keep a reference to the File in the FileReader so it can be accessed in callbacks
+                        reader.file = filesToUpload;
+                
+                    if(typeof(filesToUpload)  === "undefined"){
+                        alert('please select file.');
+                    } else {
+                        reader.onload = function(e)
+                        {                           
+                            var isSiteUser = {!IsCustomerSiteGuestUser};
+                            // FileScanning_Link_20220530:change max file szie to 10m
+                            // var maxFileSize = 26214400;//7340032;
+                            var maxFileSize = 10485760;
+                            var passFileSize;
+                            var passFileType;
+                            
+                            if(this.file.size>maxFileSize){
+                                $("#errFileSize").show();
+                                passFileType = false;
+                                finishSubmission();
+                            }else{
+                                passFileSize = 'true';
+                                $("#errFileSize").hide();
+                            }
+                        
+                            if(this.file.type!='application/vnd.openxmlformats-officedocument.wordprocessingml.document' && this.file.type!='application/msword' && this.file.type!='application/pdf' && this.file.type!='image/png' && this.file.type!='image/jpeg' && this.file.type!='image/tiff'){
+                                $("#errFileType").show();
+                                finishSubmission();
+                            }else{
+                                passFileType  = 'true';
+                                $("#errFileType").hide();
+                            }
+                            
+                            if(passFileType=='true' && passFileSize=='true' && parentId && parentId!=undefined){
+                            
+                                //var att = new sforce.SObject("Attachment");
+                                //att.Name = attType+'_'+this.file.name;
+                                //att.ContentType = this.file.type;
+                                //att.ParentId = parentId;
+                
+                                var binary = "";
+                                var bytes = new Uint8Array(e.target.result);
+                                var length = bytes.byteLength;
+                
+                                for (var i = 0; i < length; i++)
+                                {
+                                    binary += String.fromCharCode(bytes[i]);
+                                }
+                
+                                //att.Body = (new sforce.Base64Binary(binary)).toString();
+                                
+                                if(!isSiteUser){
+                                    var attachment_object = {
+                                        parentId: parentId,
+                                        Body: window.btoa(binary), 
+                                        Name: attType+'_'+this.file.name, 
+                                        ContentType: this.file.type 
+                                    };
+                                    $.ajax({
+                                        url: '{!$Site.BaseUrl}/services/data/v38.0/sobjects/Attachment',
+                                        data: JSON.stringify(attachment_object),
+                                        type: 'POST',
+                                        processData: false,
+                                        contentType: false,
+                                        headers: {'Authorization': 'Bearer {!GETSESSIONID()}', 'Content-Type': 'application/json'},
+                                        xhr: function(){
+                                            var xhr = new window.XMLHttpRequest();
+                                            //Upload progress
+                                            xhr.upload.addEventListener("progress", function(evt){
+                                                if (evt.lengthComputable) {
+                                                    var percentComplete = evt.loaded / evt.total;
+                                                    //Do something with upload progress
+                                                    console.log("Percentage:"+percentComplete);
+                                                }
+                                            }, false);
+                                            return xhr;
+                                        },
+                                        success: function(response) {
+                                            console.log(response); 
+                                            finishSubmission();
+                                            refreshAttlist();
+                                            checkAtt();
+                                            $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                                        },
+                                        error: function(xhr, status, error) {
+                                            var errorMessage = xhr.status + ': ' + xhr.statusText
+                                            console.log('ERROR:'+ errorMessage); 
+                                            finishSubmission();
+                                        }
+                                    });
+                                }else{
+                                    var attachment_object = {
+                                        parentId: parentId,
+                                        Body: window.btoa(binary), 
+                                        Name: attType+'_'+this.file.name, 
+                                        ContentType: this.file.type 
+                                    };
+                                    $.post("{!$Site.prefix}/services/apexrest/fileupload/"+parentId,
+                                           attachment_object,
+                                           function(data, status){
+                                               if(status == 'success'){
+                                                   //alert("Data: " + data + "\nStatus: " + status);
+                                                   console.log(data);
+                                                   console.log('insert attachment success')
+                                                   finishSubmission();
+                                                   refreshAttlist();
+                                                   checkAtt();
+                                                   $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                                               }else{
+                                                   alert("Upload Failed");
+                                                   finishSubmission();
+                                               }
+                                           });
+                                }
+                          }else{
+                             finishSubmission();                    
+                          }
+                        };
+                        
+                        if(filesToUpload!='' || filesToUpload!='1' || filesToUpload.legth==0){
+                            reader.readAsArrayBuffer(filesToUpload);
+                            $("#errNoFile").hide();
+                        }else{
+                            finishSubmission();
+                            $("#errNoFile").show();
+                        }
+                    }
+                } 
+                /**********************/ 
+                
+                /*Loading*/
+                function showLoading() {
+                    $('#att-loading').fadeIn(100);
+                    $('#overlay-loading').fadeIn(100);
+                }
+                        
+                function finishSubmission() {
+                    $('#att-loading').fadeOut(100);
+                    $('#overlay-loading').fadeOut(100);
+                } 
+                
+                
+                /*Third Party Payment*/
+                function checkThirdPartyPay(){
+                    $('#overlaythirdPartyAlert').css('opacity', '0.95');
+                    $('#overlaythirdPartyAlert').show();
+                    $('#alertthirdPartyAlert').show();
+                }
+                
+                function confirmThirdPartyPay(option){
+                    if(option=='true') {
+                        thirdParty = 'true';
+                        checkAttDisplay('true');
+                        $('#esign').show();
+                        adjustProgressBar('add');
+                        
+                    } else {
+                        thirdParty = 'false';
+                        checkAttDisplay('false');
+                        $('#esign').hide();
+                        adjustProgressBar('remove');
+                    }
+                    $('#overlaythirdPartyAlert').hide();
+                    $('#alertthirdPartyAlert').hide();
+                    window.nextStep('4');
+                }
+                
+                
+                /*adjust the font size of progress bar*/
+                function adjustProgressBar(size){
+                
+                    if(size =='add'){
+                        $('#info').addClass('progress-bar-font');
+                        $('#att').addClass('progress-bar-font');
+                        $('#esign').addClass('progress-bar-font');
+                    }else{
+                        $('#info').removeClass('progress-bar-font');
+                        $('#att').removeClass('progress-bar-font');
+                        $('#esign').removeClass('progress-bar-font');
+                    }
+                
+                }
+                
+                function changeSubmitBtn(){
+
+                    if(currentChangeType == 'copyDoc' || currentChangeType == 'beneficiary'){
+
+                        if ($('#mobileformNext-btn-icon').hasClass('ci-hk-arrow-31')) {
+                            $('#mobileformNext-btn-icon').removeClass('ci-hk-arrow-31').addClass('ci-hk-document-send');
+                        }
+                        $('#mobileformNext-btn-text').html('{!$Label.Submit}');
+                        $('#formNext-btn-text').html('{!$Label.Submit}');
+                        
+                    } else if (currentChangeType == 'personal') {
+                        checkNeedAtt();   
+                    
+                    }else{
+                    
+                        if ($("#mobileformNext-btn-icon").hasClass('ci-hk-document-send')) {
+                            $('#mobileformNext-btn-icon').removeClass('ci-hk-document-send').addClass('ci-hk-arrow-31');
+                        }
+                        
+                        $('#mobileformNext-btn-text').html('{!$Label.Next}');
+                        $('#formNext-btn-text').html('{!$Label.Next}');
+                    
+                    }
+                }
+                 
+               /*Submit*/
+                function submitForm(type, step){
+                    var valid = 0;
+                    var BasicInfoAddValid = 1;
+                    var BasicInfoCIValid = 1;
+                    var BeneficiaryValid = 1;
+                    var formvalid = 0;
+                    var copyDocValid = 1;
+                    if(type == 'personal'){
+                    
+                        BasicInfo.Validate.formValidation();
+                        BasicInfo.Validate.checkDOBRequired();
+                        
+                        formvalid = ($("form[id*='change-personal-information']")).validate().form();
+                        //($("form[id*='change-personal-information']")).validate().focusInvalid();
+                        /*Ray's update: Due to different behaviours of focusInvalid() in Chrome, IE and Firefox, use the one below to replace focusInvalid() */
+                        if (formvalid == 0){
+                            //CR-56_Link_20220214
+                            $("html,body").animate({ scrollTop: ($("form[id*='change-personal-information']")).find(":input.error:first").offset().top - $(window).height()/2},"slow",function(){($("form[id*='change-personal-information']")).find(":input.error:first").trigger("focus");} );
+                        }
+                        
+                        if(BasicInfo.Validate.checkAnyChangeInBasicInfo()){
+                            valid = 1;
+                        }else{
+                        
+                            valid = 0;
+                        }
+                        
+                        if(BasicInfo.Validate.checkAddChange() == false){
+                            $("#BasicInfo-ADD-errMsg").show();
+                            BasicInfoAddValid = 0;
+                            //CR-56_Link_20220214
+                            $("[id$='ADD-ResidentialAddress']").trigger("focus");
+                        }else{
+                            $("#BasicInfo-ADD-errMsg").hide();
+                            BasicInfoAddValid = 1;
+                        }
+                        
+                        if(BasicInfo.Validate.checkCIChange() == false){
+                            $("#BasicInfo-CI-errMsg").show();
+                            //CR-56_Link_20220214
+                            $("[id$='CI-Mobile-code']").trigger("focus");
+                            BasicInfoCIValid = 0;
+                        }else{
+                            $("#BasicInfo-CI-errMsg").hide();
+                            BasicInfoCIValid = 1;
+                        }
+                        
+                    }else if(type == 'dd'){
+                        PaymentInfo.Validate.formValidation();
+                        PaymentInfo.Validate.checkDOBRequired();
+                        formvalid = ($("form[id*='change-payment-info']")).validate().form();
+                        //($("form[id*='change-payment-info']")).validate().focusInvalid();
+                        /*Ray's update: Due to different behaviours of focusInvalid() in Chrome, IE and Firefox, use the one below to replace focusInvalid() */
+                        if (formvalid == 0){
+                            //CR-56_Link_20220214
+                            $("html,body").animate({ scrollTop: ($("form[id*='change-payment-info']")).find(":input.error:first").offset().top - $(window).height()/2},"slow",function(){($("form[id*='change-payment-info']")).find(":input.error:first").trigger("focus");} );
+                        }
+                        $("form[id*='change-payment-info']").find('input.form-field-style,select.form-field-style-select,textarea.form-field-style-textarea,input[type=checkbox]').each(function(){
+                            if($(this).val() != "" && $(this).val() !="1" && $(this).val() !="+852"){
+                                valid=1;
+                            }
+                        });
+     
+                    }else if(type == 'copyDoc'){
+                        
+                        RequestForCopy.Validate.formValidation();
+                        formvalid = ($("form[id*='request-copy-document']")).validate().form();
+
+                        //($("form[id*='request-copy-document']")).validate().focusInvalid();
+                        /*Ray's update: Due to different behaviours of focusInvalid() in Chrome, IE and Firefox, use the one below to replace focusInvalid() */
+                        if (formvalid == 0){
+                            //CR-56_Link_20220214
+                            $("html,body").animate({ scrollTop: ($("form[id*='request-copy-document']")).find(":input.error:first").offset().top - $(window).height()/2},"slow",function(){($("form[id*='request-copy-document']")).find(":input.error:first").trigger("focus");} );
+                        }
+
+                        if($("[id$='DuplicatePolicy']").prop('checked')==false && $("[id$='CopyMedicalDoc']").prop('checked')==false){
+                            valid=0;
+                        }else{
+                            valid=1;
+                        }
+                        
+                        if($("[id$='CopyMedicalDoc']").prop('checked')==true && $("[id$='Check-Medical-Report']").prop('checked')==false && $("[id$='Check-Att-Phy']").prop('checked')==false && $("[id$='Check-Other-Copy-Doc']").prop('checked')==false){
+                            $("#errSelectMedicalCopy").show();
+                            //CR-56_Link_20220214
+                            $("input[id*='CopyMedicalDoc']").trigger("focus");
+                            copyDocValid=0;
+                        }else{
+                            copyDocValid=1;
+                            $("#errSelectMedicalCopy").hide();
+                        }
+
+                    } else if (type == 'renew') {
+                    
+                        Reinstatement.Validate.formValidation();
+                        formvalid = $("form[id*='change-reinstatement']").validate().form();
+                        //$("form[id*='change-reinstatement']").validate().focusInvalid();
+                        
+                        /*Ray's update: Due to different behaviours of focusInvalid() in Chrome, IE and Firefox, use the one below to replace focusInvalid() */
+                        if (formvalid == 0){
+                            //CR-56_Link_20220214
+                            $("html,body").animate({ scrollTop: ($("form[id*='change-reinstatement']")).find(":input.error:first").offset().top - $(window).height()/2},"slow",function(){($("form[id*='change-reinstatement']")).find(":input.error:first").trigger("focus");} );
+                        }
+                        valid = 1;
+                        
+                    } else if (type == 'owner') {
+                        Ownership.Validate.formValidation();
+                        Ownership.Validate.checkDOBRequired();
+                        Ownership.Validate.checkBeneficiaryRequired();
+                        formvalid = $("form[id*='change-ownership']").validate().form();
+                        //$("form[id*='change-ownership']").validate().focusInvalid();
+                        /*Ray's update: Due to different behaviours of focusInvalid() in Chrome, IE and Firefox, use the one below to replace focusInvalid() */
+                        if (formvalid == 0){
+                            //CR-56_Link_20220214
+                            $("html,body").animate({ scrollTop: ($("form[id*='change-ownership']")).find(":input.error:first").offset().top - $(window).height()/2},"slow",function(){($("form[id*='change-ownership']")).find(":input.error:first").trigger("focus");} );
+                        }
+                        if(!Ownership.Validate.checkBeneficiaryRequired()){
+                            if(Ownership.Validate.checkShareTotal()){
+                                BeneficiaryValid = 1;
+                            }else{
+                            
+                                BeneficiaryValid = 0;
+                            }
+                        }else{
+                        
+                            BeneficiaryValid = 1;
+                        }
+                        valid = 1;
+                    
+                    } else if (type == 'beneficiary') {
+                        Beneficiary.Validate.formValidation();
+                        formvalid = $("form[id*='change-beneficiary']").validate().form();
+                        //$("form[id*='change-beneficiary']").validate().focusInvalid();
+                        /*Ray's update: Due to different behaviours of focusInvalid() in Chrome, IE and Firefox, use the one below to replace focusInvalid() */
+                        if (formvalid == 0){
+                            //CR-56_Link_20220214
+                            $("html,body").animate({ scrollTop: ($("form[id*='change-beneficiary']")).find(":input.error:first").offset().top - $(window).height()/2},"slow",function(){($("form[id*='change-beneficiary']")).find(":input.error:first").trigger("focus");} );
+                        }
+                        if(Beneficiary.Validate.checkShareTotal()){
+                            BeneficiaryValid = 1;
+                        }else{
+                        
+                            BeneficiaryValid = 0;
+                        }
+                        
+                        valid = 1;
+                    
+                    }else {
+                        //validation logic no yet ready
+                        valid = 1;
+                        formvalid = 1;
+                    }
+                           
+                           
+                    if(valid && formvalid && copyDocValid && BasicInfoAddValid && BasicInfoCIValid && BeneficiaryValid){
+                    
+                        $("#errSaveForm").hide();
+
+                          if (type == 'beneficiary' || type == 'copyDoc' || type =='personal' && step=='7') {
+                              skipAttSavePolicyChange();
+                          }else{
+                              getCurrentStep();
+                              window.nextStep();
+                          }
+                          
+                          
+                        
+                    } else if(valid) {
+                    
+                        $("#errSaveForm").hide();
+                    
+                    } else {
+                    
+                        $("html, body").animate({ scrollTop: 0 }, "slow");
+                        $("#errSaveForm").show();
+                        
+                    }
+                    
+                 }
+                
+                
+                 
+                 /*Quick Fix T & C*/
+                function toggleOverlay(){
+                    $('#tc-overlay').css('opacity', '0.95');
+                    $('#tc-overlay').toggle();
+                    $('#tc-popup').toggle();
+                }
+                
+                function toggleOverlayPIC(){
+                    $('#pic-overlay').css('opacity','0.95');
+                    $('#pic-overlay').toggle();
+                    $('#pic-popup').toggle();
+                }
+
+            </script>
+            <apex:outputPanel id="initialDisplay">
+                <script>    
+                    function initDisplay(){
+                        thirdParty = '{!IsThirdParty}';
+                        
+                        sforce.connection.serverUrl = '{!$Site.Prefix}'+'/services/Soap/u/32.0';
+                        
+                        if('{!IsThirdParty}' == 'true'|| '{!IsOwner}' == 'true'){
+                            $('#esign').show();
+                            adjustProgressBar('add');
+                        }else{
+                            $('#esign').hide();
+                            adjustProgressBar('remove');
+                        }
+                        
+                        $('#save').hide();
+        
+                        /*Single Select Policy Type Change Color*/
+                        //CR-56_Link_20220214
+                        $('.policy-type').on("click",function(){
+                            $(this).siblings('.policy-type').removeClass('cigna-fg-orange-dark').addClass('cigna-fg-gray-dark');
+                            $(this).removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                        });
+                    
+                        /*Selected Type assigned to be orange-dark*/ 
+                        $('.policy-type[data-select="true"]').removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                        
+                        if('{!currentStep}'!=0){
+                            $('.content-step:visible').fadeOut(function(){
+                                $('.content-step[data-step="' + '{!currentStep}' + '"]').fadeIn();
+                            });
+                        
+                            $('#save').show();
+                            
+                        }
+                        
+                        if ('{!currentStep}'==5){
+                            $("#info").removeClass('active');
+                            $("#att").addClass('bs active');
+                        }
+                        
+                        //CR-56_Link_20220214
+                        $('[data-toggle="tooltip"]').tooltip();
+
+                        
+                        /*Selected Policy assigned to be orange-dark*/
+                        $('.policy-multi[data-select="true"]').removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                        $('.policy-single[data-select="true"]').removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                        
+                        /*Single Select Policy Holder/Insured Color*/  
+                        //CR-56_Link_20220214
+                        $('.policy-member').on("click",function(){    
+                            $(this).siblings('.policy-member').removeClass('cigna-fg-orange-dark').addClass('cigna-fg-gray-dark');
+                            $(this).removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                        });
+                        
+                        /*Selected Policy Holder/Insured assigned to be orange-dark*/
+                        $('.policy-member[data-select="true"]').removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                        
+
+                    
+                        currentChangeType= '{!changeType}';
+                        changeSubmitBtn();
+                        refreshEsignature();
+                        
+                        //Nicole_Bypass Login_20200924
+                        if({!IsCustomerSiteGuestUser}){
+                            if('{!currentStep}'<=2) $("#back").hide();
+                            $("#save").hide();
+                        }
+                    }
+                    
+               </script>
+            </apex:outputPanel>
+            
+        </head>
+        <apex:define name="additionalLibraries">
+            <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+            <!-- HKITSFDC-80 BEGIN -->
+            <!-- <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.bootstrap_select_1_11_2, 'bootstrap-select-1.11.2/dist/css/bootstrap-select.min.css')}" /> -->
+            <!-- <script type="text/javascript" src="{!URLFOR($Resource.bootstrap_select_1_11_2, 'bootstrap-select-1.11.2/dist/js/bootstrap-select.min.js')}"></script> -->
+            <!-- HKITSFDC-80 END -->
+            <apex:includeScript value="{!URLFOR($Resource.signature_pad_1_5)}" />
+            <!-- CR-56_Link_20220214 -->
+            <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+            <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+            <apex:outputPanel rendered="{!userLanguage == 'zh_TW'}" layout="none">
+                <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+            </apex:outputPanel>
+            <!-- Date Picker -->
+            <link rel="stylesheet" href="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/jquery-ui.min.css')}" />
+            <!--CR-56_Link_20220214-->
+            <script type="text/javascript" src="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/jquery-ui-1.13.min.js')}"></script>
+            <script type="text/javascript" src="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/datepicker-zh-TW.js')}"></script>
+        </apex:define>
+
+        <!-- Start of the main body -->
+        <apex:define name="body">
+           <div class="bs">
+                <div class="bs container">
+                    
+                    <div class="bs row">
+                        <div id="headeraction" class="bs header-action">
+                        <apex:outputPanel id="errorMessage">
+                            <apex:pagemessages />
+                        </apex:outputPanel>
+                        <apex:messages />
+                            <apex:form >
+                                <apex:actionFunction name="init" action="{!init}" namespace="PolicyChangeAF" reRender="initialDisplay,CustomerPolicyChangePanel,policyChangeForm,uploadatt,selectMultiPolicy,selectPolicy, mobileNextFixJS" status="loader-icon" oncomplete="initDisplay();" /><!--basicInfoInit();-->
+                                <apex:actionFunction name="refreshMobileNextFixJS" reRender="mobileNextFixJS" status="loader-icon"/>
+                               <div id="back" class="bs col-xs-6 col-sm-6" style="padding-left:0px !important;">
+                                   <a onclick="previousStep();" class="bs cigna-fg-orange-medium pull-left onclick-pointer" style="text-decoration: none;"><i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a>
+                               </div>
+                               <apex:actionFunction name="SavePolicyChange" action="{!SavePolicyChange}" status="loader-icon" rerender="uploadatt" oncomplete="refreshAttlist();" />
+                               <apex:actionFunction name="InputCurrentStep" action="{!InputCurrentStep}" oncomplete="SavePolicyChange();" status="loader-icon" rerender="esignature-form,uploadatt">
+                                   <apex:param name="step" value="" assignTo="{!currentStep}"/>
+                                   <apex:param name="IsThirdParty" value="" assignTo="{!IsThirdParty}"/>
+                                   <apex:param name="selectedMemberName" value="" assignTo="{!policyMemberName}"/>
+                               </apex:actionFunction>
+                               <apex:actionFunction name="SaveAndQuit" action="{!SavePolicyChange}" status="loader-icon" oncomplete="Cigna.Util.navigateToVFP('PolicyChangeVFP');" rerender="false"  />
+                               <apex:actionFunction name="SaveAndQuitInputCurrentStep" action="{!InputCurrentStep}" oncomplete="SaveAndQuit();"  status="loader-icon" rerender="false">
+                                   <apex:param name="step" value="" assignTo="{!currentStep}"/>
+                                   <apex:param name="IsThirdParty" value="" assignTo="{!IsThirdParty}"/>
+                                   <apex:param name="selectedMemberName" value="" assignTo="{!policyMemberName}"/>
+                               </apex:actionFunction>
+                               <apex:actionFunction name="skipAttSavePolicyChange" action="{!SavePolicyChange}" rerender="false" status="loader-icon" oncomplete="submitPolicyChange();"/>
+                               
+                               <div id="save" class="bs col-xs-6 col-sm-6" style="padding-right:0px !important;">
+                                   <a class="bs cigna-fg-orange-medium pull-right onclick-pointer" onclick="SaveQuit();" style="text-decoration: none;">{!$Label.Save} <i class="ci-hk-briefcase" aria-hidden="true" style="font-weight:bold;"></i></a>
+                               </div>
+                           </apex:form>
+                        </div>
+                        
+                        <div id="progressbar" class="bs cigna-progress-bar">
+                            <div class="bs cigna-progress-bar-inner">
+                               <div id="info" class="bs active">{!$Label.Information}</div>
+                               <div id="att">{!$Label.Attachment}</div>
+                               <div id="esign" style="display:none;">{!$Label.E_Signature}</div>
+                           </div>
+                        </div>
+                    </div>
+                    <apex:outputPanel id="CustomerPolicyChangePanel">
+                        
+                        <!--Nicole_Bypass Login_20201005-->
+                        <div id="token-invalid-message" class="bs row" style="padding-top:50px;font-size:20px;text-align:center;display: none;">
+                            <apex:outputText value="{!transField['WhatApp_Invalid_Token'][$Label.Header_Language_Code_Current]}" rendered="{!contains(transKey, '~WhatApp_Invalid_Token~')}"/>
+                        </div>
+
+                        <div class="bs row content-step" data-step="1">
+                            <apex:form id="selectChange">
+                                <div class="content-question">
+                                    {!$Label.Policy_Change_type_question}
+                                </div>
+                        
+                                <apex:actionFunction name="selectChangeType" action="{!selectChangeType}"  status="loader-icon" oncomplete="showListPolicy();nextStep();" rerender="policyChangeForm,mobileNextFixJS,selectMultiPolicy">
+                                    <apex:param name="type" value="" assignTo="{!changeType}"/>
+                                </apex:actionFunction>
+                                <apex:actionFunction name="showListPolicy" action="{!showListPolicy}" rerender="selectMultiPolicy,selectPolicy,uploadatt" status="loader-icon"/>
+                        
+                                <div id="personal" class="bs table-row col-xs-12 col-sm-12 policy-type content-choice cigna-fg-gray-dark onclick-pointer"  data-select="{!IsPersonal}" onclick="selectType('personal');" style="padding-left:0px">
+                                    <div class="bs col-xs-2 col-sm-1 table-cell"><i class="fa fa-address-card-o content-icon" aria-hidden="true"></i></div>
+                                    <div class="bs col-xs-10 col-sm-11 table-cell">{!$Label.Change_Personal_Information}</div>
+                                </div>
+                                <div id="beneficiary" class="bs table-row col-xs-12 col-sm-12 policy-type content-choice cigna-fg-gray-dark onclick-pointer" data-select="{!IsBeneficiary}" onclick="selectType('beneficiary');" style="padding-left:0px">
+                                    <div class="bs col-xs-2 col-sm-1 table-cell"><i class="fa fa-child content-icon" aria-hidden="true"></i></div>
+                                    <div class="bs col-xs-10 col-sm-11 table-cell">{!$Label.Change_Beneficiary}</div>
+                                </div>
+                                <div id="owner" class="bs table-row col-xs-12 col-sm-12 policy-type content-choice cigna-fg-gray-dark onclick-pointer" data-select="{!IsOwner}" onclick="selectType('owner');" style="padding-left:0px">
+                                    <div class="bs col-xs-2 col-sm-1 table-cell"><i class="fa fa-key content-icon" aria-hidden="true"></i></div>
+                                    <div class="bs col-xs-10 col-sm-11 table-cell">{!$Label.Change_Policy_Owner}</div>
+                                </div>
+                                <div id="copyDoc" class="bs table-row col-xs-12 col-sm-12 policy-type content-choice cigna-fg-gray-dark onclick-pointer" data-select="{!IsCopyDoc}" onclick="selectType('copyDoc');" style="padding-left:0px">
+                                    <div class="bs col-xs-2 col-sm-1 table-cell"><i class="fa fa-files-o content-icon" aria-hidden="true"></i></div>
+                                    <div class="bs col-xs-10 col-sm-11 table-cell">{!$Label.Request_Copy_of_Document}</div>
+                                </div>
+                                <div id="dd" class="bs table-row col-xs-12 col-sm-12 policy-type content-choice cigna-fg-gray-dark onclick-pointer" data-select="{!IsDD}" onclick="selectType('dd');" style="padding-left:0px">
+                                    <div class="bs col-xs-2 col-sm-1 table-cell"><i class="fa fa-usd content-icon" aria-hidden="true"></i></div>
+                                    <div class="bs col-xs-10 col-sm-11 table-cell">{!$Label.Payment_Information}</div>
+                                </div>
+                                <!--HKITSFDC-71 disable the resinstatement option-->
+                               <!-- <div id="renew" class="bs table-row col-xs-12 col-sm-12 policy-type content-choice cigna-fg-gray-dark onclick-pointer" data-select="{!IsRenew}" onclick="selectType('renew');" style="padding-left:0px">
+                                    <div class="bs col-xs-2 col-sm-1 table-cell"><i class="fa fa-refresh content-icon" aria-hidden="true"></i></div>
+                                    <div class="bs col-xs-10 col-sm-11 table-cell">{!$Label.Renew_Inactive_Policy}</div>
+                                </div>-->
+                                <div id="Benefit" class="bs table-row col-xs-12 col-sm-12 policy-type content-choice cigna-fg-gray-dark onclick-pointer"  data-select="{!IsBenefit}" onclick="selectType('benefit');" style="display:none;padding-left:0px;">
+                                    <div class="bs col-xs-2 col-sm-1 table-cell"><i class="fa fa-credit-card content-icon" aria-hidden="true"></i></div>
+                                    <div class="bs col-xs-10 col-sm-11 table-cell">{!$Label.Benefit}</div>
+                                </div>
+                                <div id="App" class="bs table-row col-xs-12 col-sm-12 policy-type content-choice cigna-fg-gray-dark onclick-pointer" data-select="{!IsApp}" onclick="selectType('app');" style="display:none;padding-left:0px">
+                                    <div class="bs col-xs-2 col-sm-1 table-cell"><i class="fa fa-credit-card content-icon" aria-hidden="true"></i></div>
+                                    <div class="bs col-xs-10 col-sm-11 table-cell">{!$Label.Automatic_Premium_Payment}</div>
+                                </div>
+                                <!-- 20200306 - minghua - ILAS -->
+                                <div id="RPQForm" class="bs table-row col-xs-12 col-sm-12 policy-type content-choice cigna-fg-gray-dark onclick-pointer" onclick="Cigna.Util.navigateToVFP('RPQSubmitVFP?ss={!customerUserId}&nn={!JSINHTMLENCODE(policyHolderSSN)}', null, null, true);" style="padding-left:0px;{!IF(customerUserId != '','','display: none;')}">
+                                    <div class="bs col-xs-2 col-sm-1 table-cell"><i class="fa fa-files-o content-icon" aria-hidden="true"></i></div>
+                                    <div class="bs col-xs-10 col-sm-11 table-cell">{!transField['Online_RPQ_Form'][$Label.Header_Language_Code_Current]}</div>
+                                </div>
+                            </apex:form> 
+                            <div class="bs col-sm-12 col-xs-12"><div style="padding:50px;"/></div>
+                        </div>
+                    
+                        <div class="bs row content-step" data-step="2" style="display: none;" >
+                            <apex:form >
+                                <apex:outputPanel id="selectMultiPolicy">
+                                    <!-- Rancho_PI117_20230817 - pass current clicked element color to backend -->
+                                    <apex:actionFunction name="selectedPolicy" action="{!selectPolicy}" status="loader-icon" rerender="selectPolicy,policyChangeForm,mobileNextFixJS" oncomplete="checkIsSinglePolicy();changeSubmitBtn();">
+                                        <apex:param name="policyno" value="" assignTo="{!PolicyChoice}"/>
+                                        <apex:param name="color" value="" assignTo="{!policyColor}"/>
+                                    </apex:actionFunction>
+                                    
+                                        <script>
+                                        /*Multi Select Policy Change Color*/
+                                            //CR-56_Link_20220214
+                                            $('.policy-multi').on("click",function(){
+                                                if ($(this).hasClass('cigna-fg-gray-dark')) {
+                                                    $(this).removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                                                } else {
+                                                    $(this).removeClass('cigna-fg-orange-dark').addClass('cigna-fg-gray-dark');
+                                                }
+                                            });
+                                                
+                                        /*Single Select Policy Change Color*/  
+                                            //CR-56_Link_20220214
+                                            $('.policy-single').on("click",function(){  
+                                                $(this).siblings('.policy-single').removeClass('cigna-fg-orange-dark').addClass('cigna-fg-gray-dark');
+                                                $(this).removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                                            });
+                                            
+                                        /*Selected Policy assigned to be orange-dark*/
+                                            $('.policy-multi[data-select="true"]').removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                                            $('.policy-single[data-select="true"]').removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                                        </script>
+                                
+                                    <apex:outputPanel rendered="{!multiPolicy}">
+                                        <div class="content-question">
+                                            {!$Label.Select_policy_multiple}
+                                        </div>
+                                        <div style="padding: 20px;">
+                                            <apex:outputpanel rendered="{!hasNoPolicy}" >
+                                                <div class="bs row col-xs-12 col-sm-12 text-center" style="padding:20px;">
+                                                    <span class="fa fa-smile-o"/> {!$Label.There_is_no_policy_available}
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:repeat value="{!ListPolicy}" var="policy">
+                                                <!-- Rancho_PI117_20230817 - pass element -->
+                                                <div class="bs row policy-multi content-choice cigna-fg-gray-dark onclick-pointer" data-select="{!policy.policySelected}" onclick="selectPolicy('{!policy.policyNo}', this);">
+                                                    <div class="bs col-xs-12 col-sm-12 table-row policy-title" style="padding-left:0px">
+                                                        <div class="bs col-xs-2 col-sm-1 table-cell"><i class="ci-hk-notes content-icon" aria-hidden="true"/></div>
+                                                        <div class="bs col-xs-10 col-sm-11 table-cell"><b>{!policy.policyName}</b></div>
+                                                    </div>
+                                                    <div class="bs col-xs-12 col-sm-12 table-row policy-detail" style="padding-left:0px">
+                                                        <div class="bs col-xs-2 col-sm-1 table-cell"></div>
+                                                        <div class="bs col-xs-4 col-sm-2 table-cell">{!$Label.Policy_No}</div>
+                                                        <div class="bs col-xs-6 col-sm-9 table-cell">{!policy.policyNo}</div>
+                                                    </div>
+                                                    <div class="bs col-xs-12 col-sm-12 table-row policy-detail" style="padding-left:0px">
+                                                        <div class="bs col-xs-2 col-sm-1 table-cell"></div>
+                                                        <div class="bs col-xs-4 col-sm-2 table-cell">{!$Label.Status}</div>
+                                                        <div class="bs col-xs-6 col-sm-9 table-cell">{!policy.policystatus}</div>
+                                                    </div>
+                                                </div>
+                                            </apex:repeat>
+                                        </div>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!!multiPolicy}">
+                                        <div class="content-question">
+                                            {!$Label.Select_policy}
+                                        </div>
+                                        <div style="padding: 20px;">
+                                            <apex:outputPanel rendered="{!hasNoPolicy}">
+                                                <div class="bs row col-xs-12 col-sm-12 text-center" style="padding:20px;">
+                                                    <span class="fa fa-smile-o"/> {!$Label.There_is_no_policy_available}
+                                                </div>
+                                            </apex:outputPanel>
+                                            <apex:repeat value="{!ListPolicy}" var="policy">
+                                                <div class="bs row policy-single content-choice cigna-fg-gray-dark onclick-pointer" data-select="{!policy.policySelected}" onclick="selectPolicy('{!policy.policyNo}');">
+                                                    <div class="bs col-xs-12 col-sm-12 table-row policy-title" style="padding-left:0px">
+                                                        <div class="bs col-xs-2 col-sm-1 table-cell"><i class="ci-hk-notes content-icon" aria-hidden="true"/></div>
+                                                        <div class="bs col-xs-10 col-sm-11 table-cell"><b>{!policy.policyName}</b></div>
+                                                    </div>
+                                                    <div class="bs col-xs-12 col-sm-12 table-row policy-detail" style="padding-left:0px">
+                                                        <div class="bs col-xs-2 col-sm-1 table-cell"></div>
+                                                        <div class="bs col-xs-4 col-sm-2 table-cell">{!$Label.Policy_No}</div>
+                                                        <div class="bs col-xs-6 col-sm-9 table-cell">{!policy.policyNo}</div>
+                                                    </div>
+                                                    <div class="bs col-xs-12 col-sm-12 table-row policy-detail" style="padding-left:0px">
+                                                        <div class="bs col-xs-2 col-sm-1 table-cell"></div>
+                                                        <div class="bs col-xs-4 col-sm-2 table-cell">{!$Label.Status}</div>
+                                                        <div class="bs col-xs-6 col-sm-9 table-cell">{!policy.policystatus}</div>
+                                                    </div>
+                                                </div>
+                                            </apex:repeat>
+                                        </div>
+                                    </apex:outputPanel>
+                            </apex:outputPanel>
+                            <apex:outputPanel id="selectPolicy">
+                                <apex:actionFunction name="showPolicyMember" action="{!showPolicyMember}" rerender="selectPolicyMember,uploadatt" status="loader-icon" oncomplete="nextStep();" />
+                                <apex:outputPanel rendered="{!hasPolicy}"><!--<apex:outputPanel rendered="{!(hasPolicy && multiPolicy)}">-->
+                                    <!--desktop action button-->
+                                    <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>
+                                    <apex:outputPanel rendered="{!IsPersonal}">
+                                        <div class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="showPolicyMember();">
+                                            <span class="action-btn cigna-fg-white" role="button">{!$Label.Next}</span>
+                                        </div>
+                                    <!--mobile action button-->
+                                        <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="showPolicyMember();">
+                                            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                                                <span class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</span>
+                                            </div>
+                                        </div>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!IsDD}">
+                                        <div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="checkThirdPartyPay();">
+                                            <span class="action-btn cigna-fg-white" role="button">{!$Label.Next}</span>
+                                        </div>
+                                        <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="checkThirdPartyPay();">
+                                            <div  class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                                                <span class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</span>
+                                            </div>
+                                        </div>
+                                        <!--update IsThirdParty value-->
+                                        <apex:actionFunction name="checkAttDisplay" action="{!checkAttDisplay}" rerender="requiredAttList,uploadatt,policyChangeForm,mobileNextFixJS,checkThirdParty">
+                                            <apex:param name="IsThirdParty" value="" assignTo="{!IsThirdParty}"/>
+                                        </apex:actionFunction>
+        
+                                         <div id="overlaythirdPartyAlert" class="overlay" style="display:none;">
+                                            <div id="alertthirdPartyAlert" class="ConfirmBox">
+                                               <div id="thirdPartymsg" class="alertmsg" style="padding-top:20px;">
+                                                  {!$Label.Third_Party_Pay_Alert_Msg} 
+                                               </div>
+                                               <div class="bs col-xs-6 col-sm-6">
+                                                  <i class="glyphicon glyphicon-ok-sign oksign onclick-pointer" onclick="confirmThirdPartyPay('true')"></i>
+                                               </div>
+                                               <div class="bs col-xs-6 col-sm-6">
+                                                  <i class="glyphicon glyphicon-remove-sign cancelsign onclick-pointer" onclick="confirmThirdPartyPay('false')"></i>
+                                               </div>
+                                            </div>
+                                         </div>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!(!IsPersonal && !IsDD)}">
+                                        <div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="nextStep('4');">
+                                            <span class="action-btn cigna-fg-white" role="button">{!$Label.Next}</span>
+                                        </div>
+                                        <!--mobile action button-->
+                                        <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="nextStep('4');">
+                                            <div  class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                                                <span class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</span>
+                                            </div>
+                                        </div>
+                                    </apex:outputPanel>
+                                    
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:form>
+                        <div class="bs col-sm-12 col-xs-12"><div style="padding:50px;"/></div>
+                    </div>
+        
+                    <div class="bs row content-step" data-step="3" style="display: none;">
+                        <apex:form >
+                            <apex:actionFunction name="selectedPolicyMember" action="{!selectedPolicyMember}" rerender="policyChangeForm,mobileNextFixJS">
+                                <apex:param name="policymemberId" value="" assignTo="{!policyMemberId}"/>
+                                <apex:param name="policymemberName" value="" assignTo="{!policyMemberName}"/>
+                            </apex:actionFunction>
+                            
+                            <apex:outputPanel id="selectPolicyMember">
+                                <apex:outputPanel rendered="{!hasPolicyMember}">
+                                    <script>
+                                        /*Single Select Policy Holder/Insured Color*/  
+                                           //CR-56_Link_20220214
+                                           $('.policy-member').on("click",function(){  
+                                                $(this).siblings('.policy-member').removeClass('cigna-fg-orange-dark').addClass('cigna-fg-gray-dark');
+                                                $(this).removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                                            });
+                                            
+                                        /*Selected Policy Holder/Insured assigned to be orange-dark*/
+                                            $('.policy-member[data-select="true"]').removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                                    
+                                    </script>
+                                    <div style="padding: 20px;">
+                                        <div class="content-question">
+                                            {!$Label.Select_Person}
+                                        </div>
+                                    <!--For Policy Holder-->
+                                        <div class="bs policy-member content-choice cigna-fg-gray-dark onclick-pointer" data-select="{!ListPolicy[0].policyHolderSelected}" onclick="selectPolicyMember('{!ListPolicy[0].policyHolderId}','{!ListPolicy[0].policyHolder}')">
+                                            <i class="ci-hk-user content-icon" aria-hidden="true"></i>{!ListPolicy[0].policyHolder}
+                                        </div>
+                                    <!---for Policy Insured--->
+                                        <apex:repeat value="{!ListPolicyInsured}" var="policyI">
+                                            <div class="bs policy-member content-choice cigna-fg-gray-dark onclick-pointer" data-select="{!policyI.policyInsuredSelected}" onclick="selectPolicyMember('{!policyI.policyInsuredId}','{!policyI.policyInsured}')">
+                                                <i class="ci-hk-user content-icon" aria-hidden="true"></i>{!policyI.policyInsured}
+                                            </div>
+                                        </apex:repeat>
+                                    </div>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                               <!--no need next button-->
+                               <!-- <apex:outputPanel id="selectPolicyMemberName">
+                                    <apex:outputPanel rendered="{!hasPolicyMemberName}">
+                                        <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>
+                                        <div class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="nextStep();">
+                                            <span class="action-btn cigna-fg-white" role="button">{!$Label.Next}</span>
+                                        </div>
+                                        <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="nextStep();">
+                                            <div  class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                                                <span class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</span>
+                                            </div>
+                                        </div>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>-->
+                            </apex:form>
+                            <div class="bs col-sm-12 col-xs-12"><div style="padding:50px;"/></div>
+                        </div>
+                        
+                        
+                        <div class="bs row content-step" data-step="4" style="display: none;">
+                            <apex:outputPanel id="policyChangeForm">
+                                
+                                <div id="errSaveForm" class="alert alert-danger" role="alert" style="display:none;">
+                                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                                    <apex:outputPanel rendered="{!!IsCopyDoc}">
+                                        {!$Label.Personal_Information_Validation}
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!IsCopyDoc}">
+                                        {!$Label.Request_Copy_Doc_Form_ErrMsg}
+                                    </apex:outputPanel>  
+                                </div>
+                                
+                                <apex:outputPanel rendered="{!IsPersonal}">
+                                    <div class="content-question">
+                                        {!policyMemberName}{!$Label.Person_Information}<br/><br/>
+                                    </div>
+                                    <apex:include pageName="ChangePersonalInfoVFP"/>
+                                </apex:outputPanel>
+        
+                                <apex:outputPanel rendered="{!IsOwner}">
+                                    <apex:include pageName="ChangeOwnershipVFP"/>
+                                </apex:outputPanel>
+                                                        
+                                <apex:outputPanel rendered="{!IsDD}">
+                                    <apex:include pageName="ChangePaymentInformationVFP"/>
+                                </apex:outputPanel>
+                                
+                                <apex:outputPanel rendered="{!IsCopyDoc}">
+                                    <apex:include pageName="ChangeRequestForCopyVFP"/>
+                                </apex:outputPanel>
+                                
+                                <!--HKITSFDC-71 disable the reinstallment option-->
+                                <!--<apex:outputPanel rendered="{!IsRenew}">
+                                    <apex:include pageName="ChangeReinstatementVFP"/>
+                                </apex:outputPanel>-->
+                                
+                                <apex:outputPanel rendered="{!IsBeneficiary}">
+                                    <apex:include pageName="ChangeBeneficiaryVFP"/>
+                                </apex:outputPanel>
+                                    <!--desktop action button-->
+                                    <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>
+                                    <div id="submitForm-desktop-btn" class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="submitForm('{!changeType}')">
+                                        <span class="action-btn cigna-fg-white" role="button"><span id="formNext-btn-text">{!$Label.Next}</span></span>
+                                    </div>
+                                    <!--mobile action button-->
+                                    <div class="bs visible-xs col-xs-12" style="padding:20px;"></div>
+                                    <div id="submitForm-mobile-btn" class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="submitForm('{!changeType}')">
+                                        <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                                            <span class="action-btn cigna-fg-white" role="button"><span id="mobileformNext-btn-icon" class="ci-hk-arrow-31" aria-hidden="true"/><br/><span id="mobileformNext-btn-text">{!$Label.Next}</span></span>
+                                        </div>
+                                    </div> 
+                            </apex:outputPanel>
+                            <div class="bs col-sm-12 col-xs-12"><div style="padding:50px;"/></div>
+                        </div>
+                
+                        <div class="bs row content-step" data-step="5" style="display:none;">
+                            <apex:form >
+                                
+                            <!--start of loading-->
+                                <div id="overlay-loading" class="overlay" style="display:none; opacity:0.5;">
+                                    <div id="att-loading" class="bs col-xs-offset-3 col-xs-6 text-center loading-spinner">
+                                        <img class="bs" src="{!URLFOR($Resource.Spinners, 'slds_spinner.gif')}" width="70px" />
+                                        <div class="loading-label">
+                                            {!$Label.uploading}
+                                        </div>
+                                    </div>
+                                </div> 
+                            <!--end of loading-->
+                            
+                                <div class="content-question">
+                                    {!$Label.Please_upload_the_following_attachments}
+                                </div>
+                                <div id="errFileSize" class="alert alert-danger" role="alert" style="display:none;">
+                                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                                    {!$Label.File_size_exceeds_10M}
+                                </div>
+                                <div id="errFileType" class="alert alert-danger" role="alert" style="display:none;">
+                                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                                    {!$Label.Please_upload_a_valid_file} (i.e. .docx/.doc/.pdf/.jpeg/.png/.tiff)
+                                </div>
+                                <div id="errNoFile" class="alert alert-danger" role="alert" style="display:none;">
+                                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                                    {!$Label.ErrMasg_Upload_Att}
+                                </div>
+                                
+                                <apex:actionFunction name="refreshAttlist" rerender="uploadatt,addresslist,hkidlist,phhkidlist,tphkidlist,tpaddresslist,newphhkidlist,newphaddresslist,pihkidlist,deedpolllist" status="loader-icon"/>
+                                <apex:actionFunction name="removeAttachment" action="{!removeAtt}" rerender="uploadatt,addresslist,hkidlist,phhkidlist,tphkidlist,tpaddresslist,newphhkidlist,newphaddresslist,pihkidlist,deedpolllist,submitChange">
+                                    <apex:param name="id" value="" assignTo="{!removeAttId}" />
+                                </apex:actionFunction>
+                                <apex:actionFunction name="checkAtt" action="{!checkAtt}" reRender="submitChange"/>
+                                
+                                <div style="padding: 20px;">
+                                    <apex:outputPanel id="uploadatt">
+                                        <script>
+                                            //CR-56_Link_20220214
+                                            $('[data-toggle="tooltip"]').tooltip();
+                                        </script>
+                                        <apex:outputpanel rendered="{!((IsPersonal && IsPersonalParti) || IsOwner || IsRenew)}">
+                                            <!--HKID Attachment-->
+                                            <div id="PIPHHKIDAtt" class="bs row content-choice">
+                                                <div class="col-xs-2 col-sm-1">
+                                                    <input id="HKIDAtt" type="file" class="fileInput" onchange="uploadFile('{!policyChangeId}','HKIDAtt');" style="display:none;"/>
+                                                    <label for="HKIDAtt"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true"/></label>
+                                                </div>
+                                                <div class="col-xs-8 col-sm-10">{!policyMemberName} {!$Label.HKID_Passport}</div>
+                                                <div class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!$Label.Upload_Tooltip}" aria-hidden="true"></i></div>
+                                                <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                                                <div style="padding:20px;">
+                                                    <apex:outputPanel id="hkidlist">
+                                                        <apex:repeat value="{!ListHkidAtt}" var="hkidAtt">
+                                                            <div class="col-xs-12 col-sm-12 uploaded-filelist">{!hkidAtt.Name}<i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!hkidAtt}');" aria-hidden="true"></i></div>
+                                                            <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                                                        </apex:repeat>
+                                                    </apex:outputPanel>
+                                                </div>
+                                            </div>
+                                        </apex:outputPanel>
+                                        <apex:outputpanel rendered="{!(IsPersonal && IsPersonalParti)}">
+                                            <!--Deed Poll Attachment-->
+                                            <div id="PIPHDeedPollAtt" class="bs row content-choice">
+                                                <div class="col-xs-2 col-sm-1" style="padding-bottom:20px;">
+                                                    <input id="DeedPollAtt" type="file" class="fileInput" onchange="uploadFile('{!policyChangeId}','DeedPollAtt');" style="display:none;"/>
+                                                    <label for="DeedPollAtt"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true"></i></label>
+                                                </div>
+                                                <div class="col-xs-8 col-sm-10">{!policyMemberName} {!$Label.Deed_Poll} ({!$Label.Change_name_attachment_notice})</div>
+                                                <div class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!$Label.Upload_Tooltip}" aria-hidden="true"></i></div>
+                                                <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                                                <div id="uploadDeedPolllist" style="padding:20px;">
+                                                    <apex:outputPanel id="deedpolllist">
+                                                        <apex:repeat value="{!ListDeedPollAtt}" var="deedPollAtt">
+                                                            <div class="col-xs-12 col-sm-12 uploaded-filelist">{!deedPollAtt.Name}<i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!deedPollAtt}');" aria-hidden="true"></i></div>
+                                                            <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                                                        </apex:repeat>
+                                                    </apex:outputPanel>
+                                                </div>
+                                            </div>
+                                        </apex:outputPanel>
+                                        <!--20190726 - David Zhang - No attachment for address change -->
+                                        <apex:outputpanel rendered="false">
+                                            <!--Address Proof Attachment-->
+                                            <div id="PIPHAddressAtt" class="bs row content-choice">
+                                                <div class="col-xs-2 col-sm-1" style="padding-bottom:20px;">
+                                                    <input id="AddressAtt" type="file" class="fileInput" onchange="uploadFile('{!policyChangeId}','AddressAtt');" style="display:none;"/>
+                                                    <label for="AddressAtt"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true"></i></label>
+                                                </div>
+                                                <div class="col-xs-8 col-sm-10">{!policyMemberName} {!$Label.Proof_of_Residential_Address}</div>
+                                                <div class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!$Label.Upload_Tooltip}" aria-hidden="true"></i></div>
+                                                <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                                                <div id="uploadAddresslist" style="padding:20px;">
+                                                    <apex:outputPanel id="addresslist">
+                                                        <apex:repeat value="{!ListAddressAtt}" var="addressAtt">
+                                                            <div class="col-xs-12 col-sm-12 uploaded-filelist">{!addressAtt.Name}<i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!addressAtt}');" aria-hidden="true"></i></div>
+                                                            <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                                                        </apex:repeat>
+                                                    </apex:outputPanel>
+                                                </div>
+                                            </div>
+                                        </apex:outputPanel>
+                                        
+                                        <!--Reinstatement Policy Insured ID Copy-->
+                                        <apex:outputPanel rendered="{!IsRenew}">
+                                         <!--New Policy Holder HKID Attachment-->
+                                            <div class="bs row content-choice">
+                                                <div class="col-xs-2 col-sm-1">
+                                                    <input id="PIHKIDAtt" type="file" class="fileInput" onchange="uploadFile('{!policyChangeId}','PIHKIDAtt');" style="display:none;"/>
+                                                    <label for="PIHKIDAtt"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true"/></label>
+                                                </div>
+                                                <div class="col-xs-8 col-sm-10">{!$Label.Policy_Insured_ID_Passport_Copy}</div>
+                                                <div class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!$Label.Upload_Tooltip}" aria-hidden="true"></i></div>
+                                                <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                                                <div style="padding:20px;">
+                                                    <apex:outputPanel id="pihkidlist">
+                                                        <apex:repeat value="{!ListPiHkidAtt}" var="PIHKIDAtt">
+                                                            <div class="col-xs-12 col-sm-12 uploaded-filelist">{!PIHKIDAtt.Name}<i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!PIHKIDAtt}');" aria-hidden="true"></i></div>
+                                                            <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                                                        </apex:repeat>
+                                                    </apex:outputPanel>
+                                                </div>
+                                            </div>
+                                        </apex:outputPanel>
+                                        <!--New Policy Holder Attachement-->
+                                        <apex:outputPanel rendered="{!IsOwner}">
+                                         <!--New Policy Holder HKID Attachment-->
+                                            <div class="bs row content-choice">
+                                                <div class="col-xs-2 col-sm-1">
+                                                    <input id="NewPHHKIDAtt" type="file" class="fileInput" onchange="uploadFile('{!policyChangeId}','NewPHHKIDAtt');" style="display:none;"/>
+                                                    <label for="NewPHHKIDAtt"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true"/></label>
+                                                </div>
+                                                <div class="col-xs-8 col-sm-10">{!$Label.New_Policy_Holder_ID_Passport_Copy}</div>
+                                                <div class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!$Label.Upload_Tooltip}" aria-hidden="true"></i></div>
+                                                <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                                                <div style="padding:20px;">
+                                                    <apex:outputPanel id="newphhkidlist">
+                                                        <apex:repeat value="{!ListNewPhHkidAtt}" var="NewPHHKIDAtt">
+                                                            <div class="col-xs-12 col-sm-12 uploaded-filelist">{!NewPHHKIDAtt.Name}<i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!NewPHHKIDAtt}');" aria-hidden="true"></i></div>
+                                                            <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                                                        </apex:repeat>
+                                                    </apex:outputPanel>
+                                                </div>
+                                            </div>
+                                            <!-- 20190726 - David Zhang - No attachment for address change -->
+                                            <!--New Policy Holder Address Proof Attachment-->
+                                            <!--
+                                            <div class="bs row content-choice">
+                                                <div class="col-xs-2 col-sm-1" style="padding-bottom:20px;">
+                                                    <input id="NewPHAddressAtt" type="file" class="fileInput" onchange="uploadFile('{!policyChangeId}','NewPHAddressAtt');" style="display:none;"/>
+                                                    <label for="NewPHAddressAtt"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true"></i></label>
+                                                </div>
+                                                <div class="col-xs-8 col-sm-10">{!$Label.New_Policy_Holder_Address_Proof}</div>
+                                                <div class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!$Label.Upload_Tooltip}" aria-hidden="true"></i></div>
+                                                <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                                                <div id="uploadAddresslist" style="padding:20px;">
+                                                    <apex:outputPanel id="newphaddresslist">
+                                                        <apex:repeat value="{!ListNewPhAddressAtt}" var="NewPHaddressAtt">
+                                                            <div class="col-xs-12 col-sm-12 uploaded-filelist">{!NewPHaddressAtt.Name}<i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!NewPHaddressAtt}');" aria-hidden="true"></i></div>
+                                                            <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                                                        </apex:repeat>
+                                                    </apex:outputPanel>
+                                                </div>
+                                            </div>
+                                            -->
+                                        </apex:outputPanel>
+        
+                                        <!--Payment Information Attachemet-->
+                                        <apex:outputPanel rendered="{!IsDD}">
+                                            <!--Policy Holder HKID Attachment-->
+                                            <div class="bs row content-choice">
+                                                <div class="col-xs-2 col-sm-1">
+                                                    <input id="PHHKIDAtt" type="file" class="fileInput" onchange="uploadFile('{!policyChangeId}','PHHKIDAtt');" style="display:none;"/>
+                                                    <label for="PHHKIDAtt"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true"/></label>
+                                                </div>
+                                                <div class="col-xs-8 col-sm-10">{!Policyholder} {!$Label.HKID_Passport}</div>
+                                                <div class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!$Label.Upload_Tooltip}" aria-hidden="true"></i></div>
+                                                <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                                                <div id="uploadTPHKIDlist" style="padding:20px;">
+                                                    <apex:outputPanel id="phhkidlist">
+                                                        <apex:repeat value="{!ListPhHkidAtt}" var="phhkidAtt">
+                                                            <div class="col-xs-12 col-sm-12 uploaded-filelist">{!phhkidAtt.Name}<i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!phhkidAtt}');" aria-hidden="true"></i></div>
+                                                            <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                                                        </apex:repeat>
+                                                    </apex:outputPanel>
+                                                </div>
+                                            </div>
+                                      </apex:outputPanel>
+                                      
+                                      <apex:outputPanel rendered="{!IsThirdParty}">
+                                       <!--Third Party Payer HKID Attachment-->
+                                            <div class="bs row content-choice">
+                                                <div class="col-xs-2 col-sm-1">
+                                                    <input id="TPHKIDAtt" type="file" class="fileInput" onchange="uploadFile('{!policyChangeId}','TPHKIDAtt');" style="display:none;"/>
+                                                    <label for="TPHKIDAtt"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true"/></label>
+                                                </div>
+                                                <div class="col-xs-8 col-sm-10">{!$Label.Third_Party_Payer} {!$Label.HKID_Passport}</div>
+                                                <div class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!$Label.Upload_Tooltip}" aria-hidden="true"></i></div>
+                                                <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                                                    <div id="uploadTPHKIDlist" style="padding:20px;">
+                                                        <apex:outputPanel id="tphkidlist">
+                                                            <apex:repeat value="{!ListTpHkidAtt}" var="tphkidAtt">
+                                                                <div class="col-xs-12 col-sm-12 uploaded-filelist">{!tphkidAtt.Name}<i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!tphkidAtt}');" aria-hidden="true"></i></div>
+                                                                <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                                                            </apex:repeat>
+                                                        </apex:outputPanel>
+                                                    </div>
+                                                </div>
+                                    
+                                                <!--Third Party Payer's Address Attachment-->
+                                                <div class="bs row content-choice">
+                                                    <div class="col-xs-2 col-sm-1">
+                                                        <input id="TPAddressAtt" type="file" class="fileInput" onchange="uploadFile('{!policyChangeId}','TPAddressAtt');" style="display:none;"/>
+                                                        <label for="TPAddressAtt"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true"/></label>
+                                                    </div>
+                                                    <div class="col-xs-8 col-sm-10">{!$Label.Third_Party_Payer} {!$Label.Proof_of_Residential_Address}</div>
+                                                    <div class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!$Label.Upload_Tooltip}" aria-hidden="true"></i></div>
+                                                    <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                                                    <div id="uploadTPAddresslist" style="padding:20px;">
+                                                        <apex:outputPanel id="tpaddresslist">
+                                                            <apex:repeat value="{!ListTpAddressAtt}" var="tpAddressAtt">
+                                                                <div class="col-xs-12 col-sm-12 uploaded-filelist">{!tpAddressAtt.Name}<i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!tpAddressAtt}');" aria-hidden="true"></i></div>
+                                                                <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                                                            </apex:repeat>
+                                                        </apex:outputPanel>
+                                                    </div>
+                                                </div>
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </div>
+                                <apex:actionFunction name="submitPolicyChange" action="{!submitPolicyChange}" rerender="false" reRender="errorMessage" status="loader-icon" oncomplete="nextStep('7');" />
+                                <apex:actionFunction name="submitEsignature" action="{!submitEsignature}" rerender="false" status="loader-icon" oncomplete="submitPolicyChange();">
+                                    <apex:param name="imgDataParam" assignTo="{!eSignature}" value=""/>
+                                </apex:actionFunction>
+                                
+                                <!--Nicole_Bypass Login_20201005-->
+                                <apex:actionFunction name="sendEmailSignature" rerender="false" status="loader-icon" action="{!sendEmailSignature}" oncomplete="onAfterEmailSignature();">
+                                    <apex:param name="esignatureEmail" assignTo="{!esignatureEmail}" value=""/>
+                                </apex:actionFunction>
+                                
+                                <apex:outputpanel id="submitChange">
+                                    <apex:outputpanel rendered="{!(hasAtt && !IsOwner && !IsThirdParty)}">
+                                    <!--desktop action button-->
+                                        <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>
+                                        <div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="submitPolicyChange();">
+                                            <span class="action-btn cigna-fg-white" role="button">{!$Label.Submit}</span>
+                                        </div>
+                                    <!--mobile action button-->
+                                        <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="submitPolicyChange();">
+                                            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                                                <span class="action-btn cigna-fg-white" role="button"><span class="ci-hk-document-send" aria-hidden="true"></span><br/>{!$Label.Submit}</span>
+                                            </div>
+                                        </div>
+                                    </apex:outputPanel>
+                                    <apex:outputpanel rendered="{!(hasAtt && (IsOwner || IsThirdParty))}">
+                                    <!--desktop action button-->
+                                        <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>
+                                        <div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="nextStep();">
+                                            <span class="action-btn cigna-fg-white" role="button">{!$Label.Next}</span>
+                                        </div>
+                                    <!--mobile action button-->
+                                        <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="nextStep();">
+                                            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                                                <span class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</span>
+                                            </div>
+                                        </div>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:actionFunction name="refreshEsignature" reRender="esignature-form" status="loader-icon" oncomplete="Cigna.ESignatureComp.forceResizeCanvas();"/>
+                           </apex:form>
+                           <div class="bs col-sm-12 col-xs-12"><div style="padding:50px;"/></div>
+                        </div>
+                        <!--E-signature for ownership and third-party payer-->
+                        <div class="bs row content-step" data-step="6" style="padding-bottom:50px; display:none;">
+                            <!-- Page Message Start -->
+                            <div id="errEmptySignature" class="bs alert alert-danger" role="alert" style="display:none;">
+                                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                                {!$Label.e_signature_empty_err_msg}
+                            </div>
+                            <div id="errEmptyEmail" class="bs alert alert-danger" role="alert" style="display:none;">
+                                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                                {!$Label.email_empty_err_msg}
+                            </div>
+                            <!--<div id="errNotAcceptTNC" class="bs alert alert-danger" role="alert" style="display:none;">
+                                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                                {!$Label.e_signature_tc_err_msg}
+                            </div>-->
+                            
+                            <apex:form id="esignature-form" onsubmit="return false;">
+                            
+                            <c:eSignatureComp emailAddress="{!PolicyHolderEmail}" displayPICS="false" displayTC="false" tcMessage="{!$Label.Policy_Change_T_and_C}" ownership="{!IsOwner}" thirdParty="{!IsThirdParty}" isPolicyChange="true"/>
+                            <!--<c:eSignatureCompOriginal emailAddress="{!PolicyHolderEmail}" displayPICS="false" displayTC="false" tcMessage="{!$Label.Policy_Change_T_and_C}" ownership="{!IsOwner}" thirdParty="{!IsThirdParty}" />-->
+                            <!-- Remove Terms and Conditions
+                            <div id="tc-overlay" class="tcoverlay" style="display:none;">
+                                <div id="tc-popup" class="tcpopup">
+                                    <a href="#"><div class="glyphicon glyphicon-remove closeOverlay pull-right" onclick="toggleOverlay();"></div></a>
+                                    <h4>Terms and Conditions</h4>
+                                    <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                                    <div class="tccontent"></div>
+                                       
+                                </div>
+                            </div>
+                            
+                            <div id="pic-overlay" class="tcoverlay" style="display:none;">
+                                <div id="pic-popup" class="tcpopup">
+                                    <a href="#"><div class="glyphicon glyphicon-remove closeOverlay pull-right" onclick="toggleOverlayPIC();"></div></a>
+                                    <h4>Terms and Conditions</h4>
+                                    <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                                    <div class="tccontent"></div>
+                                </div>
+                            </div>-->
+                           
+                            <script>
+                                 /**E-signature**/
+                                 
+                                $("#esignature-email").val('{!userEmail}'); 
+                                Cigna.ESignatureComp.saveSignature = function(){
+                                    
+                                        /*if($('#esignature-sign-div #esignature-pics').is(':checked') == false){
+                                            $("#errNotAcceptTNC").show();
+                                            return;
+                                        } else {
+                                            $("#errNotAcceptTNC").hide();
+                                        }*/
+                                        
+                                        if(Cigna.ESignatureComp.isEmptyCanvas(1)){
+                                            $("#errEmptySignature").show();
+                                            return;
+                                        } else {
+                                            $("#errEmptySignature").hide();
+                                        }
+                                        
+                                        submitEsignature(Cigna.ESignatureComp.getSignatureImage(1));
+                                }
+                                    
+                                    
+                                Cigna.ESignatureComp.sendEmail =  function(){   
+                                    
+                                    $("form[id*='esignature-form']").validate();
+            
+                                    jQuery.validator.addMethod("emailStrict", function(value, element) {
+                                        return this.optional(element) || Cigna.ValidationUtil.isValidEmail(value);
+                                    }, "{!$Label.Your_Email_Address_is_invalid}");
+                                    
+                                    $("[id$='esignature-email']").rules("add", {
+                                        required : true,
+                                        emailStrict : true
+                                    });
+                                    
+                                    if(($("form[id*='esignature-form']")).validate().form()){
+                                    
+                                        sendEmailSignature(Cigna.ESignatureComp.getEmailAddress());
+                                        //alert(Cigna.ESignatureComp.getEmailAddress());
+                                        //getCurrentStep(true);
+                                    }
+                                    
+                                    
+                                }
+                                
+                                function onAfterEmailSignature(){
+                                    var isCustomerSiteGuestUser = {!isCustomerSiteGuestUser};
+                                    if(isCustomerSiteGuestUser ){                                        
+                                        nextStep('7');
+                                        $('#acknowledgement_message').hide();
+                                        $('#acknowledgement_message_without_esignature').show();
+                                    }else{
+                                        Cigna.Util.navigateToVFP('PolicyChangeVFP');
+                                    }
+                                }
+                            </script>
+                            <div id="submit-button-group" style="display:none;">
+                                <!--desktop action button-->
+                                <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>
+                                <div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="Cigna.ESignatureComp.saveSignature()">
+                                    <span class="action-btn cigna-fg-white" role="button">{!$Label.Submit}</span>
+                                </div>
+                                <!--mobile action button-->
+                                <div class="bs row mobile-app-padding" style="display: none; padding-bottom: 200px;">
+                                    <div class="bs col-xs-12"></div>
+                                </div>
+                                <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="Cigna.ESignatureComp.saveSignature()">
+                                    <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                                        <span class="action-btn cigna-fg-white" role="button"><span class="ci-hk-document-send" aria-hidden="true"></span><br/>{!$Label.Submit}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            </apex:form>
+                        </div>
+                        
+                        <div class="bs row content-step" data-step="7" style="padding-bottom:50px; display:none;">
+                            <div class="col-xs-12 col-sm-12" style="text-align:center;">
+                                <i class="fa fa-check-circle-o content-active" style="font-size:50px;" aria-hidden="true"></i>
+                            </div>
+                            
+                            <!--Nicole_Bypass Login_20200924-->
+                            <div id="acknowledgement_message" class="col-xs-12 col-sm-12 text-center" style="padding-top:30px;">
+                                <apex:outputText value="{!$Label.Policy_Change_acknowledgement_message}" escape="false" />
+                            </div>
+                            <div id="acknowledgement_message_without_esignature" class="col-xs-12 col-sm-12 text-center" style="padding-top:30px;display:none;">
+                                <apex:outputText value="{!$Label.Policy_Change_acknowledgement_message_without_Esignature}" escape="false" />
+                            </div>                           
+                            
+                            <!--desktop action button-->
+                            <div class="bs col-xs-12 col-sm-12" style="padding:20px;"></div>
+                            <div  class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="Cigna.Util.navigateToVFP('PolicyChangeSubmitVFP?pclist=true')" style="{!IF(isCustomerSiteGuestUser,'display:none;','')}">
+                                <span class="action-btn cigna-fg-white" role="button">{!$Label.Make_A_New_Request}</span>
+                            </div>
+                            <!--mobile action button-->
+                            <div class="bs action-bar visible-xs cigna-floating-bottom-panel onclick-pointer" onclick="Cigna.Util.navigateToVFP('PolicyChangeSubmitVFP?pclist=true')" style="{!IF(isCustomerSiteGuestUser,'display:none;','')}">
+                                <div  class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                                    <span class="action-btn cigna-fg-white" role="button"><span class="ci-hk-fix" aria-hidden="true"></span><br/>{!$Label.Make_A_New_Request}</span>
+                                </div>
+                            </div>
+                            <div class="bs col-sm-12 col-xs-12"><div style="padding:50px;"/></div>
+                        </div>
+                    </apex:outputPanel>
+                </div>
+            </div>
+        <!-- Ray's Updates -->
+        <apex:outputPanel id="mobileNextFixJS">
+            <script>
+                if (Cigna.Util.isIOS() && Cigna.Util.isCustomerPortal() && $(window).width() < 768 ) {  
+                   //CR-56_Link_20220214 
+                   $('.bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select, .bs textarea').on("focus",function(evt){
+                        if ($('.action-bar').is(':visible')) {
+                            $('.action-bar').addClass('hidden-xs').removeClass('visible-xs');
+                        }
+                    });
+                    
+                    $('.bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select, .bs textarea').on("blur",function(evt){
+                        if ($('.action-bar').hasClass('hidden-xs')) {
+                            $('.action-bar').addClass('visible-xs').removeClass('hidden-xs');
+                        }
+                    });
+                }
+            </script> 
+        </apex:outputPanel>
+        </apex:define>
+    </apex:page>

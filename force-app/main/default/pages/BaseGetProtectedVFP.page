@@ -1,0 +1,1026 @@
+<!--Please change apex page title-->
+<apex:page docType="html-5.0" sidebar="false" cache="false" showHeader="false" title="Get Protected" controller="GetProtectedCtrl">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+        <style>
+            <!--additional inline css-->
+            .sfdc_richtext li {
+                margin-bottom: 5px;
+            }
+            .bs .cigna-belly-button-wrapper {
+                top: -85px;
+                position: absolute;
+                left: 45%;
+                background: #fff;
+                border-radius: 100%;
+            }
+            .bs .cigna-belly-button {
+                font-size: 30px !important;
+                -webkit-border-radius: 1100%;
+                -moz-border-radius: 100%;
+                -o-border-radius: 100%;
+                border-radius: 100%;
+                border: 3px solid #39B54A;
+                text-align: center;
+                display: table-cell !important;
+                vertical-align: middle;
+                width: 60px;
+                height: 60px;
+            }
+            .bs .cigna-content-area {
+                padding: 20px;
+            }
+            .bs .cigna-btn-desktop {
+                width: 30%;
+                //text-transform: uppercase;
+                /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+                font-family: "ValueSansRegular", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+                font-style: normal;
+                font-weight: 500;
+            }
+            .bs .cigna-btn-desktop-no-width {
+                //text-transform: uppercase;
+                /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+                font-family: "ValueSansRegular", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+                font-style: normal;
+                font-weight: 500;
+            }
+            .bs .cigna-list-group {
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
+            .bs .cigna-list-group-item {
+                position: relative;
+                display: block;
+                padding: 20px 30px 20px 15px;
+                background-color: #fff;
+                border-bottom: 1px solid #ddd;
+                color: #58595B;
+            }
+            .bs .cigna-list-group-item:hover {
+                text-decoration: none;
+                color: #58595B;
+            }
+            .bs .cigna-list-group-item:last-child {
+                border: 0;
+            }
+            .bs .cigna-list-group-item i.item-right-arrow {
+                position: absolute;
+                right: 15px;
+                top: 40%;
+            }
+            .bs .cigna-list-group-item div.item-right-arrow {
+                position: absolute;
+                right: 0px;
+                top: 40%;
+            }
+            .bs .cigna-list-group-item > div {
+                position: relative;
+            }
+            .bs .cigna-list-group-item { cursor: pointer; }
+            @media (min-width: 768px) {
+                .bs .cigna-div-table {
+                    display: table !important;
+                    table-layout: fixed;
+                    width: 100%;
+                    height: 100%;
+                }
+                .bs .cigna-div-table-left {
+                    display: table-cell;
+                    height: 100%;
+                    float: none;
+                    vertical-align: middle;
+                    text-align: center;
+                    border-right: 1px #D9D9D6 solid;
+                }
+                .bs .cigna-div-table-right {
+                    display: table-cell;
+                    height: 100%;
+                    float: none;
+                }
+            }
+            .bs .display-block {
+                display: block !important;
+            }
+            .sfdc_richtext {
+                /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+                font-family: "ValueSansRegular", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif !important;
+            }
+            
+        </style>
+        <script>
+            // Rancho_JR1898_20210325
+            window.onload = function(){
+                var selectedCode = $('#current-product-code').val();
+                console.log('selectedCode:'+selectedCode);
+                if(selectedCode =='PPC'){
+                    $('#product-button-customer').hide();
+                    $('#product-button-customer-tup').hide();
+                    $('#product-button-customer-portable').hide();
+                }
+            }
+
+            <!--additional inline js-->
+            function preventDefault(event){
+                if(event.preventDefault){
+                    event.preventDefault();
+                }
+                else{
+                        window.event.returnValue=false;
+                        return false;
+
+                }
+            }
+
+            var Cigna = Cigna || {};
+            Cigna.GetProtected = function(){
+                function selectCategory(evt) {
+                    $('#product-filter-wrapper').fadeOut();
+                    $('#product-back').fadeOut();
+                    $('#content-placeholder-area').fadeIn();
+                    
+                    $('#current-step').val('product-selection');
+                    $('#current-product-code').val('');
+                    $('#cigna-selected-category').text($(this).text().toLowerCase());
+                    //JOBR127-Remove Product in Customer Portal-20220524-Kirk
+                    var category = '{!$Label.eSales_Medical_Health}';
+                    $('#current-select-Category').val(category);
+                    ServerGetProtected.loadProductList(category);
+                    
+                    evt.preventDefault();
+                }
+                
+                function selectProduct() {
+                    //Rancho_Combo_20201204
+                    if('CBO' == $(this).data('product-code') && !Cigna.Util.isBrokerPortal()) {
+                        var comboLink = document.getElementById('website_link');
+                        comboLink.click();
+                        return;
+                    }
+
+                    $('#product-selection-wrapper').fadeOut();
+                    $('#product-back').fadeOut();
+                    $('#content-placeholder-area').fadeIn();
+                    
+                    $('#current-step').val('product-info');
+                    $('#current-product-code').val($(this).data('product-code'));
+                    ServerGetProtected.loadProduct($(this).data('product-code'));
+
+                    if (!Cigna.Util.isBrokerPortal()){
+                        var prdname = $(this).data('product-name');
+                        var lang='{!userLanguage}';
+                        if (lang.substring(0,2)=='en')
+                            lang = 'en_us';
+                        GTMProductClickPush(prdname,lang);
+                    }
+                    //IBM JING PORTABLE CR 0423 START
+                    var selectedCode = $('#current-product-code').val();
+                    
+                    /*if ((selectedCode=='PBT' && {!isTopUpElig}) 
+                        || (selectedCode=='PBC' && {!isCoversionElig})
+                        || (selectedCode !='PBT' && selectedCode !='PBC' )) 
+                    {
+                        $('#product-button-customer').show();
+                    
+                    }else
+                    {
+                         $('#product-button-customer').hide();
+                    }*/
+                    //IBM JING PORTABLE CR 0423 END
+                    // Modified by IBM(Roy) due to PEI-98 START
+                    if ((selectedCode=='PBT' && {!isTopUpElig}) 
+                        || (selectedCode=='PBC' && {!isCoversionElig})) {
+                        $('#product-button-customer').hide();
+                        $('#product-button-customer-tup').hide(); //add by minghua - 20190830 - for remove 'contactme' button
+                        $('#product-button-customer-portable').show();
+                    } else if(selectedCode !='PBT' && selectedCode !='PBC') {
+                        if (selectedCode =='TUP') {
+                            $('#product-button-customer').hide();
+                            $('#product-button-customer-tup').show(); //add by minghua - 20190830 - for remove 'contactme' button  
+                            $('#product-button-customer-portable').hide();
+                        }else if(selectedCode =='CBO'){    //Combo Product
+                            $('#product-button-customer').hide();
+                        }else if(selectedCode =='PPC'){//Rancho_JR1898_20210325
+                            $('#product-button-customer').hide();
+                            $('#product-button-customer-tup').hide();
+                            $('#product-button-customer-portable').hide();
+                        }else{
+                            $('#product-button-customer').show();
+                            $('#product-button-customer-tup').hide(); //add by minghua - 20190830 - for remove 'contactme' button
+                            $('#product-button-customer-portable').hide();
+                        }
+                    } else {
+                        $('#product-button-customer').hide();
+                        $('#product-button-customer-tup').hide(); //add by minghua - 20190830 - for remove 'contactme' button
+                        $('#product-button-customer-portable').hide();
+                    }
+                    // Modified by IBM(Roy) due to PEI-98 END
+
+                    //Owen_20230103_2023 JOBR-295 for disable 'get a quote' button in custom portal
+                    var getCustomQuoteButtonCheck={!getCustomQuoteButtonCheck};
+                    if(getCustomQuoteButtonCheck){
+                        $('#customerGetQuoteMobile').hide();
+                        $('#customerGetQuoteDesktop').hide();
+                    }else{
+                        $('#customerGetQuoteMobile').show();
+                        $('#customerGetQuoteDesktop').show();
+                    }
+                }
+                
+                function finishLoading(showElems) {
+                    var isProductInfo = false;
+                    $('#content-placeholder-area').fadeOut(function(){
+                        showElems.forEach(function(elem){
+                            $(elem).fadeIn();
+                            if ($('#product-filter-wrapper').is(':visible') && elem == '#product-selection-wrapper') {
+                                $(elem).fadeOut();                            
+                            }
+                            if (elem == '#product-info-wrapper') {
+                                $('div.header-bar').css('border-bottom', '3px solid #39B54A');
+                                isProductInfo = true;
+                            }
+                        });
+                        if (!isProductInfo) {
+                            $('div.header-bar').css('border-bottom', 'none');
+                        }
+                    });
+                }
+                
+                function goBack(evt) {
+                    document.getElementById('product-back').style.display="none";
+                    if(sessionStorage.getItem('get-protected-back-url')) {
+                        var backUrl = sessionStorage.getItem('get-protected-back-url');
+                        sessionStorage.removeItem('get-protected-back-url');
+                        window.location.href = backUrl;
+                    } else if (Cigna.Util.isBrokerPortal()) {
+                        Cigna.Util.navigateToVFP("ProductDeckVFP", null, null, true);
+                    } else {
+                        
+                        if ($('#product-info-wrapper').is(':visible')) {
+                            $('#product-info-wrapper').fadeOut(function(){
+                                $('#product-selection-wrapper').fadeIn();
+                                $('div.header-bar').css('border-bottom', 'none');
+                                
+                                if($('#current-select-Category').val() != '{!JSINHTMLENCODE($CurrentPage.Parameters.Category)}'){
+                                    ServerGetProtected.loadProductList($('#current-select-Category').val());
+                                }
+                                
+                            });
+                        } else if ($('#product-selection-wrapper').is(':visible')) {
+                            
+                            $('#product-back').fadeOut();
+                            $('#product-selection-wrapper').fadeOut(function(){
+                                $('#product-filter-wrapper').fadeIn();
+                                $('div.header-bar').css('border-bottom', 'none');
+                            });
+                           
+                        }
+                        
+                        $('#current-product-code').val('');
+                        
+                    }
+                    evt.preventDefault();
+                    if ($('#product-filter-wrapper').is(':visible') && $('#product-selection-wrapper').is(':visible')) {
+                        $('#product-selection-wrapper').fadeOut();                    
+                    }
+                }
+                
+                function getQuote() {
+                    var selectedCode = $('#current-product-code').val();
+                    if (Cigna.Util.isBrokerPortal()) {
+                        if({!selectedProduct.Product_Code__c == 'LHB'}){
+                            Cigna.Util.navigateToVFP("GroupProductQuotationVFP?plan=" + $('#current-product-code').val() + "&Category=" + encodeURIComponent($('#current-select-Category').val()), null, null, true);                  
+                        }
+                        else if(selectedCode == 'PBT'){
+                            Cigna.Util.navigateToVFP("PortableGetQuoteVFP?plan=" + $('#current-product-code').val() + "&Category=" + encodeURIComponent($('#current-select-Category').val()), null, null, true);                  
+                        }
+                        else  if(selectedCode == 'PBC'){
+                            Cigna.Util.navigateToVFP("PortableConversionGetQuoteVFP?plan=" + $('#current-product-code').val() + "&Category=" + encodeURIComponent($('#current-select-Category').val()), null, null, true);                  
+                        }else if(selectedCode == 'VHIS'){
+                            Cigna.Util.navigateToVFP("GenericGetQuoteVFP?plan=" + $('#current-product-code').val() + "&Category=" + encodeURIComponent($('#current-select-Category').val()), null, null, true);   
+                        }
+                        else{
+                            //Cigna.Util.navigateToVFP("CustomerSearchVFP?plan=" + $('#current-product-code').val() + "&Category=" + $('#current-select-Category').val(), null, null, true);
+                            Cigna.Util.navigateToVFP("GetQuoteVFP?plan=" + $('#current-product-code').val() + "&Category=" + encodeURIComponent($('#current-select-Category').val()), null, null, true);
+                        }
+                    } else {
+                        // Rancho_HKITSFDC58_20241209 - redirect to website get quote page
+                        // if(selectedCode == 'PBT'){
+                        //     Cigna.Util.navigateToVFP("PortableGetQuoteVFP?plan=" + $('#current-product-code').val() + "&Category=" + encodeURIComponent($('#current-select-Category').val()), null, null, true);                  
+                        // }
+                        // else  if(selectedCode == 'PBC'){
+                        //     Cigna.Util.navigateToVFP("PortableConversionGetQuoteVFP?plan=" + $('#current-product-code').val() + "&Category=" + encodeURIComponent($('#current-select-Category').val()), null, null, true);                  
+                        // }else if(selectedCode == '{!TopUpProductCode}'){
+                        //     Cigna.Util.navigateToVFP("TopUpGetQuoteVFP?plan=" + $('#current-product-code').val() + "&Category=" + encodeURIComponent($('#current-select-Category').val()), null, null, true);   
+                        // }else if(selectedCode == 'VHIS'){
+                        //     Cigna.Util.navigateToVFP("GenericGetQuoteVFP?plan=" + $('#current-product-code').val() + "&Category=" + encodeURIComponent($('#current-select-Category').val()), null, null, true);
+                        // }else
+                        // {
+                        //     Cigna.Util.navigateToVFP("GetQuoteVFP?plan=" + $('#current-product-code').val() + "&Category=" + encodeURIComponent($('#current-select-Category').val()), null, null, true);
+                        // }
+                    }
+                }
+                
+                function init() {
+                    if ("{!selectedProductCode}" != "") {
+                        $('#product-filter-wrapper').hide();
+                        $('#product-selection-wrapper').hide();
+                        Cigna.GetProtected.finishLoading(['#product-info-wrapper', '#action-bar', '#product-back']);
+
+                        if(!Cigna.Util.isBrokerPortal()){
+                            var prdname = "{!selectedProduct.Name}";
+                            if (prdname!=""){
+                                var lang='{!userLanguage}';
+                                if (lang.substring(0,2)=='en')
+                                    lang = 'en_us';
+                                GTMProductClickPush(prdname,lang);
+                            }
+                        }
+                    } else {
+                        //JOBR127-Remove Product in Customer Portal-20220524-Kirk
+                        //$('#product-filter-wrapper').show();
+                        Cigna.GetProtected.selectCategory();
+                    }
+
+                    
+                    if(Cigna.Util.isBrokerPortal()){
+                        $('#product-button-broker').show();
+                        $('#product-button-customer').hide();
+                        $('#product-button-customer-tup').hide(); //add by minghua - 20190830 - for remove 'contactme' button
+                        $('#product-button-customer-portable').hide(); // Added by IBM(Roy) due to PEI-98
+                    }else{
+                        $('#product-button-broker').hide();
+                        //$('#product-button-customer').show();
+                        // Modified by IBM(Roy) due to PEI-98
+                        if ("{!selectedProductCode}" == "PBC" || "{!selectedProductCode}" == "PBT") {
+                            $('#product-button-customer-portable').show();
+                            $('#product-button-customer').hide();
+                            $('#product-button-customer-tup').hide();//add by minghua - 20190830 - for remove 'contactme' button
+                        } else {
+                            if("{!selectedProductCode}" == "TUP"){   //add by Nicole- 20190906 - for remove 'contactme' button
+                                $('#product-button-customer').hide();
+                                $('#product-button-customer-tup').show();//add by minghua - 20190830 - for remove 'contactme' button
+                                $('#product-button-customer-portable').hide();
+                            }else{
+                                $('#product-button-customer').show();
+                                $('#product-button-customer-tup').hide();//add by minghua - 20190830 - for remove 'contactme' button
+                                $('#product-button-customer-portable').hide();
+                            }
+                        }
+                        // Modified by IBM(Roy) due to PEI-98
+                    }
+                }
+                
+                function contactMe(){
+                    Cigna.Util.navigateToVFP("ContactMeVFP?plan=" + $('#current-product-code').val(), null, null, true);
+                    
+                }
+                
+                function gotoPaperApplication() {
+                    Cigna.Util.navigateToVFP("PaperApplicationVFP?plan=" + $('#current-product-code').val(), null, null, true);  
+                }
+
+                function gotoIllustrationForm() {
+                    Cigna.Util.navigateToVFP("IllustrationFormVFP?plan=" + $('#current-product-code').val(), null, null, true);
+                }
+
+                return {
+                    selectCategory : selectCategory,
+                    selectProduct : selectProduct,
+                    finishLoading : finishLoading,
+                    goBack : goBack,
+                    getQuote : getQuote,
+                    init : init,
+                    contactMe : contactMe,
+                    gotoPaperApplication : gotoPaperApplication,
+                    gotoIllustrationForm : gotoIllustrationForm
+                }
+            }();
+            
+            $(document).ready(function(){  
+                //CR-56_Link_20220214
+                $('#product-filter .cigna-list-group-item').on("click",Cigna.GetProtected.selectCategory);
+                $('#product-selection .cigna-list-group-item').on("click",Cigna.GetProtected.selectProduct);
+                $('#product-back-btn').on("click",Cigna.GetProtected.goBack);
+                Cigna.GetProtected.init();
+                
+                var categoryCodeParam = '{!JSINHTMLENCODE($CurrentPage.Parameters.Category)}';
+                if(categoryCodeParam != null){
+                    $('#current-select-Category').val(categoryCodeParam);
+                }
+                
+               // For customer portal app
+                if (Cigna.Util.checkWebView() && !Cigna.Util.isBrokerPortal()) {
+                
+                    var categoryCodeParam = '{!JSINHTMLENCODE($CurrentPage.Parameters.Category)}';
+                    var productCodeParam = '{!JSINHTMLENCODE($CurrentPage.Parameters.pc)}';
+                    
+                    if(categoryCodeParam != null && categoryCodeParam != "" && productCodeParam != null && productCodeParam != ""){
+                        
+                        $('#product-filter-wrapper').hide();
+                        $('#product-selection-wrapper').hide();
+                        Cigna.GetProtected.finishLoading(['#product-info-wrapper', '#action-bar', '#product-back']);
+                              
+                        $('#current-select-Category').val(categoryCodeParam);
+                      
+                        $('#product-selection-wrapper').fadeOut();
+                        $('#product-back').fadeOut();
+                        $('#content-placeholder-area').fadeIn();
+                        
+                        $('#current-step').val('product-info');
+                        $('#current-product-code').val(productCodeParam);
+                        ServerGetProtected.loadProduct(productCodeParam);
+
+                      
+                    }
+                    
+                }
+
+            });
+            
+        </script>
+    </head>
+    <apex:define name="additionalLibraries">
+         <!--additional css, bootstrap, jquery,js libraries-->
+         <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    </apex:define>
+
+    <apex:form >
+        <!-- JOBR127-Remove Product in Customer Portal-20220524-Kirk -->
+        <apex:actionFunction action="{!loadProductList}" name="loadProductList" 
+                             namespace="ServerGetProtected" rerender="product-list"
+                             oncomplete="Cigna.GetProtected.finishLoading(['#product-selection-wrapper']);">
+            <apex:param name="selectedCategory" assignTo="{!selectedCategory}" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction action="{!loadProduct}" name="loadProduct" 
+                             namespace="ServerGetProtected" rerender="product-info,get-a-quote-button-desktop,get-a-quote-button-mobile,product-button-customer,action-bar-desktop,customer-button-panel"
+                             oncomplete="Cigna.GetProtected.finishLoading(['#product-info-wrapper', '#action-bar', '#product-back']);"><!-- Rancho_JOBR324_20240202 - refresh button --><!-- Rancho_HKITSFDC58_20241209 - refresh button -->
+            <apex:param name="selectedProductCode" assignTo="{!selectedProductCode}" value="" />
+        </apex:actionFunction>
+        <input id="current-step" type="hidden" value="" />
+        <input id="current-product-code" type="hidden" value="{!selectedProductCode}" />
+        
+        <div id="product-back" class="bs row" style="display: none;">
+            <div class="bs col-xs-12">
+                <p><a id="product-back-btn" href="javascript:history.go(-1);" class="bs cigna-fg-orange-medium"><i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a></p>
+            </div>
+        </div>
+
+        <div id="product-filter-wrapper" style="display: none;">
+            <div id="product-filter" class="bs row cigna-content-area cigna-fg-gray-dark cigna-div-table">
+                <div class="bs col-xs-12 col-sm-3 cigna-div-table-left"><h4><p>{!$Label.eSales_I_want_to}</p></h4></div>
+                <div class="bs cigna-list-group col-xs-12 col-sm-9 cigna-div-table-right">
+                    <a href="#" class="bs cigna-list-group-item" data-product-category="{!$Label.eSales_Medical_Health}">
+                        {!$Label.eSales_Get_coverages_for_medical_expenses}<i class="ci-hk-arrow-31 cigna-fg-green-medium item-right-arrow" aria-hidden="true"></i>
+                    </a>
+                    <a href="#" class="bs cigna-list-group-item" data-product-category="{!$Label.eSales_Critical_Illness}">
+                        {!$Label.eSales_have_financial_assistance}<i class="ci-hk-arrow-31 cigna-fg-green-medium item-right-arrow" aria-hidden="true"></i>
+                    </a>
+                    <a href="#" class="bs cigna-list-group-item" data-product-category="{!$Label.eSales_Life_Insurance}">
+                        {!$Label.eSales_Protect_from_accidents}<i class="ci-hk-arrow-31 cigna-fg-green-medium item-right-arrow" aria-hidden="true"></i>
+                    </a>
+                    <a href="#" class="bs cigna-list-group-item" data-product-category="{!$Label.eSales_Disability}">
+                        {!$Label.eSales_Reduce_financial_burdens}<i class="ci-hk-arrow-31 cigna-fg-green-medium item-right-arrow" aria-hidden="true"></i>
+                    </a>                   
+                </div>
+            </div>
+        </div>
+        
+        <div id="product-selection-wrapper" style="display:none;">
+            <div id="product-selection" class="bs row cigna-content-area cigna-fg-gray-dark cigna-div-table">
+                <div class="bs col-xs-12 col-sm-3 cigna-div-table-left"><h4>{!$Label.eSales_I_want_to} <span id="cigna-selected-category"></span></h4></div>
+                <apex:outputPanel id="product-list" layout="block" styleClass="bs cigna-list-group col-xs-12 col-sm-9 cigna-div-table-right">
+                    <apex:repeat value="{!productList}" var="product">
+                        <!--Rancho_Combo_20201204-->
+                        <div style='display:none;'>
+                            <apex:outputPanel rendered="{!isCustomerPortal}">
+                                <a id="website_link" href="{!comboLink}" target="_blank"></a>
+                            </apex:outputPanel>
+                        </div>
+                        <!--IBM JING PORTABLE CR 0420 START-->
+                        <apex:outputPanel rendered="{!(product.Product_Code__c != 'PBT' && product.Product_Code__c != 'PBC' && product.Product_Code__c != 'TUP')}">
+                              <div class="bs row cigna-list-group-item" data-product-code="{!product.Product_Code__c}" data-product-name="{!product.Name}">
+                            <div class="bs col-xs-1 cigna-fg-green-medium"><i class="fa fa-hospital-o fa-2x" aria-hidden="true"></i></div>
+                            <div class="bs col-xs-10 cigna-fg-green-medium">
+                                <h4 style="text-transform: uppercase;">{!product.Name__c}</h4><br/>
+                            </div>
+                            <!-- Rancho_JR1898_20210325 -->
+                            <apex:outputPanel rendered="{!product.Product_Code__c != 'PPC'}">
+                                <div class="bs col-xs-12" style="padding-top: 15px;"><p>{!product.Short_Description__c}</p></div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!product.Product_Code__c == 'PPC'}">
+                                <div class="bs col-xs-12" style="padding-top: 15px;"><p>{!$Label.PPC_Product_List_Description}</p></div>
+                            </apex:outputPanel>
+                            <div class="bs pull-right item-right-arrow cigna-fg-green-medium"><i class="ci-hk-arrow-31" aria-hidden="true"></i></div>
+                        </div>
+                        <br/>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!((product.Product_Code__c == 'PBT' && isTopUpElig) || (product.Product_Code__c == 'PBC' && isCoversionElig))}">
+                              <div class="bs row cigna-list-group-item" data-product-code="{!product.Product_Code__c}" data-product-name="{!product.Name}">
+                            <div class="bs col-xs-1 cigna-fg-green-medium"><i class="fa fa-hospital-o fa-2x" aria-hidden="true"></i></div>
+                            <div class="bs col-xs-10 cigna-fg-green-medium">
+                                <h4 style="text-transform: uppercase;">{!product.Name__c}</h4><br/>
+                            </div>
+                            <div class="bs col-xs-12" style="padding-top: 15px;"><p>{!product.Short_Description__c}</p></div>
+                            <div class="bs pull-right item-right-arrow cigna-fg-green-medium"><i class="ci-hk-arrow-31" aria-hidden="true"></i></div>
+                        </div>
+                        <br/>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!(product.Product_Code__c == 'TUP' && IsTopUpEligible)}">
+                              <div class="bs row cigna-list-group-item" data-product-code="{!product.Product_Code__c}" data-product-name="{!product.Name}">
+                            <div class="bs col-xs-1 cigna-fg-green-medium"><i class="fa fa-hospital-o fa-2x" aria-hidden="true"></i></div>
+                            <div class="bs col-xs-10 cigna-fg-green-medium">
+                                <h4 style="text-transform: uppercase;">{!product.Name__c}</h4><br/>
+                            </div>
+                            <div class="bs col-xs-12" style="padding-top: 15px;"><p>{!product.Short_Description__c}</p></div>
+                            <div class="bs pull-right item-right-arrow cigna-fg-green-medium"><i class="ci-hk-arrow-31" aria-hidden="true"></i></div>
+                        </div>
+                        <br/>
+                        </apex:outputPanel>
+                        <!--IBM JING PORTABLE CR 0420 END-->
+                        
+                    </apex:repeat>
+                    <script>
+                        //CR-56_Link_20220214
+                        $('#product-selection .cigna-list-group-item').on("click",Cigna.GetProtected.selectProduct);
+                    </script>
+                </apex:outputPanel>
+            </div>
+        </div>
+        <input id="current-select-Category" type="hidden" value="{!category}" />
+        
+        <div id="product-info-wrapper" style="display: none;">
+            <div id="product-info" class="bs row cigna-content-area cigna-fg-gray-dark" style="padding-bottom: 50px;">
+                <apex:outputPanel id="product-info" layout="block">
+                    <div class="bs col-xs-12" style="position: relative;">
+                        <div class="bs cigna-belly-button-wrapper cigna-fg-green-medium">
+                            <i class="fa fa-ambulance fa-lg cigna-belly-button" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                    <!--added by Connor 20210319 start Rancho_JR1898_20210325-->
+                    <apex:outputPanel rendered="{!selectedProduct.Product_Code__c == 'PPC'}"> 
+                        <div id="PPC-image" class="bs row cigna-content-area" >
+                            <apex:image style="width: 100%;" value="{!$Resource.Health_Value_Portable_Plan}" ></apex:image>
+                        </div>
+                    </apex:outputPanel>
+                    <!--added by Connor 20210319 end-->
+                    <div class="bs col-xs-12">
+                    <apex:outputPanel rendered="{!!isBrokerPortal}">
+                        <div class="bs col-xs-2 cigna-fg-green-medium"><i class="fa fa-hospital-o fa-2x" aria-hidden="true"></i></div>
+                    </apex:outputPanel>
+                    <!--IBM JING PORTABLE CR 0419 START-->
+                    <apex:outputPanel rendered="{!isBrokerPortal && selectedProduct.Product_Code__c == 'PBT'}">
+                        <div class="bs col-sm-1 col-xs-2 cigna-fg-green-medium"><i class="fa fa-hospital-o fa-2x" aria-hidden="true"></i></div>
+                    </apex:outputPanel>
+                    <!-- Rancho_HKITSFDC264_20250903 - update font -->
+                     <apex:outputPanel rendered="{!isBrokerPortal && selectedProduct.Product_Code__c == 'PBC'}">
+                        <div class="bs col-sm-1 col-xs-2 cigna-fg-navy-blue"><i class="fa fa-hospital-o fa-2x" aria-hidden="true"></i></div>
+                    </apex:outputPanel>
+                    <!--IBM JING PORTABLE CR 0419 END-->
+                    <apex:outputPanel rendered="{!isBrokerPortal && selectedProduct.Product_Code__c == 'TU'}">
+                        <div class="bs col-sm-1 col-xs-2 cigna-fg-navy-blue"><i class="ci-hk-plus ci-hk-2x" aria-hidden="true"></i></div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!isBrokerPortal && selectedProduct.Product_Code__c == 'PM'}">
+                        <div class="bs col-sm-1 col-xs-2 cigna-fg-navy-blue"><i class="ci-hk-van ci-hk-2x" aria-hidden="true"></i></div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!isBrokerPortal && selectedProduct.Product_Code__c == 'NEL'}">
+                        <div class="bs col-sm-1 col-xs-2 cigna-fg-navy-blue"><i class="ci-hk-stethoscope ci-hk-2x" aria-hidden="true"></i></div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!isBrokerPortal && selectedProduct.Product_Code__c == 'SCI'}">
+                        <div class="bs col-sm-1 col-xs-2 cigna-fg-navy-blue"><i class="ci-hk-needle ci-hk-2x" aria-hidden="true"></i></div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!isBrokerPortal && selectedProduct.Product_Code__c == 'DMB'}">
+                        <div class="bs col-sm-1 col-xs-2 cigna-fg-navy-blue"><i class="ci-hk-med-bag ci-hk-2x" aria-hidden="true"></i></div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!isBrokerPortal && selectedProduct.Product_Code__c == 'TUL'}">
+                        <div class="bs col-xs-1 cigna-fg-navy-blue"><i class="ci-hk-doctor ci-hk-2x" aria-hidden="true"></i></div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!isBrokerPortal && selectedProduct.Product_Code__c == 'LHB'}">
+                        <div class="bs col-xs-1 cigna-fg-navy-blue"><i class="ci-hk-user-group ci-hk-2x" aria-hidden="true"></i></div>
+                    </apex:outputPanel>
+                    <!-- Combo prodcut  -->
+                    <apex:outputPanel rendered="{!isBrokerPortal && selectedProduct.Product_Code__c == 'CBO'}">
+                        <div class="bs col-xs-1 cigna-fg-navy-blue"><i class="ci-hk-van ci-hk-2x" aria-hidden="true"></i></div>
+                    </apex:outputPanel>
+                    <!-- Rancho_JOBR324_20230905 - product icon for elite 2.0 -->
+                    <apex:outputPanel rendered="{!isBrokerPortal && selectedProduct.Product_Code__c == 'NEL2'}">
+                        <div class="bs col-xs-1 cigna-fg-navy-blue"><i class="ci-hk-stethoscope ci-hk-2x" aria-hidden="true"></i></div>
+                    </apex:outputPanel>
+                    <!-- Rancho_HKITSFDC264_20250903 - update font -->
+                    <div class="bs col-sm-11 col-xs-9"><h3 class="bs cigna-fg-navy-blue">{!selectedProduct.Name__c}</h3></div>
+                    
+                </div>
+                <apex:outputPanel rendered="{!selectedProduct.Product_Code__c != 'LHB'}">
+                <div class="bs col-xs-12">
+                    <p><br/>{!selectedProduct.Short_Description__c}</p>
+                </div>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!selectedProduct.Product_Code__c == 'LHB'}">
+                <div class="bs col-xs-12">
+                    <p><br/>{!$Label.LHB_Short_Description}</p>
+                </div>
+                </apex:outputPanel>
+                <!--Modified by Terry at 2018/3/29-->
+                <!--add by David at 2018/2/27-->
+                <!--<div class="bs col-xs-12" style="padding-bottom: 15px;">
+                    <div class="bs cigna-fg-blue-light"><h4 style="text-transform: uppercase;"><br/>{!$Label.LHB_Tagline}</h4></div>
+                    <p>{!$Label.LHB_Tagline_Detail}</p>
+                </div>-->
+                <!--add by David at 2018/2/27-->
+                <!--Modified by Terry at 2018/3/29-->
+                
+                <!--Modified by IBM(Roy) at 2018/6/7 START-->
+                <!-- <apex:outputPanel rendered="{!selectedProduct.Product_Code__c == 'PBC' || selectedProduct.Product_Code__c == 'PBT'}" >
+                    <div class="bs col-xs-12" style="padding-bottom: 15px;">
+                        <div class="bs cigna-fg-blue-light"><h4 style="text-transform: uppercase;"><br/>{!$Label.Product_Tagline}</h4></div>
+                    </div>
+                    <div class="bs col-xs-12" style="padding-bottom: 10px;">
+                        <div class="bs">{!$Label.Product_Tagline_Content}</div>
+                    </div>
+                </apex:outputPanel> -->
+                <!--Modified by IBM(Roy) at 2018/6/7 END-->
+                <!-- Owen_20240226 JOBR-360 for disable elite 1.0 -->
+                <!-- Rancho_HKITSFDC264_20250903 - update font -->
+                <div class="bs col-xs-12" style="{!IF(selectedProduct.Product_Code__c != 'VHIS'&&selectedProduct.Product_Code__c != 'NEL','padding-bottom: 15px;','display:none')}">
+                    <div class="bs cigna-fg-blue-light"><h4><br/>{!$Label.Product_Highlights}</h4></div>
+                </div>
+                <div class="bs col-xs-12" style="{!IF(selectedProduct.Product_Code__c == 'VHIS','padding-bottom: 15px;','display:none')}">
+                    <div class="bs cigna-fg-blue-light"><h4><br/>{!$Label.CIGNA_VHIS_SERIES}</h4></div>
+                </div>
+                 <!--IBM JING PORTABLE CR 0419 START-->
+                 <apex:include pageName="ProductFeatures_PBT" rendered="{!selectedProduct.Product_Code__c == 'PBT'}" />
+                  <apex:include pageName="ProductFeatures_PBC" rendered="{!selectedProduct.Product_Code__c == 'PBC'}" />
+                 <!--IBM JING PORTABLE CR 0419 END-->
+                 <!-- Owen_20240226 JOBR-360 for disable elite 1.0 -->
+                <!-- <apex:include pageName="ProductFeatures_NEL" rendered="{!selectedProduct.Product_Code__c == 'NEL'}" /> -->
+                <apex:include pageName="ProductFeatures_PM" rendered="{!selectedProduct.Product_Code__c == 'PM'}" />
+                <apex:include pageName="ProductFeatures_TU" rendered="{!selectedProduct.Product_Code__c == 'TU' || selectedProduct.Product_Code__c == 'TUL'}" />
+                <apex:include pageName="ProductFeatures_SCI" rendered="{!selectedProduct.Product_Code__c == 'SCI'}" />
+                <apex:include pageName="ProductFeatures_HNG01" rendered="{!selectedProduct.Product_Code__c == 'HNG01'}" />
+                <apex:include pageName="ProductFeatures_TMC" rendered="{!selectedProduct.Product_Code__c == 'TMC'}" />
+                <apex:include pageName="ProductFeatures_QEADG" rendered="{!selectedProduct.Product_Code__c == 'QEADG'}" />
+                <apex:include pageName="ProductFeatures_TBD" rendered="{!selectedProduct.Product_Code__c == 'DMB'}" />
+                <apex:include pageName="ProductFeatures_LHB" rendered="{!selectedProduct.Product_Code__c == 'LHB'}" />
+                <apex:include pageName="ProductFeatures_LPC" rendered="{!selectedProduct.Product_Code__c == 'LPC'}"/>
+                <apex:include pageName="ProductFeatures_SME" rendered="{!selectedProduct.Product_Code__c == 'SME'}"/>
+                <apex:include pageName="ProductFeatures_WEG" rendered="{!selectedProduct.Product_Code__c == 'WEG'}"/>
+                <apex:include pageName="ProductFeatures_WEW" rendered="{!selectedProduct.Product_Code__c == 'WEW'}"/>
+                <apex:outputPanel rendered="{!selectedProduct.Product_Code__c == 'VHIS'}">
+                    <c:GenericProductFeatures selectedProductCode="VHIS" />
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!isGenericFeatureEnable}" >
+                    <c:PublichProductFeatures selectedProductCode="{!selectedProduct.Product_Code__c}" />
+                </apex:outputPanel>
+                <!-- Rancho_Combo_20201125 -->
+                <apex:outputPanel id="ProductTypePanel" rendered="{!isProductTypeEnable}">
+                    <div class="bs col-xs-12 cigna-fg-blue-light" style="padding-bottom: 15px;"><h4><br/>{!$Label.Product_Type_Combo}</h4></div>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!isProductTypeEnable}" >
+                    <c:GenericProductExtaContent tranEnquiryKey="{!productTypeKey}{!selectedProduct.Product_Code__c}"/>
+                </apex:outputPanel>
+                <!-- Rancho_JOBR324_20230905 - hide plan benefit for elite 360 -->
+                <apex:outputPanel rendered="{selectedProduct.Product_Code__c != 'NEL2'}}">
+                    <div class="bs col-xs-12" style="{!IF(selectedProduct.Product_Code__c != 'VHIS','padding-bottom: 15px;','display:none')}">
+                        <div class="bs cigna-fg-blue-light"><h4><br/>{!$Label.Plan_Benefit}</h4></div>
+                    </div>
+                    <div class="bs col-xs-12" style="{!IF(selectedProduct.Product_Code__c == 'VHIS','padding-bottom: 15px;','display:none')}">
+                        <div class="bs cigna-fg-blue-light"><h4><br/>{!$Label.VHIS_SCHEME}</h4></div>
+                    </div> 
+                    <div class="bs col-xs-12">
+                        <apex:outputField value="{!selectedProduct.Product_Highlight__c}" rendered="{!userLanguage != 'zh_tw'}" />
+                        <apex:outputField value="{!selectedProduct.Product_Highlight_CH__c}" rendered="{!userLanguage == 'zh_tw'}" />
+                    </div>
+                </apex:outputPanel>
+                <div class="bs col-xs-12 text-center ex-link" style="margin-top: 15px;">
+                    <apex:outputPanel rendered="{!showProductDetail}">
+                        <!-- 20190802 minghua - JR1768 add premium table -->
+                        <!-- Rancho_JR1898_20210325 put contact me and product details in a line for PPC-->
+                        <apex:outputPanel rendered="{!isCustomerPortal}">
+                            <apex:outputPanel rendered="{!selectedProduct.Product_Code__c != 'PPC'}">
+                            <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!attachmentId}" target="_blank" class="bs btn cigna-btn-desktop-no-width cigna-fg-white cigna-bg-orange-dark col-xs-12 col-sm-4 col-sm-offset-4 col-md-6">{!$Label.View_Product_Details}</a>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!selectedProduct.Product_Code__c == 'PPC'}">
+                                <div class="col-xs-12 col-sm-6 col-md-6" >
+                                    <a class="bs btn cigna-btn-desktop-no-width cigna-fg-white cigna-bg-orange-dark col-xs-12 col-sm-6 col-sm-offset-6 col-md-6 col-md-offset-6" onclick="preventDefault(event);Cigna.GetProtected.contactMe();return false;">{!$Label.Contact_Me}</a>
+                                </div>
+                                <div class="col-xs-12 col-sm-6 col-md-6" >
+                                    <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!attachmentId}" target="_blank" class="bs btn cigna-btn-desktop-no-width cigna-fg-white cigna-bg-orange-dark col-xs-12 col-sm-6 col-md-6">{!$Label.View_Product_Details}</a>
+                                </div>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        
+                        <apex:outputPanel rendered="{!isBrokerPortal}">
+                            <!-- Owen_20240226 JOBR-360 for disable elite 1.0 -->
+                            <apex:outputPanel rendered="{!selectedProduct.Product_Code__c!='KIDSG'&&selectedProduct.Product_Code__c!='NEL'}">
+                            <div class="col-xs-12 col-sm-6 col-md-6">
+                                <!--Rancho_Combo_20201204-->
+                                <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!attachmentId}" target="_blank" class="bs btn cigna-btn-desktop-no-width cigna-fg-white cigna-bg-orange-dark col-xs-12 col-sm-6 {!IF(selectedProduct.Product_Code__c!='SME' && selectedProduct.Product_Code__c!='CBO','col-sm-offset-6','col-sm-offset-9')} col-md-6 {!IF(selectedProduct.Product_Code__c!='SME' && selectedProduct.Product_Code__c!='CBO','col-md-offset-6','col-md-offset-9')}">{!$Label.View_Product_Details}</a>
+                            </div>
+                            <!--Rancho_Combo_20201204-->
+                            <apex:outputPanel rendered="{!selectedProduct.Product_Code__c!='SME' && selectedProduct.Product_Code__c!='CBO'}">    
+                            <div class="col-xs-12 col-sm-6 col-md-6" >
+                                <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!premiumAttId}" target="_blank" class="bs btn cigna-btn-desktop-no-width cigna-fg-white cigna-bg-orange-dark col-xs-12 col-sm-6 col-md-6">{!transField['premiumTable'][$label.Header_Language_Code_Current]}</a>
+                            </div>
+                            </apex:outputPanel>
+                            </apex:outputPanel>
+                             <apex:outputPanel rendered="{!selectedProduct.Product_Code__c=='KIDSG'}">
+                                 <div class="col-xs-12">
+                                    <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!attachmentId}" target="_blank" class="bs btn cigna-btn-desktop-no-width cigna-fg-white cigna-bg-orange-dark "><label>{!transField['KIDSG_detail_label'][$label.Header_Language_Code_Current]}</label></a>
+                                </div>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                </div>
+                <!-- Owen_20240226 JOBR-360 for disable elite 1.0 -->
+                <div class="bs col-xs-12" style="padding-bottom: 15px;{!IF(selectedProduct.Product_Code__c != 'NEL','padding-bottom: 15px;','display:none')}" >
+                    <div class="bs cigna-fg-blue-light"><h4><br/>{!$Label.Coverage_Details}</h4></div>
+                </div>
+                <div id="product-coverage-detail" class="bs col-xs-12">
+                    <!--IBM JING PORTABLE CR 0419 START-->
+                    <apex:include pageName="CoverageDetails_PBT" rendered="{!selectedProduct.Product_Code__c == 'PBT'}" />
+                    <apex:include pageName="CoverageDetails_PBC" rendered="{!selectedProduct.Product_Code__c == 'PBC'}" />
+                    <!--IBM JING PORTABLE CR 0419 END-->
+                    <!-- Owen_20240226 JOBR-360 for disable elite 1.0 -->
+                    <!-- <apex:include pageName="CoverageDetails_NEL" rendered="{!selectedProduct.Product_Code__c == 'NEL'}" /> -->
+                    <apex:include pageName="CoverageDetails_PM" rendered="{!selectedProduct.Product_Code__c == 'PM'}" />
+                    
+                    <apex:include pageName="CoverageDetails_TU" rendered="{!selectedProduct.Product_Code__c == 'TU' || selectedProduct.Product_Code__c == 'TUL'}" />
+                    <apex:include pageName="CoverageDetails_SCI" rendered="{!selectedProduct.Product_Code__c == 'SCI'}" />
+                    <apex:include pageName="CoverageDetails_HNG01" rendered="{!selectedProduct.Product_Code__c == 'HNG01'}" />
+                    <apex:include pageName="CoverageDetails_TMC" rendered="{!selectedProduct.Product_Code__c == 'TMC'}" />
+                    <apex:include pageName="CoverageDetails_QEADG" rendered="{!selectedProduct.Product_Code__c == 'QEADG'}" />
+                    <apex:include pageName="CoverageDetails_TBD" rendered="{!selectedProduct.Product_Code__c == 'DMB'}" />
+                    <apex:include pageName="CoverageDetails_LHB" rendered="{!selectedProduct.Product_Code__c == 'LHB'}" />
+                    <apex:include pageName="CoverageDetails_LPC" rendered="{!selectedProduct.Product_Code__c == 'LPC'}"/>
+                    <apex:include pageName="CoverageDetails_SME" rendered="{!selectedProduct.Product_Code__c == 'SME'}"/>
+                    <apex:include pageName="CoverageDetails_WEG" rendered="{!selectedProduct.Product_Code__c == 'WEG'}"/>
+                    <apex:include pageName="CoverageDetails_WEW" rendered="{!selectedProduct.Product_Code__c == 'WEW'}"/>
+                    <apex:outputPanel rendered="{!selectedProduct.Product_Code__c == 'VHIS'}">
+                        <c:GenericCoverageDetails selectedProductCode="VHIS" />
+                    </apex:outputPanel>
+                    
+                    <apex:outputPanel rendered="{!isGenericCoverageEnable}" >
+                        <c:GenericCoverageContent tranEnquiryKey="{!coverageEnquiryKey}{!selectedProduct.Product_Code__c}" />
+                    </apex:outputPanel>
+                    <!--Health Value+ Brochure Final Version & Broker Portal Update_Rancho_20221114-->
+                    <apex:outputPanel rendered="{!isExtraContentEnable}" >
+                        <div style="margin-left:-15px;">
+                            <c:GenericProductExtaContent tranEnquiryKey="{!extraCovDeNoteWithTranKey}{!selectedProduct.Product_Code__c}"/>
+                        </div>
+                    </apex:outputPanel>
+
+                </div>
+                <div class="bs col-xs-12" style="padding-bottom: 15px;">
+                <apex:outputPanel rendered="{!selectedProduct.Product_Code__c == 'PM' || selectedProduct.Product_Code__c == 'DMB' || selectedProduct.Product_Code__c == 'LHB' || selectedProduct.Product_Code__c == 'PBT' || selectedProduct.Product_Code__c == 'PBC'||selectedProduct.Product_Code__c =='KIDSG' || selectedProduct.Product_Code__c == 'SME'}">
+                <div class="bs cigna-fg-blue-light"><h4><br/>{!$Label.Coverage_Recommend_Additional_Bene}</h4></div>
+                </apex:outputPanel>
+                    
+                </div>
+                <div class="bs col-xs-12">
+                     <!--IBM JING PORTABLE CR 0419 START-->
+                 <apex:include pageName="CoverageDetails_PBT1" rendered="{!selectedProduct.Product_Code__c == 'PBT'}" />
+                 <apex:include pageName="CoverageDetails_PBC1" rendered="{!selectedProduct.Product_Code__c == 'PBC'}" />
+                 <!--IBM JING PORTABLE CR 0419 END-->
+                    <apex:include pageName="CoverageDetails_PM1" rendered="{!selectedProduct.Product_Code__c == 'PM'}" />
+                    <apex:include pageName="CoverageDetails_TBD1" rendered="{!selectedProduct.Product_Code__c == 'DMB'}" />
+                    <apex:include pageName="CoverageDetails_LHB1" rendered="{!selectedProduct.Product_Code__c == 'LHB'}" />
+                    <apex:include pageName="CoverageDetails_SME1" rendered="{!selectedProduct.Product_Code__c == 'SME'}" />
+                    <!-- add by lihao for rop 4kids 2019-08-23 -->
+                    <apex:outputPanel rendered="{!isGenericExtra}" >
+                        <c:GenericCoverageContent tranEnquiryKey="{!extraEnquiryKey}{!selectedProduct.Product_Code__c}" />
+                    </apex:outputPanel>
+                    
+                    <!--Nicole_Combo_20201020-->
+                    <apex:outputPanel rendered="{!isExtraContentEnable}" >
+                        <c:GenericProductExtaContent tranEnquiryKey="{!extraCoverageWithFullSizeKey}{!selectedProduct.Product_Code__c}"/>
+                    </apex:outputPanel>
+<!-- 
+                    <apex:outputPanel rendered="{!selectedProduct.Product_Code__c == 'KIDSG'}">
+                        <c:CoverageDetails_Extra_KIDSG selectedProductCode="Extra_KIDSG"/>
+                    </apex:outputPanel> -->
+                </div>
+                  <!--IBM JING PORTABLE CR 0419 START-->
+
+                <div class="bs col-xs-12" style="padding-bottom: 15px;" >
+                <apex:outputPanel rendered="{!selectedProduct.Product_Code__c == 'PBT' || selectedProduct.Product_Code__c == 'PBC'}">
+                <div class="bs cigna-fg-blue-light"><h4 style="text-transform: uppercase;"><br/>{!$Label.Eligibility_Rules}</h4></div>
+                </apex:outputPanel>
+                </div>
+
+
+                <div class="bs col-xs-12">
+                 <apex:include pageName="EligibiltyRules_PBT" rendered="{!selectedProduct.Product_Code__c == 'PBT'}" />
+                 <apex:include pageName="EligibiltyRules_PBC" rendered="{!selectedProduct.Product_Code__c == 'PBC'}" />
+                 </div>
+                <!-- IBM JING PORTABLE CR 0419 END-->
+                </apex:outputPanel>
+            </div>
+            
+            <div id="product-button-broker" style="margin-bottom: 45px;">
+            <!--<apex:outputPanel rendered="{!paperAppAccess || salesDeckAccess}">
+               <div id="action-bar" class="bs row cigna-floating-bottom-panel visible-xs">
+                    <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" style="padding-top:10px">
+                        <apex:outputPanel rendered="{!salesDeckAccess}">
+                            <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!salesDeckDocId}" target="_blank" class="bs col-xs-4 text-center action-btn cigna-fg-white">
+                            <span class="ci-hk-modify" aria-hidden="true"></span><br/>{!$Label.eSales_Sales_Deck}</a>
+                        </apex:outputPanel>
+
+                        <apex:outputPanel rendered="{!paperAppAccess}">
+                            <a href="#" class="bs col-xs-4 text-center action-btn cigna-fg-white" role="button" onclick="preventDefault(event);Cigna.GetProtected.gotoPaperApplication();" >
+                            <span class="ci-hk-document" aria-hidden="true"></span><br/>{!$Label.eSales_Submit_Paper_Form}</a>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!paperAppAccess || salesDeckAccess}">
+                            <a href="#" class="bs col-xs-4 text-center action-btn cigna-fg-white" role="button" onclick="preventDefault(event);Cigna.GetProtected.getQuote(); return false;">
+                            <span class="ci-hk-dollars" aria-hidden="true"></span><br/>{!$Label.Get_a_Quote}</a>
+                        </apex:outputPanel>
+                        
+                    </div>
+                </div>
+                </apex:outputPanel>-->
+                <div id="action-bar-desktop" class="bs row hidden-xs text-center">    
+                        <!--IBM JING PORTABLE CR 0419 START-->
+                   <!-- <apex:outputPanel rendered="{!salesDeckAccess}"> -->
+                    <apex:outputPanel rendered="{!salesDeckAccess && deckProductAccess}"><!-- add by Jack on 2022-09-22 for project: JOBR-142 Remove the “View Product Deck” button for specific product -->
+                    <!-- <apex:outputPanel rendered="{!salesDeckAccess && selectedProduct.Product_Code__c != 'ROP108' && selectedProduct.Product_Code__c != 'KIDSG' && selectedProduct.Product_Code__c != 'WEG' && selectedProduct.Product_Code__c != 'WEW'}"> -->
+                    <!--IBM JING PORTABLE CR 0419 END-->
+
+                     <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!salesDeckDocId}" target="_blank" class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" 
+                        style="{!IF(selectedProduct.Product_Code__c == 'SME','display:none','')}">{!$Label.eSales_Sales_Deck}</a>
+                    </apex:outputPanel>
+                    <!-- <apex:outputPanel rendered="{!paperAppAccess && selectedProduct.Product_Code__c != 'LHB'}"> -->
+                    <!-- Rancho_JOBR324_20230905 - hide submit paper form for elite 360 -->
+                    <!-- Rancho_JOBR359_20240226 - enable submit paper form for elite 360 -->
+                    <apex:outputPanel rendered="{!paperAppAccess && selectedProduct.Product_Code__c != 'LHB'&& selectedProduct.Product_Code__c != 'SME'}">
+                        <a href="#" class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" onclick="preventDefault(event);Cigna.GetProtected.gotoPaperApplication();">{!$Label.eSales_Submit_Paper_Form}</a>
+                    </apex:outputPanel>
+                    <!-- Temporary for Portable backout on 20180714 by IBM(Roy)-->
+                    <!-- <apex:outputPanel rendered="{!paperAppAccess || salesDeckAccess }"> -->
+                    <apex:outputPanel rendered="{!(paperAppAccess || salesDeckAccess) && selectedProduct.Product_Code__c != 'ROP108' && selectedProduct.Product_Code__c != 'KIDSG' && selectedProduct.Product_Code__c != 'SME' && selectedProduct.Product_Code__c != 'WEG' && selectedProduct.Product_Code__c != 'WEW' && !selectedProduct.Hide_Get_Quote_in_Broker__c}">
+                    <!-- <apex:outputPanel rendered="{!(paperAppAccess || salesDeckAccess) && (selectedProduct.Product_Code__c != 'PBT' && selectedProduct.Product_Code__c != 'PBC')}"> -->
+                    <!-- Temporary for Portable backout on 20180714 by IBM(Roy)-->
+                        <a href="#" class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" onclick="preventDefault(event);Cigna.GetProtected.getQuote();">{!$Label.Get_a_Quote}</a>
+                    </apex:outputPanel>
+                    <!--junda add 20210121-->
+                    <apex:outputPanel rendered="{!selectedProduct.Product_Code__c == 'WEG'}">
+                        <a href="#" class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" onclick="preventDefault(event);Cigna.GetProtected.gotoIllustrationForm();">{!$Label.Download_Illustration_Form}</a>
+                    </apex:outputPanel>
+                    <!--junda add end-->
+                    <!-- Owen_20240226 JOBR-360 for disable elite 1.0 -->
+                    <apex:outputPanel rendered="{!selectedProduct.Product_Code__c == 'NEL'}">
+                        <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!attachmentBSCHID}" target="_blank" class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" >{!$Label.View_Benefit_Schedule}</a>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!selectedProduct.Product_Code__c == 'NEL'}">
+                        <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!attachmentPPID}" target="_blank" class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" >{!$Label.View_Policy_Provision}</a>
+                    </apex:outputPanel>
+                </div>
+                <!-- Owen_20240226 JOBR-360 for disable elite 1.0 -->
+                <div id="action-bar" class="bs row cigna-floating-bottom-panel visible-xs">
+                    <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                        <apex:outputPanel rendered="{!selectedProduct.Product_Code__c == 'NEL'}">
+                            <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!attachmentBSCHID}" target="_blank" class="bs col-xs-6 text-center action-btn cigna-fg-white">
+                            <span class="ci-hk-modify" aria-hidden="true"></span><br/>{!$Label.View_Benefit_Schedule}</a>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!selectedProduct.Product_Code__c == 'NEL'}">
+                            <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!attachmentPPID}" target="_blank" class="bs col-xs-6 text-center action-btn cigna-fg-white">
+                                <span class="ci-hk-modify" aria-hidden="true"></span><br/>{!$Label.View_Policy_Provision}</a>
+                        </apex:outputPanel>
+                    </div>
+                </div>
+                <!--junda add 20210121
+                <div class="bs row text-center" style="padding-top:10px">
+                    <apex:outputPanel rendered="{!selectedProduct.Product_Code__c == 'WEG'}">
+                        <a href="#" class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" onclick="preventDefault(event);Cigna.GetProtected.gotoIllustrationForm();">{!$Label.Download_Illustration_Form}</a>
+                    </apex:outputPanel>
+                </div>
+                junda add end-->
+            </div>
+            <apex:outputPanel id="customer-button-panel">
+                <div id="product-button-customer" style="margin-bottom: 45px;">
+                    <apex:outputPanel rendered="{!selectedProduct.Product_Code__c != 'NEL'}">
+                        <div id="action-bar" class="bs row cigna-floating-bottom-panel visible-xs">
+                        <!-- Rancho_JOBR324_20240202 - redirect elite 360 to cigna page -->
+                        <!-- Rancho_HKITSFDC58_20241209 - redirect to website get quote page -->
+                        <!-- <apex:outputPanel rendered="{!selectedProduct.Product_Code__c != 'NEL2'}">
+                            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                                <a class="action-btn cigna-fg-white" role="button" onclick="preventDefault(event);Cigna.GetProtected.contactMe();return false;">
+                                <span class="ci-hk-phone" aria-hidden="true"></span><br/>{!$Label.Contact_Me}</a>
+                                <a href="#" id="customerGetQuoteMobile" class="action-btn cigna-fg-white" role="button" onclick="preventDefault(event);Cigna.GetProtected.getQuote(); return false;">
+                                <span class="ci-hk-dollars" aria-hidden="true"></span><br/>{!$Label.Get_a_Quote}</a>
+                            </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!selectedProduct.Product_Code__c == 'NEL2'}">
+                            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                                <a class="action-btn cigna-fg-white" role="button" onclick="preventDefault(event);Cigna.GetProtected.contactMe();return false;">
+                                <span class="ci-hk-phone" aria-hidden="true"></span><br/>{!$Label.Contact_Me}</a>
+                                <a href="{!$Label.Elite_360_Cigna_Quote_Link}" id="customerGetQuoteMobile" class="action-btn cigna-fg-white" role="button" target="_blank">
+                                <span class="ci-hk-dollars" aria-hidden="true"></span><br/>{!$Label.Get_a_Quote}</a>
+                            </div>
+                        </apex:outputPanel> -->
+                            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                                <a class="action-btn cigna-fg-white" role="button" onclick="preventDefault(event);Cigna.GetProtected.contactMe();return false;">
+                                    <span class="ci-hk-phone" aria-hidden="true"></span><br/>{!$Label.Contact_Me}</a>
+                                <a href="{!selectedProduct.Website_Get_Quote__c}" id="customerGetQuoteMobile" class="action-btn cigna-fg-white" role="button">
+                                <span class="ci-hk-dollars" aria-hidden="true"></span><br/>{!$Label.Get_a_Quote}</a>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <div id="action-bar-desktop" class="bs row hidden-xs text-center">
+                        <!-- Rancho_JOBR324_20240202 - redirect elite 360 to cigna page -->
+                        <!-- Rancho_HKITSFDC58_20241209 - redirect to website get quote page -->
+                        <!-- <a class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" onclick="preventDefault(event);Cigna.GetProtected.contactMe();return false;">{!$Label.Contact_Me}</a>
+                        <apex:outputPanel rendered="{!selectedProduct.Product_Code__c != 'NEL2'}">
+                            <a href="#" id="customerGetQuoteDesktop" class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" onclick="preventDefault(event);Cigna.GetProtected.getQuote();">{!$Label.Get_a_Quote}</a>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!selectedProduct.Product_Code__c == 'NEL2'}">
+                            <a href="{!$Label.Elite_360_Cigna_Quote_Link}" id="customerGetQuoteDesktop" class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" target="_blank">{!$Label.Get_a_Quote}</a>
+                        </apex:outputPanel> -->
+                        <apex:outputPanel rendered="{!selectedProduct.Product_Code__c != 'NEL'}">
+                            <a class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" onclick="preventDefault(event);Cigna.GetProtected.contactMe();return false;">{!$Label.Contact_Me}</a>
+                            <a href="{!selectedProduct.Website_Get_Quote__c}" target="_blank" id="customerGetQuoteDesktop" class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark">{!$Label.Get_a_Quote}</a>
+                        </apex:outputPanel>
+                    </div>
+                </div>
+            </apex:outputPanel>
+
+            <!-- add by minghua - 20190830 - for remove 'contactme' button -->
+            <div id="product-button-customer-tup" style="margin-bottom: 45px;">
+                <div id="action-bar" class="bs row cigna-floating-bottom-panel visible-xs">
+                    <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                        <a href="#" id="customerGetQuoteMobile" class="action-btn cigna-fg-white" role="button" onclick="preventDefault(event);Cigna.GetProtected.getQuote(); return false;">
+                            <span class="ci-hk-dollars" aria-hidden="true"></span><br/>{!$Label.Get_a_Quote}</a>
+                    </div>
+                </div>
+                <div id="action-bar-desktop" class="bs row hidden-xs text-center">
+                    <a href="#" id="customerGetQuoteDesktop" class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" onclick="preventDefault(event);Cigna.GetProtected.getQuote();">{!$Label.Get_a_Quote}</a>
+                </div>
+            </div>
+
+            <div id="product-button-customer-portable" style="margin-bottom: 45px;">
+                <div id="action-bar" class="bs row cigna-floating-bottom-panel visible-xs">
+                    <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                        <!-- <a class="action-btn cigna-fg-white" role="button" onclick="preventDefault(event);Cigna.GetProtected.contactMe();return false;">
+                            <span class="ci-hk-phone" aria-hidden="true"></span><br/>{!$Label.Contact_Me}</a>-->
+                        <a href="#" id="customerGetQuoteMobile" class="action-btn cigna-fg-white" role="button" onclick="preventDefault(event);Cigna.GetProtected.getQuote(); return false;">
+                            <span class="ci-hk-dollars" aria-hidden="true"></span><br/>{!$Label.Get_a_Quote}</a>
+                    </div>
+                </div>
+                <div id="action-bar-desktop" class="bs row hidden-xs text-center">    
+                    <!-- <a class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" onclick="preventDefault(event);Cigna.GetProtected.contactMe();return false;">{!$Label.Contact_Me}</a> -->
+                    <a href="#" id="customerGetQuoteDesktop" class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" onclick="preventDefault(event);Cigna.GetProtected.getQuote();">{!$Label.Get_a_Quote}</a>
+                </div>
+            </div>
+            <div/>
+        </div>
+        <div id="content-placeholder-area" class="bs row" style="display:none;">
+            <div class="bs col-xs-12 col-sm-8 col-sm-offset-2 content-placeholder-wrapper">
+                <div class="bs content-placeholder-masker content-placeholder-line short-line"></div>
+                <div class="bs content-placeholder-masker content-placeholder-line full-line"></div>
+                <div class="bs content-placeholder-masker content-placeholder-line full-line"></div>
+                <div class="bs content-placeholder-masker content-placeholder-line full-line"></div>
+                <div class="bs content-placeholder-masker content-placeholder-line full-line"></div>
+            </div>
+            <div class="bs col-xs-12 col-sm-8 col-sm-offset-2 content-placeholder-wrapper">
+                <div class="bs content-placeholder-masker content-placeholder-line short-line"></div>
+                <div class="bs content-placeholder-masker content-placeholder-line full-line"></div>
+                <div class="bs content-placeholder-masker content-placeholder-line full-line"></div>
+                <div class="bs content-placeholder-masker content-placeholder-line full-line"></div>
+                <div class="bs content-placeholder-masker content-placeholder-line full-line"></div>
+            </div>
+        </div>
+        <div id="mobile-app-padding" class="bs row" style="display: none; padding-bottom: 80px;">
+            <div class="bs col-xs-12"></div>
+        </div>
+        
+        <script>
+            
+            if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                $(document).ready(function(){
+                    /*
+                    var targetHeight = window.screen.height;
+                    var sfOneHeaderHeight = 44 + 20; //window.parent.document.getElementsByClassName('oneHeader')[0].offsetHeight;
+                    
+                    if($(window).width() > $(window).height()){
+                        targetHeight = window.screen.width;   
+                    }
+                    
+                    //$('body').css('height', (targetHeight  - (targetHeight * 0.09)) + 'px');
+                    $('body').css('height', (targetHeight - sfOneHeaderHeight) + 'px');
+                    $('body').bind('touchmove', function(e){$('#action-bar').css('opacity', '0');});
+                    $('body').bind('touchend', function(e){setTimeout(function(){$('#action-bar').css('opacity', '1');}, 700);});
+                    
+                    
+                    $('html').css('position', 'fixed').css('overflow', 'auto').css('width', '100%').css('height', '100%');
+                    $('body').css('position', 'fixed').css('overflow-x', 'scroll').css('width', '100%').css('height', '100%');*/
+                });
+                
+                $('#mobile-app-padding').css('display', 'block');
+                
+                $("a").attr("target","");
+                
+                
+            }
+            
+        </script>
+    </apex:form>
+
+</apex:page>

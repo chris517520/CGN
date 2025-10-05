@@ -1,0 +1,212 @@
+<apex:page Controller="MyClaimSubmitController" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+    <div class="content-question">
+         {!$Label.Which_policy_would_you_like_to_claim_under }
+         
+    </div>
+    <!-- select policy unselect / select need to clear data -->
+    
+    <apex:outputPanel id="relatedPolicyListByAccountPanel_cus">
+        <apex:form >
+            <div class="content-choice-block">
+        
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:repeat value="{!wPolicyList_PI}" var="pItem">
+                    <!--
+                    <div id="selectPolicy{!rowNum}" class="bs row content-multi-choice fg-grey"  onclick="isSelectPolicyLessThan6Months( {!pItem.isLessThan6Months}, '{!pItem.policyNum}'); isSelectPolicyLessThan2Yrs( {!pItem.isLessThan2Yrs}, '{!pItem.policyNum}'); isSelectPolicyLessThan3Yrs( {!pItem.isLessThan3Yrs}, '{!pItem.policyNum}');  isSelectUSPolicy( {!pItem.isUSDPolicy}, '{!pItem.policyNum}'); isSelectIndividualLifePolicy( {!pItem.isIndividualPolicy} && {!pItem.isLifePolicy}, '{!pItem.policyNum}'); selectPolicyToShowClaimType('{!pItem.policyNum}', {!pItem.claimTypeListStr}); selectPolicyToShowBenefit('{!pItem.policyNum}', {!pItem.benefitTypeListStr});  isGroupPolicy( {!!pItem.isIndividualPolicy}, '{!pItem.policyNum}'); ">
+                    -->
+<!--                     IBM KOU Wonder Woman CR 20180430 Start -->
+<!--                     <div id="selectPolicy{!rowNum}" class="bs row content-multi-choice fg-grey"> -->
+<!--                     <script>
+                        alert('Item.isLessThan1Yr='+pItem.isLessThan1Yr);
+                    </script>>-->   
+                                    
+                       <div id="selectPolicy{!rowNum}" class="bs row {!IF(!pItem.isDisable,'content-multi-choice','unavailable-option')} fg-grey"  onclick="isSelectPolicyLessThan1Yr( {!pItem.isLessThan1Yr}, '{!pItem.policyNum}'); cusSelectPolicy('{!pItem.policyNum}', {!pItem.isIndividualPolicy})"> 
+                          <!--Nicole_20200405_GS Claim-->
+                          <apex:outputPanel rendered="{!pItem.isDisable}">
+                               <script>
+                                   $("#selectPolicy{!rowNum}").removeAttr("onclick");
+                               </script>
+                           </apex:outputPanel>
+
+<!--                    IBM KOU Wonder Woman CR 20180430 End                     -->
+                        <div class="bs col-xs-12 col-sm-12 policy-title">
+                            <div style="float: left;">
+                                <i class="ci-hk-notes content-icon" aria-hidden="true"></i>
+                            </div>
+                            <div style="padding-left:50px; word-wrap: break-word;">
+                        <!--  added by IBM KOU 20180531 ticket product type start -->
+                        <!--  <apex:outputText value="{!if(pItem.name != null, pItem.name,'N/A')}"></apex:outputText> 
+ -->                                
+                                <apex:outputText value="{!if(pItem.isIndividualPolicy, if(pItem.name != null, pItem.name,'N/A'), if(pItem.productType != null, pItem.productType,'N/A'))}"></apex:outputText> 
+                            </div>
+                        </div>
+                        <div class="claim-detail">
+                            <div class="bs col-xs-4 col-sm-2">{!$Label.Policy_No}</div>
+                            <div class="bs col-xs-8 col-sm-10" style="word-wrap: break-word;" id="polNo">
+                                <apex:outputText value="{!if(pItem.policyNum!= null, pItem.policyNum,'N/A')}"></apex:outputText>
+                            </div>
+                        </div>
+                        <!--  added by IBM KOU 20180531 ticket product type start -->
+<!--                         <div class="claim-detail">
+                            <div class="bs col-xs-4 col-sm-2">{!$Label.Product_Type}</div>
+                            <div class="bs col-xs-8 col-sm-10" style="word-wrap: break-word;" >
+                                <apex:outputText value="{!if(pItem.productType!= null, pItem.productType,'N/A')}"></apex:outputText>
+                            </div>
+                        </div>
+ -->                        <!--  added by IBM KOU 20180531 ticket product type end -->                       
+                        <div class="claim-detail">
+                            <div class="bs col-xs-4 col-sm-2">{!$Label.Status}</div>
+                            <div class="bs col-xs-8 col-sm-10" style="word-wrap: break-word;" >
+                                <apex:outputText value="{!if(pItem.status!= null, pItem.status,'N/A')}"></apex:outputText>
+                            </div>
+                        </div> 
+                        
+                        <!--Nicole_20200405_GS Claim-->
+                        <!--Reminder-->
+                        <apex:outputPanel rendered="{!pItem.isDisable}">
+                                   <div class="bs col-xs-12 form-note">
+                                       <apex:outputText value="{!transField['BankAccountReminderHK_Nu'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, '~BankAccountReminderHK_Nu~'), true,false)}">
+                                           <apex:param value="{!employeeMember.FirstName+' '+employeeMember.LastName}" />
+                                       </apex:outputText>&nbsp;
+                                       <apex:outputText value="{!transField['BankAccountReminderHK_Nu1'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, '~BankAccountReminderHK_Nu1~'), true,false)}">
+                                           <apex:param value="{!employeeMember.FirstName+' '+employeeMember.LastName}" />
+                                       </apex:outputText>
+                                   </div>
+                        </apex:outputPanel>
+                        
+                        <!-- hidden field -->
+                        <input type="hidden" name="param-str" value="{!pItem.policyNum}" />
+                    </div>
+                    
+                    <apex:outputPanel rendered="{!if((CONTAINS(cList[0].Policy__c, pItem.policyNum) && pItem.policyNum != null && pItem.policyNum != ''),'true','false')}">
+                        <script>
+                            //simulate click
+                            $( "#selectPolicy{!rowNum}" ).removeClass('fg-grey').addClass('fg-orange');
+                            //end simulate click
+                        </script>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel rendered="{!if( isLoadOldClaim && CONTAINS(cList[0].policy__c,pItem.policyNum) && pItem.policyNum!= null && pItem.claimTypeListStr != null,'true','false')}">
+                        <script>
+                            if(!isLoadFromOldClaimRecordOneTimeOnly ){
+                                selectPolicyToShowClaimType('{!pItem.policyNum}', "{!pItem.claimTypeListStr}");
+                                {!if(cList[0].What_would_you_like_to_claim_for__c != null && cList[0].What_would_you_like_to_claim_for__c != '', 'allTypeStr="'+cList[0].What_would_you_like_to_claim_for__c+'";','')}
+                                isLoadFromOldClaimRecordOneTimeOnly = true;
+                            }          
+                        </script>
+                   </apex:outputPanel>
+                    
+                    
+                    <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                </apex:repeat>
+                <!-- next button -->
+                <!-- mobile -->
+                <div id="action-bar" class="bs action-bar hidden-sm hidden-md hidden-lg cigna-floating-bottom-panel nextStepBtnIn2" style="left:0px; display:none;" onclick="updateSelectedPolicy();nextStep();">
+                    <div id="callAction1" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                        <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</a>
+                    </div>
+                </div>
+                
+                <!-- web -->
+                <div class="bs row hidden-xs nextStepBtnIn2" style="padding-top: 20px; padding-bottom: 20px; display:none;">
+                    <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3 "></div>
+                    <div id="callAction2" class="bs col-sm-6 col-md-6 col-xs-6 col-lg-6 onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn" onclick="updateSelectedPolicy();nextStep();">
+                        {!$Label.Next}
+                    </div>
+                    <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3"></div>
+                </div>
+                               
+                
+                <!-- save record data -->
+                <apex:inputHidden value="{!cList[0].Policy__c}" id="hiddenValue_ClaimSelectPolicyForCusVFP"/>
+                
+                <apex:inputHidden value="{!selectedPolicy}" id="hidden_selectedPolicy"/>
+                
+                <apex:actionFunction status="loader-icon" name="SaveRecordCusPolicyAtAction" action="{!SavePolicyRecord}" oncomplete="nextStep();"
+                                     reRender="benClaim, hidden_ClaimTypeStr,hidden_BenefitTypeStr,hidden_selectedPolicy, bankAccBrkPanel, bankAccCusPanel, jSPanel, changeBankAccPanel, answerAndQuestionPanel" />
+
+                <apex:actionFunction status="loader-icon" name="SaveRecordCusPolicyAtActionOriginal" action="{!SavePolicyRecord}" oncomplete="selectClaimBen();"
+                                     reRender="benClaim, hidden_ClaimTypeStr,hidden_BenefitTypeStr,hidden_selectedPolicy, bankAccBrkPanel, bankAccCusPanel, jSPanel, changeBankAccPanel, answerAndQuestionPanel" />
+                                    
+                <apex:actionFunction status="loader-icon" name="SaveRecordCusPIAtAction2" action="{!SavePIRecord}" oncomplete="saveRecordCusPolicy();"
+                                     reRender="benClaim, hidden_ClaimTypeStr,hidden_BenefitTypeStr,hidden_selectedPolicy, bankAccBrkPanel, bankAccCusPanel, jSPanel, changeBankAccPanel, answerAndQuestionPanel"/>
+                <!--
+                <apex:actionFunction status="loader-icon" name="SaveRecordCusPolicyAtAction" action="{!SavePIRecord}" 
+                                     reRender="hiddenValue_ClaimSelectPolicyForCusVFP, bankAccBrkPanel, bankAccCusPanel, jSPanel"  
+                                     oncomplete="SaveRecordCusPolicyAtAction1(); "/>                
+                -->
+                
+                <script>
+                
+                /** working **/
+                function saveRecordCusPolicy(){
+                    //showLoading();
+                    console.log('to see saveRecordCusPolicy');
+                    console.log('--8--'+ new Date($.now()));
+                    // Zoe updated on 0604 for performance tuning
+                    if (performanceOption1){
+                        SaveRecordCusPolicyAtActionOriginal();
+                    }
+                    if (performanceOption2){
+                        SaveRecordCusPolicyAtAction();
+                    }
+                    //selectClaimBen();
+                    // Zoe updated on 0427 for TNB-839
+                    
+                    console.log('--9--'+ new Date($.now()));
+                    renderBenefitTypeNextBtn();
+                    console.log('--10--'+ new Date($.now()));
+                }
+                
+                function updateSelectedPolicy(){
+                    
+                    var pols;
+                    $("div[id*='selectPolicy']").each(function(idx, elem){
+                        if ($(elem).hasClass('fg-orange')){
+                            displayNextBtnIn(2);
+                            console.log('### '+$(elem).children("#polNo").get(0));
+                            console.log('### '+$(elem).find("#polNo").get(0));
+                            if(pols !=  null && pols != ''){
+                                pols = pols + "," + $(elem).find("#polNo").get(0).innerHTML;
+                            }else{
+                                pols = $(elem).find("#polNo").get(0).innerHTML;
+                            }
+                        }
+                        
+                    });
+                    console.log('selected policy: '+pols);
+                    $('input[type="hidden"][id$="hidden_selectedPolicy"]').val(pols);
+                    var selectedPolicy = $('input[type="hidden"][id$="hidden_selectedPolicy"]').val();;
+                    console.log('ClaimSelectPolicyForCusVFP selected policy controller = '+selectedPolicy);
+                }
+                </script>
+                <!-- end save record data -->
+            </div>
+            <apex:outputPanel rendered="{!IF(wPolicyList_PI != null && wPolicyList_PI.size != 0, true, false)}">
+                <script>
+                    var pols;
+                    $("div[id*='selectPolicy']").each(function(idx, elem){
+                        if ($(elem).hasClass('fg-orange')){
+                            displayNextBtnIn(2);
+                            if(pols !=  null && pols != ''){
+                                pols = pols + "," + $(elem).val();
+                            }else{
+                                pols = $(elem).val();
+                            }
+                        }
+                    });
+                    
+                    $('input[type="hidden"][id$="hidden_selectedPolicy"]').val(pols);
+                     
+                </script>
+            </apex:outputPanel>
+        </apex:form>
+        <apex:outputPanel id="wPolicyPI" rendered="{!hasNoPolicyPI}">
+            <div class="bs row listcontent content-display">
+                <div class="bs col-xs-12 col-sm-12 content-highlight">{!$Label.You_don_t_have_any_record}</div>
+            </div>
+        </apex:outputPanel>
+        
+    </apex:outputPanel>
+    
+</apex:page>

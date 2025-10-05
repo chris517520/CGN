@@ -1,0 +1,2828 @@
+<apex:page id="ClaimUtilJS" docType="html-5.0" showHeader="false" sidebar="false">
+    <apex:include pageName="ClaimUtilBrokerJS"/>
+    <!--addtional inline js-->
+    <script>
+        // 20210803 - minghua - CR48
+        var onlySelectedOPClaimType=false; // only selected claim type OP
+        var notEqualEconomistPolicy=false; // group policy not equal to economist
+        var isEntitledBenefit=false;
+        var isSeparateCharge=false;
+        var allowGovernmentHospitalVisit=false; // Rancho_CR48_20210706: whether display q20 or not
+        var onlySelectedGP=false; // only select General Practitioner benefit
+
+        var isResetAdmissionDateAndDischargeDateFlag = false;
+        var isResetVisitDateFlag = false;
+        var isResetInfoFromOtherCompanyFlag = false;
+        var isResetAndClearAllQuestionAnswer = false;
+        
+        var allTypeStr = '';
+        var allSymptomStr = '';//20210803 - Kirk - CR48
+        var oldClaimRecordBenefitType = '';
+        var isLoadFromOldClaimRecordOneTimeOnly = false;
+        var admissionAndDischargeDateItem = 0;
+        var admissionAndDischargeDateItemFilled = 0;
+        
+        var otherCompanyInfoItem = 0;
+        var otherCompanyInfoItemFilled = 0;
+        
+        var visitDateItem = 0;
+        var visitDateItemFilled = 0;
+        
+        var onlyOnePolicyAvaliable = 0;
+        var steps = 1;
+        
+        var skipOneBenefitForTestingJS = true;
+        var skipOneBenefitForTestingBrokerJS = true;
+        var simulateSelectBenefitForBroker = false;
+        
+        var brkCreatedRecord = false;
+        
+        var changeLanguageWarningRequired = true;
+        
+        var performanceOption1 = true;
+        var performanceOption2 = false;
+                
+        /**
+            Rules:
+            individualLifePolicy - selected Policy
+            brokerPAC
+            claimFromOtherCompany - by answer question
+        **/
+        /** flag for claim from other company: 0 is no / 1 is yes**/
+        
+        //split into 2 flag for HPA or HS
+        var IfHPAPolicyLessThan2Yrs = 0;
+        var IFHSPolicyLessThan3YrsOrBrokerPACPlanCode = 0;
+        
+        var IfHPAPolicyLessThan2Yrs_old = 0;
+        var IFHSPolicyLessThan3YrsOrBrokerPACPlanCode_old = 0;
+        
+        var claimFromOtherCompany = 0;
+        
+        //add account info
+        var skipSteps = 0;
+        
+        /**
+        //add plan code mapping for xls - 0 mean no, 1 mean yes
+        HIF/HI/HPA  ->  HI
+        ACC/HS  ->  HS
+        OP/ACC  ->  OP
+        MAT ->  MAT
+        TTD/DIS ->  DIS
+        CI  ->  CI
+        WP  ->  DIS
+        SD  ->  N/A
+        OTH ->  N/A
+        MIS ->  N/A
+        **/
+        var isACC = 0; 
+        var isCI = 0; 
+        var isDIS = 0; 
+        var isHI = 0; 
+        var isHIF = 0; 
+        var isHPA = 0; 
+        var isHS = 0; 
+        var isMAT = 0; 
+        var isMIS = 0; 
+        var isOP = 0; 
+        var isOPF = 0; 
+        var isOTH = 0; 
+        var isSD = 0; 
+        var isTTD = 0; 
+        var isWP = 0; 
+        // Added by minglei 2018.05.15 [add Wellness type to claim] start
+        var isWL = 0;
+        //Added by minglei 2018.05.15 [add Wellness type to claim] end
+        var isBrokerPAC = 0; 
+        var isBrokerPAC_old = 0; 
+        var isWonderWoman = 0;      //IBM KOU Wonder Woman CR 20180430   
+        
+        //question HIF / DIS -1: not exist, 0: false, 1: true
+        var showHIF = -1; // fast track (one choice only)
+        var showHI = -1; // non-fast track - HI
+        var showHPA = -1; // non-fast track - HPA - question same as HI but doc diff
+        var showHS = -1; // non-fast track - HS
+        var showCI = -1; // non-fast track - CI - question same as HI but doc diff
+        var showDIS = -1; // non-fast track - own HI question and more
+        var showHS = -1; // non-fast track - own HI question and more
+        var showOP = -1; // non-fast track - own some of HS question and more
+        var showOPF = -1; // non-fast track - own some of HS question and more
+        var showMAT = -1; // materity cost
+        //Added by minglei 2018.05.15 [add Wellness type to claim] start
+        var showWL = -1; // Wellness
+        //Added by minglei 2018.05.15 [add Wellness type to claim] end
+        
+        //list of claim type A. xxx, B. xxx etc
+        var showA = -1;
+        var showB = -1;
+        var showC = -1;
+        var showD = -1;
+        var showE = -1;
+        var showF = -1;
+        var showG = -1;
+        var showH = -1;
+        var showI = -1;
+        //Added by minglei 2018.05.15 [add Wellness type to claim] start
+        var showJ = -1;
+        //Added by minglei 2018.05.15 [add Wellness type to claim] end
+        //20210803 - Kirk - CR48  [add benefit to claim] start
+        var showK = -1;
+        var showL = -1;
+        var showM = -1;
+        var showN = -1;
+        var showO = -1;
+        var showP = -1;
+        var showQ = -1;
+        var showR = -1;
+        var showS = -1;
+        //var showT = -1; //20210803 - Kirk - CR48 - 20210917 - Kirk - T_Tui_Na__c removed
+        //20210803 - Kirk - CR48  [add benefit to claim] end
+
+        var availBenefitTypeCount;
+        
+        // to ensure everything passed to controller, redesign the next step scenario
+        // zoe working in progress
+        
+        var proceedType;    // 1 - next step; 2 - display something; 3 - display next button
+        var displayItemName;
+        var nextBtnInStep;
+        
+        var isIE = /(MSIE|Trident\/|Edge\/)/i.test(navigator.userAgent); 
+        console.log('isIE: ' + isIE);
+        
+        //For Speed optimization
+        // 20211209 - minghua - pro issue, update to false
+        var canCallSaveSelectedQuestion = false;
+        var saveSelectedQuestionQueue = [];
+    
+        function readyToCallSaveSelectedQuestion(){
+            canCallSaveSelectedQuestion = true;
+        }
+        
+        function busyToCallSaveSelectedQuestion(){
+            canCallSaveSelectedQuestion = false;
+        }
+        
+        function addSaveSelectedQuestionQueue(tmpQuestionList){
+            saveSelectedQuestionQueue.push(tmpQuestionList);
+        }
+        
+        function getSaveSelectedQuestionQueue(){
+            var tmpQuestionList = saveSelectedQuestionQueue.splice(0, 1);
+            console.log("selected questions:"+tmpQuestionList);
+            return tmpQuestionList[0];
+        }
+        
+        function callSaveSelectedQuestion(){
+            console.log("Ready to process queue: "+ canCallSaveSelectedQuestion);
+            console.log("saveSelectedQuestionQueue length: "+ saveSelectedQuestionQueue.length);
+            if(canCallSaveSelectedQuestion && saveSelectedQuestionQueue.length > 0){
+                console.log("Have "+ saveSelectedQuestionQueue.length+" queue to process");
+                busyToCallSaveSelectedQuestion();
+                saveSelectedQuestionAtAction(getSaveSelectedQuestionQueue());
+            }
+        }
+
+        // 20191126 - minghua - For Speed optimization
+        function checkSelectedQuestionsId(){
+            //check if question display
+            var tmpQuestionList = '';
+            if($("#q1").is(":visible"))    tmpQuestionList += '"q1"'; 
+            if($("#q2").is(":visible"))    tmpQuestionList += '"q2"'; 
+            if($("#q3").is(":visible"))    tmpQuestionList += '"q3"'; 
+            if($("#q4").is(":visible"))    tmpQuestionList += '"q4"'; 
+            if($("#q5").is(":visible"))    tmpQuestionList += '"q5"'; 
+            if($("#q6").is(":visible"))    tmpQuestionList += '"q6"'; 
+            if($("#q7").is(":visible"))    tmpQuestionList += '"q7"'; 
+            if($("#q8").is(":visible"))    tmpQuestionList += '"q8"'; 
+            if($("#q9").is(":visible"))    tmpQuestionList += '"q9"'; 
+            if($("#q10").is(":visible"))    tmpQuestionList += '"q10"'; 
+            if($("#q11").is(":visible"))    tmpQuestionList += '"q11"'; 
+            if($("#q12").is(":visible"))    tmpQuestionList += '"q12"'; 
+            if($("#q13").is(":visible"))    tmpQuestionList += '"q13"'; 
+            if($("#q14").is(":visible"))    tmpQuestionList += '"q14"';
+            //20191024 - Raistlin - GS claim
+            if($("#q15").is(":visible"))    tmpQuestionList += '"q15"';
+            //20210803 - Kirk - CR48
+            // if($("#q16").is(":visible"))    tmpQuestionList += '"q16"';
+            if($("#q17").is(":visible"))    tmpQuestionList += '"q17"';
+            if($("#q18").is(":visible"))    tmpQuestionList += '"q18"';
+            if($("#q19").is(":visible"))    tmpQuestionList += '"q19"';
+            // Rancho_CR48_20210706
+            if($("#q20").is(":visible"))    tmpQuestionList += '"q20"';
+
+            if($(".nextStepBtnIn7").is(":visible"))    tmpQuestionList += '"next"';
+            console.log('AllSelectedQuestionId:'+tmpQuestionList);
+            return tmpQuestionList;
+        }
+        //For Speed optimization -- End
+
+        // 20210803 - minghua - CR48
+        function checkSelectedQuestions(){
+            var selectedQuestionTemp = checkSelectedQuestionsId();
+            if(selectedQuestionTemp != undefined && selectedQuestionTemp != null && selectedQuestionTemp != ''){
+                if (selectedQuestionTemp.indexOf('next') != -1) {
+                    console.log('Have next button');
+                    if (selectedQuestionTemp.indexOf('q12') != -1) {
+                        isResetVisitDateFlag = false;
+                    }
+                    if (selectedQuestionTemp.indexOf('q14') != -1) {
+                        isResetInfoFromOtherCompanyFlag = false;
+                    }
+                    saveSelectedQuestionAtAction(selectedQuestionTemp);
+                }
+            }
+            addSaveSelectedQuestionQueue(checkSelectedQuestionsId());
+            callSaveSelectedQuestion();
+        }
+        
+        function proceedOnComplete(){
+            if (proceedType == 1){
+                nextStep();
+            }
+            else if (proceedType == 2){
+                displayQuestion(displayItemName);
+            }
+            else if (proceedType == 3){
+                displayNextBtnIn(nextBtnInStep);
+            }
+            else if (proceedType == 4){
+                // Zoe updated on 0406 for performance tuning
+                SaveRecordCusPIAtAction2(); 
+            }
+            
+        }
+        
+        var onScreenSign = false;
+        var emailSign = false;
+            
+        
+        function chooseSignOnScreen(){
+        
+            onScreenSign = true;
+            emailSign = false;
+            
+            if (Cigna.Util.isCustomerPortal()){
+                $('#ack_Non_Fast_Track_With_DocuSign_Customer_PI').show();
+                $('#ack_Non_Fast_Track_Without_DocuSign_Customer_PI').hide();
+            }
+            if (Cigna.Util.isBrokerPortal()){
+                $('#ack_Fast_Track_Individual_Without_DocuSign_Broker').hide();
+                $('#ack_Non_Fast_Track_Without_DocuSign_Broker').hide();
+            }
+        }
+        
+        function chooseEsignature(){
+        
+            onScreenSign = false;
+            emailSign = true;
+            
+            if (Cigna.Util.isCustomerPortal()){
+                $('#ack_Non_Fast_Track_With_DocuSign_Customer_PI').hide();
+                $('#ack_Non_Fast_Track_Without_DocuSign_Customer_PI').show();
+            }
+            if (Cigna.Util.isBrokerPortal()){
+                $('#ack_Fast_Track_Individual_With_DocuSign_Broker').hide();
+                $('#ack_Non_Fast_Track_With_DocuSign_Broker').hide();
+            }
+        }
+        
+        
+        function resetTypesOfBenefitCanChoose(){
+            // Zoe updated on 0405 for performance tuning - if back to change policy
+            if (oldClaimRecordBenefitType != null && oldClaimRecordBenefitType != ''){
+                isResetAndClearAllQuestionAnswer = true;
+                console.log('***************** turning on isResetAndClearAllQuestionAnswer');
+            }
+            
+            oldClaimRecordBenefitType = '';
+            
+            $("#benefit_1").hide();
+            $("#benefit_2").hide();
+            $("#benefit_3").hide();
+            $("#benefit_4").hide();
+            $("#benefit_5").hide();
+            $("#benefit_6").hide();
+            $("#benefit_7").hide();
+            $("#benefit_8").hide();
+            //Added by minglei 2018.05.15 [add Wellness type to claim] start
+            $("#benefit_9").hide();
+            //Added by minglei 2018.05.15 [add Wellness type to claim] end
+            //testing
+            resetStyleTypesOfBenefitCanChoose();
+        }
+        
+        function resetStyleTypesOfBenefitCanChoose(){
+            $("#benefit_1").removeClass('fg-orange').addClass('fg-grey');
+            $("#benefit_2").removeClass('fg-orange').addClass('fg-grey');
+            $("#benefit_3").removeClass('fg-orange').addClass('fg-grey');
+            $("#benefit_4").removeClass('fg-orange').addClass('fg-grey');
+            $("#benefit_5").removeClass('fg-orange').addClass('fg-grey');
+            $("#benefit_6").removeClass('fg-orange').addClass('fg-grey');
+            $("#benefit_7").removeClass('fg-orange').addClass('fg-grey');
+            $("#benefit_8").removeClass('fg-orange').addClass('fg-grey');
+            //Added by minglei 2018.05.15 [add Wellness type to claim] start
+            $("#benefit_9").removeClass('fg-orange').addClass('fg-grey');
+            //Added by minglei 2018.05.15 [add Wellness type to claim] end
+        
+        }
+        
+        function planCodeFlagReset(){
+            //0: false, >=1: true
+            isACC = 0; 
+            isCI = 0; 
+            isDIS = 0; 
+            isHI = 0; 
+            isHIF = 0; 
+            isHPA = 0; 
+            isHS = 0; 
+            isMAT = 0; 
+            isMIS = 0; 
+            isOP = 0; 
+            isOPF = 0; 
+            isOTH = 0; 
+            isSD = 0; 
+            isTTD = 0; 
+            isWP = 0; 
+            //Added by minglei 2018.05.15 [add Wellness type to claim] start
+            isWL = 0;
+            //Added by minglei 2018.05.15 [add Wellness type to claim] end
+            isBrokerPAC = 0; 
+            isWonderWoman = 0; //IBM KOU WONDER WOMAN CR 20180430
+        }
+        
+        function questionFlagReset(){
+            //question HIF / DIS -1: not exist, 0: false, >=1: true
+            showHIF = -1; // fast track (one choice only)
+            showHI = -1; // non-fast track - HI
+            showHPA = -1; // non-fast track - HPA - question same as HI but doc diff
+            showHS = -1; // non-fast track - HS
+            showCI = -1; // non-fast track - CI - question same as HI but doc diff
+            showDIS = -1; // non-fast track - own HI question and more
+            showHS = -1; // non-fast track - own HI question and more
+            showOP = -1; // fast or non-fast track - own some of HS question and more
+            showOPF = -1; // fast or non-fast track - own some of HS question and more
+            showMAT = -1;
+            //Added by minglei 2018.05.15 [add Wellness type to claim] start
+            showWL = -1; // Wellness
+            //Added by minglei 2018.05.15 [add Wellness type to claim] end
+        }
+        
+        function claimTypeFlagReset(){
+            // -1: not exist, 0: false, >=1: true
+            allTypeStr = '';
+            showA = -1;
+            showB = -1;
+            showC = -1;
+            showD = -1;
+            showE = -1;
+            showF = -1;
+            showG = -1;
+            showH = -1;
+            showI = -1;
+            //Added by minglei 2018.05.15 [add Wellness type to claim] start
+            showJ = -1;
+            //Added by minglei 2018.05.15 [add Wellness type to claim] end
+            //20210803 - Kirk - CR48  [add benefit to claim] start
+            showK = -1;
+            showL = -1;
+            showM = -1;
+            showN = -1;
+            showO = -1;
+            showP = -1;
+            showQ = -1;
+            showR = -1;
+            showS = -1;
+            //showT = -1;//20210803 - Kirk - CR48 - 20210917 - Kirk - T_Tui_Na__c removed
+
+            claimTypeFlagOptionReset();
+            claimTypeFlagOptionHide();
+        }
+        
+        // 20210803 - minghua - CR48, separate two functions and change the code
+        function claimTypeFlagOptionReset(){
+            console.log('enter Reset claim benefit type');
+            $("div[id='q10'] select[id='claimTypeOrganId'] .selected").each(function(idx, elem){
+                console.log('removeClass selected');
+                $(elem).removeClass('selected');
+            });
+        }
+        function claimTypeFlagOptionHide(){
+            $("div[id='q10'] option[id^='cus_claim_type_']").each(function(idx, elem){
+                $(elem).hide();
+            });
+        }
+        function q19SymptomReset(){
+            $("div[id='q19'] div[id^='q19_']").each(function(idx, elem){
+                $(elem).removeClass('fg-orange').addClass('fg-grey');
+            });
+        }
+
+        /** save btn call function **/
+        function saveRecord(){
+            //console.log('to see pass saveRecord');
+            var currentStepNum = $('.content-step:visible').data('step');
+            //saveRecordAtAction();
+            
+            // 20191126 - minghua - For Speed optimization
+            // 20200221 - minghua - SPS-388
+            if (currentStepNum == 7 && Cigna.Util.isCustomerPortal()) {
+                saveRecordSaveBtn7AtAction(checkSelectedQuestionsId());
+            }else{
+                saveRecordSaveBtnAtAction(currentStepNum);
+            }          
+        }
+        
+        /** select policy type **/
+        //var showGroupPolicyBankAccount = 0; //0: notOnlyGroupPolicy, 1:onlyGroupPolicy
+        
+        var isIndividualPolicyArr = [];
+        var isGroupPolicyArr = [];
+        //Policy - if contain group policy
+        function isGroupPolicy( flag ,item){
+            if(flag ){
+                //group policy
+                var index= $.inArray(item, isGroupPolicyArr );
+                if(index== -1)
+                {
+                    //Value not found in the array.  Add to the end of the array with push();
+                    isGroupPolicyArr.push(item);
+                }
+                else
+                {
+                    //Remove from the array using splice(). Splice takes the index value of where you want to start 
+                    //removing items from the array as the first parameter, and then the number of item you want 
+                    //to remove as the second parameter.
+                    isGroupPolicyArr.splice(index,1);
+                }
+                
+                
+            }else{
+                //Individual policy
+                var index= $.inArray(item, isIndividualPolicyArr );
+                if(index== -1)
+                {
+                    //Value not found in the array.  Add to the end of the array with push();
+                    isIndividualPolicyArr.push(item);
+                }
+                else
+                {
+                    //Remove from the array using splice(). Splice takes the index value of where you want to start 
+                    //removing items from the array as the first parameter, and then the number of item you want 
+                    //to remove as the second parameter.
+                    isIndividualPolicyArr.splice(index,1);
+                }
+            }
+            
+            //if(isGroupPolicyArr.length>0 && isIndividualPolicyArr.length == 0)    showGroupPolicyBankAccount = 1;
+            //else    showGroupPolicyBankAccount = 0;
+            
+            /**    
+            //do display part at BaseMyClaimSubmitVFP it at rerender
+            **/            
+        }
+        
+        /** select bank account type **/
+        function skipOneStep_accountInfo(){
+            skipSteps = 1;
+            CannotEnterBankAccountInformationAtAction();
+        }
+        
+        function skipOneStep_accountInfoOther(){
+            skipSteps = 0;
+            CanEnterBankAccountInformationAtAction();
+        }
+              
+        /** end select bank account type **/
+        function resetQuestionFlag(){
+            if (Cigna.Util.isCustomerPortal()){
+                hideAfterwardQuestion('q1');
+                
+                // Zoe updated on 0405 for performance tuning
+                if (isResetAndClearAllQuestionAnswer){
+                    isResetAndClearAllQuestionAnswer = false;
+                    console.log('********** turning off isResetAndClearAllQuestionAnswer');
+                }
+            }
+            if (Cigna.Util.isBrokerPortal()){
+                hideAfterwardQuestion('c1');
+                hideAfterwardQuestion('cx1');
+            }
+        }
+        
+        
+        function displayQuestion(qNum){
+            console.log('**********display Question : ' + qNum);
+            $('#'+qNum).show();
+            //rule to display document
+            if(qNum == 'cx2' || qNum == 'q14' ){
+                claimFromOtherCompany = 1;
+                //$('.claimFromOtherCompany').show();    
+            }
+            
+            if(qNum == 'cx3'){
+                $('#display_upload_brk').show();   
+                scrollTopFocus('#display_upload_brk'); 
+            }
+            
+            if(qNum == 'cx3_alert'){
+                // scrollTopFocus('#cx3_alert'); 
+                // scrollToBottomFocus();
+            }
+        }
+        
+        function hideQuestion(qNum){
+            console.log('**********hide Question : ' + qNum);
+            $('#'+qNum).hide();
+            $('#'+qNum).children().each(function(idx, elem){
+                $(elem).children('.fg-orange').each(function(idx, elem){
+                    console.log('removeClass idx=',idx);
+                    $(elem).removeClass('fg-orange').addClass('fg-grey');
+                });
+            });
+            
+            if(qNum == 'cx2' || qNum == 'q14'){
+                claimFromOtherCompany = 0;
+                //$('.claimFromOtherCompany').hide();
+            }
+            
+            // broker
+            if (qNum == 'cx3'){
+                $('#display_upload_brk').hide();
+                $('#cx3_alert').hide();
+            }
+            
+            if (qNum == 'c2'){
+                clearClassWhenHide('c2', 'question-choice');
+            }
+            
+            // customer clear answers when hiding
+            var previousQ = 0;
+            var pqNum = 'q';
+            var pqNum18 = 'q'; // 20210803 - minghua - CR48
+            if(Cigna.Util.isCustomerPortal()){
+                var qNumStr = qNum.slice(1);
+                previousQ = parseInt(qNumStr) - 1;
+            }
+            pqNum += previousQ.toString();
+
+            // 20210803 - minghua - CR48
+            if (qNum == 'q12') {
+                pqNum18='q18';
+            }
+            
+            // console.log(qNum + ' is visible? ' + $('#'+qNum).is(":Visible"));
+            // console.log(pqNum + ' is visible? ' + $('#'+ pqNum).is(":Visible"));
+            // console.log('********* isResetAndClearAllQuestionAnswer: ' + isResetAndClearAllQuestionAnswer );
+            // 20210803 - minghua - CR48, add pqNum18
+            if ($('#'+qNum).is(":Visible") ||　$('#'+ pqNum).is(":Visible") ||　$('#'+ pqNum18).is(":Visible") || isResetAndClearAllQuestionAnswer ){
+            //if (true){
+            // Zoe updated in 0405 for performance tuning
+                if (qNum == 'q1'){
+                    //$('#q1').find('.question-choice').removeClass('fg-orange').addClass('fg-grey');
+                    clearClassWhenHide('q1', 'question-choice');
+                }
+                if (qNum == 'q2'){
+                    //$('#q2').find('.question-choice').removeClass('fg-orange').addClass('fg-grey');
+                    clearClassWhenHide('q2', 'question-choice');
+                }
+                if (qNum == 'q3'){
+                    //clearwAdmittedAndDischargedFromHospitalList();
+                    isResetAdmissionDateAndDischargeDateFlag = true;
+                }
+                if (qNum == 'q4'){
+                    //$('#answer-date-cus-q4-date-format').val('');
+                    clearValueAndRemoveErrorWhenHide('answer-date-cus-q4-date-format');
+                    clearValueAndRemoveErrorWhenHide('firstConsultation-datepicker-hidden');
+                    clearFirstConsultationDateTimestamp();
+                    // TO DO
+                }
+                if (qNum == 'q5'){
+                    clearValueAndRemoveErrorWhenHide('answer-question-cus-q5');
+                }
+                if (qNum == 'q6'){
+                    clearValueAndRemoveErrorWhenHide('answer-question-cus-phone-q6');
+                }
+                if (qNum == 'q7'){
+                    clearClericalManualValue();    //clear q7 value backend
+                    clearValueAndRemoveErrorWhenHide('question-cus-percent-q7a');
+                    clearValueAndRemoveErrorWhenHide('question-cus-percent-q7b');
+                    clearValueAndRemoveErrorWhenHide('percent-check100');
+                }
+                if (qNum == 'q8'){
+                    // $('#answer-date-cus-q8-date-format').val('');
+                    clearValueAndRemoveErrorWhenHide('answer-date-cus-q8-date-format');
+                    clearValueAndRemoveErrorWhenHide('dateToStopWork-datepicker-hidden');
+                    clearStopToWorkDateTimestamp();
+                }
+                if (qNum == 'q9'){
+                    //$('#q9').find('.question-choice').removeClass('fg-orange').addClass('fg-grey');
+                    clearClassWhenHide('q9', 'question-choice');
+                }
+                if (qNum == 'q10'){
+                    // careful might need to clear some flag value as well
+                    // $('#q10').find('.question-multi-choice').removeClass('fg-orange').addClass('fg-grey');
+                    clearClassWhenHide('q10', 'question-multi-choice');
+                }
+                if (qNum == 'q11'){
+                    clearValueAndRemoveErrorWhenHide('answer-question-cus-digits-q11');
+                    //$("[id$='answer-question-cus-digits-q11']").val('');
+                    //$("[id$='answer-question-cus-digits-q11']").removeClass('error').next('label.error').remove();
+                }
+                if (qNum == 'q12'){
+                    //clearwVisitDateStrList();
+                    isResetVisitDateFlag = true;
+                    // 20210803 - minghua - CR48, reset q12
+                    // Rancho_PI56_20220304: fix compatibility in iPhone 12.4
+                    // CR-56_Link_20220214, update by minghua
+                    // if ($("input[id^='answer-date-cus-q12a-']").size()>=2) {
+                    if ($("input[id^='answer-date-cus-q12a-']").length>=2) {
+                        console.log('Reset q12 more than one value');
+                        clearwVisitDateStrList();
+                    }else{
+                        console.log('Reset q12 value');
+                        $("input[id^='answer-date-cus-q12a-']").val('');
+                    }
+                    // 20210803 - minghua - CR48, reset q19
+                    $("#symptomsOrganId").find(".selected").each(function(idx, elem){
+                        $(elem).removeClass('selected');
+                    });
+                }
+                if (qNum == 'q13'){
+                    //$('#q13').find('.question-choice').removeClass('fg-orange').addClass('fg-grey');
+                    clearClassWhenHide('q13', 'question-choice');
+                }
+                if (qNum == 'q14'){
+                    //clearwInfoFromOtherCompanyList();
+                    isResetInfoFromOtherCompanyFlag = true;
+                    // 20210803 - minghua - CR48, reset q14
+                    // Rancho_PI56_20220304: fix compatibility in iPhone 12.4
+                    // CR-56_Link_20220214, update by minghua
+                    if ($("input[id*='answer-question-cus-q14']").length>2) {
+                        console.log('Reset q14 more than one value');
+                        clearwInfoFromOtherCompanyList();
+                    }else{
+                        console.log('Reset q14 value');
+                        $("input[id*='answer-question-cus-q14']").val('');
+                    }
+                }
+                // 20210803 - Kirk - CR48 
+                if (qNum == 'q17'){
+                    clearClassWhenHide('q17', 'question-choice');
+                }
+                if (qNum == 'q18'){
+                    console.log('kirk-clear-q18-value');
+                    clearValueAndRemoveErrorWhenHide('answer-question-cus-digits-q18-1');
+                    clearValueAndRemoveErrorWhenHide('answer-question-cus-digits-q18-2');
+                    clearValueAndRemoveErrorWhenHide('answer-question-cus-digits-q18-3');
+                }
+            }
+            
+        }
+        
+        function clearValueAndRemoveErrorWhenHide(elementId){
+            $("[id*=" + elementId + "]").val('');
+            // $("[id*=" + elementId + "]").removeClass('error').next('label.error').remove();
+            
+            $("form[id*='frmAnswerClaimQuestionCus']").validate().resetForm();
+            loadPartialRules();
+        }
+        
+        function clearClassWhenHide(qNum, optionClass){
+            $('#' + qNum).find('.' + optionClass).removeClass('fg-orange').addClass('fg-grey');
+        }
+        
+        //system judgment
+        /**
+        * sj_HIF_a 
+        * Non-IPMI Policy
+        * Only HIF Claim benefit choose (only choose "Daily Hospital Cash Allowance")
+        * Insured Person without Sen Code ="N6"
+        *
+        * sj_HIF_d 
+        * (System Date - Effective Date) => 6 months  (System Date - Effective Date) => 6 months 
+        * Sum Insured (ie. $/per day) x no of days =<HKD2000 / USD 256
+        * discharge date <= Paid to date
+        * Sum of (Discharge Date– Admission Date + 1)=<5 days
+        * Previous fast-track submission history same admission date and same discharge date
+        **/
+        
+        var sj_HIF_a = false;
+        var sj_HIF_b = false;
+        var sj_HIF_c = false;
+        var sj_HIF_d = false;
+        
+        
+        var sj_HS_MAT_a = false;
+        
+        var sj_OP_a = false;
+        var sj_OP_b = false;
+        var sj_OP_c = false;    // do it at validation 
+        var sj_OP_d = false;
+        
+        /**
+        * sj_OP_a 
+        * Only Selected claim type OP
+        * Selected only 1 group policy?
+        *
+        * sj_OP_b 
+        * selected only 1 benefit with fast track allow=”On”
+        *
+        * sj_OP_c 
+        * Check the amount <= HKD $800
+        *
+        * sj_OP_d
+        * Check no fast-track submission history which is same benefit and same incurred date and submitted today 
+        */
+        
+        function loadAndDisplayQuestion( currentQuestionNum ){
+            displayQuestion( currentQuestionNum );
+        }
+        
+        function isBlank(pString){
+            if (!pString || pString.length == 0) {
+                return true;
+            }
+            return !/[^\s]+/.test(pString);
+        }
+        
+        function questionDisplayLogic( currentQuestionNum ){
+            //console.log('to see questionDisplayLogic pass');
+            
+            if (Cigna.Util.isCustomerPortal()){
+                var tmpQuestionList = '';
+                
+                if(currentQuestionNum == undefined || currentQuestionNum == null){
+                    resetQuestionFlag();
+                    
+                    //init question
+                    if( showHIF== 1 && $('#q1' ).css('display') == 'none' && sj_HIF_a && showHI<= 0 && showHPA<= 0 && showCI<= 0 && showDIS<= 0 && showHS<= 0 && showMAT<= 0  && showOP<= 0 && showOPF<= 0){
+                        hideAfterwardQuestion('q2');
+                        loadAndDisplayQuestion('q1');
+                        //testing
+                        tmpQuestionList = '"q1"'; 
+                    }
+                    
+                    else if( (showHIF== 1 || showHI== 1 || showHPA== 1 || showCI== 1 || showDIS>= 1 || showHS== 1) && $('#q4' ).css('display') == 'none' ){
+                        hideAfterwardQuestion('q5');
+                        loadAndDisplayQuestion('q4');
+                        //testing
+                        tmpQuestionList = '"q4"'; 
+                    }
+                    // 20210803 - minghua - CR48, [MAT/WL/OP display q13]
+                    else if((showMAT == 1 || showWL == 1 || showOP== 1 || showOPF == 1) && $('#q13' ).css('display') == 'none'){
+                        hideAfterwardQuestion('q14');
+                        loadAndDisplayQuestion('q13');
+                        tmpQuestionList = '"q13"'; 
+                    }
+                    // else if( (showOP== 1 || showOPF == 1) && $('#q10' ).css('display') == 'none' && sj_OP_a){
+                    //     hideAfterwardQuestion('q11');
+                    //     loadAndDisplayQuestion('q10');
+                    //     //testing
+                    //     tmpQuestionList = '"q10"'; 
+                    
+                    // }
+                    
+                    //Added by minglei 2018.05.15 [add Wellness type to claim] start
+                    //else if( (showMAT == 1 ) && $('#q13' ).css('display') == 'none' || ( (showOP== 1 || showOPF == 1) && $('#q10' ).css('display') == 'none' && !sj_OP_a) ){ 
+                    // else if( (showMAT == 1 || showWL == 1) && $('#q13' ).css('display') == 'none' || ( (showOP== 1 || showOPF == 1) && $('#q10' ).css('display') == 'none' && !sj_OP_a) ){
+                    // //Added by minglei 2018.05.15 [add Wellness type to claim] end
+                    // //sj_OP_d - need to pass data to record to justify if fast track or not, sj_OP_d no need for question logic as pass sj_OP_d or not still go next question
+                    //     hideAfterwardQuestion('q14');
+                    //     loadAndDisplayQuestion('q13');
+                    //     //testing
+                    //     tmpQuestionList = '"q13"'; 
+                    // }
+                    else{
+                        console.log('no question need to answer.');
+                    }
+                    console.log('to see tmpQuestionList at init:    '+tmpQuestionList );
+                    if (tmpQuestionList != ''){
+                        // 20211209 - minghua - pro issue
+                        readyToCallSaveSelectedQuestion();
+                        // 20191126 - minghua - For Speed optimization
+                        // saveSelectedQuestionAtAction(tmpQuestionList);
+                        addSaveSelectedQuestionQueue(tmpQuestionList);
+                        callSaveSelectedQuestion();
+                        //For Speed optimization
+                    }
+                    return;
+                }
+                //hide btn
+                hideNextBtnIn(7);
+                /** start question logic during answer question **/
+                //q1 - answer yes
+                if( currentQuestionNum =='q1' && showHIF== 1 && sj_HIF_a && sj_HIF_b && showHI<= 0 && showHPA<= 0 && showCI<= 0 && showDIS<= 0 && showHS<= 0 && showMAT<= 0  && showOP<= 0 && showOPF<= 0){
+                    hideAfterwardQuestion('q2');
+                    loadAndDisplayQuestion('q2');
+                }
+                //q1 - answer no
+                else if( currentQuestionNum =='q1' && showHIF== 1 && sj_HIF_a && !sj_HIF_b && showHI<= 0 && showHPA<= 0 && showCI<= 0 && showDIS<= 0 && showHS<= 0 && showMAT<= 0  && showOP<= 0 && showOPF<= 0){
+                    hideAfterwardQuestion('q2');
+                    loadAndDisplayQuestion('q4');
+                }
+                //q2 - answer yes
+                else if( currentQuestionNum =='q2' && showHIF== 1 && sj_HIF_a && sj_HIF_b && sj_HIF_c && showHI<= 0 && showHPA<= 0 && showCI<= 0 && showDIS<= 0 && showHS<= 0 && showMAT<= 0  && showOP<= 0 && showOPF<= 0){
+                    hideAfterwardQuestion('q3');
+                    loadAndDisplayQuestion('q3');
+                }
+                //q2 - answer no
+                else if( currentQuestionNum =='q2' && showHIF== 1 && sj_HIF_a && sj_HIF_b && !sj_HIF_c && showHI<= 0 && showHPA<= 0 && showCI<= 0 && showDIS<= 0 && showHS<= 0 && showMAT<= 0  && showOP<= 0 && showOPF<= 0){
+                    hideAfterwardQuestion('q3');
+                    loadAndDisplayQuestion('q4');
+                }
+                //q3 - enter date pass fast track
+                else if( currentQuestionNum =='q3' && showHIF== 1 && sj_HIF_a && sj_HIF_b && sj_HIF_c && sj_HIF_d && showHI<= 0 && showHPA<= 0 && showCI<= 0 && showDIS<= 0 && showHS<= 0 && showMAT<= 0  && showOP<= 0 && showOPF<= 0){            
+                     hideAfterwardQuestion('q4');
+                     console.log('to see q3 end');
+                     //end HIF fast track flow
+                     displayNextBtnIn(7);  
+                }
+                //q3 - enter date no pass fast track -> to non-fast track
+                else if( currentQuestionNum =='q3' && (showHIF== 1 || showHI== 1 || showHPA== 1 || showCI== 1 || showDIS>= 1 || showHS== 1) ){
+                    hideAfterwardQuestion('q4');
+                    loadAndDisplayQuestion('q4');
+                        
+                }else if( currentQuestionNum =='q4' && (showHIF== 1 || showHI== 1 || showHPA== 1 || showCI== 1 || showDIS>= 1 || showHS== 1) ){
+                    var isPassQ4 = false;
+                    $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-date-cus-q4-date-format']").each(function(idx, elem){
+                        var str = $(elem).val();
+                        if($(elem).valid())    isPassQ4 = true;
+                    });
+                    if(isPassQ4){
+                        hideAfterwardQuestion('q5');
+                        loadAndDisplayQuestion('q5');
+                        checkToShowNextBtn();
+                    }else{
+                        hideAfterwardQuestion('q5');
+                    }
+                }else if( currentQuestionNum =='q5' && (showHIF== 1 || showHI== 1 || showHPA== 1 || showCI== 1 || showDIS>= 1 || showHS== 1) ){
+                    // hideAfterwardQuestion('q7'); // Zoe changed on March. 5 Correct me if it causes other bugs..
+                    var isPassQ5 = false;
+                    $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-question-cus-q5']").each(function(idx, elem){
+                        var str = $(elem).val();
+                        if(!isBlank(str))    isPassQ5 = true;
+                    });
+                    if(isPassQ5){
+                        hideAfterwardQuestion('q6');
+                        loadAndDisplayQuestion('q6');
+                        checkToShowNextBtn();
+                    }else{
+                        hideAfterwardQuestion('q6');
+                    }
+                }else if( currentQuestionNum =='q6' && (showHIF== 1 || showHI== 1 || showHPA== 1 || showCI== 1) && showDIS<= 0 && showHS<= 0 && showMAT<= 0  && showOP<= 0 && showOPF<= 0){
+                    var isPassQ6a = false;
+                    $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-question-cus-phone-q6']").each(function(idx, elem){
+                        var str = $(elem).val();
+                        if(!isBlank(str))    isPassQ6a = true;
+                    });
+                    if(isPassQ6a){
+                        hideAfterwardQuestion('q7');
+                        checkToShowNextBtn();
+                        console.log('to see q7 end');
+                        //end HIF non-fast track, HI, HPA, CI only flow 
+                        if(includeGSClaim) {
+                            loadAndDisplayQuestion('q15');
+                        } else {
+                            displayNextBtnIn(7);
+                        }
+                    }else{
+                        hideAfterwardQuestion('q7');
+                    }
+                }else if( currentQuestionNum =='q6' && showDIS>= 1 ){
+                    var isPassQ6b = false;
+                    $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-question-cus-phone-q6']").each(function(idx, elem){
+                        var str = $(elem).val();
+                        if(!isBlank(str))    isPassQ6b = true;
+                    });
+                    if(isPassQ6b){
+                        hideAfterwardQuestion('q7');
+                        loadAndDisplayQuestion('q7');
+                        checkToShowNextBtn();
+                    }else{
+                        hideAfterwardQuestion('q7');
+                    }
+                }else if( currentQuestionNum =='q7' && showDIS>= 1){
+                    var isPassQ7 = false;
+                    $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-question-cus-percent']").each(function(idx, elem){
+                        var str = $(elem).val();
+                        if(!isBlank(str) && $(elem).valid())    isPassQ7 = true;    
+                    });
+                    if(isPassQ7){
+                        hideAfterwardQuestion('q8');
+                        loadAndDisplayQuestion('q8');
+                        checkToShowNextBtn();
+                    }else{
+                        hideAfterwardQuestion('q8');
+                    }
+                    
+                }else if( currentQuestionNum =='q8' && showDIS>= 1 ){
+                    var isPassQ8 = false;
+                    $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-date-cus-q8-date-format']").each(function(idx, elem){
+                        var str = $(elem).val();
+                        if($(elem).valid())    isPassQ8 = true;
+                    });
+                    if(isPassQ8){
+                        hideAfterwardQuestion('q9');
+                        loadAndDisplayQuestion('q9');
+                        checkToShowNextBtn();
+                    }else{
+                        hideAfterwardQuestion('q9');
+                    }
+                }else if( currentQuestionNum =='q9' && showDIS>= 1  && showHS<= 0 && showMAT<= 0  && showOP<= 0 && showOPF<= 0){
+                    console.log('to see q9 end');
+                    //end DIS only flow 
+                    if(includeGSClaim) {
+                        loadAndDisplayQuestion('q15');
+                    } else {
+                        displayNextBtnIn(7);
+                    }
+                // Rancho_CR48_20210706: add showOP, comment hideAfterwardQuestion('q12') from duplicate hide
+                }else if( currentQuestionNum =='q9' && (showOP== 1 || showOPF == 1) && sj_OP_a ){
+                    hideAfterwardQuestion('q11');
+                    loadAndDisplayQuestion('q10');
+                }else if( currentQuestionNum =='q10' && (showOP== 1 || showOPF == 1) && sj_OP_a && sj_OP_b){
+                    // hideAfterwardQuestion('q12');
+                    loadAndDisplayQuestion('q11');
+                }else if( currentQuestionNum =='q11' && (showOP== 1 || showOPF == 1) && sj_OP_a && sj_OP_b && sj_OP_c){
+                    var isPassQ11 = false;
+                    $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-question-cus-digits-q11']").each(function(idx, elem){
+                        var str = $(elem).val();
+                        if(!isBlank(str) && $(elem).valid())    isPassQ11 = true;
+                    });
+                    if(isPassQ11){
+                        // hideAfterwardQuestion('q13');
+                        loadAndDisplayQuestion('q12');
+                    }else{
+                        hideAfterwardQuestion('q12');
+                    }
+                }
+                /**
+                    for OPF
+                    sj_OP_d - need to pass data to record to justify if fast track or not, 
+                    sj_OP_d no need for question logic as pass sj_OP_d or not still go next question
+                **/
+                else if( (currentQuestionNum =='q6' || currentQuestionNum =='q9' || currentQuestionNum =='q10' || currentQuestionNum =='q11' || currentQuestionNum =='q12') ){    //sj_OP_d - need to pass data to record to justify if fast track or not, sj_OP_d no need for question logic as pass sj_OP_d or not still go next question
+                    /**
+                    if(currentQuestionNum =='q12'){
+                        showLoading();
+                        InSeqFunction(
+                            CalculationForVisitDateAtAction
+                        ).then(
+                            InSeqFunction(
+                                function(){
+                                    finishSubmission();
+                                    
+                                }
+                            )
+                        );
+                    }
+                    **/
+                    if(currentQuestionNum =='q11'){
+                        var isPassQ11 = false;
+                        $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-question-cus-digits-q11']").each(function(idx, elem){
+                            var str = $(elem).val();
+                            if(!isBlank(str) && $(elem).valid())    isPassQ11 = true;
+                        });
+                        console.log('kirkssssssss'+isPassQ11);
+                        if(isPassQ11){
+                            // hideAfterwardQuestion('q14');
+                            loadAndDisplayQuestion('q12');
+                        }else{
+                            hideAfterwardQuestion('q12');
+                        }
+                    
+                    }else if(currentQuestionNum =='q12'){
+                        var isPassQ12 = false;
+                        var isAtLeastOneFailQ12 = false;
+                        var count = 0;// 20210803 - Kirk - CR48
+                        $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-date-cus-q12a']").each(
+                            function(idx, elem){
+                                count += 1;
+                                var str = $(elem).val();
+                                if(!$(elem).valid()){
+                                    isAtLeastOneFailQ12 = true;
+                                }
+                            });
+                        // 20210803 - minghua - CR48
+                        console.log('isAtLeastOneFailQ12=',isAtLeastOneFailQ12);
+                        isPassQ12 = !isAtLeastOneFailQ12;
+                        if (isPassQ12) {
+                            if (count==1) {
+                                loadAndDisplayQuestion('q19');
+                            }else{
+                                hideAfterwardQuestion('q20');
+                                displayNextBtnIn(7);
+                            }
+                        }else{
+                            hideAfterwardQuestion('q20');
+                        }
+                    }else{
+                        // Rancho_PI56_20220214: remove the class of q13 after q6 changed
+                        if(currentQuestionNum=='q6'){hideQuestion('q13');}
+                        hideAfterwardQuestion('q14');
+                        loadAndDisplayQuestion('q13');
+                    }
+    
+                }else if(currentQuestionNum =='q13'){
+                    console.log('Choose YES OR NO,',sj_HS_MAT_a);
+                    console.log('Only choose one group policy,',sj_OP_a);
+                    console.log('This group policy not equal economist,',notEqualEconomistPolicy);
+                    console.log('Only choose one claim type OP,',onlySelectedOPClaimType);
+                    if(sj_HS_MAT_a){ // MAT/WL/OP choose YES
+                        hideAfterwardQuestion('q14');
+                        loadAndDisplayQuestion('q14');
+                    }else if(!sj_HS_MAT_a){  //choose No, has two choose
+                        if (sj_OP_a&&onlySelectedOPClaimType&&notEqualEconomistPolicy) {
+                            loadAndDisplayQuestion('q15');
+                        }else{
+                            displayNextBtnIn(7);
+                        }
+                    }else{
+                        displayNextBtnIn(7);
+                    }
+                }else if( currentQuestionNum =='q14'){
+                    //end
+                    console.log('to see q14 end');
+                    //displayNextBtn();    //end HS / MAT / OP / OPF only flow 
+                    // 20210803 - minghua - CR48
+                    // if(includeGSClaim) {
+                    //     loadAndDisplayQuestion('q15');
+                    // } else {
+                    //     displayNextBtnIn(7);
+                    // }
+                    displayNextBtnIn(7);
+                }else if( currentQuestionNum =='q15') {
+                    console.log('to see q15 end');
+                    displayNextBtnIn(7);
+                }else if(currentQuestionNum =='q6' || currentQuestionNum =='q9' || currentQuestionNum =='q13' || currentQuestionNum =='q14' || currentQuestionNum =='q15'){
+                    //end question logic
+                    console.log('to see currentQuestionNum  end:    '+currentQuestionNum );
+                    //end question part
+                    displayNextBtnIn(7);
+                // 20210803 - Kirk - CR48  [add question]
+                }else if (currentQuestionNum =='q16') {
+                    if (isEntitledBenefit) {
+                        loadAndDisplayQuestion('q17');
+                    }else{
+                        loadAndDisplayQuestion('q11');
+                    }
+                }else if(currentQuestionNum =='q17'){
+                    if (isSeparateCharge) {
+                        loadAndDisplayQuestion('q18');
+                    }else{
+                        loadAndDisplayQuestion('q11');
+                    }
+                }else if(currentQuestionNum =='q18'&&sj_OP_c){  //20210803 - Kirk - CR48
+                    console.log('to see si_op_c'+sj_OP_c);
+                    loadAndDisplayQuestion('q12');
+                }else if(currentQuestionNum =='q19'){ //20210803 - Kirk - CR48
+                    loadAndDisplayQuestion('q19');
+                }else if(currentQuestionNum =='q20'){ //20210803 - minghua - CR48
+                    displayNextBtnIn(7);
+                }else if(currentQuestionNum =='q21'){ // Rancho_CR48_20210706
+                    console.log('allowGovernmentHospitalVisit: '+allowGovernmentHospitalVisit+' onlySelectedGP: '+onlySelectedGP);
+                    if(allowGovernmentHospitalVisit&&onlySelectedGP){
+                        loadAndDisplayQuestion('q20');
+                    }else{
+                        displayNextBtnIn(7);
+                    }
+                }
+                
+                // 20191126 - minghua - For Speed optimization
+                // saveSelectedQuestionAtAction(tmpQuestionList);
+                // 20200221 - minghua - SPS-388
+                // 20210803 - minghua - CR48, update
+                checkSelectedQuestions();
+                //For Speed optimization
+            }
+            if (Cigna.Util.isBrokerPortal()){
+                console.log('to see questionDisplayLogicBroker start    ');
+                questionDisplayLogicBroker(currentQuestionNum);
+            }
+        }
+        
+        function checkToShowNextBtn(){
+             /*For q9 only*/
+            //170308
+            //checkRequiredq8();
+            
+            if ($('#q9').is(':visible') && ($('#q9-yes').hasClass("fg-orange") || $('#q9-no').hasClass("fg-orange")) ){
+                console.log('********checkToShowNextBtn in check validation');
+                var validation =  ($("form[id*='frmAnswerClaimQuestionCus']")).validate().form();
+                console.log('********checkToShowNextBtn in check validation: ' + validation);
+                if(validation){
+                    //displayNextBtn();
+                    displayNextBtnIn(7);
+                }else{
+                    ($('form[id$="frmAnswerClaimQuestionCus"]')).validate().focusInvalid();
+                    displayNextBtnIn(7);
+                }
+            }else{
+                console.log('********checkToShowNextBtn in q9 not answered/shown');
+                //hideNextBtn();
+                hideNextBtnIn(7);
+            }
+        
+        }
+        
+        function displayNextBtnIn(step){
+            console.log('***** the new display next button in ' + step);
+            
+            if (isBrokerIOSSF1()) {
+                $('.brkSF1NextStepBtnIn' + step).show();
+                $('.hidden-xs.nextStepBtnIn' + step).show();
+            }
+            else{
+                $('.nextStepBtnIn' + step).show();
+            }
+            // Zoe updated on 0412 for sticky button
+            
+            if (Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) { // Cigna.Util.isIOS() && 
+                $('.nextStepBtnPaddingIn' + step).show();
+            }
+        }
+        
+        function hideNextBtnIn(step){
+            console.log('*****the new hide next button in ' + step);
+            
+            if (isBrokerIOSSF1()) {
+                $('.brkSF1NextStepBtnIn' + step).hide();
+                $('.hidden-xs.nextStepBtnIn' + step).hide();
+            }
+            else{
+                $('.nextStepBtnIn' + step).hide();
+            }
+            
+            if (Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) { //Cigna.Util.isIOS() && 
+                $('.nextStepBtnPaddingIn' + step).hide();
+            }
+        }
+        
+        function displayNextBtn(){
+            console.log('*****the old display next button');
+            $('.nextStepBtn').show();
+        }
+        
+        function hideNextBtn(){
+            console.log('*****the old hide next button');
+            $('.nextStepBtn').hide();
+        }
+        
+        
+        /** ask if select life policy and individual policy**/
+        var showIndividualLifePolicy = 0; //0: not selected individual life policy, 1: is selected at least one individual life policy
+        
+        var isSelectedIndividualLifePolicyArr = [];
+        //Policy - if contain USPolicy
+        function isSelectIndividualLifePolicy( flag ,item){
+            if(flag ){
+                var index= $.inArray(item, isSelectedIndividualLifePolicyArr );
+                if(index== -1)
+                {
+                    //Value not found in the array.  Add to the end of the array with push();
+                    isSelectedIndividualLifePolicyArr.push(item);
+                }
+                else
+                {
+                    //Remove from the array using splice(). Splice takes the index value of where you want to start 
+                    //removing items from the array as the first parameter, and then the number of item you want 
+                    //to remove as the second parameter.
+                    isSelectedIndividualLifePolicyArr.splice(index,1);
+                }
+            }
+            if(isSelectedIndividualLifePolicyArr.length>0)    showIndividualLifePolicy = 1;
+            else    showIndividualLifePolicy = 0;    
+        }
+        
+        
+        
+        /** ask if policy less than 6 months**/
+        var showPolicyLessThan6Months = 0; //0: policy eff date not less than 6 month, 1: policy eff date less than 6 month
+        
+        var isPolicyLessThan6MonthsArr = [];
+        //Policy - if contain policy eff date less than 6 month
+        function isSelectPolicyLessThan6Months( flag ,item){
+            if(flag ){
+                var index= $.inArray(item, isPolicyLessThan6MonthsArr );
+                if(index== -1)
+                {
+                    //Value not found in the array.  Add to the end of the array with push();
+                    isPolicyLessThan6MonthsArr.push(item);
+                }
+                else
+                {
+                    //Remove from the array using splice(). Splice takes the index value of where you want to start 
+                    //removing items from the array as the first parameter, and then the number of item you want 
+                    //to remove as the second parameter.
+                    isPolicyLessThan6MonthsArr.splice(index,1);
+                }
+            }
+            if(isUSPolicyArr.length>0)    showPolicyLessThan6Months = 1;
+            else    showPolicyLessThan6Months = 0;            
+        }
+        
+        //IBM KOU Wonder Woman CR 20180430 Start
+        /** ask if policy less than 1 yr1**/
+        var showPolicyLessThan1Yr = 0; //0: policy eff date not less than 2 years, 1: policy eff date less than 1 years
+        
+        var isPolicyLessThan1YrArr = [];
+        //Policy - if contain policy eff date less than 1 Year
+        function isSelectPolicyLessThan1Yr( flag ,item){
+            if(flag ){
+                console.log('[isSelectPolicyLessThan1Yr] flag is true');
+                var index= $.inArray(item, isPolicyLessThan1YrArr );
+                if(index== -1)
+                {
+                    //Value not found in the array.  Add to the end of the array with push();
+                    isPolicyLessThan1YrArr.push(item);
+                }
+                else
+                {
+                    //Remove from the array using splice(). Splice takes the index value of where you want to start 
+                    //removing items from the array as the first parameter, and then the number of item you want 
+                    //to remove as the second parameter.
+                    isPolicyLessThan1YrArr.splice(index,1);
+                }
+            }
+            // alert('showPolicyLessThan1Yr='+showPolicyLessThan1Yr);
+            if(isPolicyLessThan1YrArr.length>0)    showPolicyLessThan1Yr = 1;
+            else    showPolicyLessThan1Yr = 0;            
+        }
+
+        var cusSelectPolicyList = [];
+        function cusSelectPolicy(policyNum, isIndividual) {
+            if(cusSelectPolicyList.length > 0) {
+                for(var i = 0; i < cusSelectPolicyList.length; i++) {
+                    if(cusSelectPolicyList[i].policyNum == policyNum) {
+                        cusSelectPolicyList.splice(i, 1);
+                        break;
+                    } else {
+                        cusSelectPolicyList.push({
+                            policyNum: policyNum,
+                            isIndividual: isIndividual
+                        });
+                        break;
+                    }
+                }
+            } else {
+                cusSelectPolicyList.push({
+                    policyNum: policyNum,
+                    isIndividual: isIndividual
+                });
+            }
+            console.log("cusSelectPolicyList:" + JSON.stringify(cusSelectPolicyList));
+        }
+
+        var isContainIndividualPolicy = null;
+        var isContainGroupPolicy = null;
+        function getSelectedPolicyListInfo() {
+            if(cusSelectPolicyList.length > 0) {
+                isContainIndividualPolicy = false;
+                isContainGroupPolicy = false;
+                for(var i = 0; i < cusSelectPolicyList.length; i++) {
+                    if(cusSelectPolicyList[i].isIndividual == true) {
+                        isContainIndividualPolicy = true;
+                    }
+                    
+                    if(cusSelectPolicyList[i].isIndividual == false) {
+                        isContainGroupPolicy = true;
+                    }
+                }
+            }
+            console.log("isContainIndividualPolicy:" + isContainIndividualPolicy);
+            console.log("isContainGroupPolicy:" + isContainGroupPolicy);
+        }
+        
+        //Nicole_20200317_GS Claim
+        var includeGSClaim = false;
+        function setIncludeGSClaim(result){
+            console.log('setIncludeGSClaim :'+result);
+            includeGSClaim = result;
+        }
+
+        //IBM KOU Wonder Woman CR 20180430 End                
+        /** ask if policy less than 2 yrs**/
+        var showPolicyLessThan2Yrs = 0; //0: policy eff date not less than 2 years, 1: policy eff date less than 2 years
+        
+        var isPolicyLessThan2YrsArr = [];
+        //Policy - if contain policy eff date less than 6 month
+        function isSelectPolicyLessThan2Yrs( flag ,item){
+            if(flag ){
+                var index= $.inArray(item, isPolicyLessThan2YrsArr );
+                if(index== -1)
+                {
+                    //Value not found in the array.  Add to the end of the array with push();
+                    isPolicyLessThan2YrsArr.push(item);
+                }
+                else
+                {
+                    //Remove from the array using splice(). Splice takes the index value of where you want to start 
+                    //removing items from the array as the first parameter, and then the number of item you want 
+                    //to remove as the second parameter.
+                    isPolicyLessThan2YrsArr.splice(index,1);
+                }
+            }
+            if(isPolicyLessThan2YrsArr.length>0)    showPolicyLessThan2Yrs = 1;
+            else    showPolicyLessThan2Yrs = 0;            
+        }
+        
+        
+        /** ask if policy less than 3 yrs**/
+        var showPolicyLessThan3Yrs = 0; //0: policy eff date not less than 3 years, 1: policy eff date less than 3 years
+        
+        var isPolicyLessThan3YrsArr = [];
+        //Policy - if contain policy eff date less than 6 month
+        function isSelectPolicyLessThan3Yrs( flag ,item){
+            if(flag ){
+                var index= $.inArray(item, isPolicyLessThan3YrsArr );
+                if(index== -1)
+                {
+                    //Value not found in the array.  Add to the end of the array with push();
+                    isPolicyLessThan3YrsArr.push(item);
+                }
+                else
+                {
+                    //Remove from the array using splice(). Splice takes the index value of where you want to start 
+                    //removing items from the array as the first parameter, and then the number of item you want 
+                    //to remove as the second parameter.
+                    isPolicyLessThan3YrsArr.splice(index,1);
+                }
+            }
+            if(isPolicyLessThan3YrsArr.length>0)    showPolicyLessThan3Yrs = 1;
+            else    showPolicyLessThan3Yrs = 0;            
+        }
+        
+        /** Ask if US currency for payment **/
+        var showUSCurrency = 0; //0: notContainUSPolicy, 1:containUSPolicy
+        
+        var isUSPolicyArr = [];
+        //Policy - if contain USPolicy
+        function isSelectUSPolicy( flag ,item){
+            if(flag ){
+                var index= $.inArray(item, isUSPolicyArr );
+                if(index== -1)
+                {
+                    //Value not found in the array.  Add to the end of the array with push();
+                    isUSPolicyArr.push(item);
+                }
+                else
+                {
+                    //Remove from the array using splice(). Splice takes the index value of where you want to start 
+                    //removing items from the array as the first parameter, and then the number of item you want 
+                    //to remove as the second parameter.
+                    isUSPolicyArr.splice(index,1);
+                }
+            }
+            if(isUSPolicyArr.length>0)    showUSCurrency = 1;
+            else    showUSCurrency = 0;            
+        }
+        
+        
+        //Policy - show benefit
+        var policyBenefitListMap = new Map();
+        var policyClaimTypeListMap = new Map();
+        
+        function selectPolicyToShowBenefit(pId, benefitList){
+
+            //testing to reset all flag
+            questionFlagReset();
+            //end testing
+            console.log('selectPolicyToShowBenefit reset');
+            //ResetHSBrokerPACAtAction();
+            //ResetHPABrokerPACAtAction();
+            IfHPAPolicyLessThan2Yrs = 0;
+            IFHSPolicyLessThan3YrsOrBrokerPACPlanCode = 0;
+            console.log('pId:    '+pId);
+            console.log('benefitList:    '+benefitList);
+            
+            if(benefitList instanceof Array){
+                console.log('### is Array');
+            }else{
+                console.log('### is string');
+                benefitList = benefitList.replace(/'/g, '"'); /** '" */
+                benefitList = JSON.parse(benefitList);
+            }
+            //e.g. policyBenefitListMap.set("1", ["A","B"]);
+            console.log('to see policyBenefitListMap.get(pId):    '+policyBenefitListMap.get(pId));
+            //selected policy
+            if(policyBenefitListMap.length == 0 || policyBenefitListMap.get(pId) == null || policyBenefitListMap.get(pId) == []  || policyBenefitListMap.get(pId) == undefined || policyBenefitListMap.get(pId) == '' ){  //|| policyBenefitListMap.get(pId) == undefined
+                console.log('##### select pId:    '+pId);
+                policyBenefitListMap.set(pId, benefitList);
+            }
+            //unselected policy
+            else{
+                console.log('##### unselect pId:    '+pId);
+                policyBenefitListMap.set(pId, []);
+            }
+            
+            //reset all options
+            resetTypesOfBenefitCanChoose();    //new
+            questionFlagReset();
+            planCodeFlagReset();    //new
+            //end reset all options
+            
+            //refresh options
+            policyBenefitListMap.forEach(function (item, key, mapObj) {
+                console.log('@@item:    '+item)
+                console.log('@@key:    '+key)
+                // alert('WW item=' + item); 
+                for(var i=0; i< item.length; i++ ){
+                    console.log('@@ value:     '+item[i]);
+                    if(item[i] == 'ACC')    isACC = 1; 
+                    if(item[i] == 'CI')    isCI = 1; 
+                    if(item[i] == 'DIS')    isDIS = 1; 
+                    if(item[i] == 'HI')    isHI = 1; 
+                    if(item[i] == 'HIF')    isHIF = 1; 
+                    if(item[i] == 'HPA')    isHPA = 1; 
+                    if(item[i] == 'HS')    isHS = 1; 
+                    if(item[i] == 'MAT')    isMAT = 1; 
+                    if(item[i] == 'MIS')    isMIS = 1; 
+                    if(item[i] == 'OP')    isOP = 1; 
+                    if(item[i] == 'OPF')    isOPF = 1; 
+                    if(item[i] == 'OTH')    isOTH = 1; 
+                    if(item[i] == 'SD')    isSD = 1; 
+                    if(item[i] == 'TTD')    isTTD = 1; 
+                    if(item[i] == 'WP')    isWP = 1; 
+                    //Added by minglei 2018.05.15 [add Wellness type to claim] start
+                    if(item[i] == 'WL')    isWL = 1;
+                    //Added by minglei 2018.05.15 [add Wellness type to claim] end
+                    if(item[i] == 'BrokerPAC')    isBrokerPAC = 1;     //for BrokerPAC case load doc
+                    if(item[i] == 'WonderWoman')    isWonderWoman = 1;     //IBM KOU WONDER WOMAN CR 20180430
+                }
+                //Daily Hospital Income Allowanace
+                if(isHIF>0)    showHIF = 0;    //display option
+                if(isHI>0)    showHI = 0;    //display option
+                if(isHPA>0)    showHPA = 0;    //display option
+                //Hospital Treatment Cost
+                if(isACC>0)    showHS = 0;    //display option
+                if(isHS>0)    showHS = 0;    //display option
+                //Outpatient Cost
+                if(isOP>0)    showOP = 0;    //display option
+                if(isOPF>0)    showOPF = 0;    //display option
+                if(isACC>0)    showOP = 0;    //display option
+                //Maternity Cost
+                if(isMAT>0)    showMAT = 0;    //display option
+                //Temperory or Permanent  Disability  
+                if(isTTD>0)    showDIS = 0;    //display option
+                if(isDIS>0)    showDIS = 0;    //display option
+                //Critical Illness 
+                if(isCI>0)    showCI = 0;    //display option
+                //Waiver of premium
+                if(isWP>0)    showDIS = 0;    //display option
+                //Added by minglei 2018.05.15 [add Wellness type to claim] start
+                if(isWL > 0)    showWL = 0;    //display option
+                //Added by minglei 2018.05.15 [add Wellness type to claim] end
+                
+                var tmpAvailBenefitCount = 0;
+                var tmpAvailBenefitIndex = 0;
+                
+                if( showHIF >= 0 || showHI >= 0 || showHPA >= 0 ){
+                    $("#benefit_1").show();
+                    tmpAvailBenefitCount++;
+                    tmpAvailBenefitIndex = 1;
+                    
+                    //add flag to check if display BrokerPAC plan doc logic
+                    if(showHPA == 0){
+                        var index= $.inArray(pId, isPolicyLessThan2YrsArr );
+                        if(index== -1)
+                        {
+                            //do nothing
+                        }
+                        else
+                        {
+                            //policy less than 2 years also own HPA
+                            IfHPAPolicyLessThan2Yrs = 1;
+                            //SelectHPABrokerPACAtAction();
+                            console.log('selectPolicyToShowBenefit selectHPALess2yrs');
+                        }
+                        
+                    }
+                }
+                if( showHS >= 0 ){
+                    $("#benefit_2").show();
+                    tmpAvailBenefitCount++;
+                    tmpAvailBenefitIndex = 2;
+                    
+                    //add flag to check if display BrokerPAC plan doc logic
+                    
+                    //1. case of less then 3 years
+                    var index= $.inArray(pId, isPolicyLessThan3YrsArr );
+                    if(index== -1)
+                    {
+                        //do nothing
+                    }
+                    else
+                    {
+                        //policy less than 3 years also own HS
+                        IFHSPolicyLessThan3YrsOrBrokerPACPlanCode = 1;
+                        //SelectHSBrokerPACAtAction();
+                        console.log('selectPolicyToShowBenefit HSLess3yrs');
+                    }
+                    
+                    //2. case for Broker PAC
+                    if(isBrokerPAC ){
+                        console.log('selectPolicyToShowBenefit HS broker PAC');
+                        //SelectHSBrokerPACAtAction();
+                        IFHSPolicyLessThan3YrsOrBrokerPACPlanCode = 1;
+                    }
+                }
+                if( showOP >= 0 ){
+                    $("#benefit_3").show();
+                    tmpAvailBenefitCount++;
+                    tmpAvailBenefitIndex = 3;
+                }
+                if( showMAT >= 0 ){
+                    $("#benefit_4").show();
+                    tmpAvailBenefitCount++;
+                    tmpAvailBenefitIndex = 4;
+                }
+                if( showDIS >= 0 && (isTTD>0 || isDIS>0) ){
+                    $("#benefit_5").show();    //ttd or dis
+                    tmpAvailBenefitCount++;
+                    tmpAvailBenefitIndex = 5;
+                }
+                if( showCI >= 0 ){
+                    $("#benefit_6").show();
+                    tmpAvailBenefitCount++;
+                    tmpAvailBenefitIndex = 6;
+                }
+                if( showDIS >= 0  && isWP>0){
+                    $("#benefit_7").show();     //wp
+                    tmpAvailBenefitCount++;
+                    tmpAvailBenefitIndex = 7;
+                }
+                //Added by minglei 2018.05.15 [add Wellness type to claim] start
+                if( showWL >= 0  && isWL > 0){
+                    $("#benefit_9").show();     //wp
+                    tmpAvailBenefitCount++;
+                    tmpAvailBenefitIndex = 9;
+                }
+                //Added by minglei 2018.05.15 [add Wellness type to claim] end
+                
+                console.log('********AvailBenefitCount: ' + tmpAvailBenefitCount);
+                availBenefitTypeCount = tmpAvailBenefitCount;
+                
+                /**                
+                if (skipOneBenefitForTestingJS)
+                if (availBenefitTypeCount == 1){
+                    $("#benefit_" + tmpAvailBenefitIndex).click();
+                }
+                */
+                
+                $("#benefit_8").hide(); 
+                var allOtherType = 0;
+                allOtherType = Number(isSD)+Number(isOTH)+Number(isMIS);
+                console.log('allOtherType:    '+allOtherType );
+                
+                var allMainType = 0;
+                //Added by minglei 2018.05.15 [add Wellness type to claim] start
+                //allMainType = (Number(isSD)+Number(isOTH)+Number(isMIS))>0 && Number(isHIF)+Number(isHI)+Number(isHPA)+Number(isACC)+Number(isHS)+Number(isOP)+Number(isOPF)+Number(isMAT)+Number(isTTD)+Number(isDIS)+Number(isCI)+Number(isWP);
+                allMainType = (Number(isSD)+Number(isOTH)+Number(isMIS))>0 && Number(isHIF)+Number(isHI)+Number(isHPA)+Number(isACC)+Number(isHS)+Number(isOP)+Number(isOPF)+Number(isMAT)+Number(isTTD)+Number(isDIS)+Number(isCI)+Number(isWP)+Number(isWL);
+                //Added by minglei 2018.05.15 [add Wellness type to claim] end
+                console.log('allMainType :    '+allMainType );
+                
+                //others / Death Claim /Nil
+                if(allOtherType>0)    console.log('to see allOtherType Str pass');
+                if(allMainType <=0)    console.log('to see allMainType Str allMainType ');
+                
+                if(allOtherType >0 && allMainType <=0){
+                    console.log('pass benefit type 8');
+                    $("#benefit_8").show();    //find CS for more details
+                }
+            });
+   
+        }
+        
+        //get available claim type list e.g. A. xxx , B. xxx
+        function selectPolicyToShowClaimType(pId, claimTypeList){
+            var typeCanChooseStr = '';
+            
+            //selected policy
+            if(policyClaimTypeListMap.size == 0 || policyClaimTypeListMap.get(pId) == null || policyClaimTypeListMap.get(pId) == [] || policyClaimTypeListMap.get(pId) == '' || policyClaimTypeListMap.get(pId) == null){
+                console.log('to see claimTypeList:    '+claimTypeList);
+                policyClaimTypeListMap.set(pId, claimTypeList);
+                
+            }else{
+                //unselected policy
+                console.log('to see claimTypeList empty');
+                policyClaimTypeListMap.set(pId, []);
+            }
+            claimTypeFlagReset();
+            //refresh options
+            policyClaimTypeListMap.forEach(function (item, key, mapObj) {
+                
+                for(var i=0; i< item.length; i++ ){
+                    if(item[i] == 'A')    showA = 0;    //display option
+                    if(item[i] == 'B')    showB = 0;    //display option
+                    if(item[i] == 'C')    showC = 0;    //display option 
+                    if(item[i] == 'D')    showD = 0;    //display option 
+                    if(item[i] == 'E')    showE = 0;    //display option 
+                    if(item[i] == 'F')    showF = 0;    //display option 
+                    if(item[i] == 'G')    showG = 0;    //display option 
+                    if(item[i] == 'H')    showH = 0;    //display option
+                    if(item[i] == 'I')    showI = 0;    //display option     
+                    //20210803 - Kirk - CR48  [add Wellness type to claim] start
+                    if(item[i] == 'J')    showJ = 0;    //display option
+                    //Added by minglei 2018.05.15 [add Wellness type to claim] end
+                    //20210803 - Kirk - CR48  [add benefit to claim] start
+                    if(item[i] == 'K')    showK = 0;    //display option
+                    if(item[i] == 'L')    showL = 0;    //display option
+                    if(item[i] == 'M')    showM = 0;    //display option
+                    if(item[i] == 'N')    showN = 0;    //display option
+                    if(item[i] == 'O')    showO = 0;    //display option
+                    if(item[i] == 'P')    showP = 0;    //display option
+                    if(item[i] == 'Q')    showQ = 0;    //display option
+                    if(item[i] == 'R')    showR = 0;    //display option
+                    if(item[i] == 'S')    showS = 0;    //display option
+                    //20210803 - Kirk - CR48 - 20210917 - Kirk - T_Tui_Na__c removed
+                    //if(item[i] == 'T')    showT = 0;    //display option 
+                    
+                    //Added by KIRK 2021.07.27 [add benefit to claim] end
+            }
+                
+                
+            });
+            if( showA == 0 ){
+                $("#cus_claim_type_A").show();
+                typeCanChooseStr += 'A ';
+            }
+            if( showB == 0 ){
+                $("#cus_claim_type_B").show();
+                typeCanChooseStr += 'B ';
+            }
+            if( showC == 0 ){
+                $("#cus_claim_type_C").show();
+                typeCanChooseStr += 'C ';
+            }
+            if( showD == 0 ){
+                $("#cus_claim_type_D").show();
+                typeCanChooseStr += 'D ';
+            }
+            if( showE == 0 ){
+                $("#cus_claim_type_E").show();
+                typeCanChooseStr += 'E ';
+            }
+            if( showF == 0 ){
+                $("#cus_claim_type_F").show();
+                typeCanChooseStr += 'F ';
+            }
+            if( showG == 0 ){
+                $("#cus_claim_type_G").show(); 
+                typeCanChooseStr += 'G ';
+            }
+            if( showH == 0 ){
+                $("#cus_claim_type_H").show(); 
+                typeCanChooseStr += 'H ';
+            }
+            if( showI == 0 ){
+                $("#cus_claim_type_I").show(); 
+                typeCanChooseStr += 'I ';
+            }
+            //Added by minglei 2018.05.15 [add Wellness type to claim] start
+            if( showJ == 0 ){
+                $("#cus_claim_type_J").show(); 
+                typeCanChooseStr += 'J ';
+            }
+            //Added by minglei 2018.05.15 [add Wellness type to claim] end
+            //20210803 - Kirk - CR48  [add benefit type to claim] start
+            if( showK == 0 ){
+                $("#cus_claim_type_K").show(); 
+                typeCanChooseStr += 'K ';
+            }
+            if( showL == 0 ){
+                $("#cus_claim_type_L").show(); 
+                typeCanChooseStr += 'L ';
+            }
+            if( showM == 0 ){
+                $("#cus_claim_type_M").show(); 
+                typeCanChooseStr += 'M ';
+            }
+            if( showN == 0 ){
+                $("#cus_claim_type_N").show(); 
+                typeCanChooseStr += 'N ';
+            }
+            if( showO == 0 ){
+                $("#cus_claim_type_O").show(); 
+                typeCanChooseStr += 'O ';
+            }
+            if( showP == 0 ){
+                $("#cus_claim_type_P").show(); 
+                typeCanChooseStr += 'P ';
+            }
+            if( showQ == 0 ){
+                $("#cus_claim_type_Q").show(); 
+                typeCanChooseStr += 'Q ';
+            }
+            if( showR == 0 ){
+                $("#cus_claim_type_R").show(); 
+                typeCanChooseStr += 'R ';
+            }
+            if( showS == 0 ){
+                $("#cus_claim_type_S").show(); 
+                typeCanChooseStr += 'S ';
+            }
+            //20210803 - Kirk - CR48 -20210917 - Kirk - T_Tui_Na__c removed 
+            /*if( showT == 0 ){
+                $("#cus_claim_type_T").show(); 
+                typeCanChooseStr += 'T ';
+            }*/
+            //20210803 - Kirk - CR48  [add benefit type to claim] end
+
+            console.log('to see typeCanChooseStr:    '+typeCanChooseStr);
+            AllowTypeOfDoctorToClaimAtAction(typeCanChooseStr);
+                
+        } 
+        
+        
+        function selectPolicyToShowBenefitStr(tempStr){
+            console.log('--14--'+ new Date($.now()));
+        // alert('tempStr='+tempStr);//lsw 0424 temp
+            console.log('selectPolicyToShowBenefit tempStr ' + tempStr);
+            
+            //testing to reset all flag
+            questionFlagReset();
+            //end testing
+            console.log('selectPolicyToShowBenefit reset');
+            //ResetHSBrokerPACAtAction();
+            //ResetHPABrokerPACAtAction();
+            IfHPAPolicyLessThan2Yrs = 0;
+            IFHSPolicyLessThan3YrsOrBrokerPACPlanCode = 0;
+            
+            //reset all options
+            resetTypesOfBenefitCanChoose();    //new
+            questionFlagReset();
+            planCodeFlagReset();    //new
+            //end reset all options
+            
+            var tempList = new Array();
+            tempList = tempStr.split(";");
+            var polType;
+            var polTypeList;
+            var politem;
+            var polBenefit;
+            var itemBenList;
+            var item = new Array();
+            var selectedPolicy = $('input[type="hidden"][id$="hidden_selectPolicy"]').val();
+            console.log('ClaimSUbmitMoreThanOneVFP selected policy controller = '+selectedPolicy);
+            console.log('selectPolicyToShowBenefit tempList ' + tempList );
+            for(var k = 0; k < tempList.length; k++){
+                polType = tempList[k];
+                console.log('selectPolicyToShowBenefit tempList.length ' + tempList.length);
+                console.log('selectPolicyToShowBenefit k ' + k);
+                polTypeList = new Array();
+                if(polType != null && polType != ''){
+                    polTypeList = polType.split(":");
+                    
+                    for(var j = 0; j < polTypeList.length; j++){
+                        console.log('selectPolicyToShowBenefit polTypeList.length ' + polTypeList.length);
+                        console.log('selectPolicyToShowBenefit j ' + j);
+                        if(j==0){
+                            politem = polTypeList[j];
+                        }else if(j==1){
+                            polBenefit = polTypeList[j];
+                            polBenefit = polBenefit.toString();
+                            polBenefit = polBenefit.replace('[', '');
+                            polBenefit = polBenefit.replace(']', '');
+                            polBenefit = polBenefit.replace(/'/g, ''); /** '" */
+                            console.log('selectPolicyToShowBenefit polBenefit1  ' + polBenefit);
+                            //polBenefit = JSON.parse(polBenefit);
+                            if(polBenefit != null && polBenefit != ''){
+                                item = polBenefit.split(',');
+                                
+                                
+                                console.log('@@item:    '+item)
+                                // alert('WW polBenefit item=' +item);
+                                for(var i=0; i<item.length; i++ ){
+                                    console.log('@@ value:     '+item[i]);
+                                    var ss = item[i].trim();
+                                    
+                                    if(ss == 'ACC')   isACC = 1;
+                                    if(ss == 'CI')    isCI = 1; 
+                                    if(ss == 'DIS')    isDIS = 1; 
+                                    if(ss == 'HI')    isHI = 1; 
+                                    if(ss == 'HIF')    isHIF = 1; 
+                                    if(ss == 'HPA')    isHPA = 1; 
+                                    if(ss == 'HS')    isHS = 1; 
+                                    if(ss == 'MAT')    isMAT = 1; 
+                                    if(ss == 'MIS')    isMIS = 1; 
+                                    if(ss == 'OP')    isOP = 1; 
+                                    if(ss == 'OPF')    isOPF = 1; 
+                                    if(ss == 'OTH')    isOTH = 1; 
+                                    if(ss == 'SD')    isSD = 1; 
+                                    if(ss == 'TTD')    isTTD = 1; 
+                                    if(ss == 'WP')    isWP = 1; 
+                                    //Added by minglei 2018.05.15 [add Wellness type to claim] start
+                                    if(ss == 'WL')    isWL = 1;
+                                    //Added by minglei 2018.05.15 [add Wellness type to claim] end
+                                    if(ss == 'BrokerPAC')    isBrokerPAC = 1;     //for BrokerPAC case load doc
+                                    if(ss == 'WonderWoman')    isWonderWoman = 1;     //IBM KOU WONDER WOMAN CR 20180430
+                                }
+                                //Daily Hospital Income Allowanace
+                                if(isHIF>0)    showHIF = 0;    //display option
+                                if(isHI>0)    showHI = 0;    //display option
+                                if(isHPA>0)    showHPA = 0;    //display option
+                                //Hospital Treatment Cost
+                                if(isACC>0)    showHS = 0;    //display option
+                                if(isHS>0)    showHS = 0;    //display option
+                                //Outpatient Cost
+                                if(isOP>0)    showOP = 0;    //display option
+                                if(isOPF>0)    showOPF = 0;    //display option
+                                if(isACC>0)    showOP = 0;    //display option
+                                //Maternity Cost
+                                if(isMAT>0)    showMAT = 0;    //display option
+                                //Temperory or Permanent  Disability  
+                                if(isTTD>0)    showDIS = 0;    //display option
+                                if(isDIS>0)    showDIS = 0;    //display option
+                                //Critical Illness 
+                                if(isCI>0)    showCI = 0;    //display option
+                                //Waiver of premium
+                                if(isWP>0)    showDIS = 0;    //display option
+                                //Added by minglei 2018.05.15 [add Wellness type to claim] start
+                                if(isWL > 0)    showWL = 0;    //display option
+                                //Added by minglei 2018.05.15 [add Wellness type to claim] end
+                                
+                                var tmpAvailBenefitCount = 0;
+                                var tmpAvailBenefitIndex = 0;
+                                
+                                if( showHIF >= 0 || showHI >= 0 || showHPA >= 0 ){
+                                    $("#benefit_1").show();
+                                    tmpAvailBenefitCount++;
+                                    tmpAvailBenefitIndex = 1;
+                                    
+                                    //add flag to check if display BrokerPAC plan doc logic
+                                    if(showHPA == 0){
+                                        var index= $.inArray(politem, isPolicyLessThan2YrsArr );
+                                        if(index== -1)
+                                        {
+                                            //do nothing
+                                        }
+                                        else
+                                        {
+                                            //policy less than 2 years also own HPA
+                                            IfHPAPolicyLessThan2Yrs = 1;
+                                            //SelectHPABrokerPACAtAction();
+                                            console.log('selectPolicyToShowBenefit selectHPALess2yrs');
+                                        }
+                                        
+                                    }
+                                }
+                                if( showHS >= 0 ){
+                                    $("#benefit_2").show();
+                                    tmpAvailBenefitCount++;
+                                    tmpAvailBenefitIndex = 2;
+                                    console.log('@@ showHS :     ');
+                                    //add flag to check if display BrokerPAC plan doc logic
+                                    
+                                    //1. case of less then 3 years
+                                    var index= $.inArray(politem, isPolicyLessThan3YrsArr );
+                                    if(index== -1)
+                                    {
+                                        //do nothing
+                                    }
+                                    else
+                                    {
+                                        //policy less than 3 years also own HS
+                                        IFHSPolicyLessThan3YrsOrBrokerPACPlanCode = 1;
+                                        //SelectHSBrokerPACAtAction();
+                                        console.log('selectPolicyToShowBenefit HSLess3yrs');
+                                    }
+                                    
+                                    //2. case for Broker PAC
+                                    if(isBrokerPAC ){
+                                        console.log('selectPolicyToShowBenefit HS broker PAC');
+                                        //SelectHSBrokerPACAtAction();
+                                        IFHSPolicyLessThan3YrsOrBrokerPACPlanCode = 1;
+                                    }
+                                }
+                                if( showOP >= 0 ){
+                                    $("#benefit_3").show();
+                                    tmpAvailBenefitCount++;
+                                    tmpAvailBenefitIndex = 3;
+                                }
+                                if( showMAT >= 0 ){
+                                    $("#benefit_4").show();
+                                    tmpAvailBenefitCount++;
+                                    tmpAvailBenefitIndex = 4;
+                                }
+                                if( showDIS >= 0 && (isTTD>0 || isDIS>0) ){
+                                    console.log('@@ showDIS :     ');
+                                    $("#benefit_5").show();    //ttd or dis
+                                    tmpAvailBenefitCount++;
+                                    tmpAvailBenefitIndex = 5;
+                                }
+                                if( showCI >= 0 ){
+                                    $("#benefit_6").show();
+                                    tmpAvailBenefitCount++;
+                                    tmpAvailBenefitIndex = 6;
+                                }
+                                if( showDIS >= 0  && isWP>0){
+                                    $("#benefit_7").show();     //wp
+                                    tmpAvailBenefitCount++;
+                                    tmpAvailBenefitIndex = 7;
+                                }
+                                //Added by minglei 2018.05.15 [add Wellness type to claim] start
+                                if( showWL >= 0  && isWL > 0){
+                                    $("#benefit_9").show();     //wl
+                                    tmpAvailBenefitCount++;
+                                    tmpAvailBenefitIndex = 9;
+                                }
+                                //Added by minglei 2018.05.15 [add Wellness type to claim] end
+                                
+                                console.log('********AvailBenefitCount: ' + tmpAvailBenefitCount);
+                                availBenefitTypeCount = tmpAvailBenefitCount;
+                                
+                                /**                
+                                if (skipOneBenefitForTestingJS)
+                                if (availBenefitTypeCount == 1){
+                                    $("#benefit_" + tmpAvailBenefitIndex).click();
+                                }
+                                */
+                                
+                                $("#benefit_8").hide(); 
+                                var allOtherType = 0;
+                                allOtherType = Number(isSD)+Number(isOTH)+Number(isMIS);
+                                console.log('allOtherType:    '+allOtherType );
+                                console.log('--15--'+ new Date($.now())); 
+                                var allMainType = 0;
+                                //Added by minglei 2018.05.15 [add Wellness type to claim] start
+                                //allMainType = (Number(isSD)+Number(isOTH)+Number(isMIS))>0 && Number(isHIF)+Number(isHI)+Number(isHPA)+Number(isACC)+Number(isHS)+Number(isOP)+Number(isOPF)+Number(isMAT)+Number(isTTD)+Number(isDIS)+Number(isCI)+Number(isWP);
+                                allMainType = (Number(isSD)+Number(isOTH)+Number(isMIS))>0 && Number(isHIF)+Number(isHI)+Number(isHPA)+Number(isACC)+Number(isHS)+Number(isOP)+Number(isOPF)+Number(isMAT)+Number(isTTD)+Number(isDIS)+Number(isCI)+Number(isWP)+number(isWL);
+                                //Added by minglei 2018.05.15 [add Wellness type to claim] end
+                                console.log('allMainType :    '+allMainType );
+                                
+                                //others / Death Claim /Nil
+                                if(allOtherType>0)    console.log('to see allOtherType Str pass');
+                                if(allMainType <=0)    console.log('to see allMainType Str allMainType ');
+                                
+                                if(allOtherType >0 && allMainType <=0){
+                                    console.log('pass benefit type 8');
+                                    $("#benefit_8").show();    //find CS for more details
+                                }
+                            }
+                        } 
+                    }
+                }
+            }
+
+            //}
+            console.log('policyBenefitListMap' + policyBenefitListMap);
+                        
+            //refresh options
+            //policyBenefitListMap.forEach(function (item, key, mapObj) {
+                
+                
+        }
+        
+        //get available claim type list e.g. A. xxx , B. xxx
+        //function selectPolicyToShowClaimType(pId, claimTypeList){
+        function selectPolicyToShowClaimTypeStr(tempStr){
+            var typeCanChooseStr = '';
+            console.log('selectPolicyToShowClaimType tempStr ' + tempStr);
+            
+            if(tempStr == null || tempStr == ''){
+                tempStr = $('input[type="hidden"][id$="hidden_selectedPolicyClaimTypeStr"]').val();
+            }
+            console.log('selectPolicyToShowClaimType tempStr 2 ' + tempStr);
+            
+            claimTypeFlagReset();
+            var tempList = new Array();
+            tempList = tempStr.split(";");
+            var polType;
+            var polTypeList;
+            var politem;
+            var polClaim;
+            var itemBenList;
+            var item = new Array();
+            for(var k = 0; k < tempList.length; k++){
+                polType = tempList[k];
+                polTypeList = new Array();
+                if(polType != null && polType != ''){
+                    polTypeList = polType.split(":");
+                    
+                    for(var j = 0; j < polTypeList.length; j++){
+                        if(j==0){
+                            politem = polTypeList[j];
+                        }else if(j==1){
+                            polClaim = polTypeList[j];
+                            polClaim = polClaim.toString();
+                            polClaim = polClaim.replace('[', '');
+                            polClaim = polClaim.replace(']', '');
+                            polClaim = polClaim.replace(/'/g, ''); /** '" */
+                            console.log('selectPolicyToShowClaimType polClaim ' + polClaim );
+                            //polClaim = JSON.parse(polClaim );
+                            if(polClaim != null && polClaim != ''){
+                                item = polClaim.split(',');
+                                
+                                
+                                for(var i=0; i< item.length; i++ ){
+                                    var ss = item[i].trim();
+                                    if(ss == 'A')    showA = 0;    //display option
+                                    if(ss == 'B')    showB = 0;    //display option
+                                    if(ss == 'C')    showC = 0;    //display option 
+                                    if(ss == 'D')    showD = 0;    //display option 
+                                    if(ss == 'E')    showE = 0;    //display option 
+                                    if(ss == 'F')    showF = 0;    //display option 
+                                    if(ss == 'G')    showG = 0;    //display option 
+                                    if(ss == 'H')    showH = 0;    //display option
+                                    if(ss == 'I')    showI = 0;    //display option
+                                    //Added by minglei 2018.05.15 [add Wellness type to claim] start
+                                    if(ss == 'J')    showJ = 0;    //display option
+                                    //Added by minglei 2018.05.15 [add Wellness type to claim] end  
+                                    //20210803 - Kirk - CR48  [add benefit type to claim] start
+                                    if(ss == 'K')    showK = 0;    //display option
+                                    if(ss == 'L')    showL = 0;    //display option
+                                    if(ss == 'M')    showM = 0;    //display option
+                                    if(ss == 'N')    showN = 0;    //display option
+                                    if(ss == 'O')    showO = 0;    //display option
+                                    if(ss == 'P')    showP = 0;    //display option
+                                    if(ss == 'Q')    showQ = 0;    //display option
+                                    if(ss == 'R')    showR = 0;    //display option
+                                    if(ss == 'S')    showS = 0;    //display option
+                                    //20210803 - Kirk - CR48 - 20210917 - Kirk - T_Tui_Na__c removed 
+                                    //if(ss == 'T')    showT = 0;    //display option 
+
+                                    //20210803 - Kirk - CR48  [add benefit type to claim] end
+                                }
+                            }
+                        } 
+                    }
+                }
+            }  
+                 
+            if( showA == 0 ){
+                $("#cus_claim_type_A").show();
+                typeCanChooseStr += 'A ';
+            }
+            if( showB == 0 ){
+                $("#cus_claim_type_B").show();
+                typeCanChooseStr += 'B ';
+            }
+            if( showC == 0 ){
+                $("#cus_claim_type_C").show();
+                typeCanChooseStr += 'C ';
+            }
+            if( showD == 0 ){
+                $("#cus_claim_type_D").show();
+                typeCanChooseStr += 'D ';
+            }
+            if( showE == 0 ){
+                $("#cus_claim_type_E").show();
+                typeCanChooseStr += 'E ';
+            }
+            if( showF == 0 ){
+                $("#cus_claim_type_F").show();
+                typeCanChooseStr += 'F ';
+            }
+            if( showG == 0 ){
+                $("#cus_claim_type_G").show(); 
+                typeCanChooseStr += 'G ';
+            }
+            if( showH == 0 ){
+                $("#cus_claim_type_H").show(); 
+                typeCanChooseStr += 'H ';
+            }
+            if( showI == 0 ){
+                $("#cus_claim_type_I").show(); 
+                typeCanChooseStr += 'I ';
+            }
+            //Added by minglei 2018.05.15 [add Wellness type to claim] start
+            if( showJ == 0 ){
+                $("#cus_claim_type_J").show(); 
+                typeCanChooseStr += 'J ';
+            }               
+            //Added by minglei 2018.05.15 [add Wellness type to claim] end 
+            //20210803 - Kirk - CR48  [add benefit to claim] start
+            if( showK == 0 ){
+                $("#cus_claim_type_K").show(); 
+                typeCanChooseStr += 'K ';
+            }
+            if( showL == 0 ){
+                $("#cus_claim_type_L").show(); 
+                typeCanChooseStr += 'L ';
+            }
+            if( showM == 0 ){
+                $("#cus_claim_type_M").show(); 
+                typeCanChooseStr += 'M ';
+            }
+            if( showN == 0 ){
+                $("#cus_claim_type_N").show(); 
+                typeCanChooseStr += 'N ';
+            }
+            if( showO == 0 ){
+                $("#cus_claim_type_O").show(); 
+                typeCanChooseStr += 'O ';
+            }
+            if( showP == 0 ){
+                $("#cus_claim_type_P").show(); 
+                typeCanChooseStr += 'P ';
+            }
+            if( showQ == 0 ){
+                $("#cus_claim_type_Q").show(); 
+                typeCanChooseStr += 'Q ';
+            }
+            if( showR == 0 ){
+                $("#cus_claim_type_R").show(); 
+                typeCanChooseStr += 'R ';
+            }
+            if( showS == 0 ){
+                $("#cus_claim_type_S").show(); 
+                typeCanChooseStr += 'S ';
+            }
+            //20210803 - Kirk - CR48 - 20210917 - Kirk - T_Tui_Na__c removed 
+            /*if( showT == 0 ){
+                $("#cus_claim_type_T").show(); 
+                typeCanChooseStr += 'T ';
+            }*/
+        
+            //20210803 - Kirk - CR48  [add benefit to claim] end
+            console.log('to see typeCanChooseStr:    '+typeCanChooseStr);
+            AllowTypeOfDoctorToClaimAtAction(typeCanChooseStr);
+            
+            //console.log('policyClaimTypeListMap' + policyClaimTypeListMap);
+            //refresh options
+            //policyClaimTypeListMap.forEach(function (item, key, mapObj) {
+                
+        } 
+        
+        
+        //select Benefit option
+        function showHIHPA_Flag(){
+            if(showHI == 1){
+                showHI = 0;
+            }else if(showHI == 0){
+                showHI = 1;
+            }
+            
+            if(showHIF == 1){
+                showHIF = 0;
+            }else if(showHIF == 0){
+                showHIF = 1;
+            }
+            
+            if(showHPA == 1){
+                showHPA = 0;
+            }else if(showHPA == 0){
+                showHPA = 1;
+            }
+        }
+          
+        function showHS_Flag(){
+            if(showHS == 1){
+                showHS = 0;
+            }else if(showHS == 0){
+                showHS = 1;
+            }
+        }
+        
+        function showOP_Flag_O(){
+            console.log('to see showOP_Flag_O pass showOP previous:    '+showOP );
+            console.log('to see showOP_Flag_O pass showOPF previous:    '+showOPF );
+            //2  options are OP
+            //outpatient cost is choose - ShopOP = 1
+            if(showOP == 1){
+                showOP = 0;
+            }else if(showOP == 0){
+                showOP = 1;
+            }
+            
+            if(showOPF == 1){
+                showOPF = 0;
+            }else if(showOPF == 0){
+                showOPF = 1;
+            }
+            console.log('to see showOP_Flag_O pass showOP after:    '+showOP );
+            console.log('to see showOP_Flag_O pass showOPF after:    '+showOPF );
+            
+        }
+        
+        function showDIS_Flag_T(){
+            //2 options are DIS
+            //Temperory or Permanent  Disability  is choose - showDIS = 1
+            if(showDIS == 3){
+                showDIS = 2;    
+            }else if(showDIS == 2){
+                showDIS = 3;
+            }else if(showDIS == 1){
+                showDIS = 0;
+            }else if(showDIS == 0){
+                showDIS = 1;
+            }
+        }
+        
+        function showDIS_Flag_W(){
+            //2 options are DIS
+            //Waiver of Premium is choose - showDIS = 2
+            if(showDIS == 3){
+                showDIS = 1;    
+            }else if(showDIS == 1){
+                showDIS = 3;
+            }else if(showDIS == 2){
+                showDIS = 0;
+            }else if(showDIS == 0){
+                showDIS = 2;
+            }
+        }
+        
+        function showCI_Flag(){
+            if(showCI == 1){
+                showCI = 0;
+            }else if(showCI == 0){
+                showCI = 1;
+            }
+        }
+        
+        function showMAT_Flag(){
+            if(showMAT == 1){
+                showMAT = 0;
+            }else if(showMAT == 0){
+                showMAT = 1;
+            }
+        }
+        
+        //Added by minglei 2018.05.15 [add Wellness type to claim] start
+        function showWellness_Flag(){
+            if(showWL == 1){
+                showWL = 0;
+            }else if(showWL == 0){
+                showWL = 1;
+            }
+        }
+        //Added by minglei 2018.05.15 [add Wellness type to claim] end
+        
+        
+        /** tab function **/
+        function inactiveAllTab(){
+            $('#info').removeClass();
+            $('#detail').removeClass();
+            $('#att').removeClass();
+            $('#esign').removeClass();
+        
+        }
+        
+        function displayCallAction_SubmitClaim(){
+            $('#callAction1').html('<a href="javascript:void(0);"  class="onclick-pointer action-btn cigna-fg-white" role="button"><span class="fa fa-send onclick-pointer" aria-hidden="true" style="padding-left:10px;"></span>{!$Label.Submit}</a>');
+            $('#callAction2').html('<a href="javascript:void(0);"  style="text-transform: none !important;"  class="onclick-pointer action-btn cigna-fg-white" role="button">{!$Label.Submit}</a>');
+        }
+        
+        function displayCallAction_AnotherClaim(){
+            $('#callAction1').html('<a href="javascript:void(0);"  class="onclick-pointer action-btn cigna-fg-white" role="button"><span class="fa fa-pencil-square-o onclick-pointer" aria-hidden="true" style="padding-left:10px;"></span>{!$Label.MAKE_ANOTHER_CLAIM}</a>');
+            $('#callAction2').html('<a href="javascript:void(0);"  style="text-transform: none !important;"  class="action-btn onclick-pointer cigna-fg-white" role="button">{!$Label.MAKE_ANOTHER_CLAIM}</a>');
+            //for testing use only
+            //sendClaimFormEmailAtAction();
+            //submitClaimRequestAtAction();
+        }
+        
+        function redirectRestart(){
+            //CR-56_Link_20220214
+            $('#callAction1').on("click",function(){ Cigna.Util.navigateToVFP('MyClaimSubmitVFP')});
+            $('#callAction2').on("click",function(){ Cigna.Util.navigateToVFP('MyClaimSubmitVFP')});
+        }
+        
+        function selectedPolicyFromSearch(item, rowNum){
+            //this.clear();
+            selectedPolicyListIdxAtAction(rowNum);        
+        }      
+        
+        
+        
+        
+        /**********************/ 
+            
+        /*Loading*/
+        function showLoading() {
+            $('#att-loading').fadeIn(100);
+            $('#overlay-loading').fadeIn(100);
+        }
+                
+        function finishSubmission() {
+            $('#att-loading').fadeOut(100);
+            $('#overlay-loading').fadeOut(100);
+        } 
+         
+        /*Submit*/
+        function submitForm(){
+            var valid=0;
+            $("form[id*='change-personal-information']").find('input.form-field-style,textarea.form-field-style-textarea,input[type=checkbox]').each(function(){
+                if($(this).val() != "" && $(this).val() != "on" && $(this).val() !="1" && $(this).val() !="+852") valid+=1;
+            });
+            
+           
+            if(valid){
+                $("#errSaveForm").hide();
+                //getCurrentStep();    //kenavi work
+                
+                //upload doc at controller
+                refreshAttlist();
+                
+                //nextStep();    //kenavi work
+            }
+            else {
+                $("html, body").animate({ scrollTop: 0 }, "slow");
+                $("#errSaveForm").show();
+            
+            }
+        
+        }
+        
+        function toggleOverlay_4(){
+            
+            $("#overlay_4").css("opacity", ".95");
+            $('#overlay_4').toggle();
+            $('#specialBox_4').toggle();
+            
+        }
+        
+        function toggleOverlay_CannotProvideDoc(){
+            
+            $("#overlay_CannotProvideDoc").css("opacity", ".95");
+            $('#overlay_CannotProvideDoc').toggle();
+            $('#specialBox_CannotProvideDoc').toggle();
+
+        }
+        
+        //andy work
+            
+        // Set the height of the parent scroll view
+        
+        function adjustScrollViewHeight(){
+              
+             var targetHeight = window.screen.height;
+                     
+             // handle landscape mode
+             if($(window).width() > $(window).height()){
+                      targetHeight = window.screen.width;   
+             }
+             
+             // 58px is for the nav bar of Salesforce1 app.
+             $('body').css('height', (targetHeight  - 58) + 'px');
+        }
+        
+        if (!isBrokerIOSSF1()){
+            if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                 $(document).ready(function(){
+               
+                         adjustScrollViewHeight();
+        
+                         // handle screen rotation
+                         jQuery( window ).on( "orientationchange", function( event ) { 
+                            adjustScrollViewHeight();
+                        } );
+                        //CR-56_Link_20220214
+                        $('body').on('touchmove', function(){
+                            $('.cigna-action-btn-group').css('opacity', 0);
+                        });
+                        
+                        $('body').on("touchend", function(){
+                            setTimeout(function(){
+                                $('.cigna-action-btn-group').css('opacity', 1);
+                            }, 1000);
+                        });
+    
+        
+                 });
+                     
+                $('#action-bar').removeClass('cigna-floating-bottom-panel');
+                     
+            }else{
+                $('#action-bar').addClass('cigna-floating-bottom-panel');
+            }
+        }
+        
+        //CR-56_Link_20220214
+        $('[data-toggle="tooltip"]').tooltip();
+        
+        
+        /** working on validation **/
+        function validateForm() {
+            return $("form[id*='frmApplication']").validate().form();
+        }
+        /** end working on validation **/
+        
+        /** btn js**/
+        function refreshBtnJS(){
+            console.log('to see refreshBtnJS');
+            /* load onclick for single / multiple selection */
+            
+            /** option js **/
+            var handler_single_showBtn = function() {
+                var currentStepNum = $('.content-step:visible').data('step');
+                
+                $(this).siblings('.content-choice-showBtn').removeClass('fg-orange').addClass('fg-grey');
+                $(this).addClass('fg-orange');
+                
+                //working on assign value
+                var val = '';
+                
+                $(this).parent().children('.fg-orange').each(function(idx, elem){
+                    //val = val + $(elem).data('value') + ',';
+                    var params = $(elem).children('input[type="hidden"][name="param-str"]').val();
+                    console.log('to see params :    '+params );
+                    val = params;  
+                });
+                
+                console.log('to see val: '+val );
+                console.log('to see save on field before: '+$(this).siblings('input[type="hidden"]').val());
+                $(this).siblings('input[type="hidden"]').val(val);
+                console.log('to see save on field after: '+$(this).siblings('input[type="hidden"]').val());
+                
+                
+                // zoe working in progress
+                if (currentStepNum == 6){
+                    
+                    displayNextBtnIn(currentStepNum);
+                }
+                else{
+                    displayNextBtn();
+                }
+            };
+            
+            var handler_single = function() {
+                
+                $(this).siblings('.content-choice').removeClass('fg-orange').addClass('fg-grey');
+                $(this).addClass('fg-orange');
+                
+                //working on assign value
+                var val = '';
+                
+                $(this).parent().children('.fg-orange').each(function(idx, elem){
+                    //val = val + $(elem).data('value') + ',';
+                    var params = $(elem).children('input[type="hidden"][name="param-str"]').val();
+                    console.log('to see params :    '+params );
+                    val = params;  
+                });
+                
+                //alert('handler_single val:'+val);
+                
+                console.log('to see val: '+val );
+                console.log('to see save on field before: '+$(this).siblings('input[type="hidden"]').val());
+                $(this).siblings('input[type="hidden"]').val(val);
+                console.log('to see save on field after: '+$(this).siblings('input[type="hidden"]').val());
+                
+                
+                //displayNextBtn();
+                
+                //Nicole_20200902_GS Claim
+                var currentStepNum = $('.content-step:visible').data('step');
+                if(includeGSClaim && currentStepNum == 5) displayNextBtnIn(5);
+                if((!includeGSClaim && currentStepNum == 5) || currentStepNum != 5 ){                       
+                    nextStep();
+                }
+            };
+            
+            var handler_multiple = function() {
+                var currentStepNum = $('.content-step:visible').data('step');
+            
+                if ($(this).hasClass('fg-grey')) {
+                    $(this).removeClass('fg-grey').addClass('fg-orange');
+
+                    // zoe working in progress
+                    if (Cigna.Util.isCustomerPortal()){
+                        if (currentStepNum == 2 || currentStepNum == 4){
+                             displayNextBtnIn(currentStepNum);
+                        }
+                        else{
+                            displayNextBtn();
+                        }
+                    }
+                    
+                    if (Cigna.Util.isBrokerPortal()){
+                        if (currentStepNum == 2 || currentStepNum == 3){
+                            displayNextBtnIn(currentStepNum);
+                        }
+                        else{
+                            displayNextBtn();
+                        }
+                    }
+                } else {
+                    $(this).removeClass('fg-orange').addClass('fg-grey');
+                    if(!$(this).siblings('.content-multi-choice').hasClass('fg-orange')){
+
+                        // zoe working in progress
+                        if (Cigna.Util.isCustomerPortal()){
+                            if (currentStepNum == 2 || currentStepNum == 4){
+                                hideNextBtnIn(currentStepNum);
+                            }
+                            else{
+                                hideNextBtn();
+                            }
+                        }
+                        
+                        if (Cigna.Util.isBrokerPortal()){
+                            if (currentStepNum == 2 || currentStepNum == 3){
+                                hideNextBtnIn(currentStepNum);
+                            }
+                            else{
+                                hideNextBtn();
+                            }
+                        }
+                    }
+                }
+                
+                //working on assign value
+                var val = '';
+                
+                $(this).parent().children('.fg-orange').each(function(idx, elem){
+                    var params = $(elem).children('input[type="hidden"][name="param-str"]').val();
+
+                    console.log('to see params :    '+params );
+                    val = val + params + ',';
+                });
+                
+                console.log('to see val: '+val );
+                console.log('to see save on field before: '+$(this).siblings('input[type="hidden"]').val());
+                $(this).siblings('input[type="hidden"]').val(val);
+                console.log('to see save on field after: '+$(this).siblings('input[type="hidden"]').val());
+                
+            };
+            /** end option js **/
+            
+            /** question js **/
+            var question_handler_single_showBtn = function() {
+                
+                $(this).siblings('.question-choice-showBtn').removeClass('fg-orange').addClass('fg-grey');
+                $(this).addClass('fg-orange');
+                
+                /** working on assign value **/
+                var val = '';
+                $(this).parent().children('.fg-orange').each(function(idx, elem){
+                    var params = $(elem).children('input[type="hidden"][name="param-str"]').val();
+                    console.log('to see question-choice-showBtn params:    '+params);
+                    val = params;  
+                });
+                $(this).siblings('input[type="hidden"]').val(val);
+                
+            };
+            
+            var question_handler_single = function() {
+                
+                $(this).siblings('.question-choice').removeClass('fg-orange').addClass('fg-grey');
+                $(this).addClass('fg-orange');
+                
+                /** working on assign value **/
+                var val = '';
+                // 20200107-minghua-JR1811
+                var id = '';
+                $(this).parent().children('.fg-orange').each(function(idx, elem){
+                    var params = $(elem).children('input[type="hidden"][name="param-str"]').val();
+                    console.log('to see question-choice params:'+params);
+                    id = $(elem).children('input[type="hidden"][name="param-str"]').attr('id');
+                    console.log('to see question-choice id:'+id);
+                    val = params;
+                });
+                console.log('to see question-choice id2:'+id);
+                console.log('to see value saved for question-choice:' + $(this).siblings('input[type="hidden"]').val());
+                
+                // Rancho_HC234_20230719 - move to q13
+                // if (id != undefined && id != null && id != '' && id == 'otherInsurance') {
+                //     console.log('to set value for question-choice');
+                //     $(this).siblings('input[type="hidden"]').val(val);
+                //     $('input[type="hidden"][id*="hiddenValue_cus_q13_y_2"]').val(val);
+                //     console.log('to see value saved for question-choice:' + $('input[type="hidden"][id*="hiddenValue_cus_q13_y_2"]').val());
+                // }else{
+                //     $(this).siblings('input[type="hidden"]').val(val);
+                //     var q13hidden = $('input[type="hidden"][id*="hiddenValue_cus_q13_y_2"]');
+                //     if (q13hidden != undefined && q13hidden != null && q13hidden != '') {
+                //         q13hidden.val('false');
+                //     }
+                // }
+                /**
+                if ($(this).hasClass('go-next-step')){
+                    nextStep();
+                }
+                
+                if ($(this).hasClass('display-next-button')){
+                    displayNextBtn();
+                }
+                */
+            };
+            
+            var question_handler_multiple = function() {
+                if ($(this).hasClass('fg-grey')) {
+                    $(this).removeClass('fg-grey').addClass('fg-orange');
+                } else {
+                    $(this).removeClass('fg-orange').addClass('fg-grey');
+                    if(!$(this).siblings('.question-multi-choice').hasClass('fg-orange'))    hideNextBtn();
+                }
+                
+                /** working on assign value **/
+                var val = '';
+                
+                // Rancho_CR48_20210706: avoid losing value when invoke setRow()
+                if($(this).hasClass('symptoms-and-diagnosis-item')){
+                    $(".symptoms-and-diagnosis-item").filter(".fg-orange").each(function(idx, elem){
+                        var params = $(elem).children('input[type="hidden"][name="param-str"]').val();
+                        console.log('to see question-multi-choice params:'+params);
+                        val = val + params + ',';
+                    });
+                    $(this).parent().siblings('input[type="hidden"]').val(val);
+                }else{
+                    $(this).parent().children('.fg-orange').each(function(idx, elem){
+                        var params = $(elem).children('input[type="hidden"][name="param-str"]').val();
+                        console.log('to see question-multi-choice params:'+params);
+                        val = val + params + ',';
+                    });
+                    $(this).siblings('input[type="hidden"]').val(val);
+                }
+            };
+            /** end question js **/
+            //CR-56_Link_20220214
+            $( ".content-choice-showBtn" ).off( "click" ).on( "click", handler_single_showBtn );
+            $( ".content-choice" ).off( "click" ).on( "click", handler_single );
+            $( ".content-multi-choice" ).off( "click" ).on( "click", handler_multiple );
+            // $( ".question-choice" ).unbind( "click" ).bind( "click", question_handler_single );
+            // $( ".question-multi-choice" ).unbind( "click" ).bind( "click", question_handler_multiple );
+            $( ".question-choice" ).off( "mousedown" ).on( "mousedown", question_handler_single );
+            $( ".question-multi-choice" ).off( "mousedown" ).on( "mousedown", question_handler_multiple );
+        }
+        
+        /* end btn js*/
+
+        function greySeparatorStyle () {
+             /**grey separator**/
+             var srlist = document.getElementsByClassName("listcontent");
+             var flip = 0;
+             for(var i = 0; i < srlist.length; i++){
+                 var item = srlist[i];
+                 if (flip == 0) {
+                     item.style.backgroundColor = '#f2f2f2';
+                     flip = 1;
+                 }
+                 else if ($(item).is(':first-child')) {
+                     item.style.backgroundColor = '#f2f2f2';
+                 }
+                 else{
+                     flip = 0;
+                 }
+             }
+        }
+        function InSeqFunction( action ){
+            var d = $.Deferred();
+            // some very time consuming asynchronous code...
+            setTimeout(function() {
+            action();
+            d.resolve();
+            }, 2000);
+            return d.promise();
+        }
+        
+        function testingPass(){
+            alert('testing');
+        }
+        
+        function showGroupPolicyOnlyBankAccount(){
+            $('#avaliableAccOpt').hide();
+            $('#otherBankAcc').hide();
+            $('#grpPolicy_Cus').show();
+        }
+        
+        function showNotGroupPolicyOnlyBankAccount(){
+            $('#avaliableAccOpt').show();
+            $('#otherBankAcc').show();
+            $('#grpPolicy_Cus').hide();
+        }
+        
+        
+        /** question logic **/
+        /** move to question page
+        function hideQ2(){
+            sj_HIF_b = false;
+        }
+        
+        function displayQ2(){
+            sj_HIF_b = true;
+        }
+        
+        function hideQ3(){
+            sj_HIF_c = false;
+        }
+        
+        function displayQ3(){
+            sj_HIF_c = true;
+        }
+        **/
+        function hideQ14(){
+            sj_HS_MAT_a = false;
+            hideAfterwardQuestion('q14');
+        }
+        
+        function displayQ14(){
+            sj_HS_MAT_a = true;
+        }
+        
+        //logic to load question base on selected policy
+        /** pass flag isCustomer from controller **/
+        
+        function addBenefitTypeToClaimRecord(isCustomer){
+            var benefitTypeStr = '';
+            
+            //default HIF
+            if(showHIF >= 1 && benefitTypeStr == '')    benefitTypeStr = "HIF";
+            else if(showHIF >= 1 && benefitTypeStr != '')    benefitTypeStr += ";HIF";
+            
+            if(showHI >= 1 && benefitTypeStr == '')    benefitTypeStr = "HI";
+            else if(showHI >= 1 && benefitTypeStr != '')    benefitTypeStr += ";HI";
+            
+            if(showHPA >= 1 && benefitTypeStr == '')    benefitTypeStr = "HPA";
+            else if(showHPA >= 1 && benefitTypeStr != '')    benefitTypeStr += ";HPA";
+            
+            if(showHS >= 1 && benefitTypeStr == '')    benefitTypeStr = "HS";
+            else if(showHS >= 1 && benefitTypeStr != '')    benefitTypeStr += ";HS";
+            
+            if(showDIS >= 1 && benefitTypeStr == '')    benefitTypeStr = "DIS";
+            else if(showDIS >= 1 && benefitTypeStr != '')    benefitTypeStr += ";DIS";
+            
+            if((showDIS == 3 || showDIS == 2) && benefitTypeStr == '')    benefitTypeStr = "WP";
+            else if((showDIS == 3 || showDIS == 2) && benefitTypeStr != '')    benefitTypeStr += ";WP";
+            
+            if((showDIS == 3 || showDIS == 1) && benefitTypeStr == '')    benefitTypeStr = "TTD";
+            else if((showDIS == 3 || showDIS == 1) && benefitTypeStr != '')    benefitTypeStr += ";TTD";
+            
+            
+            if(showCI >= 1 && benefitTypeStr == '')    benefitTypeStr = "CI";
+            else if(showCI >= 1 && benefitTypeStr != '')    benefitTypeStr += ";CI";
+            
+            if(showOP >= 1 && benefitTypeStr == '')    benefitTypeStr = "OP";
+            else if(showOP >= 1 && benefitTypeStr != '')    benefitTypeStr += ";OP";
+            
+            if(showOPF >= 1 && benefitTypeStr == '')    benefitTypeStr = "OPF";
+            else if(showOPF >= 1 && benefitTypeStr != '')    benefitTypeStr += ";OPF";
+            
+            if(showMAT >= 1 && benefitTypeStr == '')    benefitTypeStr = "MAT";
+            else if(showMAT >= 1 && benefitTypeStr != '')    benefitTypeStr += ";MAT";
+            //Added by minglei 2018.05.15 [add Wellness type to claim] start
+            if(showWL >= 1 && benefitTypeStr == '')    benefitTypeStr = "WL";
+            else if(showWL >= 1 && benefitTypeStr != '')    benefitTypeStr += ";WL";
+            //Added by minglei 2018.05.15 [add Wellness type to claim] end
+            
+            //save selected claim type to record
+            console.log('benefitTypeStr before pass selectBenefitTypeAtAction:    '+benefitTypeStr);
+            selectBenefitTypeAtAction(benefitTypeStr);    //on complete do questionDisplayLogic
+            console.log('to see loading end.');
+            isPass = true;
+                
+        }
+        
+        /** 170308
+        function addBenefitTypeToClaimRecord(isCustomer){
+            showLoading();    //add loading icon
+            var benefitTypeStr = '';
+            InSeqFunction(function(){
+            
+                //default HIF
+                if(showHIF >= 1 && benefitTypeStr == '')    benefitTypeStr = "HIF";
+                else if(showHIF >= 1 && benefitTypeStr != '')    benefitTypeStr += ";HIF";
+                
+                if(showHI >= 1 && benefitTypeStr == '')    benefitTypeStr = "HI";
+                else if(showHI >= 1 && benefitTypeStr != '')    benefitTypeStr += ";HI";
+                
+                if(showHPA >= 1 && benefitTypeStr == '')    benefitTypeStr = "HPA";
+                else if(showHPA >= 1 && benefitTypeStr != '')    benefitTypeStr += ";HPA";
+                
+                if(showHS >= 1 && benefitTypeStr == '')    benefitTypeStr = "HS";
+                else if(showHS >= 1 && benefitTypeStr != '')    benefitTypeStr += ";HS";
+                
+                if(showDIS >= 1 && benefitTypeStr == '')    benefitTypeStr = "DIS";
+                else if(showDIS >= 1 && benefitTypeStr != '')    benefitTypeStr += ";DIS";
+                
+                if((showDIS == 3 || showDIS == 2) && benefitTypeStr == '')    benefitTypeStr = "WP";
+                else if((showDIS == 3 || showDIS == 2) && benefitTypeStr != '')    benefitTypeStr += ";WP";
+                
+                if((showDIS == 3 || showDIS == 1) && benefitTypeStr == '')    benefitTypeStr = "TTD";
+                else if((showDIS == 3 || showDIS == 1) && benefitTypeStr != '')    benefitTypeStr += ";TTD";
+                
+                
+                if(showCI >= 1 && benefitTypeStr == '')    benefitTypeStr = "CI";
+                else if(showCI >= 1 && benefitTypeStr != '')    benefitTypeStr += ";CI";
+                
+                if(showOP >= 1 && benefitTypeStr == '')    benefitTypeStr = "OP";
+                else if(showOP >= 1 && benefitTypeStr != '')    benefitTypeStr += ";OP";
+                
+                if(showOPF >= 1 && benefitTypeStr == '')    benefitTypeStr = "OPF";
+                else if(showOPF >= 1 && benefitTypeStr != '')    benefitTypeStr += ";OPF";
+                
+                if(showMAT >= 1 && benefitTypeStr == '')    benefitTypeStr = "MAT";
+                else if(showMAT >= 1 && benefitTypeStr != '')    benefitTypeStr += ";MAT";
+                
+                console.log('to see benefitTypeStr :    '+benefitTypeStr );
+                
+            }
+            ).then(InSeqFunction(function(){
+                //save selected claim type to record
+                console.log('benefitTypeStr before pass selectBenefitTypeAtAction:    '+benefitTypeStr);
+                selectBenefitTypeAtAction(benefitTypeStr);    //on complete do questionDisplayLogic
+            })
+            ).then(
+                function(){
+                    finishSubmission();
+                    console.log('to see loading end.');
+                    isPass = true;
+                }
+            );
+        }
+        
+        **/
+        /** question logic end **/
+    </script>
+    
+</apex:page>

@@ -1,0 +1,623 @@
+<apex:page controller="CustomerPolicyChangePDFController" id="page" renderAs="pdf" docType="html-5.0" standardStylesheets="false" applyHtmlTag="false" applyBodyTag="false" showHeader="false" sidebar="false" language="zh_TW" cache="false" action="{!directToPageByRecordType}">
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <style type="text/css" media="print">
+        @page {
+            size: A4;
+            @top-left {
+                content: element(header);
+                verticle-align: top;
+            }
+            @bottom-center {
+                content: element(footer);
+            }
+            margin-left: 1.0cm;
+            margin-top: 4.0cm;
+            margin-bottom: 2.0cm;
+            margin-right: 1.0cm;
+        }       
+            
+        body, div, p {
+            font-family: "Arial Unicode MS";
+            font-size: 8pt;
+        }
+            
+        div.header {
+            display: block;
+            height:4cm;
+            padding-left: 0.25cm;
+            position: running(header);
+        }
+            
+        div.header img {
+            width: 20mm;
+            height: 20mm;
+        }
+        div.footer {
+            display: block;
+            padding: 5px;
+            position: running(footer);
+            text-align: center;
+        }       
+       .page-break {
+            display:block;
+            page-break-after:always;
+        }
+       .clear-margin-padding {
+            margin: 0 auto;
+            padding: 0;
+        }
+       .pagenumber:before {
+            content: counter(page);
+       }
+       .pagecount:before {
+            content: counter(pages);
+       }
+       tr {
+            height:30px;
+       }
+       .customli{type:"I";}
+       div.content{
+            font-family: Arial Unicode MS;
+            font-size: 8pt;
+            fill-opacity:.5; 
+            stroke:black; 
+            stroke-width:2;
+            /** does not work **/
+            word-wrap: break-word;
+            word-break: break-all;
+            /** does not work end **/
+       }
+       .title {
+            font-size: 10pt;
+            text-align: left;
+            float: right;
+            font-weight: bold;
+       }   
+       .title_pc {
+            font-size: 8pt;
+            text-align: left;
+            font-weight: bold;
+       } 
+       .header-bar {
+            font-size: 14pt;
+            font-weight: bold;
+        }      
+       .Tablebackgroundcolor {
+            background-color: rgb(24, 140, 204);
+            background-repeat: no-repeat;
+            border-collapse: collapse; 
+            border: none; 
+            width: 100%; 
+            padding:10px;
+        }
+       .CustomTable {
+            border-collapse: collapse; 
+            border: none; 
+            width: 100%;
+            padding:10px;
+        }        
+       .CustomTd { 
+           border: solid #000 1px;
+           width: 70%;
+           padding:10px;
+           font-weight: bold;
+           vertical-align: top;
+       }
+       .CustomTd_title { 
+           border: solid #000 1px;
+           width: 30%;
+           padding:10px;
+           font-weight: bold;
+           vertical-align: top;
+       }
+       .CustomColspanTd { 
+           border: solid #000 1px; 
+           padding:10px;
+       }            
+    </style>    
+</head>
+    <div class="header">
+        <br/>
+        <div style="width:720px;">
+            <div style="width: 100%; float:left;">
+                <div style="width: 60%; float:left;">
+                    <apex:outputText value="Private & Confidential  私人及機密"></apex:outputText> 
+                </div>
+                <div style="width: 40%; float:left;">
+                    <div style="width: 40%; float:left;">
+                        <apex:image url="{!$Resource.Icon_For_Form}" width="70px" /> 
+                    </div>
+                    <div style="width: 60%; float:left;">
+                        <apex:outputText escape="false" value="{!$Label.Cigna_Address_en_2_line}"/><br/><br/>
+                        Tel: 2560 1990 <apex:outputText value=" Fax: 2560 3605" rendered="{!policyChangeRequestInfo.IsGerneralPolicy__c}"/> <br/>
+                        www.cigna.com.hk
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> 
+    <div class="footer">
+        <div style="font-size: 10pt; float:right;"> <span class="pagenumber"/> / <span class="pagecount"/> </div>
+    </div>  
+<body>  
+<apex:form id="form" style="width: 100%;">
+    <table align="center" border="0" cellspacing="0" cellpadding="8" class="CustomTable">
+    <tbody>
+        <tr>
+            <td width="100%" colspan="5" style="text-align: right;">
+                Ref. 參考:<apex:outputText value="&nbsp; &nbsp; &nbsp; &nbsp; " style="text-decoration: underline;" escape="false" />(for office use內部專用)
+            </td>
+        </tr>
+        <tr>
+            <td colspan="5" width="100%" style="font-size: 12pt;">
+                 <apex:outputText value="Policy Change Form – Change of Basic Information" escape="false"/>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" width="80%" style="font-size: 12pt;">保單更改–更改基本個人資料</td>
+            <td width="20%">&nbsp;</td>
+        </tr>
+        <tr>
+            <td width="50%" colspan="3">
+                <apex:outputText value="Source" />
+                <apex:outputText value="來源：" />
+                &nbsp;
+                <apex:image url="{!IF(isCustomerUser&&NOT(isBrokerUser),$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12"/>
+                <apex:outputText style="width: 100px;" value="Customer Portal" />
+                <apex:outputText style="width: 100px;" value="客戶" />
+                &nbsp;
+                <apex:image url="{!IF(isBrokerUser&&NOT(isCustomerUser),$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12"/>
+                <apex:outputText style="width: 100px;" value="Broker Portal" />
+                <apex:outputText style="width: 100px;" value="經紀" />
+            </td>
+            <td width="50%" colspan="2">&nbsp;</td>
+        </tr>
+     </tbody>
+     </table>
+     
+     <table align="center" border="0" cellspacing="0" cellpadding="2" class="CustomTable" width="100%">
+     <tbody>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomTd" colspan="2" width="100%">
+                  <span style="color:white;">Personal Particulars</span><br/>
+                  <span style="color:white;">個人資料</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title" width="50%">
+                  Submission Date<br/>
+                  申請日期<br/>
+                  (YYYY/MM/DD)
+              </td>
+              <td class="CustomTd" width="50%" align="left" valign="top">
+                  <apex:outputText value="{0,date,yyyy/MM/dd}">
+                      <apex:param value="{! Today() }" />
+                  </apex:outputText>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Name of Policy Holder<br/>
+                  保單持有人姓名
+              </td>
+              <td class="CustomTd" align="left" valign="top"><apex:outputField value="{!policyChangeRequestInfo.Policy_Holder_Name__c}"/></td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Policy No. <br/>
+                  保單編號
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Policy_No__c}"/>
+              </td>
+          </tr>
+      </tbody>
+    </table>
+    <apex:outputPanel rendered="{!isBrokerUser}">
+        <table align="center" border="0" cellspacing="0" cellpadding="2" class="CustomTable" width="100%">
+         <tbody>
+              <tr>
+                  <td class="CustomTd_title">
+                      Broker Name<br/>
+                      經紀公司
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Broker_Name__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Financial Consultant Name<br/>
+                      財務顧問姓名
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Financial_Consultant_Name__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Financial Consultant Code<br/>
+                      財務顧問編號
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Financial_Consultant_Code__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Financial Consultant Contact No.<br/>
+                      財務顧問電話號碼
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Financial_Consultant_Contact_No__c}"/>
+                  </td>
+              </tr>
+          </tbody>
+          </table>
+      </apex:outputPanel>
+      <table align="center" border="0" cellspacing="0" cellpadding="2" class="CustomTable" width="100%">
+          <tbody>
+          <tr class="Tablebackgroundcolor" style="width:100%">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">Policy Change Information</span><br/>
+                  <span style="color:white;">保單更改資料</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Change Type<br/>
+                  更改資料類別
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!changeTypeEnglish}" /><br/>
+                  <apex:outputText value="{!changeTypeChinese}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  <!-- Rancho_MR1180_20240111 - update wording -->
+                  <!-- Selected Name of Person Insured<br/>
+                  選擇之受保人姓名 -->
+                  Selected Client<br/>
+                  選擇之客戶
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Policy_Holder_Insured_Name__c}" />
+              </td>
+          </tr>
+     </tbody>
+     </table>
+
+     <apex:outputPanel rendered="{!policyChangeRequestInfo.ChangePersonalParticular__c}">
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">Change of Personal Particulars </span><br/>
+                  <span style="color:white;">更改個人資料</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  English Name<br/>
+                  英文姓名</td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Policy_Holder_Insured_Name_in_English__c}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Chinese Name<br/>
+                  中文姓名
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Policy_Holder_Insured_Name_in_Chinese__c}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Gender<br/>
+                  性別
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!genderEnglish}" /><br/>
+                  <apex:outputText value="{!genderChinese}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Place of Birth<br/>
+                  出生地
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <!-- Rancho_MRP380_20240320 - display country name when submit in app -->
+                  <apex:outputText value="{!if(policyChangeRequestInfo.Place_of_Birth_En__c==null && policyChangeRequestInfo.Place_of_Birth_Zh__c==null, policyChangeRequestInfo.Place_of_Birth__c, if(lang == 'en_US', policyChangeRequestInfo.Place_of_Birth_En__c, policyChangeRequestInfo.Place_of_Birth_Zh__c))}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Date of Birth<br/>
+                  出生日期 
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Date_of_Birth__c}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Nationality <br/>
+                  國籍
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Nationality__c}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  HKID <br/>
+                  香港身份證
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.HKID_Passport_No__c}" />
+              </td>
+          </tr>
+     </tbody>
+     </table>
+     </apex:outputPanel>
+
+     <apex:outputPanel rendered="{!policyChangeRequestInfo.ChangeAddress__c}">
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">Change of Address </span><br/>
+                   <span style="color:white;">更改地址</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Residential Address (English)<br/>
+                  住宅地址 (英文)
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Residential_Address__c}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Permanent Address (English)<br/>
+                  永久地址 (英文)
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="Same as above <br> 與住宅地址相同" escape="false" rendered="{!policyChangeRequestInfo.PAddress_same_as_RAddress__c}"/> 
+                  <apex:outputField value="{!policyChangeRequestInfo.Permanent_Address__c}" rendered="{!NOT(policyChangeRequestInfo.PAddress_same_as_RAddress__c)}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Correspondence Address (English)<br/>
+                  通訊地址 (英文)
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="Same as above <br> 與住宅地址相同" escape="false" rendered="{!policyChangeRequestInfo.CAddress_same_as_RAddress__c}"/> 
+                  <apex:outputField value="{!policyChangeRequestInfo.Correspondence_Address__c}" rendered="{!NOT(policyChangeRequestInfo.CAddress_same_as_RAddress__c)}"/>
+              </td>
+          </tr>
+     </tbody>
+     </table>
+     </apex:outputPanel>
+
+     <apex:outputPanel rendered="{!AND(policyChangeRequestInfo.ChangeContactInfo__c,policyChangeRequestInfo.Policy_Change_Type__c != 'basic/contact')}"><!-- MRP-215 jack add for display different info based on policy change type  -->
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">Change of Contact Information</span><br/>
+                  <span style="color:white;">更改聯絡資料</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Mobile Number<br/>
+                  流動電話號碼
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <span><apex:outputField value="{!policyChangeRequestInfo.Mobile_Number_Country_Code__c}" /></span>
+                  <span><apex:outputField value="{!policyChangeRequestInfo.Mobile_Number__c}" /></span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Residential Number <br/>
+                  住宅電話號碼
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <span><apex:outputField value="{!policyChangeRequestInfo.Residential_Number_Country_Code__c}" /></span>
+                  <span><apex:outputField value="{!policyChangeRequestInfo.Residential_Number__c}" /></span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Office Number <br/>
+                  辦公室電話號碼
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <span><apex:outputField value="{!policyChangeRequestInfo.Office_Number_Country_Code__c}" /></span>
+                  <span><apex:outputField value="{!policyChangeRequestInfo.Office_Number__c}" /></span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Email Address <br/>
+                  電郵地址
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Email_Address__c}" />
+              </td>
+          </tr>
+     </tbody>
+     </table>
+     </apex:outputPanel>
+
+     <!-- MRP-215 jack add for display different info based on policy change type  -->
+     <apex:outputPanel rendered="{!AND(policyChangeRequestInfo.ChangeContactInfo__c,policyChangeRequestInfo.Policy_Change_Type__c == 'basic/contact')}">
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">Change of Contact Information</span><br/>
+                  <span style="color:white;">更改聯絡資料</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Correspondence Address (English)<br/>
+                  通訊地址 (英文)
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Correspondence_Address__c}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Mobile Number<br/>
+                  流動電話號碼
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <span><apex:outputField value="{!policyChangeRequestInfo.Mobile_Number_Country_Code__c}" /></span>
+                  <span><apex:outputField value="{!policyChangeRequestInfo.Mobile_Number__c}" /></span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Email Address <br/>
+                  電郵地址
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Email_Address__c}" />
+              </td>
+          </tr>
+     </tbody>
+     </table>
+     </apex:outputPanel>
+     <!-- MRP-215 jack add for display different info based on policy change type  -->
+
+     <apex:outputPanel rendered="{!policyChangeRequestInfo.ChangeOccupation__c}">
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">Change of Occupation</span><br/>
+                  <span style="color:white;">更改職業</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Occupation/Job Title <br/>
+                  職業/職銜
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Occupation_Job_Title__c}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Industry <br/>
+                  行業
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Industry__c}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Job Duties <br/>
+                  工作職務
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Exact_Job_Duties__c}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Name of Employer <br/>
+                  僱主名稱
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Name_of_Employer__c}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Monthly Income (HKD)<br/>
+                  每月收入(港幣)
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Monthly_Income__c}" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Business Address (English)<br/>
+                  辦公室地址 (英文)
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Business_Address__c}" />
+              </td>
+          </tr>
+     </tbody>
+     </table>
+     </apex:outputPanel>
+
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>   
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">Declaration &amp; Authorization</span><br/>
+                  <span style="color:white;">聲明及授權</span>
+              </td>
+          </tr>
+          <tr>
+             <td class="CustomColspanTd" colspan="2">
+                 <div style="width:100% ; word-wrap: break-word;word-break: break-all;">
+                     <!--JOBR-184: JOBR-199/226 updated by Kermit at 20221012-->
+                     <!--<apex:include pageName="DeclarationFormVFP"/>-->
+                     <c:DeclarationFormComponent isContainGIPolicy="{!policyChangeRequestInfo.IsGerneralPolicy__c}" isContainLifePolicy="{!policyChangeRequestInfo.IsLifePolicy__c}"/>
+                 </div>
+             </td>
+          </tr>
+      </tbody>
+  </table>
+  <apex:outputPanel rendered="{!isBrokerUser}">
+      <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+         <tbody>
+              <tr>
+                  <td class="CustomTd_title" align="left" valign="top" heigth="200">
+                      Signature<br/>
+                      簽署
+                  </td>
+                  <td class="CustomTd" align="left" height="200">
+                      <div style="width: 100%;">
+                          <div style="width: 100%;heigth:90%;text-align:left;">
+                              <apex:image id="theImage" value="{!PDFSignatureField}" width="450px"/>
+                          </div>
+                          <div style="width: 100%;heigth:10%">
+                              <br/>
+                              <apex:outputText value="Name of Policy Holder 保單持有人姓名: "/>{!policyHolder}<br/>
+                              <apex:outputText value="Date Signed 簽署日期 (YYYY/MM/DD): {0,date,yyyy/MM/dd}">
+                                  <apex:param value="{! Today() }" />
+                              </apex:outputText>
+                          </div>
+                      </div>
+                  </td>
+              </tr>      
+           </tbody>
+        </table>
+      </apex:outputPanel>  
+    </apex:form>
+</body> 
+</html>
+</apex:page>

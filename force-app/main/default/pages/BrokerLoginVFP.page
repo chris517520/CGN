@@ -1,0 +1,398 @@
+<apex:page docType="html-5.0" showHeader="false" controller="SiteLoginController" title="{!$Label.site.login}" language="{!JSINHTMLENCODE($CurrentPage.Parameters.lang)}" action="{!checkLoggedIn}" cache="false"><!--Rancho_Veracode_20220218-->
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/> 
+        
+        <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <!-- CR-56_Link_20220214 -->
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-3.6.0.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-migrate-3.3.2.js')}"/>
+        <!--HKITSFDC-26 upgrade library-->
+       <!--<script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap3.4.1.min.js')}"/>-->
+       <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap5.3.2.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.App_Link_JS, 'js/applink.js')}"></script>
+
+        
+        <apex:include pageName="CignaUtilJS"/>
+
+        <style>
+            /* Rancho_HKITSFDC264_20250903 - add font face */
+            @font-face {
+                font-family: 'ValueSansRegular';
+                src: url("{!URLFOR($Resource.Cigna_Font, 'CIGNA/ValueSans/Web/ValueSans-Regular-Pro.ttf')}") format("opentype");
+            }
+            /* End */
+   
+            span[id$="cigna-error"] span div.message{
+                border: none;
+                //background-color: #cc0000;
+                background-color: #fff;
+                //background-color: transparent;
+                opacity: .9;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td img{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell div span{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell{
+                //color: #fff;
+                //color: #F68621;
+                color:red;
+                /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+                font-family: "ValueSansRegular";
+            }
+            
+            span[id$="cigna-error"] .messageText::before{
+                content: "\f071\20";
+                font: normal normal normal 14px/1 FontAwesome;
+                font-size: inherit;
+                text-rendering: auto;
+                -webkit-font-smoothing: antialiased;
+                padding-right: 7px;
+            }
+            .logo-background{
+                z-index: 99;
+            }
+            .cignaLogo{
+                z-index: 100;
+            }
+
+            /*CR-56_Link_20220214*/
+            .ui-tooltip {
+                background: black !important;
+                max-width: 250px !important;
+                width: 250px; 
+                min-width: 100px;
+                color: white !important;
+                z-index: 1070;
+                display: block;
+                text-align: center !important;
+                font-size: 12px !important;
+                border-radius: 5px !important;
+            }
+
+        </style>
+        
+        <apex:form >
+            <apex:actionFunction name="loginSuccess" action="{!loginSuccess}"/>
+        </apex:form>
+        
+        <apex:outputPanel id="jqForm">       
+            <script>
+            
+                function checkParamExist(param){
+                    return (param != "" && param != null && typeof param !== 'undefined');
+                }
+                
+                var url = window.location.href;
+            
+                if (Cigna.Util.checkWebView()) {
+                    
+                    var refUrl = document.referrer;
+                    var liveChatUrl = '{!$Setup.Portal_Settings__c.Live_Chat_Site_URL__c}';
+                    liveChatUrl = liveChatUrl.replace("/LiveChat", "");
+                    
+                    /*
+                    if((refUrl != '' && refUrl.indexOf('CustomerRegistration') == -1 && refUrl.indexOf('CustomerForgotPassword') == -1  && refUrl.indexOf('CustomerLoginVFP') == -1 && refUrl.indexOf('LiveChat') == -1 && refUrl.indexOf(liveChatUrl) == -1 && refUrl.indexOf('RemoteAccessAuthorizationPage') == -1) ||
+                         (url.indexOf('LandingPage') != -1)){
+                        console.log(refUrl);
+                        location.href="https://localhost/logout.html";
+                    }
+                    */
+                    
+                    $("#remember-me").hide();
+                    
+                    //<!--Rancho_Veracode_20220218-->
+                    var startUrlParam = '{!JSINHTMLENCODE($CurrentPage.Parameters.startURL)}';
+                    var sourceParam = '{!JSINHTMLENCODE($CurrentPage.Parameters.source)}';
+                    var langParam = '{!JSINHTMLENCODE($CurrentPage.Parameters.lang)}';
+                    
+                    if(checkParamExist(startUrlParam)){
+                        
+                        if(startUrlParam.indexOf('source') != -1){
+                        
+                            console.log('url: ' + url);
+                            
+                            var sourceStart = startUrlParam.indexOf('source') + 7;
+                            var sourceEnd = startUrlParam.indexOf('&display=touch');
+                            var newSource = startUrlParam.substring(sourceStart, sourceEnd);
+                            
+                            console.log('source pos: ' + sourceStart + ", " + sourceEnd);
+                            
+                            console.log(newSource);
+                            
+                            if(newSource == 'null'){
+                                location.href="https://localhost/logout.html";
+                            }else if(checkParamExist(newSource)){
+                                sourceParam = decodeURIComponent(newSource);
+                            }
+                            
+                        }
+                        
+                        if(startUrlParam.indexOf('&lang=') != -1){
+                            var langStart = startUrlParam.indexOf('&lang=') + 6;
+                            var langEnd = langStart + 5;
+                            var newLang = startUrlParam.substring(langStart, langEnd);
+                            
+                            console.log('source pos: ' + langStart + ", " + langEnd);
+                            
+                            console.log(newLang);
+                            
+                            
+                            if(checkParamExist(newLang)){
+                                langParam = decodeURIComponent(newLang);
+                            }
+                        }
+                    }
+                    
+                    if(checkParamExist(sourceParam)){
+                        sessionStorage.setItem('sourceParam', sourceParam);
+                    }
+                    
+                    if(checkParamExist(langParam)){
+                        sessionStorage.setItem('langParam', langParam);
+                    }
+                    
+                    console.log('url: ' + url);
+                    console.log('src param: ' + sourceParam);
+                    console.log('lang param: ' + langParam);
+                    console.log('session src param: ' + sessionStorage.getItem('sourceParam'));
+                    console.log('session lang param: ' + sessionStorage.getItem('langParam'));
+                    
+                    if((url.indexOf('RemoteAccessAuthorizationPage') == -1 && !checkParamExist(sourceParam)) || url.indexOf("RemoteAccessAuthorizationPage.apexp?lang=") != -1){
+                        
+                        //var targetUrl = "/customer/CustomerLoginVFP?startURL=" + encodeURIComponent("/customer/setup/secur/RemoteAccessAuthorizationPage.apexp?source=" + sessionStorage.getItem('sourceParam') + "&display=touch" + "&lang=") + sessionStorage.getItem('langParam');
+                        var targetUrl = "{!$Site.Prefix}/setup/secur/RemoteAccessAuthorizationPage.apexp?source=" + sessionStorage.getItem('sourceParam') + "&display=touch&lang=" + sessionStorage.getItem('langParam');
+                        
+                        console.log('target url: ' + targetUrl);
+                        
+                        location.replace(targetUrl);
+                    }
+                    
+                }else{
+                    /*
+                    if(Cigna.Util.isIOS() && sessionStorage.showAppOpen !== 'false'){
+                        
+                        var ua = navigator.userAgent.toLowerCase();
+                        
+                        if (ua.indexOf('safari') != -1 && ua.indexOf('chrome') == -1 && !ua.match(/CriOS/i)) {
+                            // Safari uses Smart App Banner
+                        }else{
+                            $('#open-app-dialog').show();
+                            $('#open-ios-app-button').show();   
+                        }
+                            
+                    }else if(Cigna.Util.isAndroid() && sessionStorage.showAppOpen !== 'false'){
+                        
+                        $('#open-app-dialog').show();
+                        $('#open-android-app-button').show();
+                        
+                    }
+                    */
+                }         
+                
+               
+                function showLoading() {
+                    $('#login-input-area').fadeOut(100, function(){
+                        $('#login-loading').fadeIn(100);
+                    });
+                }
+                
+                function finishSubmission() {
+                    //add by kit
+                    sessionStorage.setItem("isBrokerCancel",false);
+                    
+                    if({!!hasError}){
+                        if(navigator && navigator.cookieEnabled){
+                            if('<apex:outputText value="{!rememberUN}"></apex:outputText>' == 'true'){
+                                setCookie();
+                            } else {
+                                removeCookie();
+                            }
+                        }
+                        $('#login-input-area').hide();
+                        loginSuccess();
+                    }
+                    $('#login-loading').fadeOut(100, function(){
+                        $('#login-input-area').fadeIn(100);
+                    });
+                }
+                
+                function closeAppDialog(){
+                    $('.app-dialog').fadeOut();
+                    sessionStorage.showAppOpen = 'false';
+                }
+                
+                $(document).ready(function() {
+                    // Smart App Banner for Safari
+                    //$("head").append("<meta name='apple-itunes-app' content='app-id=404249815'/>");
+
+                   //CR-56_Link_20220214
+                   $("[title]").tooltip();
+
+                    if (Cigna.Util.checkWebView() || Cigna.Util.isSalesforce1()) {
+                        $("#remember-me").hide();
+                    }
+
+                    $('a[data-applink]').applink();
+                    //CR-56_Link_20220214
+                    $('a[data-applink]').on("click",function(){
+                        closeAppDialog();
+                    });
+
+                    //check if cookies enabled
+                    if( !navigator.cookieEnabled ){
+                        $("#error-msg-area").find("#msgContent").text("{!$Label.Enable_Cookies_Msg}");
+                        $("#error-msg-area").show();
+                        $("#login-input-area").hide();
+                    }
+
+                    //set default value to show downtimemessage
+                    sessionStorage.setItem("isBrokerCancel", 'false');
+                });
+                
+                function setCookie() {
+                    if(Cigna.Util.isCustomerPortal()){
+                        document.cookie = 'cigna-customer-name=<apex:outputText value="{!JSINHTMLENCODE(username)}"></apex:outputText>;expires=2147483647000';
+                    } else if(Cigna.Util.isBrokerPortal()){
+                        document.cookie = 'cigna-broker-name=<apex:outputText value="{!JSINHTMLENCODE(username)}"></apex:outputText>;expires=2147483647000';
+                    }
+                }
+                
+                function removeCookie() {
+                    if(Cigna.Util.isCustomerPortal()){
+                        document.cookie = 'cigna-customer-name=;expires=-1';
+                    } else if(Cigna.Util.isBrokerPortal()){
+                        document.cookie = 'cigna-broker-name=;expires=-1';
+                    }
+                    
+                }
+                
+                function getCookie() {
+                    var name = '';
+                    if(Cigna.Util.isCustomerPortal()){
+                        name = 'cigna-customer-name';
+                    } else if(Cigna.Util.isBrokerPortal()){
+                        name = 'cigna-broker-name';
+                    }
+                    var arr,reg=new RegExp("(^| )" + name + "=([^;]*)(;|$)");
+                    if(arr=document.cookie.match(reg)){
+                        return unescape(arr[2]);
+                    } else {
+                        return '';
+                    }
+                }
+            </script>
+        </apex:outputPanel>
+        <!-- CR-56_Link_20220214 -->
+        <!--<link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap3.4.1.css')}" />-->
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+       <!--HKITSFDC 26 upgrade library-->
+       <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap5.3.2.css')}" />
+    </head>
+
+    <!-- Start of the page template -->
+    <apex:composition template="BrokerUnauthorizedPageTemplateNoCache">
+        <!-- Start of the main body -->
+        <apex:define name="body">
+                        
+            <div id="error-msg-area" style="display:none;">
+                <span id="cigna-error"><span>
+                    <div class="message errorM3" role="alert">
+                        <table border="0" cellpadding="0" cellspacing="0" class="messageTable" style="padding:0px;margin:0px;">
+                            <tr valign="top">
+                                <td class="messageCell">
+                                    <div class="messageText">
+                                        <div id="msgContent" style="display: inline-block;"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </span></span>
+            </div>
+                
+            <div id="login-input-area" class="bs col-xs-12">
+            
+                <div class="bs col-xs-12 col-md-12">
+                    <apex:outputPanel rendered="{!hasError}">
+                        <span id="CustomerPortalTemplatePage:cigna-error">
+                            <span>
+                                <div class="message errorM3" role="alert">
+                                    <table border="0" cellpadding="0" cellspacing="0" class="messageTable" style="padding:0px;margin:0px;">
+                                        <tbody>
+                                            <tr valign="top">
+                                                <td><img alt="ERROR" class="msgIcon" src="/s.gif" title="" data-original-title="ERROR" /></td>
+                                                <td class="messageCell">
+                                                    <div class="messageText">
+                                                        <span style="color:#cc0000"><h4>{!$Label.site.error2}</h4></span>{!errorMessage }
+                                                        <br />
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </span>
+                        </span>
+                    </apex:outputPanel>
+                </div>
+                
+                <div class="bs form-group col-xs-12 col-md-12">
+                    <apex:inputText value="{!username}" 
+                                    id="username" 
+                                    html-placeholder="{!$Label.site.email}" 
+                                    styleClass="bs form-control" 
+                                    html-autocomplete="email" 
+                    />
+                </div>
+                
+                <div class="bs form-group col-xs-12 col-md-12">
+                    <apex:inputSecret value="{!password}" 
+                                      id="password" 
+                                      html-placeholder="{!$Label.site.password}" 
+                                      styleClass="bs form-control" 
+                    />
+                </div>
+                <div id="remember-me" class="bs form-group col-xs-12 col-md-12">
+                    <p style="margin-top: 10px;">
+                        
+                        <apex:inputCheckbox styleClass="bs" id="checkbox-remember-me" value="{!rememberUN}"/>
+                        <apex:outputLabel styleClass="bs" value="{!$Label.Login_Remember_Me}" for="checkbox-remember-me"/>
+                        
+                    </p>
+                </div>
+                
+                <div class="col-xs-12 col-md-12" style="font-size: 1.1em;">
+                    <br/>
+                    <apex:outputLink value="{!$Label.Broker_ForgotPassword_VFP}?lang={!JSINHTMLENCODE($CurrentPage.Parameters.lang)}" styleClass="pull-right"> {!$Label.site.forgot_your_password_q} </apex:outputLink><!--Rancho_Veracode_20220218-->
+                </div>
+
+                <div class="col-xs-12 col-md-12" style="padding-top:10px; padding-bottom:10px;">
+                    <apex:commandButton action="{!login}" 
+                                        value="{!$Label.site.login}"
+                                        id="Login" 
+                                        onclick="showLoading();" 
+                                        rerender="preForm,thePreFormPanel,jqForm"
+                                        oncomplete="finishSubmission();" styleClass="bs btn btn-primary btn-block"
+                    />
+                    <br/>
+                </div>
+            </div>
+        </apex:define>
+    </apex:composition>
+    <!-- End of the page template -->
+    <script>
+        // execute only once except the page is refreshed manually
+        if(navigator && navigator.cookieEnabled){
+            if(getCookie() != null && getCookie() != ''){
+                $("input[id$='username']").val(getCookie());
+                $("input[id$='checkbox-remember-me']").attr("checked", true);
+            }
+        }
+    </script>
+</apex:page>

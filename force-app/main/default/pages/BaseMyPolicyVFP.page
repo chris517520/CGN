@@ -1,0 +1,1493 @@
+<!--Please change apex page title-->
+<apex:page docType="html-5.0" sidebar="false" Controller="CustomizeSearchPolicyPageCtrl" showHeader="false" title="My Policy">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>   
+        <apex:include pageName="ClaimUtilJS"/>
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+        <style>  
+              
+            .overlay {
+                display: none;
+                z-index: 10;
+                background: #D9D9D6;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                text-align: center;
+            }
+            
+            div.overlay {
+                z-index: 10;
+                background: #D9D9D6;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                text-align: center;
+            }
+            
+             .bs .link-label {
+                color: blue;
+                text-decoration: underline;
+                cursor: pointer;
+            }
+            
+            .bs .bold-font {
+                font-weight: bold;
+            }
+
+            .bs .table-content{
+                padding: 3px;
+            }
+            
+            .bs .table-content-panel{
+                padding: 20px 25px;
+            }
+
+            .bs .table-content-title{
+                font-size: 1.2em;
+            }
+
+            @media (min-width: 768px){
+              .bs .tab-pane{
+                padding: 20px 0px 0px 0px;
+                
+              }
+
+              .bs .table-header {
+                padding: 20px;
+              }
+
+              .bs .table-content {
+                padding: 20px;
+              }
+            }
+            
+            .bs .grey-background {
+                background-color: rgb(242, 242, 242);
+            }
+            
+            #imgModalDialog img {
+                width: auto;
+                height: auto;
+                max-width: 100%;
+                max-height: 100%;
+            }
+
+            .mdlLayer {
+                margin: 0px !important;
+                padding: 0px !important;
+                text-align: center;
+                vertical-align: middle;
+                display:table-cell;
+                z-index: 1100;
+              
+              /*  top:95% !important;
+                left:2% !important;
+                /*
+                background-color: grey;
+               transform: rotate(-90deg)   ;
+                
+                 
+                filter:alpha(Opacity=100);-moz-opacity:1;opacity: 1   ;
+                 */
+            }
+
+            #swipeCtn{
+                margin: 0px;
+                padding: 0px;
+                text-align: center; 
+            }
+
+            .rotate {
+                transform: rotate(-90deg)   ;
+            }
+            
+                .modal-header{
+                    padding: 1px !important;
+                }
+
+             .owl-dot span{
+                background-color: rgb(180, 180, 180)   !important;
+             }
+            
+            .owl-dot.active span{
+                background-color: #869791   !important;
+             }
+            
+            body.noscroll{
+            overflow:hidden;
+            position:fixed;
+            }
+
+            /** pop up dialog style **/
+        
+        .bs input[type="checkbox"].cigna-question-checkbox-single {
+            display: none;
+        }
+        
+        .bs input[type="checkbox"].cigna-question-checkbox-single ~ label {
+            cursor: pointer;
+        }
+        .bs input[type="checkbox"].cigna-question-checkbox-single + label::before {
+            font: normal normal normal 14px/1 FontAwesome;
+            display: inline-block;
+            content: "\f058";
+            height: 20px;
+            margin: 0 .25em 0 0;
+            padding: 0;
+            vertical-align: top;
+            width: 20px;
+            color: #C8C9C7;
+            font-size: 1.2em;
+        }
+        
+        .bs input[type="checkbox"].cigna-question-checkbox-single:checked + label::before {
+            color: #39B54A;
+            font: normal normal normal 14px/1 FontAwesome;
+            content: "\f058";
+            font-size: 1.2em;
+        }
+        
+        .bs input[type="checkbox"].cigna-question-checkbox-single:checked + label::after {
+            font-weight: bold;
+        }
+        
+        div#overlay, div#overlayPIC{
+            display: none;
+            z-index: 10;
+            background: #D9D9D6;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0px;
+            left: 0px;
+            text-align: left;
+        }
+        
+        div#specialBox, div#specialBoxPIC {
+            display: none;
+            position: absolute;
+            z-index: 11;
+            margin: 150px auto 0px auto;
+            width: 80%;
+            height: 50%;
+            background: #FFF;
+            color: #000;
+            left: 10%;
+            padding:20px;
+            border-radius:5px;
+        }
+        
+        #closeOverlay, #closeOverlayPIC {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        
+        #tccontent {
+            padding:5px;
+            color:#000;
+            font-size:12px;
+            width: 100%;
+            height: 90%;
+            overflow-y:auto;
+        } 
+        
+        #PICcontent {
+            padding:5px;
+            color:#000;
+            font-size:12px;
+            width: 100%;
+            height: 85%;
+            overflow-y:auto;
+        } 
+        
+        .fontWeightNormal label{
+            font-weight: normal;
+        }
+        /** end pop up dialog style **/
+
+        /** signature style **/
+        .signature-pad {
+            width: 95%;
+            height: 300px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            margin-bottom: 60px;
+        }
+        
+        .signature-pad-body {
+            width: 100%;
+            height: 300px;
+        }
+        
+        .signature-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .signature-pad-footer {
+            width: 100%;
+            height: 40px;
+        }
+        /** end signature style **/
+        
+        /*CR-56_Link_20220214*/
+        .ui-tooltip {
+                background: black !important;
+                max-width: 250px !important;
+                width: 250px; 
+                min-width: 100px;
+                color: white !important;
+                z-index: 1070;
+                display: block;
+                text-align: center !important;
+                font-size: 12px !important;
+                border-radius: 5px !important;
+            }
+            
+        </style>
+        <script>
+            var lastTri ;
+            var initGroup = false;
+            var imod = 0;
+            var swipeMode=false;
+        
+            var Cigna = Cigna || {};
+            
+            Cigna.MyPolicy = function() {
+                
+                function deletePolicy(policyId) {
+                    $('#overlay').show();
+                    $('#overlay').css('opacity','0.95');
+                    $('#delConfirmBox').show();
+                    $('input[id$="deletePolicyId"]').val(policyId);
+                }
+                
+                function confirmDel(option){
+                    if(option =='Y'){
+                        MyPolicyAF.deletePolicy();
+                    } else {
+                       $('#overlay').hide();
+                    }
+                }
+                
+                //add by Jack on 2021-12-09 for project: VHIS Ward Plan
+                function goToPolicyDetails(policyNumber, policyType, holdingID, SHA256Key, productCode) {
+
+                    if(policyType == 'NEW'){
+                        if(productCode == 'VHIS'){
+                            Cigna.Util.navigateToVFP('GenericEsalesVFP?tid='+ holdingID, null, null, true);
+                        }else{
+                            Cigna.Util.navigateToVFP('ESalesVFP?tid='+ holdingID, null, null, true);
+                        }
+                    }else{
+                        Cigna.Util.navigateToVFP('PolicyDetailsPageVFP?policyNumber='+ policyNumber + '&policyType=' + policyType + '&SHA256Key=' + SHA256Key, null, null, true);
+                    }
+                }
+                //add by Jack on 2021-12-09 for project: VHIS Ward Plan
+
+                return {
+                    deletePolicy: deletePolicy,
+                    confirmDel:confirmDel,
+                    goToPolicyDetails: goToPolicyDetails
+                }
+            }();
+
+          //  $(".medicalcard img").click(function()
+
+            function goBack(){
+                console.log('goBack starts...');
+                $(".eMedicalCardLayer").hide();
+                $('#emailSent').hide();
+                console.log('showIndTab:' + "{!showIndTab}");
+
+                if ( $("#prevStep").val()!='selection' ){ 
+                    console.log('policyList show');
+                    // "{!showIndTab}" = 'true';
+                    $(".policyList").show();
+                    if ("{!submitUrl}" == 'true'){
+                       Cigna.Util.navigateToVFP("MyPolicyVFP", null, null, true); 
+                    }
+                }else{
+                    console.log('eMedicalCardSelectionLayer show');
+                    $(".eMedicalCardSelectionLayer").show();
+                }
+                console.log('goBack ends...');               
+            }
+
+            function goBack2(){
+                console.log('goBack2 starts...');
+                $(".eMedicalCardSelectionLayer").hide();
+
+                $(".policyList").show();
+                $("#GroupPolicy").show();
+                $("#IndividualPolicy").hide();
+
+                $("#GroupPolicyTab").addClass("active-bar-tab");
+                $("#GroupPolicyTab").removeClass("inactive-bar-tab");
+
+                $("#IndividualPolicyTab").addClass("inactive-bar-tab");
+                $("#IndividualPolicyTab").removeClass("active-bar-tab");
+                //CR-56_Link_20220214
+                if($(".ipr").length>0 && $(".gpr").length>0) {
+                    $("#tabpnl").show();
+                }
+
+                // if ("{!submitUrl}" == 'true'){
+                //     $("#GroupPolicy").show();
+                // }
+                console.log('goBack2 ends...');
+            }
+
+
+             function AsyncSearchInd( ) {
+               setTimeout(function(){ MyPolicyAF.AsyncSearchInd() ;  },1);
+            }
+
+              function AsyncSearchGroup( ) {
+                setTimeout(function(){ MyPolicyAF.AsyncSearchGroup() ;}, 2);
+            //MyPolicyAF.searchAll();
+            }
+
+            
+
+            $(document).ready(function(){
+                $.mobile.loading().hide();
+                // CR-56_Link_20220214
+                $(".tab-header").on("click",function(event) {
+                    $(".tab-pane").hide();
+                    $("#"+(this.id).substring(0,this.id.length-3)).show();
+                    $(".active-bar-tab").addClass("inactive-bar-tab").removeClass("active-bar-tab");
+                    $(this).addClass("active-bar-tab").removeClass("inactive-bar-tab");
+                //    console.log(this.id);
+
+                    if(!initGroup && this.id == 'GroupPolicyTab'){
+                        MyPolicyAF.searchGroup();
+                    }
+                });
+
+               MyPolicyAF.searchAll();
+               //AsyncSearchInd();
+               //AsyncSearchGroup(); 
+                var policyNumberUrlVar = "{!policyNumberUrl}";
+                var multipleCardUrlVar = "{!multipleCardUrl}";
+                var submitVar = "{!submitUrl}";
+                var imgNameVar = "{!imgNameUrl}";
+
+                console.log("multipleCardUrlVar is " + multipleCardUrlVar);
+                console.log("policyNumberUrlVar:" + policyNumberUrlVar);
+                console.log("submitVar:" + submitVar);
+                console.log("imgNameVar:" + imgNameVar);
+
+                if (submitVar == 'true') {
+                    var isMobile = $("#isMobile").val();
+                    var policyNumber = $("#curPolicyNum").val();
+                    var frontVar = "{!submitFrontUrl}";
+                    var backVar = "{!submitBackUrl}";
+                    if (frontVar != '' && backVar != '') {
+                        if (multipleCardUrlVar == 'true') {    
+                            //   if (swipeMode) {isMobile='1';}
+                            // alert ('is mobile '+isMobile);
+                            MyPolicyAF.getImagePDFSubmit();
+                            //redirectPDFFile();
+                           
+                        } else {
+                            console.log('one card submit return back.');
+                            MyPolicyAF.getGroupEMedicalCardImagesOneCardSubmit();
+                        }
+
+                        
+                        $("input[id*='curFrontUrl']").val( frontVar);
+                        $("input[id*='curBackUrl']").val( backVar);
+
+                            console.log('curFrontUrl:' + $("input[id*='curFrontUrl']").val());
+                            console.log('curBackUrl:' + $("input[id*='curBackUrl']").val());
+                            
+                        if (isMobile=='1'){
+                            // $("#imgitem1").attr("src", $(obj).attr("front"));
+                            // $("#imgitem2").attr("src", $(obj).attr("back")); 
+                            $("#imgitem1").attr("src", frontVar);
+                            $("#imgitem2").attr("src", backVar); 
+                            $("#btnSave").attr("href","/customer/CusEMedicalCardPDF?isPDF=1&front=" + frontVar + "&back=" + backVar);
+                            $("#btnPrint").attr("href","/customer/CusEMedicalCardPDF?front=" + frontVar + "&back=" + backVar);
+                            
+                          
+                            initMod(imod);
+                        }else{                       
+                            // $("#eMedicalCard_webfront").attr("src", $(obj).attr("front"));
+                            // $("#eMedicalCard_webback").attr("src", $(obj).attr("back")); 
+                            $("#eMedicalCard_webfront").attr("src", frontVar);
+                            $("#eMedicalCard_webback").attr("src", backVar); 
+                            
+                            $("#btnSave").attr("href","/customer/CusEMedicalCardPDF?isPDF=1&front=" + frontVar + "&back=" + backVar);
+                            $("#btnPrint").attr("href","/customer/CusEMedicalCardPDF?front=" + frontVar + "&back=" + backVar);
+                            
+                            
+                            
+                            $(".eMedicalCardSelectionLayer").hide();
+                            $(".eMedicalCardLayer").show();
+                            if (multipleCardUrlVar == 'true') { 
+                                $("#prevStep").val('selection');
+                            }
+                        }
+                    } else {
+                        Cigna.Util.navigateToVFP("MyPolicyVFP", null, null, true);   
+                    }
+                } else {
+                    // DDA signature back to policy page
+                    if (multipleCardUrlVar == 'true') { 
+                        // $("input[id*='isClickImg']").val('true');
+                        console.log("multipleCardUrl is true");
+                        // console.log("inside clickImg:" +  $("input[id*='isClickImg']").val());
+                        console.log("policyNumberUrlVar:" + policyNumberUrlVar);
+                        console.log("should click the button.");
+                        MyPolicyAF.getEMedicalCardImagesWebGroupBack();
+                    }
+                }
+
+
+                $("#owl-promotion-mobile").owlCarousel({
+                  //  nav:true,
+                    items: 1, 
+                  //  autoHeight: true 
+                });
+                
+                if ($(window).width()>$(window).height()){
+                    $('#rotate').removeClass('rotate');
+                    imod = $(window).height()*1.12; 
+                }
+
+                $( document ).on( "orientationchange", function( event ) {
+                  //  alert ('width: '+ $(window).width()); 
+                  //  alert ('height: '+ $(window).height()); 
+                    if ( $(".modal").css('display')!='none' ){
+                        var newWidth ;
+                        if (event.orientation =='landscape' && $(window).width()>$(window).height() ){
+                            $('#rotate').removeClass('rotate');
+                            newWidth = $(window).height()*1.12;
+                        }else{
+                            $('#rotate').removeClass('rotate');
+                            $('#rotate').addClass('rotate');
+                            newWidth = $(window).width()*1.12;
+                        }        
+                        // CR-56_Link_20220214
+                        $(".close").trigger("click");
+                        initMod(newWidth); 
+                    }
+                });
+
+               $('#imgModal').on('shown.bs.modal', function () {
+                   //  alert ('a');
+                   $("body").addClass('noscroll');
+                });
+                
+                $('#imgModal').on('hidden.bs.modal', function () {
+                    //  alert ('b');
+                    $("body").removeClass('noscroll');
+                });
+
+                if (Cigna.Util.isAndroid() || Cigna.Util.isIOS()){
+                    $("#printShare_Web").hide();
+                    $("#btnSave").text("{!$Label.EMC_Card_Button_Text_Modal}");
+                    //swipeMode=true;
+                }else{
+                    $("#printShare_Web").show();
+                    //swipeMode=false;
+                }
+                <!--junda add 20201201-->
+                $('[data-toggle="tooltip"]').tooltip();
+                <!--junda add end-->
+                console.log('ready function ends..');
+            });
+            
+
+            function validateSendEmail(){
+                var errCount =0;
+                var sj =  $("input[id*='inputSubject']").val();
+                var et =  $("input[id*='inputEmail']").val();
+                var cc = $("input[id*='inputCC']").val();
+                if (sj.trim()==""){
+                        errCount++;
+                    $("#errEmptySubject").show();
+                    $("#errEmptySubject").text("Please input subject.");
+                }
+                if (et.trim()==""){
+                        errCount++;
+                    $("#errEmptyEmail").show();
+                    $("#errEmptyEmail").text("Please input email.");
+                }
+                else if (  !isValidEmail(et.trim()) ){
+                    errCount++;
+                    $("#errEmptyEmail").show();
+                    $("#errEmptyEmail").text("Invalid email.");
+                }
+                if ( cc.trim()!='' && !isValidEmail(cc.trim()) ){
+                    errCount++;
+                    $("#errCC").show();
+                    $("#errCC").text("Invalid email.");
+                }
+                
+                if (errCount==0)
+                    return true;
+                else 
+                    return false;
+            }
+        
+            function emailSent(){
+                $('#btnShare').show();$('#emailLayer').hide();$('#emailSent').show();
+                $("#errEmptySubject").hide();
+                $("#errEmptyEmail").hide();
+            } 
+              
+        function isValidEmail(str){ 
+              var regex = /^([0-9a-zA-Z]([-_\\.]*[0-9a-zA-Z]+)*)@([0-9a-zA-Z]([-_\\.]*[0-9a-zA-Z]+)*)[\\.]([a-zA-Z]{2,9})$/; 
+            //  var regex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+            if(!regex.test(str)){ 
+                return false;
+            }else{
+                return true;
+            }
+        }  
+        </script>
+
+
+        
+    </head>
+    <apex:define name="additionalLibraries">
+         <!--additional css, bootstrap, jquery,js libraries-->
+<!--
+         <apex:stylesheet value="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.carousel.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.theme.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.transitions.css')}" />
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'owl.carousel/owl.carousel.min.js')}"></script> 
+        -->
+        
+        <apex:stylesheet value="{!URLFOR($Resource.Owl_Carousel_2, 'assets/owl.carousel.min.css')}" />
+       <apex:stylesheet value="{!URLFOR($Resource.Owl_Carousel_2, 'assets/owl.theme.default.min.css')}" />
+
+        <!-- CR-56_Link_20220214 -->
+        <script type="text/javascript" src="{!URLFOR($Resource.Owl_Carousel_2, 'owl.carousel_new.min.js')}"></script> 
+
+         
+        <script type="text/javascript" src="{! $Resource.jquery_mobile_min }"></script>
+         
+        <script type="text/javascript" src="{! $Resource.jquery_touchSwipe_min }"></script>
+    </apex:define>
+
+    <apex:form id="myform" >
+      <apex:inputHidden value="{!deletePolicyId}" id="deletePolicyId" />
+     <input type='hidden' id='isMobile' value=''/>
+       <input type='hidden' id='prevStep' value=''/>
+        
+      <apex:outputPanel id="tabPanelApex" layout="block">
+        <table id='tabpnl' class="bs bar-tab-container col-lg-12 col-sm-12 col-xs-12"  style="{!if(showIndTab && showGroupTab,'','display:none;')}">
+            <tr>
+                <td id="IndividualPolicyTab" class="bs active-bar-tab tab-header onclick-pointer">
+                    {!$Label.Pol_Individual_Policy}
+                </td>
+                <td id="GroupPolicyTab" class="bs inactive-bar-tab tab-header  onclick-pointer" >
+                    {!$Label.Pol_Group_Policy}
+                </td>
+            </tr>                
+        </table>
+        <script>
+            // CR-56_Link_20220214
+            $(".tab-header").on("click",function(event) {
+                $(".tab-pane").hide();
+                $("#"+(this.id).substring(0,this.id.length-3)).show();
+                $(".active-bar-tab").addClass("inactive-bar-tab").removeClass("active-bar-tab");
+                $(this).addClass("active-bar-tab").removeClass("inactive-bar-tab");
+                console.log(this.id);
+                
+                //if(!initGroup && this.id == 'GroupPolicyTab'){
+                //   MyPolicyAF.searchGroup();
+                //}
+            });
+        
+            if($('.bs .bar-tab-container').is(":visible")){
+                if($(window).width() >= 768){
+                   $('.bs .tab-pane').css('padding-top','50px');
+                }
+            }
+            //CR-56_Link_20220214
+            console.log('ipr size:' + $(".ipr").length);
+            console.log('gpr size:' + $(".gpr").length);
+             //CR-56_Link_20220214
+             if ( $(".ipr").length>0   &&
+                 $(".gpr").length>0   ){
+                $("#tabpnl").show();
+                $("#GroupPolicy").hide();
+                $("#IndividualPolicy").show();
+            }else {
+                $("#tabpnl").hide();
+                //CR-56_Link_20220214
+                if ( $(".ipr").length>0){
+                     $("#GroupPolicy").hide();
+                     $("#IndividualPolicy").show();
+                 }else{
+                    $("#IndividualPolicy").hide();
+                    $("#GroupPolicy").show();
+                 }
+            } 
+            if ("{!submitUrl}" == 'true'){
+                $("#IndividualPolicy").hide();
+                $("#GroupPolicy").hide();
+                $("#tabpnl").hide();
+            }
+        </script>
+    </apex:outputPanel>
+      <apex:actionFunction name="searchAll" action="{!SearchAll}" namespace="MyPolicyAF" reRender="varPnl,groupPanel,individualPanel,tabPanelApex" status="loader-icon"/>
+
+      <apex:actionFunction name="AsyncSearchInd" action="{!AsyncSearchInd}" namespace="MyPolicyAF" reRender="varPnl,individualPanel,tabPanelApex" status="loader-icon"  />
+      <apex:actionFunction name="AsyncSearchGroup" action="{!AsyncSearchGroup}" namespace="MyPolicyAF" reRender="varPnl,groupPanel,tabPanelApex" status="loader-icon" />
+
+      <apex:actionFunction name="searchInv" action="{!Search}" namespace="MyPolicyAF" reRender="individualPanel" status="loader-icon"/>
+      <apex:actionFunction name="searchGroup" action="{!SearchGroup}" namespace="MyPolicyAF" reRender="groupPanel" status="loader-icon" oncomplete="initGroup=true;"/>
+      <apex:actionFunction name="deletePolicy" action="{!deletePolicy}" namespace="MyPolicyAF" reRender="individualPanel" status="loader-icon" oncomplete="$('#overlay').hide();"/>
+      
+      <apex:actionFunction name="cusIndPrevPage" action="{!cusIndHandlePrevPage}" namespace="MyPolicyAF" reRender="individualPanel" status="loader-icon" oncomplete="$('#overlay').hide();"/>
+      <apex:actionFunction name="cusIndNextPage" action="{!cusIndHandleNextPage}" namespace="MyPolicyAF" reRender="individualPanel" status="loader-icon" oncomplete="$('#overlay').hide();"/>
+      <apex:actionFunction name="cusGrpPrevPage" action="{!cusGrpHandlePrevPage}" namespace="MyPolicyAF" reRender="groupPanel" status="loader-icon" oncomplete="$('#overlay').hide();"/>
+      <apex:actionFunction name="cusGrpNextPage" action="{!cusGrpHandleNextPage}" namespace="MyPolicyAF" reRender="groupPanel" status="loader-icon" oncomplete="$('#overlay').hide();"/>
+
+      <apex:actionFunction name="sendEMedicalCardEmail" action="{!sendEMedicalCardEmail}" namespace="MyPolicyAF" reRender="varPnl" status="loader-icon" oncomplete="emailSent()"/>
+
+      <apex:actionFunction name="getEMedicalCardImagesWebInd" action="{!getIndEMedicalCardImages}" namespace="MyPolicyAF" status="loader-icon"  reRender="varPnl, eMedicalCardLayer" oncomplete=" showEMedicalCardWebInd()"/>
+      <apex:actionFunction name="getEMedicalCardImagesMobInd" action="{!getIndEMedicalCardImages}" namespace="MyPolicyAF" status="loader-icon"  reRender="varPnl, eMedicalCardLayer" oncomplete=" showEMedicalCardMobInd()"/>
+      
+      <apex:actionFunction name="getEMedicalCardImagesWebGroup" action="{!getGroupEMedicalCardImages}" namespace="MyPolicyAF" status="loader-icon"  reRender=" varPnl,groupPanel,selectLayer,eMedicalCardLayer " oncomplete=" showEMedicalCardWebGroup()"/>
+
+      <apex:actionFunction name="getEMedicalCardImagesWebGroupBack" action="{!getGroupEMedicalCardImagesBack}" namespace="MyPolicyAF" status="loader-icon"  reRender=" varPnl,groupPanel,selectLayer,eMedicalCardLayer " oncomplete=" showEMedicalCardWebGroup()"/>
+      <apex:actionFunction name="getGroupEMedicalCardImagesOneCardSubmit" action="{!getGroupEMedicalCardImagesOneCardSubmit}" namespace="MyPolicyAF" status="loader-icon"  reRender=" varPnl,groupPanel,selectLayer,eMedicalCardLayer " oncomplete=" redirectPDFFileSubmit()"/>
+      <apex:actionFunction name="getEMedicalCardImagesWebGroupOne" action="{!getGroupEMedicalCardImages}" namespace="MyPolicyAF" status="loader-icon"  reRender="varPnl, eMedicalCardLayer" oncomplete=" showEMedicalCardWebInd()"/>
+      <apex:actionFunction name="getEMedicalCardImagesMobGroup" action="{!getGroupEMedicalCardImages}" namespace="MyPolicyAF" status="loader-icon"  reRender="varPnl,groupPanel,selectLayer" oncomplete=" showEMedicalCardMobGroup()"/>
+      <apex:actionFunction name="getEMedicalCardImagesMobGroupOne" action="{!getGroupEMedicalCardImages}" namespace="MyPolicyAF" status="loader-icon"  reRender="varPnl, eMedicalCardLayer" oncomplete=" showEMedicalCardMobInd()"/>
+    
+      <apex:actionFunction name="getImagePDF" action="{!getImagePDF}" namespace="MyPolicyAF" status="loader-icon"  reRender="varPnl,selectLayer" oncomplete="redirectPDFFile()"/>
+
+      <apex:actionFunction name="getImagePDFSubmit" action="{!getImagePDFSubmit}" namespace="MyPolicyAF" status="loader-icon"  reRender="varPnl,selectLayer" oncomplete="redirectPDFFileSubmit()"/>
+
+      <apex:outputPanel id="varPnl" layout="block">
+
+        <apex:inputHidden id="curPolicyNum" value="{!curPolicyNum}" />
+        <apex:inputHidden id="curFrontUrl" value="{!curFrontUrl}" />
+        <apex:inputHidden id="curBackUrl" value="{!curBackUrl}" />         
+        <apex:inputHidden id="isRequiredSignDDA" value="{!isRequiredSignDDA}" />         
+
+            <script>
+                function clickGetEMedicalCardWebInd(obj){
+                    $("#isMobile").val("0");
+              //      if (swipeMode) {
+              //          clickGetEMedicalCardMobInd(obj)
+              //      }else{  
+                        $(obj).attr("front","{!curFrontUrl}");
+                        $(obj).attr("back","{!curbackUrl}");
+                        $("#emc_prdname").text($(obj).attr("prdname"));
+                        var pn = $(obj).attr('polNumber');
+                        $("input[id*='curPolicyNum']").val( pn);
+                        MyPolicyAF.getEMedicalCardImagesWebInd();
+               //     }
+                }
+
+                function showEMedicalCardWebInd( ){                   
+                    $("#eMedicalCard_webfront").attr("src","{!curFrontUrl}");
+                    $("#eMedicalCard_webback").attr("src","{!curbackUrl}");
+                    $("#btnSave").attr("href","/customer/CusEMedicalCardPDF?isPDF=1&front={!curFrontUrl}&back={!curbackUrl}");
+                    /*
+                    $("#btnSave").attr("href","#");
+                    $('#btnSave').on('click', function () {                  
+                     window.open("/customer/CusEMedicalCardPDF?isPDF=1&front={!curFrontUrl}&back={!curbackUrl}");
+                });
+                */
+                    
+                    $("#btnPrint").attr("href","/customer/CusEMedicalCardPDF?front={!curFrontUrl}&back={!curbackUrl}");
+
+                    
+                    $(".policyList").hide();
+                    $(".eMedicalCardLayer").show();
+                    $("#prevStep").val('main');
+
+                    MyPolicyAF.getImagePDF();
+                }
+
+                function clickGetEMedicalCardMobInd(obj){ 
+                    console.log("here1");
+                    lastTri = obj;
+                    $("#isMobile").val("1");
+                    $(obj).attr("front","{!curFrontUrl}");
+                    $(obj).attr("back","{!curbackUrl}");
+                    $("#emc_prdname").text($(obj).attr("prdname"));
+                    var pn = $(obj).attr('polNumber');
+                    $("input[id*='curPolicyNum']").val( pn);
+                    MyPolicyAF.getEMedicalCardImagesMobInd();
+                }
+
+                function showEMedicalCardMobInd(){
+                    console.log("here2");
+                    $("#imgitem1").attr("src", "{!curFrontUrl}");
+                    $("#imgitem2").attr("src", "{!curbackUrl}");                    
+                   // alert ('{!curFrontUrl}'); 
+                    initMod(imod);
+                     
+                    $("#btnSave_mob").attr("href","/customer/CusEMedicalCardPDF?isPDF=1&front={!curFrontUrl}&back={!curbackUrl}");
+                    MyPolicyAF.getImagePDF();
+                }
+
+                function clickGetEMedicalCardWebGroup(obj){
+                    
+                    $("#isMobile").val("0");
+                    var cardCount = $(obj).attr("cardCount");   
+                    $("#emc_prdname").text($(obj).attr("prdname"));
+                    //
+                    //  cardCount++;
+                    //                 
+                    if (cardCount==1){
+                        $("#isMobile").val("0");  
+                        $(obj).attr("front","{!curFrontUrl}");
+                        $(obj).attr("back","{!curbackUrl}");
+                        $("#emc_prdname").text($(obj).attr("prdname"));
+                        var pn = $(obj).attr('polNumber');
+                        $("input[id*='curPolicyNum']").val( pn);
+                        var isRequiredSignDDAVar = $("input[id*='isRequiredSignDDA']").val();
+                        console.log('isRequiredSignDDAVar:' + isRequiredSignDDAVar);
+                        if (isRequiredSignDDAVar == 'true') {
+                            Cigna.Util.navigateToVFP("MyDDASignatureForm?policyNumber=" + $("input[id*='curPolicyNum']").val()+"&front={!curFrontUrl}&back={!curbackUrl}", null, null, true);
+                        } else {
+                            //setTimeout (function (){MyPolicyAF.getEMedicalCardImagesWebGroupOne()}, 1000);
+                            MyPolicyAF.getEMedicalCardImagesWebGroupOne();
+                        }
+                        console.log($(obj).attr("front"));
+                        console.log('zyhere');
+                    }else{
+                        var pn = $(obj).attr('polNumber');
+                        $("input[id*='curPolicyNum']").val( pn);  
+                        //  alert ('called');
+                        //setTimeout (function (){MyPolicyAF.getEMedicalCardImagesWebGroup()}, 1000);
+                        MyPolicyAF.getEMedicalCardImagesWebGroup();
+                        
+                    }
+                     
+                }
+                function showEMedicalCardWebGroup(){
+                    $(".policyList").hide();
+                    $(".eMedicalCardSelectionLayer").show();
+                    //MyPolicyAF.getImagePDF();
+                }
+
+                function clickGetEMedicalCardMobGroup(obj){      
+                    $("#isMobile").val("1");              
+                    var cardCount = $(obj).attr("cardCount");
+                    var pn = $(obj).attr('polNumber');
+                    // cardCount++;
+                    if (cardCount==1){
+                        lastTri = obj;
+                        $("#isMobile").val("1");
+                        $(obj).attr("front","{!curFrontUrl}");
+                        $(obj).attr("back","{!curbackUrl}");
+                        $("#emc_prdname").text($(obj).attr("prdname"));
+                        var pn = $(obj).attr('polNumber');
+                        $("input[id*='curPolicyNum']").val( pn);
+                        MyPolicyAF.getEMedicalCardImagesMobGroupOne();
+                        console.log('zyhere2');
+                    }else{
+                        var pn = $(obj).attr('polNumber');
+                        $("input[id*='curPolicyNum']").val( pn);  
+                        MyPolicyAF.getEMedicalCardImagesMobGroup();
+                        
+                    }
+                     
+                }
+                function showEMedicalCardMobGroup(){
+                    $(".policyList").hide();
+                    $(".eMedicalCardSelectionLayer").show();
+                   // MyPolicyAF.getImagePDF();
+                }
+
+                function clickGetEMedicalCard(obj){
+                    var isMobile = $("#isMobile").val();
+                    var policyNumber = $("#curPolicyNum").val();
+                    console.log("required sign DDA is :" + $("input[id*='isRequiredSignDDA']").val());
+                    if ($("input[id*='isRequiredSignDDA']").val() == 'true'){
+                        Cigna.Util.navigateToVFP("MyDDASignatureForm?policyNumber=" + $("input[id*='curPolicyNum']").val()+"&multipleCard=true"
+                            +"&imgName=" + $(obj).attr("imgName")+"&front="+$(obj).attr("front")+"&back="+$(obj).attr("back"), null, null, true);
+                    } else {
+                        //   if (swipeMode) {isMobile='1';}
+                       // alert ('is mobile '+isMobile);
+                       $("input[id*='curFrontUrl']").val( $(obj).attr("front"));
+                       $("input[id*='curBackUrl']").val( $(obj).attr("back"));
+                       MyPolicyAF.getImagePDF();
+                            console.log('$(obj).attr("front"):' + $(obj).attr("front"));
+                            console.log('$(obj).attr("back"):' + $(obj).attr("back"));
+                            
+                        if (isMobile=='1'){
+                            $("#imgitem1").attr("src", $(obj).attr("front"));
+                            $("#imgitem2").attr("src", $(obj).attr("back")); 
+                            // $("#imgitem1").attr("src", "{!curFrontUrl}");
+                            // $("#imgitem2").attr("src", "{!curbackUrl}"); 
+                            $("#btnSave").attr("href","/customer/CusEMedicalCardPDF?isPDF=1&front={!curFrontUrl}&back={!curbackUrl}");
+                            $("#btnPrint").attr("href","/customer/CusEMedicalCardPDF?front={!curFrontUrl}&back={!curbackUrl}");
+                            
+                          
+                            initMod(imod);
+                        }else{                          
+                            $("#eMedicalCard_webfront").attr("src", $(obj).attr("front"));
+                            $("#eMedicalCard_webback").attr("src", $(obj).attr("back")); 
+                            // $("#eMedicalCard_webfront").attr("src", "{!curFrontUrl}");
+                            // $("#eMedicalCard_webback").attr("src", "{!curbackUrl}"); 
+                            
+                            $("#btnSave").attr("href","/customer/CusEMedicalCardPDF?isPDF=1&front="+$(obj).attr("front")+"&back="+$(obj).attr("back"));
+                            $("#btnPrint").attr("href","/customer/CusEMedicalCardPDF?front="+$(obj).attr("front")+"&back="+$(obj).attr("back"));
+                            
+                            
+                            
+                            $(".eMedicalCardSelectionLayer").hide();
+                            $(".eMedicalCardLayer").show();
+                            $("#prevStep").val('selection');
+                        }
+                    }
+                }
+
+                function redirectPDFFile(){
+                  //  alert('in')  ;  
+                    $("#btnSave").attr("href","{!curPDFUrl}");          
+                    $("#btnSave_mob").attr("href","{!curPDFUrl}");  
+                    if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {                       
+                        $("a").attr("target","");
+                    } else {
+                    	$("a").attr("target","_blank");
+                    }
+                    /*
+                    if (Cigna.Util.isMobile()){
+                        $("#btnPrint").hide();  
+                    }
+                    */
+                  //  alert("curpdfurl : {!curPDFUrl}")  ;             
+                   // $("#btnSave").click();
+                }
+
+                function redirectPDFFileSubmit(){
+                  //  alert('in')  ;  
+                    //$("#btnSave").attr("href","{!curPDFUrl}");                  
+                    //$("#btnSave_mob").attr("href","{!curPDFUrl}"); 
+                    if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {                       
+                        $("a").attr("target","");           
+                    }     
+                    /*
+                    if (Cigna.Util.isMobile()){
+                        $("#btnPrint").hide();  
+                    }
+                    */
+                  //  alert("curpdfurl : {!curPDFUrl}")  ;             
+                   // $("#btnSave").click();
+                }
+               
+                function initMod(wid){
+
+                 //   $("#owl-promotion-mobile").data('owlCarousel').destroy();  
+    //                    $("#owl-promotion-mobile").data('owl.carousel ').destroy();  
+                  // CR-56_Link_20220214
+                  $(".close").trigger("click");
+                
+                    if($('#rotate').hasClass('rotate')){
+                        $("#owl-promotion-mobile").owlCarousel({
+                            loop:false,
+                            items: 1,
+                        //    autoHeight: true,
+                            autoWidth:true,                            
+                            touchDrag : false,
+                            mouseDrag  : false,   
+                            responsiveRefreshRate: 200  
+
+                        });
+                    }else{
+                        $("#owl-promotion-mobile").owlCarousel({
+                            loop:false,
+                            items: 1,
+                         //   autoHeight: true,
+                            autoWidth:true,                            
+                            responsiveRefreshRate: 200                        
+                        });
+                    } 
+                             
+                    var owlwidth = $(document).width()*1.12;//*0.9 ;//* 0.6;
+                    if (Cigna.Util.isIOS() || Cigna.Util.isAndroid() || Cigna.Util.checkWebView()) {
+                        owlwidth = $(document).width()*1.12;//*0.9 ;  //                 
+                    }
+      
+                //    alert ('wid '+wid);
+                    if (wid ==0){
+                        $("#owl-promotion-mobile").width(owlwidth);
+                    }else {
+                        $("#owl-promotion-mobile").width(wid);
+                    }
+                    $('#overlay').show();
+                    $('#overlay').css('opacity','0.95');
+                    setTimeout (function (){$('#overlay').show();}, 300);
+                    
+                    $("#imgModal").modal( );
+                    $("body").addClass("noscroll");
+     
+                    var slider = $('#owl-promotion-mobile');
+
+                    slider.on('changed.owl.carousel', function (event) {
+                   //  alert ('a');
+                    //    alert (event.item.index);
+                        var curindex = event.item.index;
+                       if (curindex==0)
+                       $("#modal_header_text").text("{!$Label.EMC_Card_Header_Text_Front_Modal}");
+                        if (curindex==1)
+                       $("#modal_header_text").text("{!$Label.EMC_Card_Header_Text_Back_Modal}");
+                   
+                    });
+/*
+                    slider.on('prev.owl.carousel', function () {
+                       //  alert ('a');
+                       $("#modal_header_text").text("{!$Label.EMC_Card_Header_Text_Front_Modal}");
+                    });
+*/
+                    $("#swipeCtn").swipe( {
+                        swipeDown:function(event, direction, distance, duration) {
+                            slider.trigger('next.owl.carousel');
+                         //   $("#modal_header_text").text("{!$Label.EMC_Card_Header_Text_Back_Modal}");
+                        //    slider.trigger('owl.goTo', 2);
+                        //    alert('detect swipe up');
+                        },
+                         swipeUp:function(event, direction, distance, duration) {
+                            slider.trigger('prev.owl.carousel');
+//                            $("#modal_header_text").text("{!$Label.EMC_Card_Header_Text_Front_Modal}");
+                        //    slider.trigger('owl.goTo', 1);
+                        //    alert('detect swipe down');
+           
+                         },
+                         
+                        threshold:15,
+                        allowPageScroll:"vertical"
+                    });
+
+                } 
+            </script>
+      </apex:outputPanel>
+
+      <div class="tab-content policyList">
+        <apex:outputPanel layout="block" id="individualPanel">
+           
+           <div id="IndividualPolicy" class="bs {!if(showIndTab,'in active','')}  tab-pane" style="{!if(showIndTab,'','display:none;')}">
+                <div class="bs col-xs-12 hidden-xs">
+                    <div class="bs row table-header">
+              
+                        <div class="bs col-sm-3 col-md-3">{!$Label.Pol_Product_Name}</div>
+                        <div class="bs col-sm-2 col-md-2" style="word-break: break-word;">{!$Label.Person_Insured}</div>
+                        <div class="bs col-sm-2 col-md-2">{!$Label.Pol_Effective_Date}</div>
+                        <div class="bs col-sm-2 col-md-2">{!$Label.Pol_Policy_Number}</div>
+                        <div class="bs col-sm-1 col-md-1">{!$Label.Pol_Status}</div>
+                        <div class="bs col-sm-2 col-md-2">
+
+                            <div class="col-sm-10 col-md-10">{!$Label.EMC_Medical_Card}</div>
+                            <div class=" col-sm-2 col-md-2"></div>
+                        </div>
+                    </div>
+                    
+                    <apex:variable value="{!1}" var="rowNum" />
+                    <apex:repeat value="{!policyList}" var="c" rows="{!cusPageSize}" first="{!cusIndStartIndex}">
+                      <div class="ipr bs row table-content  {!IF(MOD(rowNum,2)==1,'grey-background','')}" data-new-policy="{!IF(c.policyType == 'NEW' ,'Y','N')}" >
+                        <div class="bs col-sm-3 col-md-3 bold-font">
+                            <span class="{!IF(c.policyType == 'NEW','','onclick-pointer')}" onclick="Cigna.MyPolicy.goToPolicyDetails('{!c.policyNumber}', '{!c.policyType}', '{!c.holdingID}','{!c.SHA256Key}','{!c.productCode}')"><!--add by Jack on 2021-12-09 for project: VHIS Ward Plan -->
+                            {!c.marketingName}
+                            </span>
+                        </div>
+                        <div class="bs col-sm-2 col-md-2 bold-font"  style='word-wrap:break-word;'>
+                            <span class="{!IF(c.policyType == 'NEW','','onclick-pointer')}" onclick="Cigna.MyPolicy.goToPolicyDetails('{!c.policyNumber}', '{!c.policyType}', '{!c.holdingID}','{!c.SHA256Key}','{!c.productCode}')">{!c.insuredList[0].fullName}<!--add by Jack on 2021-12-09 for project: VHIS Ward Plan -->
+                            </span>
+                        </div>
+                        <div class="bs col-sm-2 col-md-2 bold-font">
+                            <span class="{!IF(c.policyType == 'NEW','','onclick-pointer')}" onclick="Cigna.MyPolicy.goToPolicyDetails('{!c.policyNumber}', '{!c.policyType}', '{!c.holdingID}','{!c.SHA256Key}','{!c.productCode}')"><!--add by Jack on 2021-12-09 for project: VHIS Ward Plan -->
+                            <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                <apex:param value="{!c.effDateInDate}"/>
+                            </apex:outputText>
+                            </span>
+                        </div>
+                        <div class="bs col-sm-2 col-md-2 bold-font" style="word-wrap: break-word;" >
+                            <span class="{!IF(c.policyType == 'NEW','','onclick-pointer')}"  onclick="Cigna.MyPolicy.goToPolicyDetails('{!c.policyNumber}', '{!c.policyType}', '{!c.holdingID}','{!c.SHA256Key}','{!c.productCode}')"><!--add by Jack on 2021-12-09 for project: VHIS Ward Plan -->
+                            {!c.policyNumber}
+                            </span>
+                            </div>
+                        <div class="bs col-sm-1 col-md-1 bold-font" >
+                            <span class="{!IF(c.policyType == 'NEW','','onclick-pointer')}"  onclick="Cigna.MyPolicy.goToPolicyDetails('{!c.policyNumber}', '{!c.policyType}', '{!c.holdingID}','{!c.SHA256Key}','{!c.productCode}')"><!--add by Jack on 2021-12-09 for project: VHIS Ward Plan -->
+                                {!c.policyStatusDisplayName}
+                                    <!--junda add 20201201-->
+                                    <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="{!$Label.Policy_Tooltip}" aria-hidden="true" STYLE="{!IF(c.isDisplayTooltip, '', 'display:none')}"></i>
+                                    <!--junda add end-->
+                            </span>
+                        </div>
+
+                        <div class="bs col-sm-2 col-md-2 bold-font medicalcard" > 
+                            <div class='col-sm-8 col-md-8 ' style='text-align: center;'> 
+                                <apex:outputPanel rendered="{!c.EMedicalCardCount>0}">
+                                    <img src="{!URLFOR($Resource.My_EMedical_Card_Icon)}"  front=" " back=" " prdname="{!c.marketingName}" cardCount="{!c.EMedicalCardCount}"
+                                    style="cursor:pointer;" polNumber = "{!c.PolicyNumber}"
+                                    onclick="clickGetEMedicalCardWebInd(this)" />
+                                </apex:outputPanel>
+
+                                <apex:outputPanel rendered="{!c.EMedicalCardCount==0}">
+                                    <span>N/A</span>
+                                </apex:outputPanel>
+                            </div>
+                            <div class='col-sm-4 col-md-4'> 
+                                <!-- <span class="{!IF(c.policyType == 'NEW','','onclick-pointer')}"  onclick="Cigna.MyPolicy.goToPolicyDetails('{!c.policyNumber}', '{!c.policyType}', '{!c.holdingID}','{!c.SHA256Key}','{!c.productCode}')"> --><!--add by Jack on 2021-12-09 for project: VHIS Ward Plan -->
+                                
+                                <apex:outputPanel rendered="{!IF(c.policyType == 'NEW' ,true,false)}">
+                                    <i class="ci-hk-delete ci-hk-sm pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="Cigna.MyPolicy.deletePolicy('{!c.holdingID}');" aria-hidden="true" />
+                                    <i class="ci-hk-pencil ci-hk-sm pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="Cigna.MyPolicy.goToPolicyDetails('{!c.policyNumber}', '{!c.policyType}', '{!c.holdingID}','{!c.SHA256Key}','{!c.productCode}')" aria-hidden="true" style="padding-right: 10px;"/><!--add by Jack on 2021-12-09 for project: VHIS Ward Plan -->
+                                </apex:outputPanel>
+                                
+                                <apex:outputPanel rendered="{!IF(c.policyType != 'NEW',true,false)}">
+                                    <!-- Rancho_PI67_20220519 - add click action for ">" button -->
+                                    <i class="ci-hk-arrow-31 ci-hk-sm pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="Cigna.MyPolicy.goToPolicyDetails('{!c.policyNumber}', '{!c.policyType}', '{!c.holdingID}','{!c.SHA256Key}','{!c.productCode}')"></i>
+                                </apex:outputPanel>
+                                <!-- </span> --><!--add by Jack on 2021-12-09 for project: VHIS Ward Plan -->
+                            </div> 
+                        </div>
+                      </div>
+                      <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                    </apex:repeat>
+                    <!--junda add 20201201-->
+                    <script>
+                       $('[data-toggle="tooltip"]').tooltip();
+                    </script>
+                    <!--junda add end-->
+                </div>
+                <div class="visible-xs hidden-sm hidden-md col-sm-12 col-xs-12" style="padding: 0px">
+                <apex:variable value="{!1}" var="rowNum" />
+                <apex:repeat value="{!policyList}" var="c" rows="{!cusPageSize}" first="{!cusIndStartIndex}">
+                    <div class="ipr bs col-sm-12 col-xs-12 table-content-panel {!IF(MOD(rowNum,2)==1,'','grey-background')}" data-new-policy="{!IF(c.policyType == 'NEW' ,'Y','N')}" >
+                        <div class="bs row table-content table-content-title" >
+                            <div class="col-sm-12 col-xs-12 bold-font">
+                                {!c.marketingName}
+                                <apex:outputPanel rendered="{!IF(c.policyType != 'NEW',true,false)}">
+                                    <!-- Rancho_PI67_20220519 - add click action for ">" button -->
+                                    <i class="ci-hk-arrow-31 ci-hk-sm pull-right cigna-fg-blue-medium onclick-pointer" onclick="Cigna.MyPolicy.goToPolicyDetails('{!c.policyNumber}', '{!c.policyType}', '{!c.holdingID}','{!c.SHA256Key}','{!c.productCode}')"></i>
+                                </apex:outputPanel>
+                            </div>
+
+                        </div>
+                        <div class="bs row table-content">
+                           <div class="col-sm-6 col-xs-6" style="word-break: break-word;">{!$Label.Person_Insured}</div>
+                           <div class="col-sm-6 col-xs-6 bold-font" >
+                                <span class="{!IF(c.policyType == 'NEW','','onclick-pointer')}" onclick="Cigna.MyPolicy.goToPolicyDetails('{!c.policyNumber}', '{!c.policyType}', '{!c.holdingID}','{!c.SHA256Key}','{!c.productCode}')"><!--add by Jack on 2021-12-09 for project: VHIS Ward Plan -->
+                               {!c.insuredList[0].fullName}
+                               </span>
+                               <apex:outputPanel rendered="{!IF(c.policyType == 'NEW' ,true,false)}">
+                                    <i class="ci-hk-pencil ci-hk-sm pull-right cigna-fg-blue-medium onclick-pointer" onclick="Cigna.MyPolicy.goToPolicyDetails('{!c.policyNumber}', '{!c.policyType}', '{!c.holdingID}','{!c.SHA256Key}','{!c.productCode}')" aria-hidden="true"/><!--add by Jack on 2021-12-09 for project: VHIS Ward Plan -->
+                                </apex:outputPanel>
+                           </div>
+                        </div>
+                        <div class="bs row table-content">
+                           <div class="col-sm-6 col-xs-6">{!$Label.Pol_Effective_Date}</div>
+                           <div class="col-sm-6 col-xs-6 bold-font">
+                            <span class="{!IF(c.policyType == 'NEW','','onclick-pointer')}" onclick="Cigna.MyPolicy.goToPolicyDetails('{!c.policyNumber}', '{!c.policyType}', '{!c.holdingID}','{!c.SHA256Key}','{!c.productCode}')"><!--add by Jack on 2021-12-09 for project: VHIS Ward Plan -->
+                               <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                    <apex:param value="{!c.effDateInDate}"/>
+                                </apex:outputText>
+                            </span>
+                           </div>
+                        </div>
+                        <div class="bs row table-content">
+                           <div class="col-sm-6 col-xs-6">{!$Label.Pol_Policy_Number}</div>
+                           <div class="col-sm-6 col-xs-6 bold-font"  style="word-wrap: break-word;">
+                            <span class="{!IF(c.policyType == 'NEW','','onclick-pointer')}" onclick="Cigna.MyPolicy.goToPolicyDetails('{!c.policyNumber}', '{!c.policyType}', '{!c.holdingID}','{!c.SHA256Key}','{!c.productCode}')"><!--add by Jack on 2021-12-09 for project: VHIS Ward Plan -->
+                            {!c.policyNumber}
+                            </span>
+                            </div>
+                        </div>
+                        <div class="bs row table-content">
+                            <div class="col-sm-6 col-xs-6">{!$Label.Pol_Status}</div>
+                            <div class="col-sm-6 col-xs-6 bold-font">
+                                <span class="{!IF(c.policyType == 'NEW','','onclick-pointer')}" onclick="Cigna.MyPolicy.goToPolicyDetails('{!c.policyNumber}', '{!c.policyType}', '{!c.holdingID}','{!c.SHA256Key}','{!c.productCode}')"><!--add by Jack on 2021-12-09 for project: VHIS Ward Plan -->
+                                {!c.policyStatusDisplayName}
+                                    <!--junda add 20201201-->
+                                    <i class="fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="{!$Label.Policy_Tooltip}" aria-hidden="true" STYLE="{!IF(c.isDisplayTooltip, '', 'display:none')}"></i>
+                                    <!--junda add end-->
+                                </span>
+                                <apex:outputPanel rendered="{!IF(c.policyType == 'NEW' ,true,false)}">
+                                    <i class="ci-hk-delete ci-hk-sm pull-right cigna-fg-blue-medium onclick-pointer" onclick="Cigna.MyPolicy.deletePolicy('{!c.holdingID}');" aria-hidden="true" />
+                                </apex:outputPanel>
+                            </div>
+                            
+                        </div>
+                        <apex:outputPanel rendered="{!c.EMedicalCardCount>0}">
+                        <div class="bs row table-content">
+                            <div class="col-sm-6 col-xs-6">{!$Label.EMC_Medical_Card}</div>
+                            <div class="col-sm-6 col-xs-6 bold-font">
+                                 <img src="{!URLFOR($Resource.My_EMedical_Card_Icon)}"  front=" " back=" " prdname="{!c.marketingName}" polNumber="{!c.PolicyNumber}" 
+                                style="cursor:pointer;" 
+                                onclick="clickGetEMedicalCardMobInd(this)" />
+                            </div>                            
+                        </div>
+                        </apex:outputPanel>
+                    </div>
+                <apex:variable var="rowNum" value="{!rowNum + 1}" />
+
+                </apex:repeat>
+                    <!--junda add 20201201-->
+                    <script>
+                        $('[data-toggle="tooltip"]').tooltip();
+                    </script>
+                    <!--junda add end-->
+            </div>
+            
+            <div class="bs col-sm-12 col-xs-12 col-lg-12 col-md-12" style="text-align: center;padding-top:30px;">
+                <apex:outputPanel rendered="{!If(cusIndHasPrev,true,false)}">
+                    <div class="ci-hk-arrow-29 ci-hk-sm onclick-pointer cigna-fg-orange-dark" style="padding-right:10px;" aria-hidden="true" onclick="MyPolicyAF.cusIndPrevPage();"/>
+                </apex:outputPanel>
+
+                <apex:outputText value="{!$Label.Page_0_of_1}" >
+                    <apex:param value="{!cusIndCurrentPage}" />
+                    <apex:param value="{!cusIndTotalPage}" />
+                </apex:outputText>
+
+                <apex:outputPanel rendered="{!If(cusIndHasNext,true,false)}">
+                    <div class="ci-hk-arrow-31 ci-hk-sm onclick-pointer cigna-fg-orange-dark" style="padding-left:10px;" aria-hidden="true" onclick="MyPolicyAF.cusIndNextPage();"/>
+                </apex:outputPanel>
+            </div> 
+            
+           </div>
+            <script>
+                $("div[data-new-policy='Y']").prop('onclick',null).off('click');
+            </script>
+        </apex:outputPanel>
+        <apex:outputPanel layout="block" id="groupPanel">
+            <div id="GroupPolicy" class="bs tab-pane {!if(showGroupTab && !showIndTab,'in active','')}" style="{!if(showIndTab,'display:none;','')}">
+                <div class="bs col-xs-12 hidden-xs">
+                    <apex:outputPanel layout="block" rendered="{!policyListGroup.size>0}">
+                        <div class="bs row table-header">
+                            <div class="bs col-sm-2">{!$Label.Pol_Plan_Type}</div>
+                            <div class="bs col-sm-2" style="word-break: break-word;">{!$Label.Pol_Policy_Holder}</div>
+                            <!-- Modified by IBM(Roy) due to PEI-156/PORTABLE R2 START-->
+                            <!-- <div class="bs col-sm-2">{!$Label.Pol_Coverage_Period_From}</div>
+                            <div class="bs col-sm-2">{!$Label.Pol_Coverage_Period_To}</div> -->
+                           <!--Add by Caden for JR1753 - change from policy level to member level coverage start  -->
+                            <div class="bs col-sm-2">{!$Label.Member_Period_From}</div>
+                            <div class="bs col-sm-2">{!$Label.Member_Period_To}</div>
+                            <!--Add by Caden for JR1753 - change from policy level to member level coverage end  -->
+                            <!-- Modified by IBM(Roy) due to PEI-156/PORTABLE R2 END-->
+                            <div class="bs col-sm-4">
+                                <div class="col-sm-4">{!$Label.Pol_Policy_Number}</div>
+                                <div class="col-sm-4">{!$Label.Member_Status}</div> 
+                                <div class="col-sm-4">{!$Label.EMC_Medical_Card}</div>   
+                            </div>                          
+                        </div>
+                    </apex:outputPanel>
+                    <apex:variable value="{!1}" var="rowNum" />
+                    <apex:repeat value="{!policyListGroup}" var="c" rows="{!cusPageSize}" first="{!cusGrpStartIndex}">
+                      <div class="gpr bs row table-content  {!IF(MOD(rowNum,2)==1,'grey-background','')}"  >
+                        <!-- Rancho_JOBR376_20240612 - could not submit claim if policy expired more than 90 days -->
+                        <div class="bs col-sm-2 bold-font " >
+                                 <span class='onclick-pointer' onclick="Cigna.Util.navigateToVFP('PolicyDetailsPageVFP?policyNumber={!c.policyNumber}&policyType=Group&SHA256Key={!c.SHA256Key}&termDate={!c.memberTermDate}', null, null, true)">
+                        {!c.productType}</span></div>
+                        <div class="bs col-sm-2 bold-font"><span class='onclick-pointer' onclick="Cigna.Util.navigateToVFP('PolicyDetailsPageVFP?policyNumber={!c.policyNumber}&policyType=Group&SHA256Key={!c.SHA256Key}&termDate={!c.memberTermDate}', null, null, true)">{!c.holderName}</span></div>
+                        <div class="bs col-sm-2 bold-font">
+                        <span class='onclick-pointer' onclick="Cigna.Util.navigateToVFP('PolicyDetailsPageVFP?policyNumber={!c.policyNumber}&policyType=Group&SHA256Key={!c.SHA256Key}&termDate={!c.memberTermDate}', null, null, true)">
+                           <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                <!--Add by Caden for JR1753 - change from policy level to member level coverage start  -->
+                               <apex:param value="{!c.memberEffDateInDate}"/>
+                               <!--Add by Caden for JR1753 - change from policy level to member level coverage end  -->
+                           </apex:outputText>
+                           </span>
+                        </div>
+                        <div class="bs col-sm-2 bold-font">
+                        <span class='onclick-pointer' onclick="Cigna.Util.navigateToVFP('PolicyDetailsPageVFP?policyNumber={!c.policyNumber}&policyType=Group&SHA256Key={!c.SHA256Key}&termDate={!c.memberTermDate}', null, null, true)">
+                           <apex:outputText value="{0, date, yyyy/MM/dd}">
+                               <!--Add by Caden for JR1753 - change from policy level to member level coverage start  -->
+                               <apex:param value="{!c.memberTermDateInDate}"/>
+                               <!--Add by Caden for JR1753 - change from policy level to member level coverage end  -->
+                           </apex:outputText>
+                           </span>
+                        </div>
+                        <div class="bs col-sm-4 bold-font">
+                            <div class="col-sm-4 bold-font" style="word-wrap: break-word;">
+                            <span class='onclick-pointer' onclick="Cigna.Util.navigateToVFP('PolicyDetailsPageVFP?policyNumber={!c.policyNumber}&policyType=Group&SHA256Key={!c.SHA256Key}&termDate={!c.memberTermDate}', null, null, true)">{!c.policyNumber}</span></div>
+                            <!--Add by Caden for JR1753 - change from policy level to member level coverage start-->
+                            <div class="col-sm-4 bold-font"><span class='onclick-pointer' onclick="Cigna.Util.navigateToVFP('PolicyDetailsPageVFP?policyNumber={!c.policyNumber}&policyType=Group&SHA256Key={!c.SHA256Key}&termDate={!c.memberTermDate}', null, null, true)">{!c.memberStatusDisplayName}</span></div>  
+                            <!--Add by Caden for JR1753 - change from policy level to member level coverage end-->
+                            <div class="col-sm-4 bold-font">
+                                <apex:outputPanel rendered="{!c.EMedicalCardCount>0}">
+                                    <img id="img-{!c.PolicyNumber}" src="{!URLFOR($Resource.My_EMedical_Card_Icon)}"  front="{!URLFOR($Resource.eMedical, 'eMedical/Elite_front.png')}" back="{!URLFOR($Resource.eMedical, 'eMedical/Elite_back.png')}"  cardCount="{!c.EMedicalCardCount}" polNumber = "{!c.PolicyNumber}"  prdname="{!c.ProductType}"  
+                                    style="cursor:pointer;" 
+                                    onclick="clickGetEMedicalCardWebGroup(this)" />
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!c.EMedicalCardCount==0}">
+                                    <span>N/A</span>
+                                </apex:outputPanel>
+                            </div>   
+                        </div>
+                      </div>
+                      <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                    </apex:repeat>
+                </div>
+                
+                <div class="visible-xs hidden-sm hidden-md col-sm-12 col-xs-12" style="padding: 0px">
+                    <apex:variable value="{!1}" var="rowNum" />
+                    <apex:repeat value="{!policyListGroup}" var="c" rows="{!cusPageSize}" first="{!cusGrpStartIndex}">
+                        <div class="gpr bs col-sm-12 col-xs-12 table-content-panel {!IF(MOD(rowNum,2)==1,'','grey-background')}" >
+                            <div class="bs row table-content table-content-title" >
+                                <div class="col-sm-12 col-xs-12 bold-font">
+                                   <span class='onclick-pointer' onclick="Cigna.Util.navigateToVFP('PolicyDetailsPageVFP?policyNumber={!c.policyNumber}&policyType=Group&SHA256Key={!c.SHA256Key}&termDate={!c.memberTermDate}', null, null, true)">
+                                    {!c.productType}
+                                    </span>
+                                    <i class="fa fa-angle-right" aria-hidden="true" style="font-size: 1.2em;float:right;color: #134688;margin-right: -20px;"></i>
+                                </div>
+                            </div>
+    
+                            <div class="bs row table-content onclick-pointer" onclick="Cigna.Util.navigateToVFP('PolicyDetailsPageVFP?policyNumber={!c.policyNumber}&policyType=Group&SHA256Key={!c.SHA256Key}&termDate={!c.memberTermDate}', null, null, true)">
+                               <div class="col-sm-6 col-xs-6" style="word-wrap: break-word;">
+                               {!$Label.Pol_Policy_Holder} </div>
+                               <div class="col-sm-6 col-xs-6 bold-font">{!c.holderName}</div>
+                            </div>
+                            <div class="bs row table-content onclick-pointer" onclick="Cigna.Util.navigateToVFP('PolicyDetailsPageVFP?policyNumber={!c.policyNumber}&policyType=Group&SHA256Key={!c.SHA256Key}&termDate={!c.memberTermDate}', null, null, true)">
+                               <!--Add by Caden for JR1753 - change from policy level to member level coverage start  -->
+                                <div class="col-sm-6 col-xs-6">{!$Label.Member_Period_From}</div>
+                                <!--Add by Caden for JR1753 - change from policy level to member level coverage end  -->
+                               <div class="col-sm-6 col-xs-6 bold-font">
+                               
+                                   <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                       <!--Add by Caden for JR1753 - change from policy level to member level coverage start  -->
+                                       <apex:param value="{!c.memberEffDateInDate}"/>
+                                       <!--Add by Caden for JR1753 - change from policy level to member level coverage end  -->
+                                   </apex:outputText>
+                                 
+                               </div>
+                            </div>
+                            <div class="bs row table-content onclick-pointer" onclick="Cigna.Util.navigateToVFP('PolicyDetailsPageVFP?policyNumber={!c.policyNumber}&policyType=Group&SHA256Key={!c.SHA256Key}&termDate={!c.memberTermDate}', null, null, true)">
+                               <!--Add by Caden for JR1753 - change from policy level to member level coverage start  -->
+                                <div class="col-sm-6 col-xs-6">{!$Label.Member_Period_To}</div>
+                                <!--Add by Caden for JR1753 - change from policy level to member level coverage end  -->
+                               <div class="col-sm-6 col-xs-6 bold-font">
+                              
+                                   <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                       <!--Add by Caden for JR1753 - change from policy level to member level coverage start  -->
+                                       <apex:param value="{!c.memberTermDateInDate}"/>
+                                       <!--Add by Caden for JR1753 - change from policy level to member level coverage end  -->
+                                   </apex:outputText>
+                              
+                               </div>
+                            </div>
+                            <div class="bs row table-content onclick-pointer" onclick="Cigna.Util.navigateToVFP('PolicyDetailsPageVFP?policyNumber={!c.policyNumber}&policyType=Group&SHA256Key={!c.SHA256Key}&termDate={!c.memberTermDate}', null, null, true)">
+                               <div class="col-sm-6 col-xs-6">{!$Label.Pol_Policy_Number}</div>
+                               <div class="col-sm-6 col-xs-6 bold-font"  style="word-wrap: break-word;">
+                                {!c.policyNumber}
+                                </div>
+                            </div>
+                            <div class="bs row table-content onclick-pointer" onclick="Cigna.Util.navigateToVFP('PolicyDetailsPageVFP?policyNumber={!c.policyNumber}&policyType=Group&SHA256Key={!c.SHA256Key}&termDate={!c.memberTermDate}', null, null, true)">
+                                <div class="col-sm-6 col-xs-6">{!$Label.Member_Status}</div>
+                                 <!--Add by Caden for JR1753 - change from policy level to member level coverage start-->
+                                    <div class="col-sm-6 col-xs-6 bold-font">
+                                    {!c.memberStatusDisplayName}</div>
+                                <!--Add by Caden for JR1753 - change from policy level to member level coverage end-->
+                            </div>
+                            <apex:outputPanel rendered="{!c.EMedicalCardCount>0  }">
+                            <div class="bs row table-content">
+                                <div class="col-sm-6 col-xs-6">{!$Label.EMC_Medical_Card}</div>
+                                <div class="col-sm-6 col-xs-6 bold-font">
+                                     <img src="{!URLFOR($Resource.My_EMedical_Card_Icon)}"  front="{!URLFOR($Resource.eMedical, 'eMedical/Elite_front.png')}" back="{!URLFOR($Resource.eMedical, 'eMedical/Elite_back.png')}" prdname="{!c.marketingName}" cardCount="{!c.EMedicalCardCount}" polNumber="{!c.policyNumber}"
+                                     style="cursor:pointer;" 
+                                    onclick="clickGetEMedicalCardMobGroup(this)" />
+                                </div>                            
+                            </div>
+                            </apex:outputPanel>
+                        </div>
+                    <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                    </apex:repeat>
+                </div>
+                
+                <div class="bs col-sm-12 col-xs-12 col-lg-12 col-md-12" style="text-align: center;padding-top:30px;">
+                   <apex:outputPanel rendered="{!If(cusGrpHasPrev,true,false)}">
+                    <div class="ci-hk-arrow-29 ci-hk-sm onclick-pointer cigna-fg-orange-dark" style="padding-right:10px;" aria-hidden="true" onclick="MyPolicyAF.cusGrpPrevPage();"/>
+                  </apex:outputPanel>
+
+                  <apex:outputText value="{!$Label.Page_0_of_1}" >
+                      <apex:param value="{!cusGrpCurrentPage}" />
+                      <apex:param value="{!cusGrpTotalPage}" />
+                  </apex:outputText>
+
+                  <apex:outputPanel rendered="{!If(cusGrpHasNext,true,false)}">
+                      <div class="ci-hk-arrow-31 ci-hk-sm onclick-pointer cigna-fg-orange-dark" style="padding-left:10px;" aria-hidden="true" onclick="MyPolicyAF.cusGrpNextPage()"/>
+                  </apex:outputPanel>
+                </div> 
+             </div>
+        </apex:outputPanel>
+      </div>
+
+      <!-- mutipul card second page -->
+      <div class="tab-content eMedicalCardSelectionLayer col-xs-12 col-sm-12" style="display: none;" >
+         <apex:outputPanel layout="block" id="selectLayer">
+        <div class='col-sm-3 hidden-xs'></div>
+        <div class='col-sm-6 col-xs-12' style='padding: 0px;margin: 0px;text-align: center;max-width: 500px;'>
+            <div style='padding: 0px;margin: 0px;text-align: center;'>
+                <div class="bs col-sm-12 col-xs-12" style="margin-top:10px;text-align:left"  >
+                    <p class= 'bs '>
+                        <apex:outputPanel layout="inline"  styleClass="bs pull-left">
+                        <a id="back-btn" class="bs cigna-fg-orange-medium onclick-pointer" onclick="goBack2();"><i class="ci-hk-arrow-29" aria-hidden="true"></i>{!$Label.Back}</a>
+                        </apex:outputPanel>
+                    </p>                
+                </div>
+                <div class="bs col-sm-12 col-xs-12 " style='margin: 10px;text-align: left;'  >
+                {!$Label.EMC_Card_Dependent_Panel_Header_Text}
+                </div>
+                <div class="bs col-sm-12 col-xs-12 cigna-fg-green-medium" style='margin-top: 10px;' >
+
+                    <apex:repeat value="{!imgMap}" var="im"  >
+                    <div class="col-sm-12 col-xs-12 gpd" style='cursor:pointer;margin-top: 10px;margin-bottom: 10px;'  front="{!im.front}" back="{!im.back}" prdname=""   imgName="{!im.name}"
+                        onclick="clickGetEMedicalCard(this)"  
+                        >
+                        <div class="col-sm-2 col-xs-2" style='padding: 0px 15px 0px 0px;text-align: right;' >
+                            <img src="{!URLFOR($Resource.My_EMedical_Card_Icon)}" />
+                        </div> 
+                        <div class="col-sm-8 col-xs-8" style='padding: 0px 10px 0px 10px;text-align: left;'>
+                            <p>{!im.name}</p>
+                        </div>
+                        <div class="col-sm-2 col-xs-2" style='text-align: left;vertical-align: middle;'  >
+                        <p><i class="ci-hk-arrow-31 ci-hk-sm onclick-pointer"></i></p>
+                        </div>
+                    </div>
+                    </apex:repeat>
+                </div>
+            </div>
+        </div>
+        <div class='col-sm-3 hidden-xs'></div>
+        </apex:outputPanel>
+      </div>
+
+    
+
+      <div class="tab-content eMedicalCardLayer" style='display:none;'>
+            <div class="bs col-sm-12" style="margin-top:10px" >
+                <p class= 'bs pull-left'>
+                    <apex:outputPanel layout="inline"  styleClass="bs pull-left">
+                    <a id="back-btn" class="bs cigna-fg-orange-medium onclick-pointer" onclick="goBack();"><i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a>
+                    </apex:outputPanel>
+                </p>                
+            </div>
+            <div class="bs col-sm-12" style="margin-top:10px;padding-left:20px;" >
+                <p class= 'bs pull-left col-sm-12'> 
+                    <span id='emc_prdname'></span>                    
+                </p>  
+                <div class='bs ' style='padding-left:20px;display:inline-block;margin-right:20px;'>       
+                <p  >
+                    <img id='eMedicalCard_webfront' style='max-width:324px;border: 1px solid grey;' src=''/>
+                </p>  
+                 <p  >
+                    <img id='eMedicalCard_webback' style='max-width:324px;border: 1px solid grey;'   src=''/>
+                </p>   
+                </div>   
+                <div class='bs ' style="vertical-align:top;display:inline-block;width:45%;height:100%;padding-top:20px;"> 
+                    <div class='bs col-sm-12'>
+                        <div style='display:inline;'>
+                            <a id='btnSave' style="text-align: center; width:100%;display:inline;margin-right:30px;" class="btn cigna-fg-white cigna-bg-orange-dark " href="/customer/CusEMedicalCardPDF?isPDF=1&front={!curFronturl}&back={!curBackurl}" target="_blank" >{!$Label.EMC_Card_Button_Save_Text_Web}</a>  
+                        </div>
+                        <div id="printShare_Web" style='display:inline;'>
+                          <a id='btnPrint' style="text-align: center; width:100%;display:inline;margin-right:30px;" class="btn cigna-fg-white cigna-bg-orange-dark " href="/customer/CusEMedicalCardPDF&front={!curFronturl}&back={!curBackurl}" target="_blank" >{!$Label.EMC_Card_Button_Print_Text_Web}</a>
+                          <div id='btnShare' style="text-align: center; width:100%;display:inline;" class="btn cigna-fg-white cigna-bg-orange-dark " onclick="$('#btnShare').hide();$('#emailLayer').show();" >{!$Label.EMC_Card_Button_Share_Text_Web}</div>
+                        </div>
+                    </div>
+                     <div class='bs col-sm-12' id='emailLayer' style='display:none;vertical-align:middle;'>
+                        <div class='col-sm-12' style='padding-top: 20px;padding-left:0px;'>
+                            <div class='col-sm-4' style="text-align: right;padding-left:0px;">
+                                {!$Label.EMC_Card_Email_To}: 
+                            </div>
+                            <div class='col-sm-6' style='padding:0px;'>
+                                <apex:input id="inputEmail" value="{!edmTo}" type="email" styleClass="bs form-control" />
+                                <label id="errEmptyEmail" style="color:red;display:none;"></label>
+                            </div>
+                        </div>
+                        <div class='col-sm-12' style='padding-top: 20px;padding-left:0px;'>
+                            <div class='col-sm-4' style="text-align: right;padding-left:0px;">
+                                {!$Label.EMC_Card_Email_CC}:
+                            </div>
+                            <div class='col-sm-6' style='padding:0px;'>
+                                <apex:input id="inputCC" value="{!edmCC}" type="email" styleClass="bs form-control" />
+                                <label id="errCC" style="color:red;display:none;"></label>
+                            </div>
+                        </div>
+                        <div class='col-sm-12'  style='padding-top: 20px;padding-left:0px;'>
+                            <div class='col-sm-4' style="text-align: right;padding-left:0px;">
+                                {!$Label.EMC_Card_Email_Subject}:
+                            </div>
+                            <div class='col-sm-6' style='padding:0px;'>
+                                <apex:input id="inputSubject" value="{!edmSubject}" styleClass="bs form-control"/>
+                                <label id="errEmptySubject" style="color:red;display:none;"></label>
+                            </div>
+                        </div>
+                        <div class='col-sm-12'  style='padding-top: 20px;padding-left:0px;'>
+                            <div class='col-sm-4' style="text-align: right;padding-left:0px;">
+                                {!$Label.EMC_Card_Email_Body}:
+                            </div>
+                            <div class='col-sm-6' style='padding:0px;'>
+                                <apex:inputTextarea id="inputBody" value="{!edmBody}"  styleClass="bs form-control" style="height:120px;"/>
+                                <label id="errBody" style="color:red;display:none;"></label>
+                            </div>
+                        </div>
+                        <div class='bs col-sm-12'  style='padding-top: 20px;text-align: center;'>
+                            <div id='btnSendEmail' style="text-align: center; width:100%;display:inline;" class="bs btn cigna-fg-white cigna-bg-orange-dark " onclick="if (validateSendEmail()){MyPolicyAF.sendEMedicalCardEmail();}" >{!$Label.EMC_Card_Button_Send_Email_Web}</div>
+                        </div>
+                     </div>
+                     <div class='bs col-sm-12 cigna-fg-blue-medium' id='emailSent' style='display:none;padding-top:20px;'>
+                            {!$Label.EMC_Card_Email_Sent} 
+                     </div>
+                </div>
+            </div>
+      </div>
+        
+      <div id="overlay" class="overlay" style="display:none;">
+        <div id="delConfirmBox" class="ConfirmBox">
+            <div id="delmsg" class="alertmsg">
+                {!$Label.Pol_Are_you_sure_to_delete_the_policy}
+            </div>
+            <div class="bs col-xs-6 col-sm-6">
+            <i class="glyphicon glyphicon-ok-sign oksign onclick-pointer" onclick="Cigna.MyPolicy.confirmDel('Y')"></i>
+            </div>
+            <div class="bs col-xs-6 col-sm-6">
+            <i class="glyphicon glyphicon-remove-sign cancelsign onclick-pointer" onclick="Cigna.MyPolicy.confirmDel('N')"></i>
+            </div>
+        </div>  
+       </div>
+
+        <div class="bs modal text-center " id="imgModal" style='padding:0 ;margin:0 auto;text-align: center;vertical-align: middle;'>
+            <div id="dd" style='width:100%;height:100%;display:table;padding:0 auto;margin:0 auto;text-align: center;vertical-align: middle;'>
+                        <div class="bs modal-dialog mdlLayer" id="imgModalDialog"  >
+                            <div id='rotate' class='rotate ' style='vertical-align:middle;text-align: center;padding:2px;margin:1px 1px 1px -23px; '>
+                                <div style='padding:0 auto;margin:0 auto;text-align: center;display:table;'>
+                                <div class="bs modal-header  " style="border: 0; ">
+                                    <label id="modal_header_text" style="float:left;">{!$Label.EMC_Card_Header_Text_Front_Modal}</label>
+                                    <button id="modalCloseBtn" type="button" class="close" data-dismiss="modal" aria-label="Close" 
+                                    onclick="$('#overlay').hide();" ><span aria-hidden="true">&times;</span></button>
+                                </div>
+                                 
+                                <div id='swipeCtn' style="position:relative; z-index:1200;">
+                                    <div id="owl-promotion-mobile" class="owl-carousel owl-theme" style='padding:0px;margin:0px;'>
+                                        <div class="item">
+                                            <img id="imgitem1" style='max-width:100%;max-height:100%' src="" />
+                                        </div>
+                                        <div class="item">
+                                            <img id="imgitem2" style='max-width:100%;max-height:100%' src="" />
+                                        </div>
+                                    </div>
+                                </div>
+<div style='font-size:12px;float:right;margin-top:-30px;position:relative; z-index:1300;color: black !important;width:70%;'>
+<div style='padding:2px;text-align:right;margin：0,0,2,0 !important;'>
+<a style ='text-align:right;border: black 3px solid;' id='btnSave_mob' class='bs btn  cigna-bg-gray-2'  href="" target="_blank" >{!$Label.EMC_Card_Button_Text_Modal}</a>
+</div>
+<div style='font-size:8px;text-align:right;margin：0,0,2,0 !important;'>{!$Label.EMC_Card_Button_Footer_Text_Modal}</div>
+</div>
+                                </div>
+                            </div> 
+                        </div> 
+            </div> 
+        </div>
+
+    </apex:form>
+</apex:page>

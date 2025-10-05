@@ -1,0 +1,53 @@
+<apex:page docType="html-5.0" showHeader="false" sidebar="false" applyHtmlTag="false" controller="LiveChatCtrl">
+<html>
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <meta http-equiv="Cache-control" content="NO-CACHE"/>
+        
+       <!-- CR-56_Link_20220214 -->
+       <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap3.4.1.css')}" />
+       <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-3.6.0.min.js')}"/>
+
+       <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap3.4.1.min.js')}"/>
+
+        <apex:include pageName="CignaUtilJS"/>
+        <script type='text/javascript' src='{!$Setup.Portal_Settings__c.Live_Agent_JavaScript_URL__c}'></script>
+
+    </head>
+
+    <!-- Start of the main body -->
+    <apex:define name="body">
+        
+        <script> 
+        
+            $(document).ready(function(){
+                
+                var liveChatPage = '{!$Label.LiveChatPreChatPageName}';
+                var liveChatMessageToCase = '{!$Label.LiveChatMessageToCasePageName}';
+                var selectedLang = '{!JSINHTMLENCODE($CurrentPage.Parameters.lang)}';
+                
+                if(selectedLang.toLowerCase() == 'zh_tw'){
+                    liveChatPage = 'DE_PreChatCNVFP';
+                    liveChatMessageToCase = 'LiveChatMessageToCaseCNVFP';
+                }
+                
+                if('{!JSINHTMLENCODE($CurrentPage.parameters.status)}' == 'online'){
+                    
+                    setTimeout(function(){
+                        console.log('new update : ' + liveChatPage);
+                        window.location.replace("{!$Setup.Portal_Settings__c.Live_Chat_Site_URL__c}/apex/" + liveChatPage + "?language=#deployment_id={!$Setup.Portal_Settings__c.Live_Agent_Deployment_ID__c}&org_id={!LEFT($Organization.Id, 15)}&button_id={!JSINHTMLENCODE($CurrentPage.Parameters.bid)}&session_id={!SessionId}");
+                        //window.location.replace("customerPOC/apex/" + liveChatPage + "?language=#deployment_id={!$Setup.Portal_Settings__c.Live_Agent_Deployment_ID__c}&org_id={!LEFT($Organization.Id, 15)}&button_id={!JSINHTMLENCODE($CurrentPage.Parameters.bid)}&session_id={!SessionId}");
+                    }, 1000);
+                    
+                }else{
+                    window.location.replace(liveChatMessageToCase );   
+                }
+            
+            });
+            
+        </script>
+
+    </apex:define>
+    <!-- End of the main body -->
+</html>
+</apex:page>

@@ -1,0 +1,2895 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" title="Get Protected" controller="GenericEsalesCtrl">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />        
+    
+    <style>
+        @media (max-width: 767px) {
+            body {
+                padding-top: 50px;
+            }
+            
+            div#reallocationSpecialBoxESales {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 100px auto 0px auto;
+                width: 90%;
+                height: 80%;
+                background: #FFF;
+                color: #000;
+                left: 5%;
+                padding: 20px;
+                border-radius: 5px;
+             }
+        }
+        @media (min-width: 768px) {
+            body {
+                padding-top: 50px;
+                min-height: 1024px;
+            }
+            
+            div#reallocationSpecialBoxESales {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 150px auto 0px auto;
+                width: 80%;
+                height: 60%;
+                background: #FFF;
+                color: #000;
+                left: 10%;
+                padding:20px;
+                border-radius:5px;
+              }
+        }
+              
+        div#reallocationOverlayESales {
+            display: none;
+            z-index: 10;
+            background: #D9D9D6;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0px;
+            left: 0px;
+            text-align: center;
+        }
+                             
+        #reallocationCloseOverlayESales {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        
+        #reallocationtccontentESales {
+            padding:10px;
+            color:#000;
+            font-size:12px;
+            width: 100%;
+            height: 95%;
+            overflow-y:auto;
+        } 
+          
+        div#overlay{
+            display: none;
+            z-index: 11;
+            background: #D9D9D6;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0px;
+            left: 0px;
+            text-align: left;
+        }
+        
+        div#specialBox{
+            display: none;
+            position: absolute;
+            z-index: 11;
+            margin: 150px auto 0px auto;
+            width: 80%;
+            height: 60%;
+            background: #FFF;
+            color: #000;
+            left: 10%;
+            padding:20px;
+            border-radius:5px;
+        }
+        
+        #closeOverlay{
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        
+        #tccontent {
+            padding:5px;
+            color:#000;
+            font-size:12px;
+            width: 100%;
+            height: 90%;
+            overflow-y:auto;
+        } 
+        .bs .cigna-progress-bar-inner > div {
+                font-size: 0.7em;
+        }
+        .bs cigna-fg-gray-dark {
+                border-left: 1px solid #C8C9C7;
+                border-right: 1px solid #C8C9C7;
+                border-bottom: 1px solid #C8C9C7;
+        }
+        .bs .cigna-form-section-header {
+                background: #eee;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                margin-bottom: 15px;
+        }
+        .bs .cigna-quote-question {
+            padding:5px 0 5px 5px;
+            font-size: 16px;
+            font-weight: 400;
+            color: #58595B !important;
+        }
+        .bs input.cigna-question-text {
+            border: 0;
+            border-bottom: 1px solid #58595B;
+            background: transparent;
+            width: 100%;
+            box-shadow: none !important;
+            border-radius: 0;
+            //color: #58595B;
+            width: 50px;
+            text-align: left;
+            padding:10px;
+            outline: none;
+        }
+        .bs input.text-center{
+            text-align:center;
+        }
+        .bs input.cigna-question-text:focus {
+            box-shadow: none !important;
+            border-bottom: 1px solid #eac048 !important;
+        } 
+        .bs .cigna-btn-desktop {
+                width: 30%;
+                //text-transform: uppercase;
+                font-family: "Gotham SSm A", "Gotham SSm B", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+                font-style: normal;
+                font-weight: 500;
+        } 
+        .bs .cigna-answer-wrapper > p {
+                background: #fff;
+        }
+        .bs .cigna-answer-wrapper > p > label {
+                margin-left: 10px;
+                margin-top: 5px;
+                font-weight: normal;
+                padding: 5px;
+                width: 100%;
+        } 
+        .uploaded-filelist{
+                padding:10px; 
+                background-color:#f2f2f2;
+                text-overflow: ellipsis;
+                overflow:hidden;
+                white-space:nowrap;
+                
+        }
+        .content-choice{
+                font-size:14px !important;
+                padding-top:20px !important;
+                padding-bottom:10px !important;
+                border-bottom:1px solid #f2f2f2 !important;
+        }     
+        .bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select, .bs span.form-control  {
+                border-top: 0 !important;
+                border-left: 0 !important;
+                border-right: 0 !important;
+                border-bottom: 1px solid #58595B !important;
+                background: transparent;
+                width: 100%;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                background-color:#FFF!important;
+        }   
+    </style>
+    <script type="text/javascript">
+            var __sfdcSessionId = '{!GETSESSIONID()}';
+            var filesToUpload = '';  
+            var uploadedFile = 0;
+    </script>
+    <script src="/soap/ajax/32.0/connection.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+        var btnNextDisabled = false;
+        var btnPrevDisabled = false;
+        
+        var autoShowAuw = function(url){
+                if(url != null && url != ''){
+                    childWin = window.open(url);
+                    //Ray Update: Add the pop-up to check the window for ipad/iphone safari
+                    if(Cigna.Util.isIOS()&&!Cigna.Util.checkWebView()){
+                        if ((childWin == null || typeof(childWin)=='undefined') && Cigna.Util.isSafari()) {  
+                        //if (childWin == null || typeof(childWin)=='undefined') {  
+                            //alert('Please disable your pop-up blocker and click the "Open" link again.'); 
+                            var language = window.navigator.userLanguage || window.navigator.language;                          
+                            if(language == 'zh-TW'||language == 'zh-CH'){
+                                alert("請先確保於Safari設置中容許彈出式視窗 - 請到 [設置] -> [Safari] -> 取消勾選 [阻擋彈出式視窗], 然後按以下[關閉]繼續。");   
+                            }else{
+                                alert("Please make sure to enable popups in Safari settings by going to [Settings] -> [Safari] -> Uncheck [Block Pop-ups], then press [Close] below to proceed.");                      
+                            }
+                        } 
+                        else {  
+                            childWin.focus();
+                        }
+                    }
+                    //Ray Update: End
+                    isChildWinOpened = true;
+                }
+        }
+        
+        var closeChildWindow = function(){
+            
+                if (childWin && childWin.closed) {
+                    isChildWinOpened = false;
+                }
+            
+                if(isChildWinOpened){
+                    childWin.close();
+                    childWin = null;
+                    isChildWinOpened = false;
+                }
+        }
+            
+        function validate() {
+            var questionsAnswered = $("form[id$='form']").validate().form();    
+            var confirmV = true;
+            var currentStep = $('#esales-current-step').val();  
+            if(currentStep == '{!STEP_CONFIRMATION}'){ 
+                confirmV = $("form[id$='confirmationfrm']").validate().form();        
+            }
+            
+            console.log('confirmV '+confirmV );
+            return questionsAnswered && confirmV;       
+        }
+        function goNext(){
+            var currentStep = $('#esales-current-step').val();  
+            Cigna.ESales.getCreditCardNo();
+            Cigna.ESales.getCreditCardNo1();  
+            Cigna.ESales.getBankAccNo();                               
+            //CR-56_Link_20220214
+            if(validate()){
+                if (currentStep == '{!STEP_UPLOADDOC}'){
+                   if($('[att-type="HKIDAttPH"]').length<1 && $('[att-type="HKIDAttPI"]').length<1
+                       && $('[att-type="HKIDAttC1"]').length<1 && $('[att-type="HKIDAttC2"]').length<1 && $('[att-type="HKIDAttC3"]').length<1 && $('[att-type="HKIDAttTP"]').length<1){
+                       $('#errUpdateAllFile').show();
+                       return;
+                    } 
+    
+                    if( $('#CPDUpload').length > 0 && $('[att-type="CPDAtt"]').length<1){
+                        $('#errUpdateCPDFile').show();
+                         return;
+                    }                               
+                }
+                console.log('[nextStep]');
+                nextStep();
+            }else{
+                if(currentStep == '{!STEP_CONFIRMATION}'){
+                    //CR-56_Link_20220214
+                    $("html,body").animate({ scrollTop: ($("form[id*='confirmationfrm']")).find(":input.error:first").offset().top - $(window).height()/2},"slow",function(){($("form[id*='confirmationfrm']")).find(":input.error:first").trigger("focus");} );                    
+                }
+            }  
+            console.log('[goNext] Completed');                    
+        }
+        
+        
+        function reallocationToggleOverlayESales(){           
+                var overlay = document.getElementById('reallocationOverlayESales');
+                var specialBox = document.getElementById('reallocationSpecialBoxESales');
+                overlay.style.opacity = .95;
+                if(overlay.style.display == "block"){
+                    overlay.style.display = "none";
+                    specialBox.style.display = "none";
+                } else {
+                    overlay.style.display = "block";
+                    specialBox.style.display = "block";
+                }
+                
+        }
+        function onRadioChange(evt) {
+            var val = $(this).val();
+            var parent = $(this).parent();
+            $(parent).siblings('input[type="hidden"]').val(val).trigger('change');
+            
+            if(this.id.indexOf('payment-method-first') >= 0){
+                if ($('#payment-method-first-02').is(':checked')) {
+                    $('#cheque-number').show();
+                    var isIE = /(MSIE|Trident\/|Edge\/)/i.test(navigator.userAgent); 
+                    if(isIE){
+                        var x = $(document).scrollLeft(), y = $(document).scrollTop();
+                        //CR-56_Link_20220214
+                        $('[id$=cheque-number]').trigger("focus").trigger("blur");                                
+                        window.scrollTo(x, y);
+                    }                   
+                } else {
+                    $('#cheque-number').hide();                   
+                }
+                $("input[id$='cheque-number']").rules("add", {
+                    required: function(element) {
+                        return ($("input[id$='paramPaymentMethod']").val() == 'Cheque');
+                    },
+                    digits: true
+                });
+            }
+            console.log('onRadioChange');
+            console.log('payment method'+$("input[id$='paramPaymentMethod']").val());
+        }
+        
+        function onCheckboxChange(evt) {        
+            var val = $(this).is(':checked');            
+            console.log('onCheckboxChange val'+val);
+            if(this.id.indexOf('payment-method-subseq-01') == 0 && val == true){
+                val = 'Credit Card';
+                $("#payment-method-subseq-02").prop("checked", false);
+                $("input[id$='paramPaymentMethodSubseq']").val('Credit Card');
+
+            }else if(this.id.indexOf('payment-method-subseq-02') == 0 && val == true){
+                val = 'Savings';
+                $("#payment-method-subseq-01").prop("checked", false);
+                $("input[id$='paramPaymentMethodSubseq']").val('Savings');
+
+            }
+            $(this).siblings('input[type="hidden"]').val(val).trigger('change');
+        }
+        
+        function onCheckboxChangeTC(evt) {
+            var val = $(this).is(':checked');
+            var parent = $(this).parent();
+            $(parent).siblings('input[type="hidden"]').val(val).trigger('change');
+            console.log('accept# ' + val);
+            if(val == true) {
+                $('input[type="hidden"][id$="select-accept-tc"]').val('true');
+                console.log('accept22# ' + $('input[type="hidden"][id$="select-accept-tc"]').val());
+            }else{
+                $('input[type="hidden"][id$="select-accept-tc"]').val('');
+            }
+        }
+        function goHome() {
+                    var userAgent = window.navigator.userAgent.toLowerCase();
+                    var sf1withoutBrowser = /salesforce1/i.test( userAgent );
+                    
+                    var sitePrefix = "{!$Site.Prefix}";
+                    var url = "";
+    
+                    if (Cigna.Util.isBrokerPortal()) {
+                        url = sitePrefix + "/apex/BrkBrokerLandingVFP";
+                    } else if (Cigna.Util.isCustomerPortal()) {
+                        url = sitePrefix + "/apex/CustomerLandingPage";
+                    } else {
+                        var currentUrl = window.location.href.substring(window.location.href.lastIndexOf('/'));
+                        if (currentUrl.toLowerCase().indexOf('/cus') == 0) {
+                            url = "/apex/CustomerLandingPage"; 
+                        } else if (currentUrl.toLowerCase().indexOf('/brk') == 0) {
+                            url = "/apex/BrkBrokerLandingVFP";
+                        } else {
+                            url = "/apex/CustomerLandingPage"; 
+                        } 
+                    }
+    
+                    if (Cigna.Util.isSalesforce1()) {
+                        if(sf1withoutBrowser){
+                            sforce.one.navigateToURL(url, true);
+                        } else {
+                            window.location.href = url;
+                        }    
+                    } else {
+                        window.location.href = url;
+                    }
+        }
+                
+        function viewOtherPlans() {
+                    if (Cigna.Util.isBrokerPortal()) {
+                        Cigna.Util.navigateToVFP("ProductDeckVFP", null, null, true);
+                    } else {
+                        Cigna.Util.navigateToVFP("GetProtectedVFP", null, null, true);
+                    }
+        }
+        
+        function uploadFile(parentId, attType){
+                    
+                    showLoadingIcon('snd-loading-phurl');
+                    $('#errNoFile').hide();
+                    $("#"+attType).each(function(){            
+                      filesToUpload=$(this)[0].files[0];                      
+                    });
+                    var reader = new FileReader();            
+                    // Keep a reference to the File in the FileReader so it can be accessed in callbacks
+                    reader.file = filesToUpload;            
+                    reader.onload = function(e)
+                    {
+                        var maxFileSize = 7340032;
+                        var passFileSize;
+                        var passFileType;
+                        
+                        if(this.file.size>maxFileSize){
+                            $("#errFileSize").show();
+                            passFileType = false;
+                        }else{
+                            passFileSize = 'true';
+                            $("#errFileSize").hide();
+                        }
+                    
+                        if(this.file.type!='application/vnd.openxmlformats-officedocument.wordprocessingml.document' && this.file.type!='application/msword' && this.file.type!='application/pdf' && this.file.type!='image/png' && this.file.type!='image/jpeg' && this.file.type!='image/tiff'){
+                            $("#errFileType").show();
+                        }else{
+                            passFileType  = 'true';
+                            $("#errFileType").hide();
+                        }
+                        
+                        if(passFileType=='true' && passFileSize=='true' && parentId && parentId!=undefined){
+                        
+                            var att = new sforce.SObject("Attachment");
+                            att.Name = attType+'_'+this.file.name;
+                            att.ContentType = this.file.type;
+                            att.ParentId = parentId;
+            
+                            var binary = "";
+                            var bytes = new Uint8Array(e.target.result);
+                            var length = bytes.byteLength;
+            
+                            for (var i = 0; i < length; i++)
+                            {
+                                binary += String.fromCharCode(bytes[i]);
+                            }
+            
+                            att.Body = (new sforce.Base64Binary(binary)).toString();
+            
+                            sforce.connection.create([att],
+                            {
+                                onSuccess : function(result, source)
+                                {
+                                    if (result[0].getBoolean("success"))
+                                    {
+                                        console.log("new attachment created with id " + result[0].id);
+                                        hideLoadingIcon('snd-loading-phurl');
+                                        refreshAttlist();
+                                        //checkAtt();
+                                        if(attType!='auwAtt'){
+                                            $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                                        }
+                                        
+            
+                                    }
+                                    else
+                                    {
+                                        console.log("failed to create attachment " + result[0]);
+                                        //alert("failed to create attachment " + result[0]);
+                                        hideLoadingIcon('snd-loading-phurl');
+                                        
+                                    }
+                                },
+                                onFailure : function(error, source)
+                                {
+                                    console.log("an error has occurred " + error);
+                                    //alert("an error has occurred " + error);
+                                    hideLoadingIcon('snd-loading-phurl');
+                                }
+                            });
+                        }else{
+                            hideLoadingIcon('snd-loading-phurl');
+                        }
+                    };
+                    
+                    if(filesToUpload!='' || filesToUpload!='1'){
+                        reader.readAsArrayBuffer(filesToUpload);
+                        $("#errNoFile").hide();
+                    }else{
+                        finishSubmission();
+                        $("#errNoFile").show();
+                    }
+       } 
+       
+       function showLoadingIcon(id){
+                    $('#' + id).show();
+       }
+        
+       function hideLoadingIcon(id){
+                    $('#' + id).hide();
+       }
+       
+       function refreshEsignatrueButton(){                    
+           if($('#mobile-submit').length ){
+               $('#mobile-submit').show();
+               $('#mobile-sendEmail').hide();
+               $('#mobile-esignature-sendEmail').hide();
+               $('#mobile-esignature-submit').hide();
+           }
+        }
+        var Cigna = Cigna || {};
+            Cigna.ESales = function(){
+            
+                //Add by Manuel for AUW polling start
+                var uwPollingId, isPolling;
+                function setUWStatusPolling() {
+                    console.log('Manuel 000 debug js setUWStatusPolling function');
+                    if (uwPollingId == null || typeof uwPollingId == undefined) {
+                        uwPollingId = setInterval(pollUWStatus, 3000);
+                    }
+                }
+                function pollUWStatus() {
+                    console.log('Manuel 000 debug js pollUWStatus function + isPolling'+isPolling);
+                    if (!isPolling) {
+                        isPolling = true;
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.GenericEsalesCtrl.getUWStatus}', 
+                            $('#esales-txn-id').val(),
+                            $('#esales-current-step').val(),
+                            function(result, event){
+                                if (event.status && result) {
+                                    resetPollingFlag();
+                                } else {
+                                    isPolling = false;
+                                }
+                            }, 
+                            {escape: true}
+                        );
+                    }
+                }
+                
+                //for broker salesforce1
+                function mobileSetUWStatusPolling() {
+                    if (uwPollingId == null || typeof uwPollingId == undefined) {
+                        uwPollingId = setInterval(mobilePollUWStatus, 8000);
+                    }
+                }
+                
+                function mobilePollUWStatus() {
+                    console.log('mobilePollUWStatus isPolling'+isPolling);
+                    if (!isPolling) {
+                        isPolling = true;
+                        hideLoadingIcon('loader-icon');
+                        showLoadingIcon('aps-loading-phurl');
+                        var url = $('#auw-url').val();
+                        var auwcom = $('#esales-AUWCompleteStep').val();
+                        var curStep = $('#esales-current-step').val();
+                        if(curStep == auwcom && !Cigna.Util.isAndroid()){
+                            $('input[type="hidden"][id$="esales-isCompleteAUW"]').val('true');
+                            refresh();
+                        }else{
+                            $('input[type="hidden"][id$="esales-isCompleteAUW"]').val('false');
+                        }
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.GenericEsalesCtrl.getUWStatus}', 
+                            $('#esales-txn-id').val(),
+                            $('#esales-current-step').val(), 
+                            function(result, event){
+                                //alert(JSON.stringify(event) + " " + result + "isAutoClose " + isAutoClose);
+                                
+                                if (event.status && result) {
+                                    resetPollingFlag();
+                                    closeChildWindow();
+                                    isAutoClose = true;
+                                } else {
+                                    isPolling = false;
+                                    if(Cigna.Util.isAndroid()){ //for android
+                                        
+                                        //do nothing
+                                    }else if(!Cigna.Util.checkWebView()){//for safari
+
+                                        if ((childWin == null || childWin.closed)) {
+                                            if(curStep == auwcom && isAutoClose == false){
+                                                $('input[type="hidden"][id$="esales-isCompleteAUW"]').val('false');
+                                                refresh();
+                                            }
+                                            autoShowAuw(url);
+                                            isAutoClose = false;
+                                        }
+                                    }else if(Cigna.Util.isIOS() && Cigna.Util.isSalesforce1()){//ios salesforce1
+                                        if(curStep == auwcom && isAutoClose == false){
+                                            $('input[type="hidden"][id$="esales-isCompleteAUW"]').val('false');
+                                            refresh();
+                                        }
+                                        autoShowAuw(url);
+                                        isAutoClose = false;
+                                    //}else if(Cigna.Util.isAndroid()){ //for android
+                                        
+                                        //do nothing
+                                        //if(curStep == auwcom && isAutoClose == false){
+                                        //    $('input[type="hidden"][id$="esales-isCompleteAUW"]').val('false');
+                                        //    refresh();
+                                        //}
+                                        //isAutoClose = false;
+                                        
+                                    }else{//for others
+                                        if ((childWin == null || childWin.closed)) {
+                                            if(curStep == auwcom && isAutoClose == false){
+                                                $('input[type="hidden"][id$="esales-isCompleteAUW"]').val('false');
+                                                refresh();
+                                            }
+                                            autoShowAuw(url);
+                                            isAutoClose = false;
+                                        }
+                                    
+                                    }
+                                    
+                                }
+                                hideLoadingIcon('aps-loading-phurl');
+                                
+                            }, 
+                            {escape: true}
+                        );
+                        
+                        
+                    }
+                }
+                
+                function resetPollingFlag() {
+                    console.log('Manuel 000 debug js resetPollingFlag function');
+                    isPolling = false;
+                    clearUWStatusPolling();
+                    nextStep();
+                }
+                function clearUWStatusPolling() {
+                    console.log('Manuel 000 debug js clearUWStatusPolling function');
+                    clearInterval(uwPollingId);
+                    uwPollingId = null;
+                }
+                //Add by Manuel for AUW polling stop
+                
+                function onselectToCopy(){
+                    var val = $(this).is(':checked');
+                    
+                    if(val){
+
+                       var holder1 = $("[id$='DDA-Credit-Card-Holder1']").val();
+                       
+                       var bankName = $("[id$='DDA-Card-Issuing-Bank1']").val();
+                       var cardNum1 = $("[id$='paramCreditCardNum1']").val();
+                       var cardNum2 = $("[id$='paramCreditCardNum2']").val();
+                       var cardNum3 = $("[id$='paramCreditCardNum3']").val();
+                       var cardNum4 = $("[id$='paramCreditCardNum4']").val();
+                       var expiryMth = $("[id$='card-expiry-month1']").val();
+                       var expiryYr = $("[id$='card-expiry-year1']").val();
+
+                       $("[id$='DDA-Credit-Card-Holder']").val(holder1);
+                       $("[id$='DDA-Card-Issuing-Bank']").val(bankName);
+                       $("[id$='creditCardNum1']").val(cardNum1);
+                       $("[id$='creditCardNum2']").val(cardNum2);
+                       $("[id$='creditCardNum3']").val(cardNum3);
+                       $("[id$='creditCardNum4']").val(cardNum4);
+                       $("[id$='card-expiry-month']").val(expiryMth);
+                       $("[id$='card-expiry-year']").val(expiryYr);
+
+                       getCreditCardNo();
+                    }
+
+                }
+                var creditCardNo = '';
+                function getCreditCardNo(){
+                    
+                    var num1 = $("form[id*='form'] input[id$='creditCardNum1']").val();
+                    var num2 = $("form[id*='form'] input[id$='creditCardNum2']").val();
+                    var num3 = $("form[id*='form'] input[id$='creditCardNum3']").val();
+                    var num4 = $("form[id*='form'] input[id$='creditCardNum4']").val();
+                    creditCardNo = num1 + num2 + num3 + num4;
+                    
+                    //if(num1.length == 4 && num2.length == 4 && num3.length == 4 && num4.length == 4){        
+                        $("input[id*='Credit-Card-Number']").val(creditCardNo);
+                    //}
+                    
+                    $("form[id*='form']").validate();
+                    $("input[id*='Credit-Card-Number']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            maskedCreditCard: true,
+                            creditCard: true
+                        });
+                    });
+                    
+                    if (creditCardNo == 16){
+                        //CR-56_Link_20220214
+                        $("input[id*='Credit-Card-Number']").trigger("focus");
+                    }
+                    
+                }
+                var creditCardNo1 = '';
+                function getCreditCardNo1(){
+                    
+                    var num1 = $("form[id*='form'] input[id$='paramCreditCardNum1']").val();
+                    var num2 = $("form[id*='form'] input[id$='paramCreditCardNum2']").val();
+                    var num3 = $("form[id*='form'] input[id$='paramCreditCardNum3']").val();
+                    var num4 = $("form[id*='form'] input[id$='paramCreditCardNum4']").val();
+                    creditCardNo1 = num1 + num2 + num3 + num4;
+                    
+                    //if(num1.length == 4 && num2.length == 4 && num3.length == 4 && num4.length == 4){        
+                        $("input[id*='Credit-Card-Number1']").val(creditCardNo1);
+                    //}
+                    
+                    $("form[id*='form']").validate();
+                    $("input[id*='Credit-Card-Number1']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            maskedCreditCard1: true,
+                            creditCard: true
+                        });
+                    });
+                    
+                    if (creditCardNo1 == 16){
+                        //CR-56_Link_20220214
+                        $("input[id*='Credit-Card-Number1']").trigger("focus");
+                    }
+                }
+                function getBankAccNo(){
+                    console.log('getBankAccNo');
+                    var bankcode = $("form[id*='form'] input[id$='bank-code']").val();
+                    var branchcode = $("form[id*='form'] input[id$='branch-code']").val();
+                    var bankaccountcode = $("form[id*='form'] input[id$='bank-account-code']").val();
+
+                    var bankAcctNo = bankcode + branchcode + bankaccountcode;
+                    
+                    //if(bankcode.length > 0 && branchcode.length > 0 && bankaccountcode.length > 0){
+                    //    $("input[id*='Bank-Account-Number']").val(bankAcctNo);
+                    //}        
+                    console.log('getBankAccNo');
+                    $("form[id*='form']").validate();
+                    $("input[id*='Bank-Account-Number']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            //digits: true,
+                            checklength :true,
+                            required: true
+                        });
+                    });
+                    console.log('bankcode'+bankcode);
+                    console.log('branchcode'+branchcode);
+                    console.log('bankaccountcode'+bankaccountcode);
+                    if(bankcode!=null && branchcode!=null && bankaccountcode!=null){
+                        if(bankcode!='' && branchcode!='' && bankaccountcode!=''){
+                            console.log('bankcode'+bankcode);
+                            console.log('branchcode'+branchcode);
+                            console.log('bankaccountcode'+bankaccountcode);
+                            $("input[id*='Bank-Account-Number']").val(bankAcctNo);
+                            //CR-56_Link_20220214
+                            $("input[id*='Bank-Account-Number']").trigger("focus");
+                        }
+                    }
+                    
+                }
+                function isSavedCreditCardValue(value){
+                    return value == '{!savedCreditCardWithMask}';
+                }
+                function isSavedCreditCardValue1(value){
+                    return value == '{!savedCreditCardWithMask1}';
+                }
+                function appealQuestionYes(){
+                    $('input[type="hidden"][id$="esales-isAppealYes"]').val(true);
+                    $('input[type="hidden"][id$="esales-isAppealNo"]').val(false);
+                    console.log('click yes: ' + $('input[type="hidden"][id$="esales-isAppealYes"]').val());
+                    ServerESales.refreshAppealPanel();
+                    $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                }
+                
+                function appealQuestionNo(){
+                    $('input[type="hidden"][id$="esales-isAppealNo"]').val(true);
+                    $('input[type="hidden"][id$="esales-isAppealYes"]').val(false);
+                    console.log('click No: ' + $('input[type="hidden"][id$="esales-isAppealNo"]').val());
+                    ServerESales.refreshAppealPanel();
+                    if({!txn.AUW_Overall_Result__c == 'Decline'}){
+                        $('#eSales-back-btn').hide();
+                        $('#eSales-save-btn').hide();
+                        $("[id*='reridericon-']").each(function(idx, elem){
+                            var ids = elem.id;
+                            $('#' + ids).hide();
+                        });
+                    }
+
+                    $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                }
+                function finishLoading() {
+                    btnNextDisabled = false;
+                    btnPrevDisabled = false;
+                }
+                function validateForm() {
+                    return $("form[id*='form']").validate().form();
+                }
+                function prevStep(evt) {
+                    console.log('prevStep'+btnPrevDisabled );
+                    if (!btnPrevDisabled) {
+                        btnPrevDisabled = true;
+                        ServerESales.prevStep();
+                    }
+                    evt.preventDefault();
+                }
+                function saveRecord(evt) {
+                    var currentStep = $('#esales-current-step').val();
+                    getCreditCardNo();
+                    getCreditCardNo1();
+                    getBankAccNo();
+
+                    var formvalid = 1;
+                    if(currentStep == '{!STEP_CONFIRMATION}'){
+                        formvalid = 0;
+                        ConfirmationForm.Validate.formValidation();
+                        formvalid = ($("form[id*='confirmationfrm']")).validate().form();
+                    
+                        if (formvalid == 0){
+                            //CR-56_Link_20220214
+                            $("html,body").animate({ scrollTop: ($("form[id*='confirmationfrm']")).find(":input.error:first").offset().top - $(window).height()/2},"slow",function(){($("form[id*='confirmationfrm']")).find(":input.error:first").trigger("focus");} );
+                        }
+                    }
+
+                    if(validateForm() && formvalid){
+                        ServerESales.saveRecord();
+                    }
+                    
+                }
+                function redirectToQuote() {
+                
+                    var params;
+                    if(Cigna.Util.isBrokerPortal()){
+                        params = {
+                            plan : "{!paraPlan}",
+                            phFN : "{!personPH.Given_Name__c}",
+                            phLN : "{!personPH.Family_Name__c}",
+                            phGender : "{!personPH.Gender__c}",
+                            phCountryCode : "{!personPH.Country_Code__c}",
+                            phMobileNo : "{!personPH.Contact_No__c}",
+                            phDOBYear : "{!paramDOBPHYear}",
+                            phDOBMonth : "{!paramDOBPHMonth}",
+                            phDOBDay : "{!paramDOBPHDay}",
+                            tid : "{!esalesId}",
+                            fromPage : "Esales"
+                        };
+                        
+                        Cigna.Util.navigateToVFP("GenericGetQuoteVFP?" + $.param(params), null, null, true);
+                        
+                    }else{
+                        params = {
+                                plan : "{!paraPlan}",
+                                Category : "{!paraCategory}"
+                            };                       
+                        Cigna.Util.navigateToVFP("GenericGetQuoteVFP?" + $.param(params), null, null, true);
+                        
+                    }
+                }        
+                function onPIRAChange(evt){
+                    var val = $(this).is(':checked');                   
+                    if(val){
+                        $('input[type="hidden"][id$="Same-Residential-Address-PH"]').val('true');
+                    } else{
+                        $('input[type="hidden"][id$="Same-Residential-Address-PH"]').val('false');
+                    }                   
+                    ServerESales.onPIRAChange();
+                    console.log('onPIRAChange val'+val);
+                }  
+                function validateExpiryDate(resour){
+                    console.log('validateExpiryDate');
+                    var elemId = resour.getAttribute("id");
+                    var currentdate=new Date();
+                    var nowYear=currentdate.getFullYear();
+                    var nowMonth=currentdate.getMonth();
+
+                    if(elemId.indexOf('Credit-Card-Expiry-Date1') > -1){
+                        var expirymth1 = $("form[id*='form'] input[id$='card-expiry-month1']").val();
+                        var expiryYr1 = $("form[id*='form'] input[id$='card-expiry-year1']").val(); 
+                        var expiryDt1 = expirymth1 + '/' + expiryYr1;
+                        if(expirymth1.length > 0 && expiryYr1.length > 0){
+                            $("input[id*='Credit-Card-Expiry-Date1']").val(expiryDt1);
+                        }
+
+                        if(expiryYr1 > nowYear){
+                            return true;
+                        }else if(expiryYr1 == nowYear && expirymth1 > nowMonth){
+                            return true;
+                        }else{
+                            return false;
+                        }
+                    }
+
+                    if(elemId.indexOf('Credit-Card-Expiry-Date') > -1){
+                        var expirymth = $("form[id*='form'] input[id$='card-expiry-month']").val();
+                        var expiryYr = $("form[id*='form'] input[id$='card-expiry-year']").val(); 
+                        
+                        console.log('nowYear '+nowYear +'expiryYr '+expiryYr );
+                        console.log('nowMonth '+nowMonth +'expirymth '+expirymth );
+                        
+                        var expiryDt = expirymth + '/' + expiryYr;
+                        if(expirymth.length > 0 && expiryYr.length > 0){
+                            $("input[id*='Credit-Card-Expiry-Date']").val(expiryDt);
+                        }
+
+                        if(expiryYr > nowYear){
+                            return true;
+                        }else if(expiryYr == nowYear && expirymth > nowMonth){
+                            return true;
+                        }else{
+                            return false;
+                        }
+                    }
+                    return true;
+                }   
+                function checkBankAcctLength(){
+                    var bankcode = $("form[id*='form'] input[id$='bank-code']").val();
+                    var branchcode = $("form[id*='form'] input[id$='branch-code']").val();
+                    if(bankcode.length < 3 || branchcode.length < 3){
+                        return false;
+                    }
+                    return true;
+                }   
+            return {
+                autoShowAuw : autoShowAuw,
+                closeChildWindow : closeChildWindow,
+                setUWStatusPolling : setUWStatusPolling,
+                mobileSetUWStatusPolling : mobileSetUWStatusPolling,
+                mobilePollUWStatus : mobilePollUWStatus,
+                getCreditCardNo : getCreditCardNo,
+                getCreditCardNo1 : getCreditCardNo1,
+                isSavedCreditCardValue : isSavedCreditCardValue,
+                isSavedCreditCardValue1 : isSavedCreditCardValue1,
+                onselectToCopy : onselectToCopy,
+                getBankAccNo : getBankAccNo,
+                appealQuestionYes : appealQuestionYes,
+                appealQuestionNo : appealQuestionNo,
+                finishLoading : finishLoading,
+                prevStep : prevStep,
+                saveRecord : saveRecord,
+                redirectToQuote : redirectToQuote,
+                onPIRAChange : onPIRAChange,
+                clearUWStatusPolling : clearUWStatusPolling,
+                validateExpiryDate : validateExpiryDate,
+                checkBankAcctLength : checkBankAcctLength
+            }
+        }(); 
+        
+        $(document).ready(function(){
+            sforce.connection.serverUrl = "{!$Site.Prefix}/services/Soap/u/32.0";
+ 
+            $('input[type="hidden"][id$="esales-documentloadReady"]').val(true);
+            if (Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                    $('input[type="hidden"][id$="esales-isSalesforce1"]').val(true);
+            } else {
+                    $('input[type="hidden"][id$="esales-isSalesforce1"]').val(false);
+            }
+            
+            if (Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal() && Cigna.Util.isAndroid()) {
+                    $('input[type="hidden"][id$="esales-isAndroidShowButton"]').val(true);
+            } else {
+                    $('input[type="hidden"][id$="esales-isAndroidShowButton"]').val(false);
+            }
+                
+            var successPay = $('input[type="hidden"][id$="esales-afterPay"]').val();
+            console.log('###successPay: ' + successPay);
+            if(successPay=='true'){//to remove
+                console.log('###begin: ' + successPay);
+                eSalesDoneAndCallWS();
+                $('input[type="hidden"][id$="esales-afterPay"]').val(false);
+                console.log('###afterpay: ' + $('input[type="hidden"][id$="esales-afterPay"]').val());
+            }
+        });
+    </script>
+    </head>
+    <apex:define name="additionalLibraries">
+        <!--additional css, bootstrap, jquery,js libraries-->
+        <!-- CR-56_Link_20220214 -->
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+        <apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+             <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+        </apex:outputPanel>
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    </apex:define>        
+    
+    <!--Error Message Panel-->  
+    <apex:outputPanel id="errmessage">
+                <div class="bs row">
+                    <apex:pagemessages ></apex:pagemessages>
+                </div>
+    </apex:outputPanel>
+    
+    <apex:outputPanel id="wrapper">    
+        <apex:form id="form">
+            <!--Action function-->
+            <!--Add by Manuel to trigger retrieve auw function etc-->
+            <apex:actionFunction action="{!nextStep}" name="nextStep" reRender="wrapper,wrapperApp,errmessage" oncomplete="retrieveAUWURL_JS();Cigna.ESales.finishLoading();" />
+            <apex:actionFunction action="{!prevStep}" name="prevStep" namespace="ServerESales" reRender="wrapper,wrapperApp,errmessage" oncomplete="Cigna.ESales.finishLoading();" status="loader-icon" />
+            <apex:actionFunction action="{!saveRecord}" name="saveRecord" namespace="ServerESales" reRender="wrapper,wrapperApp,errmessage" status="loader-icon"/>
+            <apex:actionFunction action="{!retrieveAUWURL}" name="retrieveAUWURL_JS" status="loader-icon" reRender="wrapper,wrapperApp"/> 
+            <apex:actionFunction action="{!displayPHFT}" name="displayPHFT" reRender="height-field-panel-ph,validationRulePanel" />
+            <apex:actionFunction action="{!hidePHFT}" name="hidePHFT" reRender="height-field-panel-ph,validationRulePanel" /> 
+            <apex:actionFunction action="{!displaySPFT}" name="displaySPFT" reRender="height-field-panel-sp,validationRulePanel" />
+            <apex:actionFunction action="{!hideSPFT}" name="hideSPFT" reRender="height-field-panel-sp,validationRulePanel" /> 
+            <apex:actionFunction action="{!displayCH1FT}" name="displayCH1FT" reRender="height-field-panel-ch1,validationRulePanel" />
+            <apex:actionFunction action="{!hideCH1FT}" name="hideCH1FT" reRender="height-field-panel-ch1,validationRulePanel" /> 
+            <apex:actionFunction action="{!displayCH2FT}" name="displayCH2FT" reRender="height-field-panel-ch2,validationRulePanel" />
+            <apex:actionFunction action="{!hideCH2FT}" name="hideCH2FT" reRender="height-field-panel-ch2,validationRulePanel" /> 
+            <apex:actionFunction action="{!displayCH3FT}" name="displayCH3FT" reRender="height-field-panel-ch3,validationRulePanel" />
+            <apex:actionFunction action="{!hideCH3FT}" name="hideCH3FT" reRender="height-field-panel-ch3,validationRulePanel"/> 
+            <apex:actionFunction action="{!onPIRAChange}" name="onPIRAChange" namespace="ServerESales" reRender="person-information-sp-panel,validationRulePanel"  status="loader-icon"/> 
+            <apex:actionFunction name="removeAttachment" action="{!removeAtt}" rerender="uploadatt,uploadUWatt">
+                <apex:param name="id" value="" assignTo="{!removeAttId}" />
+            </apex:actionFunction> 
+            <apex:actionFunction name="refreshAttlist" rerender="uploadatt,uploadUWatt" status="loader-icon"/>
+            <apex:actionFunction action="{!addHolderForJointAccount}" name="addHolderForJointAccount" reRender="wrapper,wrapperApp"/> 
+            <apex:actionFunction action="{!minusHolderForJointAccount}" name="minusHolderForJointAccount" reRender="wrapper,wrapperApp"/>
+            <apex:actionFunction action="{!eSalesDoneAndCallWS}" name="eSalesDoneAndCallWS" reRender="wrapper,wrapperApp" status="loader-icon"/>
+            <apex:actionFunction action="{!appealFunctionNo}" name="refreshAppealPanel" namespace="ServerESales" status="loader-icon" reRender="wrapper,wrapperApp" />
+            <apex:actionFunction name="refresh" reRender="wrapper,wrapperApp"/>
+            
+            <input type="hidden" id="esales-current-step" value="{!currentStep}" />
+            <apex:inputHidden id="esales-isSalesforce1" value="{!isSalesforce1}" />
+            <apex:inputHidden id="esales-isAndroidShowButton" value="{!isAndroidShowButton}" />
+            <apex:inputHidden id="esales-documentloadReady" value="{!documentloadReady}" />
+            <input type="hidden" id="esales-AUWCompleteStep" value="{!AUWCompleteStep}" />
+            <input type="hidden" id="esales-txn-id" value="{!txn.Id}" />
+            <apex:inputHidden id="esales-afterPay" value="{!afterPay}" />
+            <apex:outputPanel id="appealParam">
+                <apex:inputHidden id="esales-isAppealYes" value="{!isAppealYes}" />
+                <apex:inputHidden id="esales-isAppealNo" value="{!isAppealNo}" />
+            </apex:outputPanel>
+            
+            <!--Page Header: display step information-->
+            
+            <apex:outputPanel >
+                    <div class="bs hidden-xs col-sm-12 cigna-progress-bar desktopProgressBar">
+                        <div class="bs cigna-progress-bar-inner">
+                            <div class="bs {!IF(currentStep == STEP_PERSONAL_DETAIL, 'active', '')}">{!IF(isCustomerPortal, $Label.Your_Details, $Label.Client_Details)}</div>
+                            <div class="bs {!IF(currentStep == STEP_UNDERWRITING || currentStep == STEP_UNDERWRITING_SP || currentStep == STEP_UNDERWRITING_C1 || currentStep == STEP_UNDERWRITING_C2 || currentStep == STEP_UNDERWRITING_C3, 'active', '')}">{!$Label.Underwriting_Questions}</div>
+                            <div class="bs {!IF(currentStep >= STEP_CONFIRMATION && currentStep < STEP_PAYMENT_METHOD, 'active', '')}">{!$Label.Confirmation}</div>
+                            <div class="bs {!IF(currentStep >= STEP_PAYMENT_METHOD && currentStep <= STEP_PAYMENT, 'active', '')}">{!$Label.Payment}</div>
+                        </div>
+                    </div>
+            </apex:outputPanel>
+            
+            <apex:outputPanel >
+                <div class="bs visible-xs col-xs-12 cigna-progress-bar">
+                    <div class="bs cigna-progress-bar-inner">
+                        <div style="font-size:8px" class="bs {!IF(currentStep == STEP_PERSONAL_DETAIL, 'active', '')}">{!IF(isCustomerPortal, $Label.Your_Details, $Label.Client_Details)}</div>
+                        <div style="font-size:8px" class="bs {!IF(currentStep == STEP_UNDERWRITING || currentStep == STEP_UNDERWRITING_SP || currentStep == STEP_UNDERWRITING_C1 || currentStep == STEP_UNDERWRITING_C2 || currentStep == STEP_UNDERWRITING_C3, 'active', '')}">{!$Label.Underwriting_Questions}</div>
+                        <div style="font-size:8px" class="bs {!IF(currentStep >= STEP_CONFIRMATION && currentStep < STEP_PAYMENT_METHOD, 'active', '')}">{!$Label.Confirmation}</div>
+                        <div style="font-size:8px" class="bs {!IF(currentStep >= STEP_PAYMENT_METHOD && currentStep <= STEP_PAYMENT, 'active', '')}">{!$Label.Payment}</div>
+                    </div>
+                </div>
+            </apex:outputPanel>
+            
+            <!--Back and Save button Panel-->
+            <apex:outputPanel id="back-save-button-panel">
+                <apex:outputPanel layout="block" rendered="{!currentStep >= STEP_CONFIRMATION && currentStep < STEP_PAYMENT  && !(txn.AUW_Overall_Result__c == 'Decline' && isCustomerPortal) && !(txn.AUW_Overall_Result__c == 'Decline' && isBrokerPortal)}" styleClass="bs row">
+                    <div class="bs col-xs-12">
+                        <p class="bs pull-left"><a id="eSales-back-btn" class="bs cigna-fg-orange-medium onclick-pointer" style="text-decoration: none;"><i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a></p>
+                        <p class="bs pull-right"><a id="eSales-save-btn" class="bs cigna-fg-orange-medium onclick-pointer" style="text-decoration: none;">{!$Label.Save} <i class="ci-hk-briefcase" aria-hidden="true"></i> </a></p>
+                    </div>
+                    <script>
+                        // CR-56_Link_20220214
+                        $('#eSales-back-btn').on("click",Cigna.ESales.prevStep);
+                        $('#eSales-save-btn').on("click",Cigna.ESales.saveRecord);
+                    </script>
+                </apex:outputPanel>
+                <apex:outputPanel layout="block" rendered="{!currentStep == STEP_PERSONAL_DETAIL}" styleClass="bs row">
+                    <div class="bs col-xs-12">
+                        <p class="bs pull-left"><a id="eSales-back-btn" class="bs cigna-fg-orange-medium onclick-pointer" style="text-decoration: none;" onclick="Cigna.ESales.redirectToQuote();"><i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a></p>
+                        <p class="bs pull-right"><a id="eSales-save-btn" class="bs cigna-fg-orange-medium onclick-pointer" style="text-decoration: none;">{!$Label.Save} <i class="ci-hk-briefcase" aria-hidden="true"></i> </a></p>
+                    </div>
+                    <script>
+                        // CR-56_Link_20220214
+                        $('#eSales-save-btn').on("click",Cigna.ESales.saveRecord);
+                    </script>
+                </apex:outputPanel>
+            </apex:outputPanel>                      
+            
+            <!--Basic Information Step-->        
+            <apex:outputPanel layout="block" rendered="{!currentStep == STEP_PERSONAL_DETAIL}" styleClass="bs row">
+                <apex:outputPanel rendered="{!PHFieldIds.size>0}">
+                    <div class="bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h4>{!$Label.Policy_Holder}</h4></div>  
+                    <apex:repeat value="{!PHFieldIds}" var="index">
+                        <apex:outputPanel rendered="{!PHBasicInfoFieldsMap[index].questionType = textQuestionType && PHBasicInfoFieldsMap[index].questionId!='ESALES_HEIGHT_FIELD_PH'}">
+                            <c:ESaleField idPrefix="basic-info-{!PHBasicInfoFieldsMap[index].questionId}" esaleQuestion="{!PHBasicInfoFieldsMap[index]}" compStyle="Application"/>
+                        </apex:outputPanel>
+                        <apex:outputPanel id="height-field-panel-ph" rendered="{!PHBasicInfoFieldsMap[index].questionType = textQuestionType && PHBasicInfoFieldsMap[index].questionId='ESALES_HEIGHT_FIELD_PH'}">
+                            <c:ESaleField idPrefix="basic-info-{!PHBasicInfoFieldsMap[index].questionId}" esaleQuestion="{!PHBasicInfoFieldsMap[index]}" compStyle="Application" changeTwoInput="{!showPHFT}" twoInputValue="{!PHBasicInfoFieldsMap[index].answer}"/>
+                        </apex:outputPanel> 
+                        <apex:outputPanel rendered="{!PHBasicInfoFieldsMap[index].questionType = dropdownQuestionType}">
+                            <c:ESaleDropDown idPrefix="basic-info-{!PHBasicInfoFieldsMap[index].questionId}" esaleQuestion="{!PHBasicInfoFieldsMap[index]}" compStyle="Application" />
+                        </apex:outputPanel> 
+                        <apex:outputPanel rendered="{!PHBasicInfoFieldsMap[index].questionType = dateQuestionType}">
+                            <c:ESaleDate idPrefix="basic-info-{!PHBasicInfoFieldsMap[index].questionId}" esaleQuestion="{!PHBasicInfoFieldsMap[index]}"/>
+                        </apex:outputPanel> 
+                        <apex:outputPanel rendered="{!PHBasicInfoFieldsMap[index].questionType = radioQuestionType}">
+                            <c:ESaleRadio idPrefix="basic-info-{!PHBasicInfoFieldsMap[index].questionId}" esaleQuestion="{!PHBasicInfoFieldsMap[index]}" compStyle="Application" />
+                        </apex:outputPanel> 
+                    </apex:repeat>
+                </apex:outputPanel>
+                
+                <apex:outputPanel rendered="{!SPFieldIds.size>0}" id="person-information-sp-panel">
+                    <div class="bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h4>{!$Label.eSales_Spouse}</h4></div>  
+                    <apex:repeat value="{!SPFieldIds}" var="index">
+                        <apex:outputPanel rendered="{!index==ESALES_TITLE1_POSITION}"><div class="bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h5>{!$Label.Personal_Detail}</h5></div></apex:outputPanel>
+                        <apex:outputPanel rendered="{!index==ESALES_TITLE2_POSITION}">
+                            <div class="bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h5>{!$Label.Contact_Detail}</h5></div>
+                            <br/>
+                            <div class="bs col-sm-12" style="padding: 10px 0px 10px 30px;">
+                                <p>
+                                    <input type="checkbox" id="PI-Residential-Address-checkbox" name="PI-Residential-Address-checkbox" class="bs cigna-question-checkbox"/>
+                                    <label for="PI-Residential-Address-checkbox" style="font-weight: normal;">{!$Label.Same_Residential_Address_as_Policy_Holder}</label>
+                                </p>
+                                <apex:inputHidden id="Same-Residential-Address-PH" value="{!paramSameResidentialAddressPH}"/>
+                            </div>
+                            <script>                               
+                                var paramSameResidentialAddressPH = "{!paramSameResidentialAddressPH}";
+                                if(paramSameResidentialAddressPH == 'true'){
+                                    $("#PI-Residential-Address-checkbox").attr('checked','checked');                                    
+                                }
+                                //CR-56_Link_20220214
+                                $('input#PI-Residential-Address-checkbox').on("change",Cigna.ESales.onPIRAChange);
+                            </script>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!SPBasicInfoFieldsMap[index].questionType = textQuestionType && SPBasicInfoFieldsMap[index].questionId!=ESALES_HEIGHT_FIELD_SP}">
+                            <c:ESaleField idPrefix="basic-info-{!SPBasicInfoFieldsMap[index].questionId}" esaleQuestion="{!SPBasicInfoFieldsMap[index]}" compStyle="Application" rendered="{!IF(SPBasicInfoFieldsMap[index].questionId==ESALES_ADDRESS1_FIELD_SP || SPBasicInfoFieldsMap[index].questionId==ESALES_ADDRESS2_FIELD_SP || SPBasicInfoFieldsMap[index].questionId==ESALES_ADDRESS3_FIELD_SP,showAddressSP,'')}"/>
+                        </apex:outputPanel> 
+                        <apex:outputPanel id="height-field-panel-sp" rendered="{!SPBasicInfoFieldsMap[index].questionType = textQuestionType && SPBasicInfoFieldsMap[index].questionId=ESALES_HEIGHT_FIELD_SP}">
+                            <c:ESaleField idPrefix="basic-info-{!SPBasicInfoFieldsMap[index].questionId}" esaleQuestion="{!SPBasicInfoFieldsMap[index]}" compStyle="Application" changeTwoInput="{!showSPFT}" twoInputValue="{!SPBasicInfoFieldsMap[index].answer}"/>
+                        </apex:outputPanel> 
+                        <apex:outputPanel rendered="{!SPBasicInfoFieldsMap[index].questionType = dropdownQuestionType}">
+                            <c:ESaleDropDown idPrefix="basic-info-{!SPBasicInfoFieldsMap[index].questionId}" esaleQuestion="{!SPBasicInfoFieldsMap[index]}" compStyle="Application" rendered="{!IF(SPBasicInfoFieldsMap[index].questionId==ESALES_COUNTRY_FIELD_SP,showAddressSP,'')}"/>
+                        </apex:outputPanel> 
+                        <apex:outputPanel rendered="{!SPBasicInfoFieldsMap[index].questionType = dateQuestionType}">
+                            <c:ESaleDate idPrefix="basic-info-{!SPBasicInfoFieldsMap[index].questionId}" esaleQuestion="{!SPBasicInfoFieldsMap[index]}"/>
+                        </apex:outputPanel> 
+                    </apex:repeat>
+                </apex:outputPanel>
+                
+                <apex:outputPanel rendered="{!CH1FieldIds.size>0}">
+                    <div class="bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h4>{!$Label.Child} 1</h4></div>  
+                    <apex:repeat value="{!CH1FieldIds}" var="index">
+                        <apex:outputPanel rendered="{!CH1BasicInfoFieldsMap[index].questionType = textQuestionType && CH1BasicInfoFieldsMap[index].questionId!=ESALES_HEIGHT_FIELD_CH1}">
+                            <c:ESaleField idPrefix="basic-info-{!CH1BasicInfoFieldsMap[index].questionId}" esaleQuestion="{!CH1BasicInfoFieldsMap[index]}" compStyle="Application" />
+                        </apex:outputPanel> 
+                        <apex:outputPanel id="height-field-panel-ch1" rendered="{!CH1BasicInfoFieldsMap[index].questionType = textQuestionType && CH1BasicInfoFieldsMap[index].questionId=ESALES_HEIGHT_FIELD_CH1}">
+                            <c:ESaleField idPrefix="basic-info-{!CH1BasicInfoFieldsMap[index].questionId}" esaleQuestion="{!CH1BasicInfoFieldsMap[index]}" compStyle="Application" changeTwoInput="{!showCH1FT}" twoInputValue="{!CH1BasicInfoFieldsMap[index].answer}"/>
+                        </apex:outputPanel> 
+                        <apex:outputPanel rendered="{!CH1BasicInfoFieldsMap[index].questionType = dropdownQuestionType}">
+                            <c:ESaleDropDown idPrefix="basic-info-{!CH1BasicInfoFieldsMap[index].questionId}" esaleQuestion="{!CH1BasicInfoFieldsMap[index]}" compStyle="Application"/>
+                        </apex:outputPanel> 
+                        <apex:outputPanel rendered="{!CH1BasicInfoFieldsMap[index].questionType = dateQuestionType}">
+                            <c:ESaleDate idPrefix="basic-info-{!CH1BasicInfoFieldsMap[index].questionId}" esaleQuestion="{!CH1BasicInfoFieldsMap[index]}"/>
+                        </apex:outputPanel> 
+                    </apex:repeat>
+                </apex:outputPanel>
+                
+                <apex:outputPanel rendered="{!CH2FieldIds.size>0}">
+                    <div class="bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h4>{!$Label.Child} 2</h4></div>  
+                    <apex:repeat value="{!CH2FieldIds}" var="index">
+                        <apex:outputPanel rendered="{!CH2BasicInfoFieldsMap[index].questionType = textQuestionType && CH2BasicInfoFieldsMap[index].questionId!=ESALES_HEIGHT_FIELD_CH2}">
+                            <c:ESaleField idPrefix="basic-info-{!CH2BasicInfoFieldsMap[index].questionId}" esaleQuestion="{!CH2BasicInfoFieldsMap[index]}" compStyle="Application" />
+                        </apex:outputPanel> 
+                        <apex:outputPanel id="height-field-panel-ch2" rendered="{!CH2BasicInfoFieldsMap[index].questionType = textQuestionType && CH2BasicInfoFieldsMap[index].questionId=ESALES_HEIGHT_FIELD_CH2}">
+                            <c:ESaleField idPrefix="basic-info-{!CH2BasicInfoFieldsMap[index].questionId}" esaleQuestion="{!CH2BasicInfoFieldsMap[index]}" compStyle="Application" changeTwoInput="{!showCH2FT}" twoInputValue="{!CH2BasicInfoFieldsMap[index].answer}"/>
+                        </apex:outputPanel> 
+                        <apex:outputPanel rendered="{!CH2BasicInfoFieldsMap[index].questionType = dropdownQuestionType}">
+                            <c:ESaleDropDown idPrefix="basic-info-{!CH2BasicInfoFieldsMap[index].questionId}" esaleQuestion="{!CH2BasicInfoFieldsMap[index]}" compStyle="Application"/>
+                        </apex:outputPanel> 
+                        <apex:outputPanel rendered="{!CH2BasicInfoFieldsMap[index].questionType = dateQuestionType}">
+                            <c:ESaleDate idPrefix="basic-info-{!CH2BasicInfoFieldsMap[index].questionId}" esaleQuestion="{!CH2BasicInfoFieldsMap[index]}"/>
+                        </apex:outputPanel> 
+                    </apex:repeat>
+                </apex:outputPanel>
+                
+                <apex:outputPanel rendered="{!CH3FieldIds.size>0}">
+                    <div class="bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h4>{!$Label.Child} 3</h4></div>  
+                    <apex:repeat value="{!CH3FieldIds}" var="index">
+                        <apex:outputPanel rendered="{!CH3BasicInfoFieldsMap[index].questionType = textQuestionType && CH3BasicInfoFieldsMap[index].questionId!=ESALES_HEIGHT_FIELD_CH3}">
+                            <c:ESaleField idPrefix="basic-info-{!CH3BasicInfoFieldsMap[index].questionId}" esaleQuestion="{!CH3BasicInfoFieldsMap[index]}" compStyle="Application" />
+                        </apex:outputPanel> 
+                        <apex:outputPanel id="height-field-panel-ch3" rendered="{!CH3BasicInfoFieldsMap[index].questionType = textQuestionType && CH3BasicInfoFieldsMap[index].questionId=ESALES_HEIGHT_FIELD_CH3}">
+                            <c:ESaleField idPrefix="basic-info-{!CH3BasicInfoFieldsMap[index].questionId}" esaleQuestion="{!CH3BasicInfoFieldsMap[index]}" compStyle="Application" changeTwoInput="{!showCH3FT}" twoInputValue="{!CH3BasicInfoFieldsMap[index].answer}"/>
+                        </apex:outputPanel> 
+                        <apex:outputPanel rendered="{!CH3BasicInfoFieldsMap[index].questionType = dropdownQuestionType}">
+                            <c:ESaleDropDown idPrefix="basic-info-{!CH3BasicInfoFieldsMap[index].questionId}" esaleQuestion="{!CH3BasicInfoFieldsMap[index]}" compStyle="Application"/>
+                        </apex:outputPanel> 
+                        <apex:outputPanel rendered="{!CH3BasicInfoFieldsMap[index].questionType = dateQuestionType}">
+                            <c:ESaleDate idPrefix="basic-info-{!CH3BasicInfoFieldsMap[index].questionId}" esaleQuestion="{!CH3BasicInfoFieldsMap[index]}"/>
+                        </apex:outputPanel> 
+                    </apex:repeat>
+                </apex:outputPanel>
+    
+            </apex:outputPanel>  
+            
+            <!-- Add by Manuel for AUW start -->
+            <apex:outputPanel id="underwriting-section" rendered="{!currentStep == STEP_UNDERWRITING && !isSalesforce1 && documentloadReady}" styleClass="bs row" layout="block" >
+                 <div class="bs col-xs-12">
+                    <apex:outputPanel >
+                        <div class="uw-person-name bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h4><center>{!personinsuredMap['PH'].Given_Name__c+' '+personinsuredMap['PH'].Family_Name__c}</center></h4></div>
+                        <br/>
+                    </apex:outputPanel>
+                    <apex:outputPanel styleClass="wrap-iframe-third-party">
+                            <apex:iframe src="{!phURL}" height="1024px" scrolling="true"/>
+                    </apex:outputPanel>
+                </div>
+                <script>
+                    console.log('Manuel 000 debug underwriting for ph script');
+                    Cigna.ESales.setUWStatusPolling();
+                    if( !Cigna.Util.isIOS() && !!navigator.userAgent.match(/Version\/[\d\.]+.*Safari/) && '{!phURL}'!='') {
+                        //Add by Manuel to alert the message base on user prefer display language 
+                        if('{!$Label.User_Language}'=='zh_tw'||'{!$Label.User_Language}'=='zh_cn'||'{!$Label.User_Language}'=='zh_ch'){
+                            alert("請先確保於Safari設置中容許Cookies - 請到 [Safari] -> [偏好設定⋯] -> [隱私權] -> 在「Cookie 和網站資料」選擇 [總是允許], 然後按以下[關閉]繼續。");   
+                        }else{
+                            alert("Please make sure to always allow cookies in Safari settings by going to [Safari] -> [Preferences...] -> [Privacy] -> Select [Always Allow] option under “Cookies and website data”, then press [Close] below to proceed.");                      
+                        }
+                    } 
+                    $('div.header-bar').hide();
+                    $('div.desktopProgressBar').css('margin-top','50px');
+                    if (Cigna.Util.isSalesforce1() && Cigna.Util.isIOS()) {
+                        var $frame = $('.wrap-iframe-third-party iframe').first();
+                        $($frame).height((window.screen.height - 44 - 20 - 64) * 0.95 + 'px');
+                    } else {
+                        var $frame = $('.wrap-iframe-third-party iframe').first();
+                        $($frame).height(($(window).height() - $($frame).offset().top) * 0.95);
+                    }
+                </script>
+            </apex:outputPanel>
+            <apex:outputPanel id="underwriting-section-sp" rendered="{!currentStep == STEP_UNDERWRITING_SP && !isSalesforce1 && documentloadReady}" styleClass="bs row" layout="block" >
+                <div class="bs col-xs-12">
+                    <apex:outputPanel >
+                        <div class="uw-person-name bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h4><center>{!personinsuredMap['SP'].Given_Name__c+' '+personinsuredMap['SP'].Family_Name__c}</center></h4></div>
+                        <br/>
+                    </apex:outputPanel>
+                    <apex:outputPanel styleClass="wrap-iframe-third-party">
+                            <apex:iframe src="{!spURL}" height="1024px" scrolling="true"/>
+                    </apex:outputPanel>
+                </div>
+                <script>
+                    Cigna.ESales.setUWStatusPolling();
+                    if( !Cigna.Util.isIOS() && !!navigator.userAgent.match(/Version\/[\d\.]+.*Safari/) && '{!spURL}' !='' ){
+                        //Add by Manuel to alert the message base on user prefer display language 
+                        if('{!$Label.User_Language}'=='zh_tw'||'{!$Label.User_Language}'=='zh_cn'||'{!$Label.User_Language}'=='zh_ch'){
+                            alert("請先確保於Safari設置中容許Cookies - 請到 [Safari] -> [偏好設定⋯] -> [隱私權] -> 在「Cookie 和網站資料」選擇 [總是允許], 然後按以下[關閉]繼續。");   
+                        }else{
+                            alert("Please make sure to always allow cookies in Safari settings by going to [Safari] -> [Preferences...] -> [Privacy] -> Select [Always Allow] option under “Cookies and website data”, then press [Close] below to proceed.");                      
+                        }
+                    }
+                    $('div.desktopProgressBar').css('margin-top','50px'); 
+                    var $frame = $('.wrap-iframe-third-party iframe').first();
+                    $($frame).height(($(window).height() - $($frame).offset().top) * 0.95);
+                </script>
+            </apex:outputPanel>
+            <apex:outputPanel id="underwriting-section-ch1" rendered="{!currentStep == STEP_UNDERWRITING_C1 && !isSalesforce1 && documentloadReady}" styleClass="bs row" layout="block" >
+                <div class="bs col-xs-12">
+                    <apex:outputPanel >
+                        <div class="uw-person-name bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h4><center>{!personinsuredMap['CH1'].Given_Name__c+' '+personinsuredMap['CH1'].Family_Name__c}</center></h4></div>
+                        <br/>
+                    </apex:outputPanel>
+                    <apex:outputPanel styleClass="wrap-iframe-third-party">
+                            <apex:iframe src="{!c1URL}" height="1024px" scrolling="true"/>
+                    </apex:outputPanel>
+                </div>
+                <script>
+                    Cigna.ESales.setUWStatusPolling();
+                    $('div.desktopProgressBar').css('margin-top','50px'); 
+                    var $frame = $('.wrap-iframe-third-party iframe').first();
+                    $($frame).height(($(window).height() - $($frame).offset().top) * 0.95);
+                </script>
+            </apex:outputPanel>
+            <apex:outputPanel id="underwriting-section-ch2" rendered="{!currentStep == STEP_UNDERWRITING_C2 && !isSalesforce1 && documentloadReady}" styleClass="bs row" layout="block" >
+                <div class="bs col-xs-12">
+                    <apex:outputPanel >
+                        <div class="uw-person-name bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h4><center>{!personinsuredMap['CH2'].Given_Name__c+' '+personinsuredMap['CH2'].Family_Name__c}</center></h4></div>
+                        <br/>
+                    </apex:outputPanel>
+                    <apex:outputPanel styleClass="wrap-iframe-third-party">
+                            <apex:iframe src="{!c2URL}" height="1024px" scrolling="true"/>
+                    </apex:outputPanel>
+                </div>
+                <script>
+                    Cigna.ESales.setUWStatusPolling();
+                    $('div.desktopProgressBar').css('margin-top','50px'); 
+                    var $frame = $('.wrap-iframe-third-party iframe').first();
+                    $($frame).height(($(window).height() - $($frame).offset().top) * 0.95);
+                </script>
+            </apex:outputPanel>
+            <apex:outputPanel id="underwriting-section-ch3" rendered="{!currentStep == STEP_UNDERWRITING_C3 && !isSalesforce1 && documentloadReady}" styleClass="bs row" layout="block" >
+                <div class="bs col-xs-12">
+                    <apex:outputPanel >
+                        <div class="uw-person-name bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h4><center>{!personinsuredMap['CH3'].Given_Name__c+' '+personinsuredMap['CH3'].Family_Name__c}</center></h4></div>
+                        <br/>
+                    </apex:outputPanel>
+                    <apex:outputPanel styleClass="wrap-iframe-third-party">
+                            <apex:iframe src="{!c3URL}" height="1024px" scrolling="true"/>
+                    </apex:outputPanel>
+                </div>
+                <script>
+                    Cigna.ESales.setUWStatusPolling();
+                    $('div.desktopProgressBar').css('margin-top','50px'); 
+                    var $frame = $('.wrap-iframe-third-party iframe').first();
+                    $($frame).height(($(window).height() - $($frame).offset().top) * 0.95);
+                </script>
+            </apex:outputPanel>
+            <!-- Add by Manuel for AUW stop -->
+            
+            <!--for mobile version AUW -->
+            <apex:inputHidden id="esales-isCompleteAUW" value="{!isCompleteAUW}" />          
+            <apex:outputPanel id="underwriting-section11" rendered="{!currentStep == STEP_UNDERWRITING && isSalesforce1 && isCompleteAUW != 'true'}" styleClass="bs row" layout="block">
+                <script>Cigna.ESales.hideLoadingIcon('loader-icon');</script>
+                <div class="bs col-xs-12 show-in-center">
+                    <apex:outputPanel >
+                        <!--
+                        <div class="aps-loading-div">
+                            <span id="aps-loading-phurl">
+                                <div class="bs col-xs-12 col-lg-12 loading-sp">
+                                    <span class="loading-helper"></span>
+                                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                            </span>
+                        </div>
+                        -->
+                        <br/>
+                        <br/>
+                        <div class="bs col-xs-12" style="margin-top:50px"><br/><br/><h4><center>{!$Label.eSales_Generating_underwriting_questions_for} {!personinsuredMap['PH'].Given_Name__c+' '+personinsuredMap['PH'].Family_Name__c} {!$Label.eSales_Generating_underwriting_questions_for_2}
+                            <apex:outputPanel rendered="{!isAndroidShowButton}">
+                                <br/>
+                                <br/>
+                                <a style="text-align:center" target="_blank" onclick="Cigna.ESales.autoShowAuw('{!phURL}')">{!$Label.eSales_AUW_Open_Link}
+                                </a>
+                            </apex:outputPanel>
+                        </center></h4></div>
+                        <br/>
+                        
+                        <a id="showAuwButton" style="text-align:center" href="javascript:Cigna.ESales.autoShowAuw('{!phURL}');">
+                        </a>
+                        
+                    </apex:outputPanel>
+                    <input type="hidden" id="auw-url" value="{!auwURL}" />
+    
+                </div>
+                
+                <script>Cigna.ESales.autoShowAuw('{!phURL}');</script>
+                
+                <script>
+                    
+                    Cigna.ESales.mobileSetUWStatusPolling();
+    
+                    $('div.header-bar').hide();
+                    if (Cigna.Util.isSalesforce1() && Cigna.Util.isIOS()) {
+                        var $frame = $('.wrap-iframe-third-party iframe').first();
+                        $($frame).height((window.screen.height - 44 - 20 - 64) * 0.95 + 'px');
+                    } else {
+                        var $frame = $('.wrap-iframe-third-party iframe').first();
+                        $($frame).height(($(window).height() - $($frame).offset().top) * 0.95);
+                    }
+                </script>
+            </apex:outputPanel>
+            <apex:outputPanel id="underwriting-sectionPI2" rendered="{!currentStep == STEP_UNDERWRITING_SP && isSalesforce1 && isCompleteAUW != 'true'}" styleClass="bs row" layout="block">
+                <script>Cigna.ESales.hideLoadingIcon('loader-icon');</script>
+                <div class="bs col-xs-12 show-in-center">
+                    <apex:outputPanel >
+                        <!--
+                        <div class="aps-loading-div">
+    
+                            <span id="aps-loading-phurl">
+                                <div class="bs col-xs-12 col-lg-12 loading-sp" style="padding: 0px;">
+                                    <span class="loading-helper"></span>
+                                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                            </span>
+                        </div>
+                        -->
+                        <br/>
+                        <br/>
+                        <div class="bs col-xs-12" style="margin-top:50px"><br/><br/><h4><center>{!$Label.eSales_Generating_underwriting_questions_for} {!personinsuredMap['SP'].Given_Name__c+' '+personinsuredMap['SP'].Family_Name__c} {!$Label.eSales_Generating_underwriting_questions_for_2}
+                            <apex:outputPanel rendered="{!isAndroidShowButton}">
+                                <br/>
+                                <br/>
+                                <a style="text-align:center" target="_blank" onclick="Cigna.ESales.autoShowAuw('{!spURL}')">{!$Label.eSales_AUW_Open_Link}
+                                </a>
+                            </apex:outputPanel>
+                        
+                        </center></h4></div>
+                        <br/>
+                        
+                        <a id="showAuwButton" style="text-align:center" href="javascript:Cigna.ESales.autoShowAuw('{!spURL}');">
+                        </a>
+                        
+                    </apex:outputPanel>
+                    <input type="hidden" id="auw-url" value="{!auwURL}" />
+    
+                </div>
+                 <script>Cigna.ESales.autoShowAuw('{!spURL}');</script>        
+                
+                <script>
+                    Cigna.ESales.mobileSetUWStatusPolling();
+    
+                    var $frame = $('.wrap-iframe-third-party iframe').first();
+                    $($frame).height(($(window).height() - $($frame).offset().top) * 0.95);
+                </script>
+            </apex:outputPanel>
+            
+            <apex:outputPanel id="underwriting-section12" rendered="{!currentStep == STEP_UNDERWRITING_C1 && isSalesforce1 && isCompleteAUW != 'true'}" styleClass="bs row" layout="block">
+                <script>Cigna.ESales.hideLoadingIcon('loader-icon');</script>
+                <div class="bs col-xs-12 show-in-center">
+                    <apex:outputPanel >
+                        <!--
+                        <div class="aps-loading-div">
+    
+                            <span id="aps-loading-phurl">
+                                <div class="bs col-xs-12 col-lg-12 loading-sp" style="padding: 0px;">
+                                    <span class="loading-helper"></span>
+                                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                            </span>
+                        </div>
+                        -->
+                        <br/>
+                        <br/>
+                        <div class="bs col-xs-12" style="margin-top:50px"><br/><br/><h4><center>{!$Label.eSales_Generating_underwriting_questions_for} {!personinsuredMap['CH1'].Given_Name__c+' '+personinsuredMap['CH1'].Family_Name__c} {!$Label.eSales_Generating_underwriting_questions_for_2}
+                            <apex:outputPanel rendered="{!isAndroidShowButton}">
+                                <br/>
+                                <br/>
+                                <a style="text-align:center" target="_blank" onclick="Cigna.ESales.autoShowAuw('{!C1URL}')">{!$Label.eSales_AUW_Open_Link}
+                                </a>
+                            </apex:outputPanel>
+                        </center></h4></div>
+                        <br/>
+                        
+                        <a id="showAuwButton" style="text-align:center" href="javascript:Cigna.ESales.autoShowAuw('{!C1URL}');">
+                        </a>
+                        
+                    </apex:outputPanel>
+                    <input type="hidden" id="auw-url" value="{!auwURL}" />
+    
+                </div>
+                 <script>Cigna.ESales.autoShowAuw('{!C1URL}');</script>        
+                
+                <script>
+                    Cigna.ESales.mobileSetUWStatusPolling();
+    
+                    var $frame = $('.wrap-iframe-third-party iframe').first();
+                    $($frame).height(($(window).height() - $($frame).offset().top) * 0.95);
+                </script>
+            </apex:outputPanel>
+            
+            <apex:outputPanel id="underwriting-section13" rendered="{!currentStep == STEP_UNDERWRITING_C2 && isSalesforce1 && isCompleteAUW != 'true'}" styleClass="bs row" layout="block">
+                <script>Cigna.ESales.hideLoadingIcon('loader-icon');</script>
+                <div class="bs col-xs-12 show-in-center">
+                    <apex:outputPanel >
+                        <!--
+                        <div class="aps-loading-div">
+                            
+                            <span id="aps-loading-phurl">
+                                <div class="bs col-xs-12 col-lg-12 loading-sp" style="padding: 0px;">
+                                    <span class="loading-helper"></span>
+                                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                            </span>
+                        </div>
+                        -->
+                        <br/>
+                        <br/>
+                        <div class="bs col-xs-12" style="margin-top:50px"><br/><br/><h4><center>{!$Label.eSales_Generating_underwriting_questions_for} {!personinsuredMap['CH2'].Given_Name__c+' '+personinsuredMap['CH2'].Family_Name__c} {!$Label.eSales_Generating_underwriting_questions_for_2}
+                            <apex:outputPanel rendered="{!isAndroidShowButton}">
+                                <br/>
+                                <br/>
+                                <a style="text-align:center" target="_blank" onclick="Cigna.ESales.autoShowAuw('{!C2URL}')">{!$Label.eSales_AUW_Open_Link}
+                                </a>
+                            </apex:outputPanel>
+                        </center></h4></div>
+                        <br/>
+                        <a id="showAuwButton" style="text-align:center" href="javascript:Cigna.ESales.autoShowAuw('{!C2URL}');">
+                        </a>
+                        
+                    </apex:outputPanel>
+                    <input type="hidden" id="auw-url" value="{!auwURL}" />
+                </div>
+                <script>Cigna.ESales.autoShowAuw('{!C2URL}');</script> 
+                <script>
+                    Cigna.ESales.mobileSetUWStatusPolling();
+                    
+                    var $frame = $('.wrap-iframe-third-party iframe').first();
+                    $($frame).height(($(window).height() - $($frame).offset().top) * 0.95);
+                </script>
+            </apex:outputPanel>
+            
+            <apex:outputPanel id="underwriting-section14" rendered="{!currentStep == STEP_UNDERWRITING_C3 && isSalesforce1 && isCompleteAUW != 'true'}" styleClass="bs row" layout="block">
+                <script>Cigna.ESales.hideLoadingIcon('loader-icon');</script>
+                <div class="bs col-xs-12 show-in-center">
+                    <apex:outputPanel >
+                        <!--
+                        <div class="aps-loading-div">
+                            <span id="aps-loading-phurl">
+                                <div class="bs col-xs-12 col-lg-12 loading-sp" style="padding: 0px;">
+                                    <span class="loading-helper"></span>
+                                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                            </span>
+                        </div>
+                        -->
+                        <br/>
+                        <br/>
+                        <div class="bs col-xs-12" style="margin-top:50px"><br/><br/><h4><center>{!$Label.eSales_Generating_underwriting_questions_for} {!personinsuredMap['CH3'].Given_Name__c+' '+personinsuredMap['CH3'].Family_Name__c} {!$Label.eSales_Generating_underwriting_questions_for_2}
+                            <apex:outputPanel rendered="{!isAndroidShowButton}">
+                                <br/>
+                                <br/>
+                                <a style="text-align:center" target="_blank" onclick="Cigna.ESales.autoShowAuw('{!C3URL}')">{!$Label.eSales_AUW_Open_Link}
+                                </a>
+                            </apex:outputPanel>
+                        </center></h4></div>
+                        <br/>
+                        <a id="showAuwButton" style="text-align:center" href="javascript:Cigna.ESales.autoShowAuw('{!C3URL}');">
+                        </a>
+                        
+                    </apex:outputPanel>
+                    <input type="hidden" id="auw-url" value="{!auwURL}" />
+    
+                </div>
+                
+                <script>Cigna.ESales.autoShowAuw('{!C3URL}');</script>
+    
+                <script>
+                    Cigna.ESales.mobileSetUWStatusPolling();
+                    
+                    var $frame = $('.wrap-iframe-third-party iframe').first();
+                    $($frame).height(($(window).height() - $($frame).offset().top) * 0.95);
+                </script>
+            </apex:outputPanel>
+            <!-- end for mobile version AUW -->
+            
+            <!--Upload Attachment Step-->
+            <apex:outputPanel id="show-uploadDoc-section" rendered="{!currentStep == STEP_UPLOADDOC}" styleClass="bs row" layout="block" style="padding:0 30px;">
+                <div class="snd-loading-div">
+                    <span id="snd-loading-phurl" style="display: none;">
+                        <div class="bs col-xs-12 col-lg-12 loading-div">
+                            <span class="loading-helper"></span>
+                            <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                    </span>
+                </div>
+                
+                <div class="bs col-xs-12 form-horizontal">
+                    <div class="bs" style="padding: 20px 0px;">
+                        <h4 class="bs cigna-fg-blue-medium">{!$Label.eSales_upload_attachments}</h4>
+                    </div>
+    
+                    <div id="errFileSize" class="alert alert-danger" role="alert" style="display:none;">
+                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                        {!$Label.File_size_exceeds_10M}
+                    </div>
+                    <div id="errFileType" class="alert alert-danger" role="alert" style="display:none;">
+                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                        {!$Label.Please_upload_a_valid_file} (i.e. .docx/.doc/.pdf/.jpeg/.png/.tiff)
+                    </div>
+                    <div id="errNoFile" class="alert alert-danger" role="alert" style="display:none;">
+                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                        {!$Label.ErrMasg_Upload_Att}
+                    </div>
+                    <div id="errUpdateAllFile" class="alert alert-danger" role="alert" style="display:none;">
+                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                        {!$Label.eSales_uploadfile_required}
+                    </div>
+                    <div id="errUpdateCPDFile" class="alert alert-danger" role="alert" style="display:none;">
+                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                        {!$Label.eSales_uploadfile_CPD_required}
+                    </div>
+                    
+                    <apex:outputPanel id="uploadatt">
+                        <script>
+                            $('[data-toggle="tooltip"]').tooltip({
+                                placement: "top"
+                            });
+                        </script>
+                        
+                        <!--HKID Attachment-->
+                        <div class="bs row content-choice">
+                            <div class="col-xs-2 col-sm-1">
+                                <input id="HKIDAttPH" type="file" class="fileInput cigna-validation" onchange="uploadFile('{!esalesId}','HKIDAttPH');" style="display:none;"/>
+                                <label for="HKIDAttPH"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true"/></label>
+                            </div>
+                            <div class="col-xs-8 col-sm-10">{!personPH.Family_Name__c}&nbsp;{!personPH.Given_Name__c}'s {!$Label.eSales_id_copy}</div>
+                            <div class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!$Label.Upload_Tooltip}" data-placement="top" aria-hidden="true"></i></div>
+                            <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                            <div style="padding:20px;">
+                                <apex:outputPanel id="hkidlist">
+                                    <apex:repeat value="{!IDAttList}" var="idAtt">
+                                        <div att-type="HKIDAttPH" class="col-xs-12 col-sm-12 uploaded-filelist">
+                                        {!idAtt.Name}
+                                        <i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!idAtt}');" aria-hidden="true"></i></div>
+                                        <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                                    </apex:repeat>
+                                </apex:outputPanel>
+                            </div>
+                        </div>
+                        <apex:outputPanel rendered="{!if(personSP!=null,if(personSP.AUW_Result__c != 'Decline',true,false),false)}">
+                            <div class="bs row content-choice">
+                                <div class="col-xs-2 col-sm-1">
+                                    <input id="HKIDAttPI" type="file" class="fileInput cigna-validation" onchange="uploadFile('{!eSalesId}','HKIDAttPI');" style="display:none;"/>
+                                    <label for="HKIDAttPI"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true"/></label>
+                                </div>
+                                <div class="col-xs-8 col-sm-10">{!personSP.Family_Name__c}&nbsp;{!personSP.Given_Name__c}'s {!$Label.eSales_id_copy}</div>
+                                <div class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!$Label.Upload_Tooltip}" aria-hidden="true"></i></div>
+                                <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                                <div style="padding:20px;">
+                                    <apex:outputPanel id="hkidPIlist">
+                                        <apex:repeat value="{!IDAttPIList}" var="idAtt">
+                                            <div att-type="HKIDAttPI" class="col-xs-12 col-sm-12 uploaded-filelist">
+                                            {!idAtt.Name}
+                                            <i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!idAtt}');" aria-hidden="true"></i></div>
+                                            <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                                        </apex:repeat>
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!personCH1!=null}">
+                            <div class="bs row content-choice">
+                                <div class="col-xs-2 col-sm-1">
+                                    <input id="HKIDAttC1" type="file" class="fileInput cigna-validation" onchange="uploadFile('{!eSalesId}','HKIDAttC1');" style="display:none;"/>
+                                    <label for="HKIDAttC1"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true"/></label>
+                                </div>
+                                <div class="col-xs-8 col-sm-10">{!personCH1.Family_Name__c}&nbsp;{!personCH1.Given_Name__c}'s {!$Label.eSales_id_copy}</div>
+                                <div class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!$Label.Upload_Tooltip}" aria-hidden="true"></i></div>
+                                <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                                <div style="padding:20px;">
+                                    <apex:outputPanel id="hkidC1list">
+                                        <apex:repeat value="{!IDAttC1List}" var="idAtt">
+                                            <div att-type="HKIDAttC1" class="col-xs-12 col-sm-12 uploaded-filelist">
+                                            {!idAtt.Name}
+                                            <i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!idAtt}');" aria-hidden="true"></i></div>
+                                            <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                                        </apex:repeat>
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!personCH2!=null}">
+                            <div class="bs row content-choice">
+                                <div class="col-xs-2 col-sm-1">
+                                    <input id="HKIDAttC2" type="file" class="fileInput cigna-validation" onchange="uploadFile('{!eSalesId}','HKIDAttC2');" style="display:none;"/>
+                                    <label for="HKIDAttC2"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true"/></label>
+                                </div>
+                                <div class="col-xs-8 col-sm-10">{!personCH2.Family_Name__c}&nbsp;{!personCH2.Given_Name__c}'s {!$Label.eSales_id_copy}</div>
+                                <div class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!$Label.Upload_Tooltip}" aria-hidden="true"></i></div>
+                                <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                                <div style="padding:20px;">
+                                    <apex:outputPanel id="hkidC2list">
+                                        <apex:repeat value="{!IDAttC2List}" var="idAtt">
+                                            <div att-type="HKIDAttC2" class="col-xs-12 col-sm-12 uploaded-filelist">
+                                            {!idAtt.Name}
+                                            <i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!idAtt}');" aria-hidden="true"></i></div>
+                                            <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                                        </apex:repeat>
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!personCH3!=null}">
+                            <div class="bs row content-choice">
+                                <div class="col-xs-2 col-sm-1">
+                                    <input id="HKIDAttC3" type="file" class="fileInput cigna-validation" onchange="uploadFile('{!eSalesId}','HKIDAttC3');" style="display:none;"/>
+                                    <label for="HKIDAttC3"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true"/></label>
+                                </div>
+                                <div class="col-xs-8 col-sm-10">{!personCH3.Family_Name__c}&nbsp;{!personCH3.Given_Name__c}'s {!$Label.eSales_id_copy}</div>
+                                <div class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!$Label.Upload_Tooltip}" aria-hidden="true"></i></div>
+                                <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                                <div style="padding:20px;">
+                                    <apex:outputPanel id="hkidC3list">
+                                        <apex:repeat value="{!IDAttC3List}" var="idAtt">
+                                            <div att-type="HKIDAttC3" class="col-xs-12 col-sm-12 uploaded-filelist">
+                                            {!idAtt.Name}
+                                            <i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!idAtt}');" aria-hidden="true"></i></div>
+                                            <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                                        </apex:repeat>
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </apex:outputPanel>                  
+                    </apex:outputPanel>
+                    <div class="bs">
+                        <div class="bs cigna-answer-wrapper">  
+                            <p>
+                                <input type="checkbox" id="hkid-certified" name="hkid-certified" class="bs cigna-question-checkbox" />
+                                <label style="margin-left: 0px;padding-left: 0px;" for="hkid-certified">{!$Label.eSales_certify_id}</label>
+                                <br/>
+                                <apex:inputHidden value="{!hkidCertified}" 
+                                        id="hkidCertified"
+                                        html-class="cigna-validation answer-validation"
+                                        html-data-msg-required="{!$Label.eSales_certify_id_required}"/>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <script>
+                    if($('input[type="hidden"][id$="hkidCertified"]').val() == 'true'){
+                        $("#hkid-certified").prop("checked", true);
+                    }else{
+                        $("#hkid-certified").prop("checked", false);
+                    }
+
+                    //CR-56_Link_20220214
+                    $('input.cigna-question-checkbox').on("change",Cigna.ESales.onCheckboxChange);
+                </script>
+            
+            </apex:outputPanel>
+            
+            <!--Esignatrue Step-->
+            <apex:outputPanel id="payment-esignature-section" rendered="{!currentStep == STEP_ESIGNATURE}" styleClass="bs row" layout="block">
+                <apex:outputPanel id="esignature-section">
+                    <div id="overlay" style="display:none;">
+                            <div id="specialBox">
+                                <a><div id="closeOverlay" class="onclick-pointer ci-hk-x" onclick="toggleOverlay();"></div></a>
+                                <h4>{!$Label.Terms_And_Conditions}</h4>
+                                <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                                <div id="tccontent">
+                                    <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'en_US'}">
+                                           <b>聲明及授權</b><br/><br/>
+                                                    1.  本人聲明，據本人所知為本申請提供的陳述及答案, 均完全屬實無訛<br/><br/>
+                                                    2.  本人確認本人及所有受保人士均為持有有效香港身份證及於香港居住。<br/><br/>
+                                                    <!--Comment by Shengt for JOBR-235--> 
+                                                    <!-- 3.  本人確認已閱讀及明白<a href="{!PersonalInformationCollectionStatement_chi}" target="_blank" style="text-decoration: underline;">信諾之個人資料收集聲明</a>及<a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!Privacy_statement_chi}" target="_blank" style="text-decoration: underline;">私隱聲明</a>。本人同意信諾可根據信諾之個人資料收集聲明，使用及/或披露本人(申請人)的個人資料。本人明白本人有權在空格上加上「✓」號或根據信諾之個人資料收集聲明，表示拒絕使用本人的個人資料作直接促銷用途。然而，本人也明白選擇拒絕使用本人的個人資料作直接促銷，即導致將來本人不能從信諾處收到任何針對性或特別優惠的直接促銷。<br/><br/> -->
+
+                                                    3.  本人確認已閱讀及明白<a href="{!PersonalInformationCollectionStatement_chi}" target="_blank" style="text-decoration: underline;">信諾之個人資料收集聲明</a>及<a href="{!Privacy_statement_chi}" target="_blank" style="text-decoration: underline;">私隱聲明</a>。本人同意信諾可根據信諾之個人資料收集聲明，使用及/或披露本人(申請人)的個人資料。本人明白本人有權在空格上加上「✓」號或根據信諾之個人資料收集聲明，表示拒絕使用本人的個人資料作直接促銷用途。然而，本人也明白選擇拒絕使用本人的個人資料作直接促銷，即導致將來本人不能從信諾處收到任何針對性或特別優惠的直接促銷。<br/><br/>
+                                                    4.  本人同意本保單之保障範圍，由保單承保表內所列之生效日起生效。<br/><br/>
+                                                    5.  本人同意接受本申請而發出的任何保單即等於接納保單内的條款，同時追認信諾在保單上所作的任何更改。<br/><br/>
+                                                    6.  本人授權，而且確認準受保人已授權，凡存有關本人或準受保人健康狀況任何紀錄或得悉此方面資料的任何持牌醫師、醫生、醫院、診所或者其他醫療或與相關的設施、保險公司或其他組織、機構或個人，可向信諾及其再保險公司提供有關資料，以評估本保險申請或日後根據本申請書簽發的本保單下提出任何的保險索償。此授權書的複印本與正本同樣有效。<br/><br/>
+                                                    7.  <b>取消保單權利及發還保費：本人明白本人有權以書面通知取消保單並取回已繳保費。但是本人必須簽署該通知，並確保信諾環球保險有限公司(位於香港灣仔軒尼詩道28號15樓)於以下時段內直接收到該通知：保單交付本人或本人的代表後或《通知書》發予本人或本人的代表後起計的30日，以較先者為準。</b><br/><br/>
+                                   </apex:outputPanel>
+                                   <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'zh_TW'}">
+                                                 <b>Declaration and Authorization</b><br/><br/>
+                                                    1.  I declare that the above statements and answers provided for this application are true and complete to the best of my knowledge.<br/><br/>
+                                                    2.  I confirm that I and all the persons insured are Hong Kong residents with a valid Hong Kong Identity Card and residency in Hong Kong.<br/><br/>
+                                                    <!--Comment by Shengt for JOBR-235--> 
+                                                    <!-- 3.  I confirm that I have read and understood the <a href="{!PersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;">Personal Information Collection Statement</a> ("PICS") and <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!Privacy_statement_eng}" target="_blank" style="text-decoration: underline;">Privacy Statement</a> of Cigna. I agree that Cigna may use and/or disclose my (the Applicant's) personal information in accordance with the PICS. I understand that I have the right to opt out of the use of my personal information for direct marketing purposes by ticking the box below or in accordance with the PICS. I understand that opting out will mean that Cigna will not be able to send me any direct marketing, targeted or special offers in the future.<br/><br/> -->
+                                                    
+                                                    3.  I confirm that I have read and understood the <a href="{!PersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;">Personal Information Collection Statement</a> ("PICS") and <a href="{!Privacy_statement_eng}" target="_blank" style="text-decoration: underline;">Privacy Statement</a> of Cigna. I agree that Cigna may use and/or disclose my (the Applicant's) personal information in accordance with the PICS. I understand that I have the right to opt out of the use of my personal information for direct marketing purposes by ticking the box below or in accordance with the PICS. I understand that opting out will mean that Cigna will not be able to send me any direct marketing, targeted or special offers in the future.<br/><br/>
+                                                    4.  I agree that the insurance coverage applied for shall only take effect from the Commencement Date as specified in the Policy Schedule.<br/><br/>
+                                                    5.  I agree that acceptance of any policy issued on this application will constitute an agreement to its terms and condition as well as notifications of any changes specified by Cigna in this policy.<br/><br/>
+                                                    6.  I hereby authorize, and confirm that Proposed Person(s) Insured has / have authorized, any licensed physician, medical practitioner, hospital, clinic or other medical or medically related facility, insurance company or other organization, institution or person, that has any records or knowledge of my or the Proposed Person(s) Insured's health to give to Cigna and its reinsurers any such information for the purpose of assessment of this insurance proposal or subsequent assessment of any insurance claim under the policy that may be issued pursuant to this application. A photographic copy of this authorization shall be as valid as the original.<br/><br/>
+                                                    7.  <b>Cancellation Rights and Refund of Premium(s): I understand that I have the right to cancel and obtain a refund of any premium(s) paid by giving written notice. Such notice must be signed by me and received directly by Cigna Worldwide General Insurance Company Limited which is located at 15/F, 28 Hennessy Road, Wan Chai, Hong Kong within 30 days after the delivery of the policy or issue of a Notice to the policyholder or the policyholder's representative, whichever is the earlier.</b><br/><br/>
+                                   </apex:outputPanel>
+                                </div>
+                            </div>
+                    </div>
+                    <apex:actionFunction action="{!saveSignature}" name="saveSignature" namespace="ServerESales" reRender="false" oncomplete="nextStep();">
+                        <apex:param name="imgDataParam" assignTo="{!imgData}" value=""/>
+                        <apex:param name="imgDataParam2" assignTo="{!imgData2}" value=""/>
+                    </apex:actionFunction>
+                    <div class="bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h4>{!$Label.E_Signature}</h4></div>                   
+                    <c:eSignatureComp emailAddress="" 
+                              displayPICS="false"
+                              displayTC="true"
+                              tcMessage="{!$Label.ESales_PICS_Accept}"
+                              sendEmailMessage="{!$Label.An_email_with_the_E_Signature_access_link_can_be_sent_to}"
+                              signNow="true"
+                              BrokerScenarios="EsignatureSign"
+                              isBroker="true"
+                              PICSLink="{!PersonalInfoCollectionStatementURL}"
+                              isEsales="true"
+                              hasTwoAdults="{!hasTwoAdults}" 
+                              eSalesThirdParty="False"
+                              eSalesApplicantInfo="({!personPH.Family_Name__c} {!personPH.Given_Name__c})"
+                              eSalesSpouseInfo="({!If(personSP!=null,personSP.Family_Name__c,'')} {!If(personSP!=null,personSP.Given_Name__c,'')})"
+                              eSalesTPPInfo=""
+                    />           
+                    <script>
+                        if({!IF(personSP != null, true, false)}){
+                            $("#adult1Div").hide();
+                            $("#adult2Div").show();
+                        }
+                        Cigna.ESignatureComp.saveSignature = function() {                    
+                            if($('#esignature-sign-div #esignature-pics').is(':checked') == false){
+                                $("#errNotAcceptTNC1").show();
+                                return;
+                            } else {
+                                $("#errNotAcceptTNC1").hide();
+                            }
+                            
+                            if(Cigna.ESignatureComp.isEmptyCanvas(1)){
+                                $("#errEmptySignature1").show();
+                                return;
+                            } else {
+                                $("#errEmptySignature1").hide();
+                            }
+                            
+                            var signature2Image = '';
+                            if({!personSP!=null}){
+                                if(Cigna.ESignatureComp.isEmptyCanvas(2)){
+                                    $("#errEmptySignature2").show();
+                                    return;
+                                } else {
+                                    $("#errEmptySignature2").hide();
+                                }
+                                signature2Image = Cigna.ESignatureComp.getSignatureImage(2);
+                            }
+                            ServerESales.saveSignature(Cigna.ESignatureComp.getSignatureImage(1), signature2Image);
+                        
+                            //Ray Update: Auto Scroll to Top
+                            $("html, body").animate({ scrollTop: 0 }, "fast"); 
+                            //Ray Update: End
+                        }
+                        
+                        Cigna.ESignatureComp.forceResizeCanvas();
+                        
+                        function toggleOverlay(){
+                            var overlay = document.getElementById('overlay');
+                            var specialBox = document.getElementById('specialBox');
+                            overlay.style.opacity = .95;
+                            if(overlay.style.display == "block"){
+                                overlay.style.display = "none";
+                                specialBox.style.display = "none";
+                            } else {
+                                overlay.style.display = "block";
+                                specialBox.style.display = "block";
+                            }
+                       }
+                        
+                        refreshEsignatrueButton();
+                    </script>
+                </apex:outputPanel>                
+            </apex:outputPanel>
+            
+            <!--Payment Method Step -->
+            <apex:outputPanel id="payment-method-section" styleClass="bs row" rendered="{!currentStep == STEP_PAYMENT_METHOD}" layout="block">
+                <div id="payment-div">
+                    <div id="firstPaymentDiv" class="bs col-xs-12 form-horizontal" style="display:none">
+                        <div class="bs form-group">
+                            <apex:outputPanel rendered="{!showPremium}">
+                                <div class="bs col-xs-12">
+                                    <p>{!$Label.Choose_the_payment_method_for_the_1st_payment} ({!IF(txn.Payment_Mode__c=='Annually', $Label.Annually, $Label.Monthly)} - {!$Label.HKD} 
+                                    <apex:outputText value="{0, Number,#####0}">
+                                                <apex:param value="{!txn.Amount__c}"/>
+                                    </apex:outputText>{!IF(txn.Payment_Mode__c=='Annually','',' x2')}):</p>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!!showPremium}">
+                                <div class="bs col-xs-12">
+                                    <p>{!$Label.Choose_the_payment_method_for_the_1st_payment}</p>
+                                </div>
+                            </apex:outputPanel>
+    
+                        </div>
+                        <div class="bs col-xs-12 cigna-answer-wrapper">
+                            <p>
+                                <input type="radio" id="payment-method-first-01" value="Credit Card" name="payment-method-first" class="bs cigna-question-radio" />
+                                <label for="payment-method-first-01">{!$Label.Credit_Card}</label>
+                            </p>
+                            <p>
+                                <input type="radio" id="payment-method-first-02" value="Cheque" name="payment-method-first" class="bs cigna-question-radio" />
+                                <label for="payment-method-first-02">{!$Label.Cheque}</label>
+                            </p>
+                            <p id="cheque-number" style="display: none; background: #fff;">
+                                <apex:inputText id="cheque-number" value="{!txn.Cheque_Number_1st_Paymet__c}" styleClass="bs form-control" 
+                                                html-placeholder="{!$Label.eSales_Cheque_Number}"
+                                />
+                                <br/>
+                                <apex:outputText style="padding-left: 0px;font-size: 0.8em;padding-top: 50px;" rendered="{!onlyHasLife}">{!$Label.eSales_Cheque_Message_Life}</apex:outputText>
+                                <apex:outputText style="padding-left: 0px;font-size: 0.8em;padding-top: 50px;" rendered="{!!onlyHasLife}">{!$Label.eSales_Cheque_Message_GI}</apex:outputText>
+                            </p>
+                            <apex:inputHidden value="{!txn.Payment_Method_1st_Payment__c}" id="paramPaymentMethod"
+                                              html-class="cigna-validation answer-validation"
+                                              html-data-msg-required="{!$Label.Error_Please_choose_a_payment_method}" />
+                        </div>
+                    </div> 
+                    <div id="subsequentPaymentDiv" class="bs col-xs-12 form-horizontal" style="display:none">
+                        <div class="bs col-xs-12"><hr /></div>
+                        <div class="bs form-group">
+                            <apex:outputPanel rendered="{!showPremium}">
+                                <div class="bs col-xs-12">
+                                    <!--<p>{!$Label.Choose_the_payment_method_for_the_subsequent_payment}({!IF(txn.Payment_Mode__c=='Annually', $Label.Annually, $Label.Monthly)} - {!$Label.HKD} {!txn.Amount__c}):</p>-->
+                                    <p>{!$Label.Choose_the_payment_method_for_the_subsequent_payment} ({!IF(txn.Payment_Mode__c=='Annually', $Label.Annually, $Label.Monthly)} - {!$Label.HKD} 
+                                    <apex:outputText value="{0, Number,#####0}">
+                                                <apex:param value="{!txn.Amount__c}"/>
+                                    </apex:outputText>):</p>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!!showPremium}">
+                                <div class="bs col-xs-12">
+                                    <p>{!$Label.Choose_the_payment_method_for_the_subsequent_payment}</p>
+                                </div>
+                            </apex:outputPanel>
+    
+                        </div>
+                        <div class="bs col-xs-12 cigna-answer-wrapper">
+                            <p>
+                                <input type="checkbox" id="payment-method-subseq-01" value="Credit Card" name="payment-method-subseq" class="bs cigna-question-checkbox" />
+                                <label for="payment-method-subseq-01">{!$Label.Credit_Card}</label>
+                            </p>
+                            <p>
+                                <input type="checkbox" id="payment-method-subseq-02" value="Savings" name="payment-method-subseq" class="bs cigna-question-checkbox" />
+                                <label for="payment-method-subseq-02">{!$Label.Savings_Current_Account}</label>
+                            </p>
+                            <apex:inputHidden value="{!txn.Payment_Method_Subsequent_Payment__c}" id="paramPaymentMethodSubseq"
+                                              html-class="cigna-validation"
+                                              html-data-msg-required="{!$Label.Error_Please_choose_a_payment_method}" />
+                        </div>
+                    </div> 
+                </div>
+                <script>              
+                //CR-56_Link_20220214
+                    $('input.cigna-question-radio').on("change",onRadioChange);
+                    $('input.cigna-question-checkbox').on("change",onCheckboxChange);
+    
+                    var provideinfo = $('input[type="hidden"][id$="paramProvidePaymentInfo"]').val();
+                    console.log('yes' + !{! (onlyHasLife && (txn.Is_Making_1st_Payment__c == 'No' || txn.Is_Paying_Subsequent_Payment__c == 'No'))});
+    
+                    if((provideinfo == 'Yes' || '{!txn.AUW_Overall_Result__c}' == 'Accept' || '{!txn.AUW_Overall_Result__c}' == 'Referred'  || '{!txn.AUW_Overall_Result__c}' == 'Decline' ) && ! {! (onlyHasLife && (txn.Is_Making_1st_Payment__c == 'No' || txn.Is_Paying_Subsequent_Payment__c == 'No'))}){
+                        $('#firstPaymentDiv').show();
+                        $('#subsequentPaymentDiv').show();
+                    }else{
+                        $('#firstPaymentDiv').hide();
+                        $('#subsequentPaymentDiv').hide();
+                    }
+                   
+                    if(provideinfo == 'Yes'){
+                        $("#payment-info-question-yes").prop("checked", true);
+                        $("#payment-info-question-no").prop("checked", false);
+                    }else if(provideinfo == 'No'){
+                        $("#payment-info-question-yes").prop("checked", false);
+                        $("#payment-info-question-no").prop("checked", true);
+                    }
+    
+                    var firstMethod = $("input[id$='paramPaymentMethod']").val();
+                    if(firstMethod == 'Credit Card'){
+                        $("#payment-method-first-01").prop("checked", true);
+                        $("#payment-method-first-02").prop("checked", false);
+                    }else if(firstMethod == 'Cheque'){
+                        $("#payment-method-first-01").prop("checked", false);
+                        $("#payment-method-first-02").prop("checked", true);
+                    }
+    
+                    if ($('#payment-method-first-02').is(':checked')) {
+                        $('#cheque-number').show();
+                    } else {
+                        $('#cheque-number').hide();
+                    }
+    
+                    var subseqMethod = $("input[id$='paramPaymentMethodSubseq']").val();
+                    if(subseqMethod == 'Credit Card'){
+                        $("#payment-method-subseq-01").prop("checked", true);
+                        $("#payment-method-subseq-02").prop("checked", false);
+                    }else if(subseqMethod == 'Savings'){
+                        $("#payment-method-subseq-01").prop("checked", false);
+                        $("#payment-method-subseq-02").prop("checked", true);
+                    }      
+                                                          
+                </script>
+            </apex:outputPanel>
+            
+            <!--Payment DDA Step-->
+            <apex:outputPanel id="payment-dda-section" rendered="{!currentStep == STEP_PAYMENT_DDA}" styleClass="bs row" layout="block">
+                <div class="bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h4>{!$Label.Direct_Debit_Authorization}</h4></div>
+                <br/>
+                 <apex:outputPanel rendered="{!txn.Payment_Method_1st_Payment__c == 'Credit Card' && (txn.AUW_Overall_Result__c == 'Referred' || onlyHasLife) && isBrokerPortal}">
+                    <div class="bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header">
+                        <h5>{!$Label.eSales_First_Payment}</h5>
+                    </div>
+                    <br/>
+                    <div class="bs col-xs-12 form-horizontal">
+                        <apex:outputPanel layout="block" styleClass="bs form-group" >
+                            <div class="bs col-sm-3">
+                                <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.First_Pay_Credit_Card_Holder_Full_Name__c.Label}" for="DDA-Credit-Card-Holder1"/>
+                            </div>
+                            <div class="bs col-sm-9">
+                                <apex:inputText id="DDA-Credit-Card-Holder1" value="{!txn.First_Pay_Credit_Card_Holder_Full_Name__c}" styleClass="bs form-control cigna-validation answer-validation" />
+                            </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel layout="block" styleClass="bs form-group">
+                            <div class="bs col-sm-3">
+                                <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.First_Pay_Name_of_Card_Issuing_Bank__c.Label}" for="DDA-Card-Issuing-Bank1"/>
+                            </div>
+                            <div class="bs col-sm-9">
+                                <apex:inputText id="DDA-Card-Issuing-Bank1" value="{!txn.First_Pay_Name_of_Card_Issuing_Bank__c}" styleClass="bs form-control cigna-validation answer-validation" />
+                            </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel layout="block" styleClass="bs form-group">
+                            <div class="bs col-sm-3">
+                                <apex:outputLabel value="{!$Label.Credit_Card_Number_VISA_MasterCard}" for="DDA-Credit-Card-Number1"/>
+                            </div>
+                           <script>
+                              function getNextInputField(resour,index){
+                                    resour.parentNode.children[index].focus();
+                              }
+    
+                           </script>
+    
+                            <div class="bs col-sm-9">
+                                <apex:input type="tel" value="{!paramCardNum1}" 
+                                                       html-maxlength="4" 
+                                                       styleClass="bs form-control text-center credit-card-box1"
+                                                       size="6"
+                                                       style="display: inline; width: auto;padding:3px;"
+                                                       id="paramCreditCardNum1"
+                                                       onblur="Cigna.ESales.getCreditCardNo1();getNextInputField(this,2);"
+                                />
+                                <span>-&nbsp;</span>
+                                <apex:input type="tel" value="{!paramCardNum2}" 
+                                                       html-maxlength="4" 
+                                                       styleClass="bs form-control text-center credit-card-box1"
+                                                       size="6"
+                                                       style="display: inline; width: auto;padding:3px;"
+                                                       id="paramCreditCardNum2"
+                                                       onblur="Cigna.ESales.getCreditCardNo1();getNextInputField(this,4);"
+                                />
+                                <span>-&nbsp;</span>
+                                <apex:input type="tel" value="{!paramCardNum3}" 
+                                                       html-maxlength="4" 
+                                                       styleClass="bs form-control text-center credit-card-box1"
+                                                       size="6"
+                                                       style="display: inline; width: auto;padding:3px;"
+                                                       id="paramCreditCardNum3"
+                                                       onblur="Cigna.ESales.getCreditCardNo1();getNextInputField(this,6);"
+                                />
+                                <span>-&nbsp;</span>
+                                <apex:input type="tel" value="{!paramCardNum4}" 
+                                                       html-maxlength="4" 
+                                                       styleClass="bs form-control text-center credit-card-box1"
+                                                       size="6"
+                                                       style="display: inline; width: auto;padding:3px;"
+                                                       id="paramCreditCardNum4"
+                                                       onblur="Cigna.ESales.getCreditCardNo1();"
+                                />
+                                
+                            </div>
+                             <script>
+                               function hiddenonblur(element){
+                                   //CR-56_Link_20220214
+                                    $(element).trigger("blur");
+                                }
+                             </script>
+    
+                            <div class="bs col-sm-offset-3 col-sm-9 col-xs-12">
+                                <apex:inputText id="Credit-Card-Number1" 
+                                                style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none" 
+                                                onfocus="hiddenonblur(this)" tabindex="-1"/>
+                            </div>
+                            
+                            <script>
+                                //CR-56_Link_20220214
+                                $('input.credit-card-box1').on("keyup",function(evt) {
+                                    if (this.value.length == this.maxLength && evt.keyCode >= 48 && evt.keyCode <= 57) {
+                                        var $next = $(this).nextAll('.credit-card-box1');
+                                        if ($next.length > 0){
+                                            $(this).nextAll('.credit-card-box1')[0].focus();
+                                        } else {
+                                            //CR-56_Link_20220214
+                                            $(this).trigger("blur");
+                                        }
+                                    } else if (this.value.length == 0 && evt.keyCode == 8) {
+                                        // Backspace
+                                        var $prev = $(this).prevAll('.credit-card-box1');
+                                        if ($prev.length > 0){
+                                            $(this).prevAll('.credit-card-box1')[0].focus();
+                                        } else {
+                                            //CR-56_Link_20220214
+                                            $(this).trigger("blur");
+                                        }
+                                    }
+                                });
+                                
+                            </script>
+                        </apex:outputPanel>
+                        <apex:outputPanel layout="block" styleClass="bs form-group">
+                            <div class="bs col-sm-3">
+                                <apex:outputLabel value="{!$Label.Credit_Card_Expiry_Date_MM_YYYY}" for="DDA-Credit-Card-Expiry"/>
+                            </div>
+                            <div class="bs col-sm-9">
+                                <apex:inputText id="card-expiry-month1" value="{!txn.First_Pay_Credit_Card_Expiry_Date_Month__c}" 
+                                                     maxlength="2" 
+                                                     html-placeholder="{!$Label.MM}"
+                                                     size="4"
+                                                     styleClass="bs form-control text-center credit-card-expiry"
+                                                     style="display: inline; width: auto;"
+                                />
+                                <span>&nbsp;/&nbsp;</span>
+                                <apex:inputText id="card-expiry-year1" value="{!txn.First_Pay_Credit_Card_Expiry_Date_Year__c}" 
+                                                 maxlength="4" 
+                                                 html-placeholder="{!$Label.YYYY}" 
+                                                 styleClass="bs form-control text-center credit-card-expiry"
+                                                 size="6"
+                                                 style="display: inline; width: auto;"
+                                />
+                            </div>
+                            <div class="bs col-sm-offset-3 col-sm-9 col-xs-12">
+                                <apex:inputText id="Credit-Card-Expiry-Date1" 
+                                                style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none" 
+                                                onfocus="hiddenonblur(this)" tabindex="-1"/>
+                            </div>
+    
+                            <script>
+                                //CR-56_Link_20220214
+                                $('input.credit-card-expiry').on("keyup",function(evt) {
+                                    if (this.value.length == this.maxLength && evt.keyCode >= 48 && evt.keyCode <= 57) {
+                                        var $next = $(this).nextAll('.credit-card-expiry');
+                                        if ($next.length > 0){
+                                            $(this).nextAll('.credit-card-expiry')[0].focus();
+                                        } else {
+                                            //CR-56_Link_20220214
+                                            $(this).trigger("blur");
+                                        }
+                                    } else if (this.value.length == 0 && evt.keyCode == 8) {
+                                        // Backspace
+                                        var $prev = $(this).prevAll('.credit-card-expiry');
+                                        if ($prev.length > 0){
+                                            $(this).prevAll('.credit-card-expiry')[0].focus();
+                                        } else {
+                                            //CR-56_Link_20220214
+                                            $(this).trigger("blur");
+                                        }
+                                    }
+                                });
+                            </script>
+                        </apex:outputPanel>
+                    </div>
+                </apex:outputPanel>
+                
+                <apex:outputPanel rendered="{!txn.Payment_Method_1st_Payment__c == 'Credit Card' && (txn.AUW_Overall_Result__c == 'Referred' || onlyHasLife) && isBrokerPortal && txn.Payment_Method_Subsequent_Payment__c != null}">
+                    <div class="bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header">
+                            <h5>{!$Label.eSales_Subsequent_Payment}</h5>
+                    </div>
+                    <apex:outputPanel rendered="{!txn.Payment_Method_Subsequent_Payment__c == 'Credit Card'}">
+                        <div class="bs col-xs-12 cigna-answer-wrapper">
+                            <p>
+                                <input type="checkbox" id="getCopy" name="getCopy" class="bs cigna-question-checkbox" />
+                                <label for="getCopy">{!$Label.eSales_Auto_copy_from_First_Payment}</label>
+                            </p>
+                        </div>
+                        <script>
+                            //CR-56_Link_20220214
+                            $('input#getCopy').on("change",Cigna.ESales.onselectToCopy);
+                        </script>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+                
+                <br/>
+                <div class="bs col-xs-12 form-horizontal">
+                    <apex:outputPanel rendered="{!txn.Payment_Method_Subsequent_Payment__c == 'Credit Card'}" layout="block" styleClass="bs form-group">
+                        <div class="bs col-sm-3">
+                            <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Credit_Card_Holder_Full_Name__c.Label}" for="DDA-Credit-Card-Holder"/>
+                        </div>
+                        <div class="bs col-sm-9">
+                            <apex:inputText id="DDA-Credit-Card-Holder" value="{!txn.Credit_Card_Holder_Full_Name__c}" styleClass="bs form-control cigna-validation answer-validation" />
+                        </div>                       
+                    </apex:outputPanel>
+                    
+                    <apex:outputPanel rendered="{!txn.Payment_Method_Subsequent_Payment__c == 'Credit Card'}" layout="block" styleClass="bs form-group">
+                        <div class="bs col-sm-3">
+                            <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Name_of_Card_Issuing_Bank__c.Label}" for="DDA-Card-Issuing-Bank"/>
+                        </div>
+                        <div class="bs col-sm-9">
+                            <apex:inputText id="DDA-Card-Issuing-Bank" value="{!txn.Name_of_Card_Issuing_Bank__c}" styleClass="bs form-control cigna-validation answer-validation" />
+                        </div>
+                    </apex:outputPanel>
+                    
+                    <apex:outputPanel rendered="{!txn.Payment_Method_Subsequent_Payment__c == 'Credit Card'}" layout="block" styleClass="bs form-group">
+                        <div class="bs col-sm-3">
+                            <apex:outputLabel value="{!$Label.Credit_Card_Number_VISA_MasterCard}" for="DDA-Credit-Card-Number"/>
+                        </div>
+                        <script>
+                          function getNextInputField(resour,index){
+                                resour.parentNode.children[index].focus();
+                          }
+                        </script>
+                        <div class="bs col-sm-9">
+                            <apex:input type="tel" value="{!paramCreditCardNum1}" 
+                                                   html-maxlength="4" 
+                                                   styleClass="bs form-control text-center credit-card-box"
+                                                   size="6"
+                                                   style="display: inline; width: auto;padding: 3px;"
+                                                   id="creditCardNum1"
+                                                   onblur="Cigna.ESales.getCreditCardNo();getNextInputField(this,2);"
+                            />
+                            <span>-&nbsp;</span>
+                            <apex:input type="tel" value="{!paramCreditCardNum2}" 
+                                                   html-maxlength="4" 
+                                                   styleClass="bs form-control text-center credit-card-box"
+                                                   size="6"
+                                                   style="display: inline; width: auto;padding: 3px;"
+                                                   id="creditCardNum2"
+                                                   onblur="Cigna.ESales.getCreditCardNo();getNextInputField(this,4);"
+                            />
+                            <span>-&nbsp;</span>
+                            <apex:input type="tel" value="{!paramCreditCardNum3}" 
+                                                   html-maxlength="4" 
+                                                   styleClass="bs form-control text-center credit-card-box"
+                                                   size="6"
+                                                   style="display: inline; width: auto;padding: 3px;"
+                                                   id="creditCardNum3"
+                                                   onblur="Cigna.ESales.getCreditCardNo();getNextInputField(this,6);"
+                            />
+                            <span>-&nbsp;</span>
+                            <apex:input type="tel" value="{!paramCreditCardNum4}" 
+                                                   html-maxlength="4" 
+                                                   styleClass="bs form-control text-center credit-card-box"
+                                                   size="6"
+                                                   style="display: inline; width: auto;padding: 3px;"
+                                                   id="creditCardNum4"
+                                                   onblur="Cigna.ESales.getCreditCardNo()"
+                            />
+                           
+                        </div>
+                         <script>
+                             function hiddenonblur(element){
+                                 //CR-56_Link_20220214
+                                $(element).trigger("blur");
+                             }
+                         </script>
+                        <div class="bs col-sm-offset-3 col-sm-9 col-xs-12">
+                            <apex:inputText id="Credit-Card-Number" 
+                                            style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none" 
+                                            onfocus="hiddenonblur(this)" tabindex="-1" styleClass="bs cigna-validation answer-validation"/>
+                        </div>                   
+                        <script>
+                            //CR-56_Link_20220214
+                            $('input.credit-card-box').on("keyup",function(evt) {
+                                if (this.value.length == this.maxLength && evt.keyCode >= 48 && evt.keyCode <= 57) {
+                                    var $next = $(this).nextAll('.credit-card-box');
+                                    if ($next.length > 0){
+                                        $(this).nextAll('.credit-card-box')[0].focus();
+                                    } else {
+                                        //CR-56_Link_20220214
+                                        $(this).trigger("blur");
+                                    }
+                                } else if (this.value.length == 0 && evt.keyCode == 8) {
+                                    // Backspace
+                                    var $prev = $(this).prevAll('.credit-card-box');
+                                    if ($prev.length > 0){
+                                        $(this).prevAll('.credit-card-box')[0].focus();
+                                    } else {
+                                        //CR-56_Link_20220214
+                                        $(this).trigger("blur");
+                                    }
+                                }
+                            });                        
+                        </script>
+                    </apex:outputPanel>
+                    
+                    <apex:outputPanel rendered="{!txn.Payment_Method_Subsequent_Payment__c == 'Credit Card'}" layout="block" styleClass="bs form-group">
+                        <div class="bs col-sm-3">
+                            <apex:outputLabel value="{!$Label.Credit_Card_Expiry_Date_MM_YYYY}" for="DDA-Credit-Card-Expiry"/>
+                        </div>
+                        <div class="bs col-sm-9">
+                            <apex:inputText id="card-expiry-month" value="{!txn.Credit_Card_Expiry_Date_Month__c}" 
+                                                 maxlength="2" 
+                                                 html-placeholder="{!$Label.MM}"
+                                                 size="4"
+                                                 styleClass="bs form-control text-center credit-card-expiry"
+                                                 style="display: inline; width: auto;"
+                            />
+                            <span>&nbsp;/&nbsp;</span>
+                            <apex:inputText id="card-expiry-year" value="{!txn.Credit_Card_Expiry_Date_Year__c}" 
+                                             maxlength="4" 
+                                             html-placeholder="{!$Label.YYYY}" 
+                                             styleClass="bs form-control text-center credit-card-expiry"
+                                             size="6"
+                                             style="display: inline; width: auto;"
+                            />
+                        </div>
+                        <div class="bs col-sm-offset-3 col-sm-9 col-xs-12">
+                            <apex:inputText id="Credit-Card-Expiry-Date" 
+                                            style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none" 
+                                            onfocus="hiddenonblur(this)" tabindex="-1" />
+                        </div>
+    
+                        <script>
+                            //CR-56_Link_20220214
+                            $('input.credit-card-expiry').on("keyup",function(evt) {
+                                if (this.value.length == this.maxLength && evt.keyCode >= 48 && evt.keyCode <= 57) {
+                                    var $next = $(this).nextAll('.credit-card-expiry');
+                                    if ($next.length > 0){
+                                        $(this).nextAll('.credit-card-expiry')[0].focus();
+                                    } else {
+                                        //CR-56_Link_20220214
+                                        $(this).trigger("blur");
+                                    }
+                                } else if (this.value.length == 0 && evt.keyCode == 8) {
+                                    // Backspace
+                                    var $prev = $(this).prevAll('.credit-card-expiry');
+                                    if ($prev.length > 0){
+                                        $(this).prevAll('.credit-card-expiry')[0].focus();
+                                    } else {
+                                        //CR-56_Link_20220214
+                                        $(this).trigger("blur");
+                                    }
+                                }
+                            });
+                        </script>
+                    </apex:outputPanel>
+                </div>
+                
+                <apex:outputPanel id="firstHolder" rendered="{!txn.Payment_Method_Subsequent_Payment__c == 'Savings'}" layout="block" styleClass="bs form-group">
+                    <div class="bs col-sm-3">
+                        <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Name_of_Account_Holder_in_English__c.Label}" for="DDA-Account-Holder-Name"/>
+                    </div>
+                    <div class="bs col-sm-8">
+                        <apex:inputField id="DDA-Account-Holder-Name" value="{!txn.Name_of_Account_Holder_in_English__c}" styleClass="bs form-control cigna-validation answer-validation" />
+                    </div>
+                    <div class="bs col-sm-1">
+                        <apex:commandLink styleClass="glyphicon glyphicon-plus-sign fa-lg" onclick="addHolderForJointAccount();return false;" rendered="{!showAddHolder}" style="text-decoration: none;color:rgb(88, 89, 91) !important;"/>&nbsp;&nbsp;&nbsp;&nbsp;
+                        <apex:commandLink styleClass="glyphicon glyphicon-minus-sign fa-lg onclick-pointer" onclick="minusHolderForJointAccount();return false;" rendered="{!showMinusHolder}" style="text-decoration: none;color:rgb(88, 89, 91) !important;"/>
+                    </div>
+                </apex:outputPanel>
+                
+                <apex:outputPanel id="secondHolder" rendered="{!txn.Payment_Method_Subsequent_Payment__c == 'Savings' && showSecondHolder}" layout="block" styleClass="bs form-group col-sm-12" style="padding-left:0px;">                   
+                    <!--for joint account hanlding -->
+                    <div class="bs col-sm-3" id="secondHolderLabel">
+                        <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Credit_Card_Second_Holder_Full_Name__c.Label}" for="DDA-Account-Holder-Name2"/>
+                    </div>
+                    <div class="bs col-sm-9" id="secondHolderValue">
+                        <apex:inputText id="DDA-Account-Holder-Name2" value="{!txn.Credit_Card_Second_Holder_Full_Name__c}" styleClass="bs form-control cigna-validation answer-validation" />
+                    </div>                    
+                </apex:outputPanel>
+                
+                <apex:outputPanel id="thirdHolder" rendered="{!txn.Payment_Method_Subsequent_Payment__c == 'Savings' && showThirdHolder}" layout="block" styleClass="bs form-group col-sm-12" style="padding-left:0px;">                    
+                    <!--for joint account hanlding -->
+                    <div class="bs col-sm-3" id="thirdHolderLabel">
+                        <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Credit_Card_Third_Holder_Full_Name__c.Label}" for="DDA-Account-Holder-Name3"/>
+                    </div>
+                    <div class="bs col-sm-9" id="thirdHolderValue">
+                        <apex:inputText id="DDA-Account-Holder-Name3" value="{!txn.Credit_Card_Third_Holder_Full_Name__c}" styleClass="bs form-control cigna-validation answer-validation" />
+                    </div>
+                </apex:outputPanel>
+                
+                <apex:outputPanel rendered="{!txn.Payment_Method_Subsequent_Payment__c == 'Savings'}" layout="block" styleClass="bs form-group col-sm-12" style="padding-left:0px;">
+                    <div class="bs col-sm-3">
+                        <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Bank_Name__c.Label}" for="DDA-Bank-Name"/>
+                    </div>
+                    <div class="bs col-sm-9">
+                        <apex:inputField id="DDA-Bank-Name" value="{!txn.Bank_Name__c}" styleClass="bs form-control cigna-validation answer-validation" />
+                    </div>
+                </apex:outputPanel>
+                
+                <apex:outputPanel rendered="{!txn.Payment_Method_Subsequent_Payment__c == 'Savings'}" layout="block" styleClass="bs form-group col-sm-12" style="padding-left:0px;">
+                    <div class="bs col-sm-3">
+                        <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Branch_Name__c.Label}" for="DDA-Branch-Name"/>
+                    </div>
+                    <div class="bs col-sm-9">
+                        <apex:inputField id="DDA-Branch-Name" value="{!txn.Branch_Name__c}" styleClass="bs form-control cigna-validation answer-validation" />
+                    </div>
+                </apex:outputPanel>
+                
+                <apex:outputPanel rendered="{!txn.Payment_Method_Subsequent_Payment__c == 'Savings'}" layout="block" styleClass="bs form-group col-sm-12" style="padding-left:0px;">
+                    <div class="bs col-sm-3">
+                        <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Bank_Account_No__c.Label}" for="DDA-Bank-Acct-No"/>
+                    </div>
+                    <div class="bs col-sm-9">
+                        <apex:input id="bank-code" type="tel" value="{!paramBankCode}" 
+                                               html-maxlength="3" 
+                                               styleClass="bs form-control text-center bank-acc-no"
+                                               size="4"
+                                               style="display: inline; width: auto;"
+                                               onblur="Cigna.ESales.getBankAccNo();"
+                        />
+                        <span>&nbsp;-&nbsp;</span>
+                        <apex:input id="branch-code" type="tel" value="{!paramBranchCode}" 
+                                               html-maxlength="3" 
+                                               styleClass="bs form-control text-center bank-acc-no"
+                                               size="4"
+                                               style="display: inline; width: auto;"
+                                               onblur="Cigna.ESales.getBankAccNo();"
+                        />
+                        <span>&nbsp;-&nbsp;</span>
+                        <apex:input id="bank-account-code" type="tel" value="{!paramBankAcctCode}" 
+                                               html-maxlength="9" 
+                                               styleClass="bs form-control text-center bank-acc-no"
+                                               size="10"
+                                               style="display: inline; width: auto;"
+                                               onblur="Cigna.ESales.getBankAccNo();"
+                        />
+
+                    </div>
+
+                    <script>
+                       function hiddenonblur(element){
+                           //CR-56_Link_20220214
+                            $(element).trigger("blur");
+                        }
+                    </script>
+                    <div class="bs col-sm-offset-3 col-sm-9 col-xs-12">
+                        <apex:inputText id="Bank-Account-Number" 
+                                        style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none" 
+                                        onfocus="hiddenonblur(this)" tabindex="-1"/>
+                    </div>
+                    
+                    <script>
+                        //CR-56_Link_20220214
+                        $('input.bank-acc-no').on("keyup",function(evt) {
+                            if (this.value.length == this.maxLength && evt.keyCode >= 48 && evt.keyCode <= 57) {
+                                var $next = $(this).nextAll('.bank-acc-no');
+                                if ($next.length > 0){
+                                    $(this).nextAll('.bank-acc-no')[0].focus();
+                                } else {
+                                    //CR-56_Link_20220214
+                                    $(this).trigger("blur");
+                                }
+                            } else if (this.value.length == 0 && evt.keyCode == 8) {
+                                // Backspace
+                                var $prev = $(this).prevAll('.bank-acc-no');
+                                if ($prev.length > 0){
+                                    $(this).prevAll('.bank-acc-no')[0].focus();
+                                } else {
+                                    //CR-56_Link_20220214
+                                    $(this).trigger("blur");
+                                }
+                            }
+                        });
+                            
+                    </script>
+                </apex:outputPanel>
+                
+                 <apex:outputPanel rendered="{!txn.Payment_Method_Subsequent_Payment__c == 'Savings'}" layout="block" styleClass="bs form-group">
+                    <div class="bs col-sm-3">
+                        <apex:outputLabel value="{!$Label.Effective_Month_of_the_First_Debit}" for="DDA-Effective-Month"/>
+                    </div>
+                    <div class="bs col-sm-9">
+                        <apex:selectList value="{!txn.DDA_Effective_Month__c}" multiselect="false" size="1" styleClass="bs form-control">
+                            <apex:selectOptions value="{!monthValues}"/>
+                        </apex:selectList>
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel>
+            
+            <apex:outputPanel id="payment-gateway-section" rendered="{!currentStep > STEP_PAYMENT && isCustomerPortal && paymentResult != 'Failed' && txn.AUW_Overall_Result__c != 'Referred' }" styleClass="bs row" layout="block">
+                <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+                    <i class="fa fa-check-circle-o content-active cigna-fg-green-medium" style="font-size:50px;" aria-hidden="true"></i>
+                </div>
+                <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+                    <p>{!$Label.Payment_Confirmation}</p>
+                </div>
+            </apex:outputPanel>
+            
+            <apex:outputPanel id="payment-gateway-section2" rendered="{!currentStep > STEP_PAYMENT && paymentResult == 'Failed' && txn.AUW_Overall_Result__c != 'Referred'}" styleClass="bs row" layout="block">
+                
+                <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+                    <i class="bs cigna-fg-red-alert fa fa-times-circle fg-lg" style="font-size:50px;" aria-hidden="true"></i>
+                </div>
+                <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+                    <!--changed by Stripe CR 
+                    <p>{!$Label.Payment_Failed}{!txn.Payment_PSPReference__c}{!$Label.Payment_Failed_2}</p>-->
+                    <p>{!$Label.Payment_Failed}</p>
+                    <br/>
+                </div>
+                <br/>
+                <div id="action-bar-desktop" class="bs hidden-xs text-center" style="padding-bottom: 100px;">
+                    <a id="eSales-previous-btn-desktop"  class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" 
+                        role="button" onclick="Cigna.ESales.returnToPreviousPage();">
+                        {!$Label.Return_to_previous_page}
+                    </a> 
+                </div>
+                <apex:outputPanel rendered="{!isCustomerPortal}">
+                    <div id="action-bar" class="bs cigna-floating-bottom-panel visible-xs">
+                        <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                            <a id="eSales-previous-btn" class="action-btn cigna-fg-white" 
+                                role="button" onclick="Cigna.ESales.returnToPreviousPage();">
+                                <i class="ci-hk-arrow-29" aria-hidden="true"></i><br/>{!$Label.Return_to_previous_page} 
+                            </a>    
+                        </div>
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel>
+                                   
+            <!--payment process-->
+            <apex:outputPanel rendered="{!currentStep == STEP_PAYMENT}" styleClass="bs row" layout="block">
+                <apex:outputPanel styleClass="wrap-iframe-third-party">
+                    <script>
+                    
+                    //Quick fix for IPad, avoid duplicate event trigger -- Kenneth Wong
+                    var already_run = false;
+                    $(window).on("message onmessage", function(evt){
+                        var event = evt.originalEvent;
+                        if(!already_run){
+                            if (event.origin != null && event.origin.toLowerCase() == window.location.origin) {
+                                already_run = true;
+                                Cigna.Util.navigateToVFP("GenericESalesVFP?afterPay=true&tid=" + event.data, null, null, true);
+                            }
+                        }
+                    });
+                    </script>
+                    <apex:iframe src="{!paymenturl}" height="1024px" scrolling="true" />
+                </apex:outputPanel>
+                
+            </apex:outputPanel>           
+        </apex:form>
+        
+        <apex:outputPanel id="confirmation-section" rendered="{!currentStep == STEP_CONFIRMATION}" styleClass="bs row" layout="block" >
+            <script>
+                Cigna.ESales.clearUWStatusPolling();
+                $('div.header-bar').show();
+                window.scrollTo(0, 0);
+            </script>
+            <apex:include pageName="GenericEsalesConfirmationFormVFP" />
+        </apex:outputPanel>
+        
+        <div id="web-app-padding" class="bs row" style="padding-bottom: 50px;">
+            <div class="bs col-xs-12"></div>
+        </div>
+        <div id="mobile-app-padding" class="bs row" style="display: none; padding-bottom: 120px;">
+            <div class="bs col-xs-12"></div>
+        </div>
+        <script>
+             if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                 $('#mobile-app-padding').css('display', 'block');
+             }
+        </script>
+        <apex:outputPanel id="showNextButton" rendered="{!currentStep < STEP_PAYMENT && currentStep != STEP_UNDERWRITING && currentStep != STEP_UNDERWRITING_SP && currentStep != STEP_UNDERWRITING_C1 && currentStep != STEP_UNDERWRITING_C2 && currentStep != STEP_UNDERWRITING_C3 && currentStep!= STEP_ESIGNATURE }" styleClass="bs row" layout="block">
+            <apex:outputPanel rendered="{!displayNextButton}">
+                 <div id="action-bar-desktop" class="bs hidden-xs text-center next-btn" style="padding-bottom: 300px;">
+                        <a class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" role="button" onclick="goNext();">
+                            {!$Label.Next}
+                        </a> 
+                 </div>
+                 <div id="action-bar" class="bs cigna-floating-bottom-panel visible-xs next-btn">
+                            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                                <a class="action-btn cigna-fg-white" role="button" onclick="goNext();">
+                                    <i class="ci-hk-arrow-31" aria-hidden="true"></i><br/>{!$Label.Next} 
+                                </a>    
+                            </div>
+                 </div>
+             </apex:outputPanel>
+        </apex:outputPanel>              
+        
+        <apex:outputPanel rendered="{!currentStep > STEP_PAYMENT && !isCustomerPortal && paymentResult != 'Failed' && !hideAcknowledgement}" styleClass="bs row" layout="block">
+        
+            <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+                <i class="fa fa-check-circle-o content-active cigna-fg-green-medium" style="font-size:50px;" aria-hidden="true"></i>
+            </div>
+            <apex:outputPanel rendered="{!onlyHasLife && txn.AUW_Overall_Result__c == 'Accept' && (txn.Is_Making_1st_Payment__c == 'Yes' && txn.Is_Paying_Subsequent_Payment__c == 'Yes')}">
+                <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+                    <p>{!$Label.eSales_Acknowledgement_Life_Accept}</p>
+                </div>
+            </apex:outputPanel>
+
+            <apex:outputPanel rendered="{!!onlyHasLife && txn.AUW_Overall_Result__c == 'Accept'}">
+                <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">       
+                    <apex:outputText escape="false" value="{!$Label.eSales_Acknowledgement_GI_Accept}"/>
+                </div>
+            </apex:outputPanel>
+
+            <apex:outputPanel rendered="{!txn.AUW_Overall_Result__c == 'Referred' || txn.AUW_Overall_Result__c == 'Decline'}">
+                <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+                    <p>{!$Label.eSales_Acknowledgement_Refer}</p>
+                </div>
+            </apex:outputPanel>
+            
+            <script>
+                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                    //$('#action-bar').css('position', 'absolute');
+                    //$('#mobile-app-padding').css('display', 'block');
+                    
+                    var targetHeight = window.screen.height;
+                    var sfOneHeaderHeight = 44 + 20;
+                    
+                    if($(window).width() > $(window).height()){
+                        targetHeight = window.screen.width;   
+                    }
+                    
+                    $('body').css('height', (targetHeight - sfOneHeaderHeight) + 'px');
+                    //CR-56_Link_20220214
+                    $('body').on('touchmove', function(e){$('#action-bar').css('opacity', '0');});
+                    $('body').on('touchend', function(e){setTimeout(function(){$('#action-bar').css('opacity', '1');}, 700);});
+                    
+                    $('html').css('position', 'fixed').css('overflow', 'auto').css('width', '100%').css('height', '100%');
+                    $('body').css('position', 'fixed').css('overflow-x', 'scroll').css('width', '100%').css('height', '100%');
+                }
+            </script>
+        </apex:outputPanel>
+            
+        <apex:outputPanel rendered="{!currentStep > STEP_PAYMENT && paymentResult != 'Failed'}" styleClass="bs row" layout="block">
+            <div id="action-bar-desktop" class="bs hidden-xs text-center">
+                <a id="eSales-view-plans-btn2" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" 
+                   role="button" onclick="Cigna.ESales.viewOtherPlans();">
+                    {!$Label.View_Other_Plans}
+                </a>
+                <a id="eSales-home-btn2" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" 
+                    role="button" onclick="Cigna.ESales.goHome();">
+                    {!$Label.Home}
+                </a>
+            </div>
+            <apex:outputPanel rendered="{!isCustomerPortal}">
+                <div id="action-bar" class="bs cigna-floating-bottom-panel visible-xs">
+                    <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                        <a id="eSales-view-plans-btn" href="javascript:void(0);" class="action-btn cigna-fg-white" role="button"
+                           onclick="Cigna.ESales.viewOtherPlans();">
+                           <i class="ci-hk-modify" aria-hidden="true"></i><br/>
+                            {!$Label.View_Other_Plans}
+                        </a>
+                        <a id="eSales-home-btn" href="javascript:void(0);" class="action-btn cigna-fg-white" role="button" 
+                           onclick="Cigna.ESales.goHome();">
+                           <i class="ci-hk-home" aria-hidden="true"></i><br/>
+                            {!$Label.Home}
+                        </a> 
+                    </div>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <script>
+                //CR-56_Link_20220214
+                $('input.cigna-question-radio').on("change",onRadioChange);
+                $('input.cigna-question-checkbox').on("change",onCheckboxChange);
+                $('.drop-down-seleter').on("change",
+                    function (event) {
+                        var Id = $(this).attr('id');
+                        if(Id.indexOf("{!ESALES_HEIGHT_UNIT_FIELD}")>0){
+                            if(Id.indexOf("{!ESALES_PI_KEY_PH }")>0){
+                                console.log('On Change Height Unit for PH');
+                                if($(this).val()=='feet'){ displayPHFT(); 
+                                }else{ hidePHFT(); }
+                            }
+                            if(Id.indexOf("{!ESALES_PI_KEY_SP }")>0){
+                                console.log('On Change Height Unit for SP');
+                                if($(this).val()=='feet'){ displaySPFT(); 
+                                }else{ hideSPFT(); }
+                            }
+                            if(Id.indexOf("{!ESALES_PI_KEY_CH1 }")>0){
+                                console.log('On Change Height Unit for CH1');
+                                if($(this).val()=='feet'){ displayCH1FT(); 
+                                }else{ hideCH1FT(); }
+                            }
+                            if(Id.indexOf("{!ESALES_PI_KEY_CH2 }")>0){
+                                console.log('On Change Height Unit for CH2');
+                                if($(this).val()=='feet'){ displayCH2FT(); 
+                                }else{ hideCH2FT(); }
+                            }
+                            if(Id.indexOf("{!ESALES_PI_KEY_CH3 }")>0){
+                                console.log('On Change Height Unit for CH3');
+                                if($(this).val()=='feet'){ displayCH3FT(); 
+                                }else{ hideCH3FT(); }
+                            }
+                        }
+                    }
+                );
+        </script>            
+        <apex:outputPanel id="validationRulePanel">           
+            <script>
+                
+                function hiddenContentShowAction(Id){
+                    $('#'+Id).addClass('hidden');
+                    $('#'+Id.replace('show','hide')).removeClass('hidden');
+                    $('#'+Id.replace('show','content')).css("display","block");
+                }
+                
+                function dispalyContentHideAction(Id){
+                    $('#'+Id).addClass('hidden');
+                    $('#'+Id.replace('hide','show')).removeClass('hidden');
+                    $('#'+Id.replace('hide','content')).css("display","none");
+                }
+                function birthValidationRule(resour){
+                    console.log('Birthdate validation');
+                    var parent =  resour.parentNode;    
+                    var parentId =  parent.getAttribute("id");
+                    console.log('parentId '+parentId );   
+                    
+                    var year =  $("input[id*='"+parentId+"-DOB-Year']").val();
+                    var month =  $("input[id*='"+parentId +"-DOB-Month']").val();
+                    var day =  $("input[id*='"+parentId +"-DOB-Day']").val();
+                    
+                    if(day!='' && month!='' && year!='' ){
+                        if(day==0 || day>31){ return false; }
+                        
+                        if(month==2){
+                            if(day>29) return false;
+                            if(day == 29){
+                                console.log('Feb'+year%4);
+                                if(year%4!=0) return false;
+                            }
+                        }
+                        
+                        if(month==4 || month==6 || month==9 || month==11){ if(day>30) return false; }
+                        if(month==0 || month>12){ return false; }
+                                            
+                        var adate=new Date(year,month-1,day);   
+                        var thedate=new Date();                    
+                        var nowYear=thedate.getFullYear();
+                        var nowMonth=thedate.getMonth()+1;
+                        var nowday=thedate.getDate();
+                        
+                        if(year<1900 || year>nowYear){ return false; }
+                        
+                        var minDays = 0;
+                        var minYear = 0;
+                        var maxDays = 0;
+                        var maxYear = 0;                    
+                        
+                        if(typeof $("[id$='"+parentId+"-minAge']").val() != undefined && $("[id$='"+parentId+"-minAge']").val()!=null){
+                            if($("[id$='"+parentId+"-minAge']").val().indexOf(",") >= 0){
+                                var ageList = $("[id$='"+parentId+"-minAge']").val().split(',');
+                                if(ageList[0].indexOf("year")>=0 && ageList[0].indexOf("-")){
+                                    minYear = ageList[0].split('_')[1];
+                                }
+                                if(ageList[1].indexOf("day")>=0 && ageList[1].indexOf("-")){
+                                    minDays = ageList[1].split('_')[1];
+                                }
+                            }
+                        } 
+                        console.log(parentId + ' minYear '+minYear + ' minDays '+ minDays );
+                        
+                        if(typeof $("[id$='"+parentId+"-maxAge']").val() != undefined && $("[id$='"+parentId+"-maxAge']").val()!=null){
+                            if($("[id$='"+parentId+"-maxAge']").val().indexOf(",") >= 0){
+                                var ageList = $("[id$='"+parentId+"-maxAge']").val().split(',');
+                                if(ageList[0].indexOf("year")>=0 && ageList[0].indexOf("-")){
+                                    maxYear = ageList[0].split('_')[1];
+                                }
+                                if(ageList[1].indexOf("day")>=0 && ageList[1].indexOf("-")){
+                                    maxDays = ageList[1].split('_')[1];
+                                }
+                            }
+                        } 
+                        console.log(parentId + ' maxYear '+maxYear + ' maxDays '+ maxDays );
+                        
+                        var age=nowYear-year;                    
+                        if(nowMonth<=month){
+                            if(nowMonth==month){
+                                if(nowday<day){
+                                    age--;                                
+                                }
+                            }else{
+                                age--;
+                            }
+                        }
+                        var days = 0;
+                        if(age==0){ days = nowday - day; }
+                        console.log(parentId + ' age '+ age + ' days '+ days );
+                        
+                        if(maxYear>0){
+                            if(age > maxYear){ return false; }
+                        }else if(maxDays>0){
+                            if(days > maxDays){ return false; }
+                        }
+                        
+                        if(minYear>0){
+                            if(age < minYear){ return false;}
+                        }else if(minDays>0){
+                            if(age==0){
+                                if(days < minDays){ return false;}
+                            }else{
+                                return true;
+                            }
+                        }
+                        
+                    }                                                     
+                    return true;
+                }
+                
+                function inputTextValidationRule(resour){
+                    var parentId = resour.parentNode.parentNode.getAttribute("id");  
+                    var regexValue = $("[id$='"+parentId+"-data-format']").val();
+                    console.log('Validation for '+parentId + ' regexValue ' + regexValue);
+                    
+                    if(regexValue !=null && regexValue !='' && typeof(regexValue)!='undefined'){
+                        var regexValue = new RegExp(regexValue);                                       
+                        if(!regexValue.test(resour.value)) {
+                            return false;
+                        }
+                        return true;
+                    }
+                    return true;
+                }
+                            
+                jQuery.extend(jQuery.validator.messages, {
+                    required: "{!$Label.ESales_Required_Field_Error_Message}"
+                });  
+                
+                jQuery.validator.addMethod("validateDOB", function(value, element) {
+                       return birthValidationRule(element);
+                }, "{!$Label.ESales_Invalid_DOB}");  
+                
+                jQuery.validator.addMethod("validateText", function(value, element) {
+                       return inputTextValidationRule(element);
+                }, "{!$Label.ESales_Invalid_value}");                               
+                                                           
+                $("form[id*='form']").validate({
+                    ignore: ':hidden:not(.cigna-validation)'
+                });
+                
+                $("form[id$='confirmationfrm']").validate({
+                    ignore: ':hidden:not(.cigna-validation)'                 
+                });
+            
+                $(".answer-validation").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        required:true
+                    });
+                });
+                
+                $(".input-text-checking").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        validateText:true
+                    });
+                });
+                
+                $(".birthdate-checking").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        validateDOB:true
+                    });
+                });
+                
+                $('#basic-info-APPLICATION_FIELD_33_PH-normal-field > input').attr('placeholder','{!$ObjectType.ESales_Person_Insured__c.Fields.Country_Code__c.Label}');  
+                $('#basic-info-APPLICATION_FIELD_33_SP-normal-field > input').attr('placeholder','{!$ObjectType.ESales_Person_Insured__c.Fields.Country_Code__c.Label}');                     
+                
+                <apex:outputPanel rendered="{!currentStep == STEP_PAYMENT_DDA}" layout="none">
+                    
+                    jQuery.validator.addMethod("checklength", function(value, element) {
+                        return Cigna.ESales.checkBankAcctLength();
+                    }, "{!$Label.eSales_bankcode_length}");
+        
+                    jQuery.validator.addMethod("creditCard", function(value, element) {
+                        return this.optional(element) || Cigna.ValidationUtil.isValidCreditCard(value) || Cigna.ESales.isSavedCreditCardValue1(value) || Cigna.ESales.isSavedCreditCardValue(value);
+                    }, "{!$Label.Error_Message_Invalid_Credit_Card_No}");
+        
+                    jQuery.validator.addMethod("creditExpiryDate", function(value, element) {
+                           return Cigna.ESales.validateExpiryDate(element);
+                    }, "{!$Label.eSales_Expiry_date_not_valid}");
+                    
+                    jQuery.validator.addMethod("maskedCreditCard1", function(value, element) {
+                        return this.optional(element) || Cigna.ESales.isSavedCreditCardValue1(value) || /^([0-9]*)$/.test(value); 
+                    }, "{!$Label.Err_Msg_invalid_saved_credit_card}");
+                    
+                    jQuery.validator.addMethod("maskedCreditCard", function(value, element) {
+                        return this.optional(element) || Cigna.ESales.isSavedCreditCardValue(value) || /^([0-9]*)$/.test(value); 
+                    }, "{!$Label.Err_Msg_invalid_saved_credit_card}");
+                    
+                    $("form[id*='form'] input").each(function(idx, elem){
+                        if (elem.id.indexOf('bank-code') > -1 || elem.id.indexOf('branch-code') > -1 ||
+                            elem.id.indexOf('bank-account-code') > -1 || elem.id.indexOf('creditCardNum1') > -1
+                            || elem.id.indexOf('creditCardNum2') > -1 || elem.id.indexOf('creditCardNum3') > -1
+                            || elem.id.indexOf('creditCardNum4') > -1 || elem.id.indexOf('paramCreditCardNum1') > -1
+                            || elem.id.indexOf('paramCreditCardNum2') > -1 || elem.id.indexOf('paramCreditCardNum3') > -1
+                            || elem.id.indexOf('paramCreditCardNum4') > -1 || elem.id.indexOf('Credit-Card-Expiry-Date') > -1
+                            || elem.id.indexOf('Credit-Card-Expiry-Date1') > -1) {
+                            // do nth
+                        } else {
+        
+                            $(elem).rules("add", {
+                                required: true
+                            });
+                        }
+                    });
+                    
+                    $("form[id*='form'] input[id$='card-expiry-month1']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            digits: true,
+                            minlength: 2,
+                            maxlength: 2,
+                            range: [01, 12]
+                        });
+                    });
+                    $("form[id*='form'] input[id$='card-expiry-year1']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            digits: true,
+                            minlength: 4,
+                            maxlength: 4,
+                            range: [1900, 2999]
+                        });
+                    });
+        
+                    $("form[id*='form'] input[id$='card-expiry-month']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            digits: true,
+                            minlength: 2,
+                            maxlength: 2,
+                            range: [01, 12]
+                        });
+                    });
+                    $("form[id*='form'] input[id$='card-expiry-year']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            digits: true,
+                            minlength: 4,
+                            maxlength: 4,
+                            range: [1900, 2999]
+                        });
+                    });
+        
+                    $("form[id*='form'] input[id$='Credit-Card-Expiry-Date']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            creditExpiryDate : true
+                        });
+                    });
+                    $("form[id*='form'] input[id$='Credit-Card-Expiry-Date1']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            creditExpiryDate : true
+                        });
+                    });
+        
+                </apex:outputPanel>
+            </script>
+        </apex:outputPanel>
+    </apex:outputPanel>
+</apex:page>

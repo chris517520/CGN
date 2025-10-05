@@ -1,0 +1,205 @@
+<apex:page sidebar="false" controller="BDNewBusinessDetailsCtrl" tabStyle="New_Business__tab" lightningStylesheets="true">   
+    <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.SLDS, 'styles/salesforce-lightning-design-system.min.css')}" />
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    <!--<apex:include pageName="CignaCommonCSS" />-->
+    <style>
+        
+        .block-header{
+            margin:10px 0 10px 0;
+            background:rgb(243, 242, 242);
+            border:1px solid transparent;
+        }
+        
+        html{
+            line-height: 1;
+            background-color:white ;
+        }
+        
+        .slds-form-element__static{
+            min-height:calc(1.25rem + 2px);
+        }
+        
+        .forcePageBlockItem{
+            margin:0 50px 0 0;
+        }
+        
+        body .bPageBlock, .slds-scope .bPageBlock{
+            border: 0;
+            box-shadow : 0 0 0 0 rgba(0,0,0,0);
+        }
+        
+        body .bPageBlock.apexDefaultPageBlock, body .bPageBlock.bDetailBlock, body .bPageBlock.bEditBlock, .slds-scope .bPageBlock.apexDefaultPageBlock, .slds-scope .bPageBlock.bDetailBlock, .slds-scope .bPageBlock.bEditBlock{
+            padding:1rem 0 1rem 0;
+        }
+    </style>
+    <script>
+       $(document).ready(function(){
+            getNewBusinessDetail();
+            getQuestionAndAnswers();
+        });
+        
+        function getDoc(){
+            var txnName = $('input[type="hidden"][id$="fileURL"]').val();
+            if(txnName != null && txnName != ''){
+                sforce.one.navigateToURL(txnName);
+            }
+        }
+    </script>
+    
+   <apex:form id="theForm">
+        <apex:actionFunction action="{!getNewBusinessDetail}" name="getNewBusinessDetail"  status="loader-icon" reRender="requestDetailsPageBlock,commentListPanel" />
+        <apex:actionFunction action="{!getQuestionAndAnswers}" name="getQuestionAndAnswers"  status="loader-icon" reRender="questionListPanel" />
+        <apex:actionFunction action="{!downloadFile}" name="downloadFile" status="loader-icon" reRender="fileURL" oncomplete="getDoc();">
+            <apex:param name="selectedDocId" assignTo="{!selectedDocId}" value=""/>
+        </apex:actionFunction>
+        
+        <apex:inputHidden id="fileURL" value="{!selectedDocUrl}"/>
+       
+        <apex:actionStatus id="loader-icon">
+           <apex:facet name="start">
+                <div id="loadericondiv" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                     &nbsp;
+                 </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Please Wait...</span>
+                    </div>
+                 </div>
+            </apex:facet>
+        </apex:actionStatus>        
+        
+        <apex:outputPanel id="requestDetailsPageBlock">     
+            <div class="block-header">
+                <h2 class="header-title-container" style="padding-bottom:5px;padding-top:5px;">
+                    <span class="slds-text-heading--small slds-truncate " style="padding-left:10px;">
+                        New Business Details
+                    </span>
+                </h2>
+            </div>
+            <div class="slds-grid full forcePageBlockSectionRow">
+                <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                        <span class="slds-form-element__label" style="font-size:14px;font-wight;bold;">
+                            <apex:outputText value="{0, date, yyyy/MM/dd}{!emptyString}">
+                                <apex:param value="{!requestDetail.statusUpdatedDateTime }"/>
+                            </apex:outputText>  
+                        </span>
+                    </div>
+                </div>
+            </div> 
+            <div class="slds-grid full forcePageBlockSectionRow">
+                <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                  <span class="slds-form-element__label">{!$Label.Category}</span>
+                  <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                    <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">New Business</span>
+                  </div>
+                </div>
+                </div>
+                <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                      <span class="slds-form-element__label">{!$Label.Policy_No}</span>
+                      <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!requestDetail.policyNumber}</span>
+                      </div>
+                    </div>
+                </div>
+            </div> 
+            <div class="slds-grid full forcePageBlockSectionRow">
+                <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                  <span class="slds-form-element__label">{!$Label.Type}</span>
+                  <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                    <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only"> - </span>
+                  </div>
+                </div>
+                </div>
+                <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                      <span class="slds-form-element__label">{!$Label.Status}</span>
+                      <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!requestDetail.RequestStatus}</span>
+                      </div>
+                    </div>
+                </div>
+            </div> 
+            <div class="slds-grid full forcePageBlockSectionRow">
+                <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                  <span class="slds-form-element__label">{!$Label.Request_Status}</span>
+                  <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                    <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!requestDetail.UWRequestStatus}</span>
+                  </div>
+                </div>
+                </div>
+                <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                      <span class="slds-form-element__label">{!$Label.Process_Stage}</span>
+                      <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!requestDetail.UWStage}</span>
+                      </div>
+                    </div>
+                </div>
+            </div> 
+            <div class="slds-grid full forcePageBlockSectionRow">
+                <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                  <span class="slds-form-element__label">{!$Label.Broker_Company_Name}</span>
+                  <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                    <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!requestDetail.brokerComapnyName}</span>
+                  </div>
+                </div>
+                </div>
+                <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                      <span class="slds-form-element__label">{!$Label.Individual_Consultant_Name}</span>
+                      <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!requestDetail.individualConsultantName}</span>
+                      </div>
+                    </div>
+                </div>
+            </div> 
+        </apex:outputPanel>  
+        
+        <br/>           
+        <apex:pageBlock id="bdNewBusinessDetailsPageBlock" mode="maindetail" >    
+            <apex:outputPanel id="commentListPanel">
+                <apex:pageblockSection id="commentListPageBlock" columns="1" title="{!$Label.Underwriting_Comments_for_Current_Application}" rendered="{!commentList.size > 0}">
+                    <apex:pageBlockTable value="{!commentList}" var="comment">                    
+                        <apex:column headerValue="{!$Label.Commented_By}" >{!comment.commentedBy} </apex:column>
+                        <apex:column headerValue="{!$Label.Commented_Date_Time}" >
+                            <apex:outputText value="{0, date, yyyy/MM/dd}{!emptyString}">
+                                <apex:param value="{!comment.commentedDateTime}"/>
+                            </apex:outputText> 
+                        </apex:column>
+                        <apex:column headerValue="{!$Label.Comment}" >{!comment.comments}</apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageblockSection>
+            </apex:outputPanel>
+            <br/>
+            
+            <apex:outputPanel id="questionListPanel">
+                <apex:pageBlockSection id="documentListPageBlock" columns="1" title="{!$Label.Please_download_the_documents_below_if_needed}" rendered="{!docWrapperList.size > 0}" >
+                    <apex:pageBlockTable value="{!docWrapperList}" var="docWrapper">
+                        <apex:column headerValue="Document Name">                           
+                             <!--<apex:commandLink id="commandlinkid" value="{!docWrapper.docFileName}" target="_blank"  onclick="downloadFile('{!docWrapper.docId}');return false"></apex:commandLink>-->
+                             <a href="javascript:void(0);" onclick="downloadFile('{!docWrapper.docId}');return false">{!docWrapper.docFileName}</a>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+                <br/>
+            
+                <apex:pageBlockSection id="questionListPageBlock" columns="1" title="Pending Memo Message" rendered="{!memoRequestList.size > 0}" >
+                    <apex:pageBlockTable value="{!memoRequestList}" var="requestion">                    
+                        <apex:column headerValue="Comment from Operator" >{!requestion.pendingQuestion}</apex:column>
+                        <apex:column headerValue="Response from Customer">{!requestion.answer}</apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection> 
+            </apex:outputPanel>
+            
+        </apex:pageBlock>
+     
+    </apex:form>
+</apex:page>

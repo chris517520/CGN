@@ -1,0 +1,629 @@
+<!--Please change apex page title-->
+<apex:page id="pendingMemoPage" docType="html-5.0" sidebar="false" showHeader="false" Controller="PendingMemoListController" title="Pending Memo List">
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+        <style>
+        @media only screen and (max-width: 760px),
+        (min-device-width: 768px) and (max-device-width: 1024px) {
+            .nav-pills:active {
+                color: #fff !important;
+                background-color: #2E2E2E !important;
+            }
+            .myTitle {
+                font-weight: bold;
+            }
+            .myTable {
+                border-top: 0px !important;
+            }
+            .bs .nav-pills>li.active>a,
+            .bs .nav-pills>li.active>a:focus,
+            .bs .nav-pills>li.active>a:hover {
+                color: #FFF !important;
+                background-color: #2E2E2E !important;
+            }
+            .bs .nav-pills>li>a:hover {
+                color: #FFF !important;
+                background-color: #BDBDBD !important;
+            }
+            .bs .nav-pills>li>a {
+                color: #2E2E2E !important;
+                background-color: #FFF !important;
+            }
+        }
+        </style>
+        <script>
+        var noSearchValueErrMsg = '{!$Label.Error_Input_Criteria}';
+        
+        $(document).ready(function() {
+
+            if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                $('#action-bar').css('position', 'absolute');
+                $('#mobile-app-padding').css('display', 'block');
+            }
+
+            /**grey separator**/
+            var srlist = document.getElementsByClassName("listcontent");
+            var flip = 0;
+            for (var i = 0; i < srlist.length; i++) {
+                var item = srlist[i];
+                if (flip == 0) {
+                    item.style.backgroundColor = '#f2f2f2';
+                    flip = 1;
+                } else if ($(item).is(':first-child')) {
+                    item.style.backgroundColor = '#f2f2f2';
+                } else {
+                    flip = 0;
+                }
+            }
+
+            //Updated by TC@Cigna 20200615: for re-triggered the filter criteria when back to this page:
+            var selectedCat=''+'{!selectedCategory}';
+            if(selectedCat!=null && selectedCat!=''){
+                if(selectedCat =='{!CATEGORY_NEW_POLICY}'){
+                    selectedTabById('new');
+                    displayList('new');
+                    searchNewPolicy();
+                }else if(selectedCat =='{!CATEGORY_POLICY_CHANGE}'){
+                    selectedTabById('change');
+                    displayList('change');
+                    searchPolicyChange();
+                }else if(selectedCat =='{!CATEGORY_CLAIM}' ){
+                    selectedTabById('claim');
+                    displayList('claim');
+                    searchClaim();
+                }
+            }else{
+                searchNewPolicy();
+            }
+        });
+        
+        //Ray's Updates
+        if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+        
+                $('html').css('position', 'fixed').css('overflow', 'auto').css('width', '100%').css('height', '100%');
+                $('body').css('position', 'fixed').css('overflow-y', 'scroll').css('width', '100%').css('height', '100%');
+        }
+
+        function getURLParameter(name) {
+
+            return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1].replace(/\+/g, '%20')) || null;
+        }
+
+        $("[id$='myPolicy']").addClass('active'); // <-- change the id to the active tab
+
+        var selectItems = document.getElementsByClassName("inactive-bar-tab");
+        var startItems = document.getElementsByClassName("active-bar-tab");
+
+        //Added By TC@Cigna 20200615: retrigger filter when back to this page
+        function selectedTabById(category){
+            var tab;
+            if (category == 'new') {
+                tab = document.getElementById('newTab');
+            }else if(category == 'change'){
+                tab = document.getElementById('changeTab');
+            }else if(category == 'claim'){
+                tab = document.getElementById('claimTab');
+            }
+            if(tab!=null){
+                selectedTab(tab);
+            }
+        }
+
+        function selectedTab(item) {
+            this.clear();
+            item.style.backgroundColor = '#00A9E0';
+        }
+
+        function clear() {
+            for (var i = 0; i < selectItems.length; i++) {
+                var item = selectItems[i];
+                item.style.backgroundColor = '#004986';
+            }
+            for (var i = 0; i < startItems.length; i++) {
+                var item = startItems[i];
+                item.style.backgroundColor = '#004986';
+            }
+
+        }
+
+        function displayList(category) {
+
+            if (category == 'new') {
+                document.getElementById('brkNewPolicyList').style.display = "block";
+                document.getElementById('brkPolicyChangeList').style.display = "none";
+                document.getElementById('brkClaimList').style.display = "none";
+            }
+
+            if (category == 'change') {
+                document.getElementById('brkNewPolicyList').style.display = "none";
+                document.getElementById('brkPolicyChangeList').style.display = "block";
+                document.getElementById('brkClaimList').style.display = "none";
+            }
+
+            if (category == 'claim') {
+                document.getElementById('brkNewPolicyList').style.display = "none";
+                document.getElementById('brkPolicyChangeList').style.display = "none";
+                document.getElementById('brkClaimList').style.display = "block";
+            }
+        }
+        
+        
+        
+        function newPolicySearchValidation(){
+            //var sel = document.getElementById('j_id0:j_id20:pendingMemoPage:pendingMemoForm:newPolicySearchOption').selectedIndex;
+            //var opt = document.getElementById('j_id0:j_id20:pendingMemoPage:pendingMemoForm:newPolicySearchOption').options[sel].text;
+            var opt = $("[id$='newPolicySearchOption']").find(":selected").val();
+            var searchvalue = $("input[id*='newPolicySearchValue']").val().split(' ').join('');
+
+            if(!searchvalue.trim()){
+               $('#newPolicyErrorMessage').text(noSearchValueErrMsg); 
+               $('#newPolicyErrorMessage').show();
+                 
+                return null;                  
+            } else {
+               $('#newPolicyErrorMessage').hide();
+            }
+            if(opt == "POLICY_HOLDER_NAME"){
+                //var searchvalue = document.getElementById('j_id0:j_id20:pendingMemoPage:pendingMemoForm:newPolicySearchValue').value;
+                
+                if((searchvalue.length) < 2){
+                    $('#newPolicyErrorMessage').text('{!$Label.Please_input_at_least_2_characters_to_search}');
+                    $('#newPolicyErrorMessage').css('display','block');
+                }
+                else{
+                    $('#newPolicyErrorMessage').css('display','none');
+                    searchNewPolicy();
+                }
+            }
+            else{
+                $('#newPolicyErrorMessage').css('display','none');
+                searchNewPolicy();
+            }
+        }
+        
+        function policyChangeSearchValidation(){
+            var opt = $("[id$='policyChangeSearchOption']").find(":selected").val();
+            var searchvalue = $("input[id*='policyChangeSearchValue']").val().split(' ').join('');
+
+            if(!searchvalue.trim()){
+                $('#policyChangeErrorMessage').text(noSearchValueErrMsg); 
+                $('#policyChangeErrorMessage').show();
+                 
+                return null;                  
+            } else {
+              $('#policyChangeErrorMessage').hide();
+            }
+
+            if(opt == "POLICY_HOLDER_NAME"){
+                
+                if((searchvalue.length) < 2){
+                    $('#policyChangeErrorMessage').text('{!$Label.Please_input_at_least_2_characters_to_search}'); 
+                    $('#policyChangeErrorMessage').css('display','block');
+                }
+                else{
+                    $('#policyChangeErrorMessage').css('display','none');
+                    searchPolicyChange();
+                }
+            } else{
+                $('#policyChangeErrorMessage').css('display','none');
+                searchPolicyChange();
+            }
+        }
+        
+        function claimListSearchValidation(){
+            var opt = $("[id$='claimListSearchOption']").find(":selected").val();
+            var searchvalue = $("input[id*='claimListSearchValue']").val().split(' ').join('');
+
+            if(!searchvalue.trim()){
+                $('#claimListErrorMessage').text(noSearchValueErrMsg); 
+                $('#claimListErrorMessage').show();
+                 
+                return null;                  
+            } else {
+              $('#claimListErrorMessage').hide();
+            }
+
+            if(opt == "PERSON_INSURED_NAME"){
+                //var searchvalue = document.getElementById('j_id0:j_id20:pendingMemoPage:pendingMemoForm:claimListSearchValue').value;
+                //var searchvalue = $('#claimListSearchValue').text();
+                
+                if((searchvalue.length) < 2){
+                    $('#claimListErrorMessage').text('{!$Label.Please_input_at_least_2_characters_to_search}'); 
+                    $('#claimListErrorMessage').css('display','block');
+                }
+                else{
+                    $('#claimListErrorMessage').css('display','none');
+                    searchClaim();
+                }
+            }
+            else{
+                $('#claimListErrorMessage').css('display','none');
+                searchClaim();
+            }
+        }
+        
+        </script>
+    </head>
+    <apex:define name="additionalLibraries">
+        <!--additional css, bootstrap, jquery,js libraries-->
+    </apex:define>
+    <div id="container" class="bs container-fluid">
+        <apex:form id="pendingMemoForm">
+            <apex:actionFunction name="searchNewPolicy" action="{!searchNewPolicy}" status="loader-icon" reRender="brkNewPolicyListPanel" />
+            <apex:actionFunction name="searchPolicyChange" action="{!searchPolicyChange}" status="loader-icon" reRender="brkPolicyChangeListPanel" />
+            <apex:actionFunction name="searchClaim" action="{!searchClaim}" status="loader-icon" reRender="brkClaimListPanel" />
+            <apex:actionFunction name="newPolicyPrevPage" action="{!newPolicyHandlePrevPage}" namespace="PendingMemoNS" reRender="brkNewPolicyListPanel" status="loader-icon" oncomplete="$('#overlay').hide();" />
+            <apex:actionFunction name="newPolicyNextPage" action="{!newPolicyHandleNextPage}" namespace="PendingMemoNS" reRender="brkNewPolicyListPanel" status="loader-icon" oncomplete="$('#overlay').hide();" />
+            <apex:actionFunction name="policyChangePrevPage" action="{!policyChangeHandlePrevPage}" namespace="PendingMemoNS" reRender="brkPolicyChangeListPanel" status="loader-icon" oncomplete="$('#overlay').hide();" />
+            <apex:actionFunction name="policyChangeNextPage" action="{!policyChangeHandleNextPage}" namespace="PendingMemoNS" reRender="brkPolicyChangeListPanel" status="loader-icon" oncomplete="$('#overlay').hide();" />
+            <apex:actionFunction name="claimPrevPage" action="{!claimHandlePrevPage}" namespace="PendingMemoNS" reRender="brkClaimListPanel" status="loader-icon" oncomplete="$('#overlay').hide();" />
+            <apex:actionFunction name="claimNextPage" action="{!claimHandleNextPage}" namespace="PendingMemoNS" reRender="brkClaimListPanel" status="loader-icon" oncomplete="$('#overlay').hide();" />
+            <div id="bartab" class="bs row">
+                <table class="bs bar-tab-container col-sm-12 col-xs-12">
+                    <tr>
+                        <td id="newTab" class="bs active-bar-tab onclick-pointer" onclick="selectedTab(this);displayList('new');searchNewPolicy();">
+                            {!$Label.New_Policy} <!--({!pendingMemoNewPolicy})-->
+                        </td>
+                        <td id="changeTab" class="bs inactive-bar-tab onclick-pointer" onclick="selectedTab(this);displayList('change');searchPolicyChange();">
+                            {!$Label.Policy_Change} <!--({!pendingMemoPolicyChange})-->
+                        </td>
+                        <td id="claimTab" class="bs inactive-bar-tab onclick-pointer" onclick="selectedTab(this);displayList('claim');searchClaim()">
+                            {!$Label.Claims} ({!pendingMemoClaim})
+                        </td>
+                        <!--<td id="startTab" class="bs active-bar-tab onclick-pointer" onclick="selectedTab(this);displayList('new');">
+                            {!$Label.New_Policy}
+                        </td>
+                        <td class="bs inactive-bar-tab onclick-pointer" onclick="selectedTab(this);displayList('change');">
+                            {!$Label.Policy_Change}
+                        </td>
+                        <td class="bs inactive-bar-tab onclick-pointer" onclick="selectedTab(this);displayList('claim');">
+                            {!$Label.Claims}
+                        </td>-->
+                    </tr>
+                </table>
+            </div>
+            <!--Broker View-->
+            <div id="brkresult" class="bs row">
+                <div id="brkNewPolicyList">
+                    <div class="bs col-sm-12 col-xs-12" style="padding: 20px 0px 20px 0px; ">
+                        <div class="bs col-sm-6 col-xs-12" style="padding-bottom:20px;">
+                            <apex:SelectList id="newPolicySearchOption" size="1" value="{!npSearchInputType}" styleClass="bs form-field-style-select cigna-fg-gray-dark" style="font-size:1em; height:35px;">
+                                <apex:selectOptions value="{!NewPolicySearchCriteria}" />
+                            </apex:SelectList>
+                        </div>
+                        <div class="bs col-sm-6 col-xs-12">
+                            <apex:input id="newPolicySearchValue" style="font-size:1em; height:35px; width:95%" styleClass="bs form-field-style cigna-fg-gray-dark" value="{!npSearchInputText}" /><i class="fa fa-search cigna-fg-orange-dark text-center onclick-pointer" onclick="newPolicySearchValidation()" style="width:5%" aria-hidden="true" />
+                        </div>
+                    </div>
+                    <div id="newPolicyErrorMessage" class="bs col-sm-12 col-xs-12 text-center" style="color:red;padding-bottom:20px;display:none;">
+                            {!$Label.Please_input_at_least_2_characters_to_search}
+                    </div>
+                    <apex:outputPanel id="brkNewPolicyListPanel">
+                        <apex:outputPanel layout="block" id="newPolicyErrMsgBroker" rendered="{!showTooManyRecordErrorNewPolicy}">
+                        <div class="bs col-sm-12 col-xs-12 text-center" style="color: red; padding-bottom:20px;">
+                            {!errorMessageNewPolicy}
+                        </div>
+                        </apex:outputPanel>
+                        <div class="bs row listcontent-header hidden-xs"  style="{!IF(nbSearched, '', 'display:none;')}">
+                            <div class="bs col-sm-2">{!$Label.Policy_No}</div>
+                            <div class="bs col-sm-2">{!$Label.Policy_Holder_Name}</div>
+                            <div class="bs col-sm-2">{!$Label.Insured_Person}</div>
+                            <div class="bs col-sm-2">{!$Label.Pol_Product_Name}</div>
+                            <div class="bs col-sm-2">{!$Label.Last_Updated_Date}</div>
+                            <div class="bs col-sm-2">{!$Label.Status}</div>
+                        </div>
+                        <apex:outputPanel id="brkNewPolicyList">
+                            <!--broker new policy list-->
+                            <apex:repeat value="{!NewPolicyList}" var="li" rows="{!newPolicyPageSize}" first="{!newPolicyStartIndex}">
+                                <div class="bs row listcontent onclick-pointer" onclick="Cigna.Util.navigateToVFP('PendingMemoVFP?requestId={!li.memoId}&category=nb{!IF(encryptedSearchCriteria!='','&'+URLParamName+'='+encryptedSearchCriteria,'')}', null, null, true)">
+                                    <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                        <div class="bs col-xs-12 col-sm-12 content-highlight table-cell">
+                                            {!li.PolicyNo}
+                                            <i class="ci-hk-arrow-31 pull-right visible-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                        </div>
+                                    </div>
+                                    <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                        <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Holder_Name}</div>
+                                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!li.policyHolder}</div>
+                                    </div>
+                                    <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                        <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Insured_Person}</div>
+                                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!li.InsuredPerson}</div>
+                                    </div>
+                                    <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                        <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Pol_Product_Name}</div>
+                                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!li.ProductName}</div>
+                                    </div>
+                                    <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                        <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Last_Updated_Date}</div>
+                                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                            <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                                <apex:param value="{!li.LastUpdatedDate}" />
+                                            </apex:outputText>
+                                        </div>
+                                    </div>
+                                    <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                        <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Status}</div>
+                                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!li.Status}
+                                            <i class="ci-hk-arrow-31 pull-right hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </apex:repeat>
+                            <apex:outputPanel rendered="{!NewPolicyList.size == 0 && nbSearched}">
+                                <div style="padding:20px;" class="bs col-sm-12 col-xs-12 text-center">
+                                    <i class="fa fa-smile-o cigna-fg-black" aria-hidden="true"></i> {!$Label.You_dont_have_any_pending_memo_record}
+                                </div>
+                            </apex:outputPanel>
+                            <!--pagination-->
+                            <div class="bs col-sm-12 col-xs-12 col-lg-12 col-md-12" style="{!IF(nbSearched, '', 'display:none;')}">
+                                <div style="padding:20px;" class="bs col-sm-6 col-sm-offset-3 col-xs-6 col-xs-offset-3 text-center">
+                                    <apex:outputPanel rendered="{!If(newPolicyHasPrev,true,false)}"><span class="fa fa-chevron-left onclick-pointer cigna-fg-orange-dark" style="padding-right:10px;" aria-hidden="true" onclick ="{!IF(newPolicyHasPrev, 'PendingMemoNS.newPolicyPrevPage();','')}"/></apex:outputPanel>
+                                    <apex:outputText value="{!$Label.Pol_Page}">
+                                        <apex:param value="{!newPolicyCurrentPage }" /></apex:outputText>&nbsp;
+                                    <apex:outputText value="{!$Label.Pol_of}">
+                                        <apex:param value="{!newPolicyTotalPage }" /></apex:outputText>
+                                    <apex:outputPanel rendered="{!If(newPolicyHasNext,true,false)}"><span class="fa fa-chevron-right onclick-pointer cigna-fg-orange-dark" style="padding-left:10px;" aria-hidden="true" onclick ="{!IF(newPolicyHasNext, 'PendingMemoNS.newPolicyNextPage();', '')}" /></apex:outputPanel>
+                                </div>
+                            </div>
+                            <script>
+                            /**grey separator**/
+                            var srlist = document.getElementsByClassName("listcontent");
+                            var flip = 0;
+                            for (var i = 0; i < srlist.length; i++) {
+                                var item = srlist[i];
+                                if (flip == 0) {
+                                    item.style.backgroundColor = '#f2f2f2';
+                                    flip = 1;
+                                } else if ($(item).is(':first-child')) {
+                                    item.style.backgroundColor = '#f2f2f2';
+                                } else {
+                                    flip = 0;
+                                }z
+                            }
+                            </script>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    <!--end of broker all policy list-->
+                </div>
+                <!--Policy Change List-->
+                <div id="brkPolicyChangeList" style="display:none;">
+                    <div class="bs col-sm-12 col-xs-12" style="padding: 20px 0px 20px 0px; ">
+                        <div class="bs col-sm-6 col-xs-12" style="padding-bottom:20px;">
+                            <apex:SelectList id="policyChangeSearchOption" size="1" value="{!pcSearchInputType}" styleClass="bs form-field-style-select cigna-fg-gray-dark" style="font-size:1em; height:35px;">
+                                <apex:selectOptions value="{!PolicyChangeSearchCriteria}" />
+                            </apex:SelectList>
+                        </div>
+                        <div class="bs col-sm-6 col-xs-12">
+                            <apex:input id="policyChangeSearchValue" style="font-size:1em; height:35px; width:95%" styleClass="bs form-field-style cigna-fg-gray-dark" value="{!pcSearchInputText}" /><i class="fa fa-search cigna-fg-orange-dark text-center onclick-pointer" onclick="policyChangeSearchValidation()" style="width:5%" aria-hidden="true" />
+                        </div>
+                    </div>
+                    <div id="policyChangeErrorMessage" class="bs col-sm-12 col-xs-12 text-center" style="color:red;padding-bottom:20px;display:none;">
+                            {!$Label.Please_input_at_least_2_characters_to_search}
+                    </div>
+                    <apex:outputPanel id="brkPolicyChangeListPanel">
+                        <apex:outputPanel layout="block" id="policyChangeErrMsgBroker" rendered="{!showTooManyRecordErrorPolicyChange}">
+                        <div class="bs col-sm-12 col-xs-12 text-center" style="color: red; padding-bottom:20px;">
+                            {!errorMessagePolicyChange}
+                        </div>
+                        </apex:outputPanel>
+                        <div class="bs row listcontent-header hidden-xs" style="{!IF(pcSearched, '', 'display:none;')}">
+                            <div class="bs col-sm-2">{!$Label.Policy_No}</div>
+                            <div class="bs col-sm-2">{!$Label.Policy_Holder_Name}</div>
+                            <!--<div class="bs col-sm-2">{!$Label.Pol_Product_Name}</div>-->
+                            <div class="bs col-sm-3">{!$Label.Change_Type}</div>
+                            <div class="bs col-sm-2">{!$Label.Last_Updated_Date}</div>
+                            <div class="bs col-sm-2">{!$Label.Status}</div>
+                            <div class="bs col-sm-1"></div>
+                        </div>
+                        <apex:outputPanel id="brkPolicyChangeList">
+                            <apex:repeat value="{!PolicyChangeList}" var="li" rows="{!policyChangePageSize}" first="{!policyChangeStartIndex}">
+                                <div class="bs row listcontent onclick-pointer" onclick="Cigna.Util.navigateToVFP('PendingMemoVFP?requestId={!li.memoId}&category=pc{!IF(encryptedSearchCriteria!='','&'+URLParamName+'='+encryptedSearchCriteria,'')}', null, null, true)">
+                                    <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                        <div class="bs col-xs-12 col-sm-12 content-highlight table-cell">
+                                            {!li.PolicyNo}
+                                            <!--
+                                    <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                         <apex:param value="{!pc.PolicyChangeDate}"/>
+                                    </apex:outputText> 
+                                    -->
+                                        <i class="ci-hk-arrow-31 pull-right visible-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                        </div>
+                                    </div>
+                                    <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                        <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Policy_Holder_Name}</div>
+                                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!li.policyHolder}</div>
+                                    </div>
+                                    <!--<div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                        <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Pol_Product_Name}</div>
+                                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!li.ProductName}</div>
+                                    </div>-->
+                                    <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                        <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Change_Type}</div>
+                                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!li.ChangeType}</div>
+                                    </div>
+                                    <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                        <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Last_Updated_Date}</div>
+                                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                            <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                                <apex:param value="{!li.LastUpdatedDate}" />
+                                            </apex:outputText>
+                                        </div>
+                                    </div>
+                                    <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                        <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Status}</div>
+                                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!li.Status}
+                                            <!--<i class="ci-hk-arrow-31 pull-right hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>-->
+                                        </div>
+                                    </div>
+                                    <div class="bs table-row col-xs-12 col-sm-1" style="padding:0px !important;">
+                                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                            <i class="ci-hk-arrow-31 pull-right hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </apex:repeat>
+                            <apex:outputPanel rendered="{!PolicyChangeList.size == 0 && pcSearched}">
+                                <div style="padding:20px;" class="bs col-sm-12 col-xs-12 text-center">
+                                    <i class="fa fa-smile-o cigna-fg-black" aria-hidden="true"></i> {!$Label.You_dont_have_any_pending_memo_record}
+                                </div>
+                            </apex:outputPanel>
+                            <!--pagination-->
+                            <div class="bs col-sm-12 col-xs-12 col-lg-12 col-md-12" style="{!IF(pcSearched, '', 'display:none;')}">
+                                <div style="padding:20px;" class="bs col-sm-6 col-sm-offset-3 col-xs-6 col-xs-offset-3 text-center">
+                                    <apex:outputPanel rendered="{!If(policyChangeHasPrev,true,false)}"><span class="fa fa-chevron-left onclick-pointer cigna-fg-orange-dark" style="padding-right:10px;" aria-hidden="true" onclick ="{!IF(policyChangeHasPrev, 'PendingMemoNS.policyChangePrevPage();','')}"/></apex:outputPanel>
+                                    <apex:outputText value="{!$Label.Pol_Page}">
+                                        <apex:param value="{!policyChangeCurrentPage }" /></apex:outputText>&nbsp;
+                                    <apex:outputText value="{!$Label.Pol_of}">
+                                        <apex:param value="{!policyChangeTotalPage }" /></apex:outputText>
+                                    <apex:outputPanel rendered="{!If(policyChangeHasNext,true,false)}"><span class="fa fa-chevron-right onclick-pointer cigna-fg-orange-dark" style="padding-left:10px;" aria-hidden="true" onclick ="{!IF(policyChangeHasNext, 'PendingMemoNS.policyChangeNextPage();', '')}" /></apex:outputPanel>
+                                </div>
+                            </div>
+                            <script>
+                            /**grey separator**/
+                            var srlist = document.getElementsByClassName("listcontent");
+                            var flip = 0;
+                            for (var i = 0; i < srlist.length; i++) {
+                                var item = srlist[i];
+                                if (flip == 0) {
+                                    item.style.backgroundColor = '#f2f2f2';
+                                    flip = 1;
+                                } else if ($(item).is(':first-child')) {
+                                    item.style.backgroundColor = '#f2f2f2';
+                                } else {
+                                    flip = 0;
+                                }
+                            }
+                            </script>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                </div>
+                <!--Claim List-->
+                <div id="brkClaimList" style="display:none;">
+                    <div class="bs col-sm-12 col-xs-12" style="padding: 20px 0px 20px 0px; ">
+                        <div class="bs col-sm-6 col-xs-12" style="padding-bottom:20px;">
+                            <apex:SelectList id="claimListSearchOption" size="1" value="{!SearchInputType}" styleClass="bs form-field-style-select cigna-fg-gray-dark" style="font-size:1em; height:35px;">
+                                <apex:selectOptions value="{!ClaimSearchCriteria}" />
+                            </apex:SelectList>
+                        </div>
+                        <div class="bs col-sm-6 col-xs-12">
+                            <apex:input id="claimListSearchValue" style="font-size:1em; height:35px; width:95%" styleClass="bs form-field-style cigna-fg-gray-dark" value="{!SearchInputText}" /><i class="fa fa-search cigna-fg-orange-dark text-center onclick-pointer" onclick="claimListSearchValidation()" style="width:5%" aria-hidden="true" />
+                        </div>
+                    </div>
+                    <div id="claimListErrorMessage" class="bs col-sm-12 col-xs-12 text-center" style="color:red;padding-bottom:20px;display:none;">
+                            {!$Label.Please_input_at_least_2_characters_to_search}
+                    </div>
+                    <apex:outputPanel id="brkClaimListPanel">
+                        <apex:outputPanel layout="block" id="claimListErrMsgBroker" rendered="{!showTooManyRecordErrorClaimList}">
+                        <div class="bs col-sm-12 col-xs-12 text-center" style="color: red; padding-bottom:20px;">
+                            {!errorMessageClaimList}
+                        </div>
+                        </apex:outputPanel>
+                        <div class="bs row listcontent-header hidden-xs" style="{!IF(clSearched, '', 'display:none;')}">
+                            <div class="bs col-sm-2">{!$Label.Policy_No}</div>
+                            <div class="bs col-sm-2">{!$Label.Insured_Person}</div>
+                            <!--<div class="bs col-sm-2">{!$Label.Pol_Product_Name}</div>-->
+                            <div class="bs col-sm-3">{!$Label.Claim_Claim_Type}</div>
+                            <div class="bs col-sm-2">{!$Label.Last_Updated_Date}</div>
+                            <div class="bs col-sm-2">{!$Label.Status}</div>
+                            <div class="bs col-sm-1"></div>
+                        </div>
+                        <apex:outputPanel id="brkClaimList">
+                            <apex:repeat value="{!ClaimList}" var="li" rows="{!claimPageSize}" first="{!claimStartIndex}">
+                                <div class="bs row listcontent onclick-pointer" onclick="Cigna.Util.navigateToVFP('PendingMemoVFP?requestId={!li.memoId}&category=cl{!IF(encryptedSearchCriteria!='','&'+URLParamName+'='+encryptedSearchCriteria,'')}', null, null, true)">
+                                    <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                        <div class="bs col-xs-12 col-sm-12 content-highlight table-cell">
+                                            {!li.PolicyNo}
+                                            <!--
+                                    <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                         <apex:param value="{!pc.PolicyChangeDate}"/>
+                                    </apex:outputText> 
+                                    -->
+                                        <i class="ci-hk-arrow-31 pull-right visible-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                        </div>
+                                    </div>
+                                    <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                        <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Insured_Person}</div>
+                                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!li.InsuredPerson}</div>
+                                    </div>
+                                    <!--<div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                        <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Pol_Product_Name}</div>
+                                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!li.ProductName}</div>
+                                    </div>-->
+                                    <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                        <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Claim_Claim_Type}</div>
+                                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!li.ClaimType}</div>
+                                    </div>
+                                    <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                        <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Last_Updated_Date}</div>
+                                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                            <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                                <apex:param value="{!li.LastUpdatedDate}" />
+                                            </apex:outputText>
+                                        </div>
+                                    </div>
+                                    <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                                        <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Status}</div>
+                                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">{!li.Status}
+                                            <!--<i class="ci-hk-arrow-31 pull-right hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>-->
+                                        </div>
+                                    </div>
+                                    <div class="bs table-row col-xs-12 col-sm-1" style="padding:0px !important;">
+                                        <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                            <i class="ci-hk-arrow-31 pull-right hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </apex:repeat>
+                            
+                            <apex:outputPanel rendered="{!ClaimList.size == 0 && clSearched}">
+                                <div style="padding:20px;" class="bs col-sm-12 col-xs-12 text-center">
+                                    <i class="fa fa-smile-o cigna-fg-black" aria-hidden="true"></i> {!$Label.You_dont_have_any_pending_memo_record}
+                                </div>
+                            </apex:outputPanel>
+                            
+                            <!--pagination-->
+                            <div class="bs col-sm-12 col-xs-12 col-lg-12 col-md-12" style="{!IF(clSearched, '', 'display:none;')}">
+                                <div style="padding:20px;" class="bs col-sm-6 col-sm-offset-3 col-xs-6 col-xs-offset-3 text-center">
+                                    <apex:outputPanel rendered="{!If(claimHasPrev,true,false)}"><span class="fa fa-chevron-left onclick-pointer cigna-fg-orange-dark" style="padding-right:10px;" aria-hidden="true" onclick ="{!IF(claimHasPrev, 'PendingMemoNS.claimPrevPage();','')}"/></apex:outputPanel>
+                                    <apex:outputText value="{!$Label.Pol_Page}">
+                                        <apex:param value="{!claimCurrentPage }" /></apex:outputText>&nbsp;
+                                    <apex:outputText value="{!$Label.Pol_of}">
+                                        <apex:param value="{!claimTotalPage }" /></apex:outputText>
+                                    <apex:outputPanel rendered="{!If(claimHasNext,true,false)}"><span class="fa fa-chevron-right onclick-pointer cigna-fg-orange-dark" style="padding-left:10px;" aria-hidden="true" onclick ="{!IF(claimHasNext, 'PendingMemoNS.claimNextPage();', '')}" /></apex:outputPanel>
+                                </div>
+                            </div>
+                            <script>
+                            /**grey separator**/
+                            var srlist = document.getElementsByClassName("listcontent");
+                            var flip = 0;
+                            for (var i = 0; i < srlist.length; i++) {
+                                var item = srlist[i];
+                                if (flip == 0) {
+                                    item.style.backgroundColor = '#f2f2f2';
+                                    flip = 1;
+                                } else if ($(item).is(':first-child')) {
+                                    item.style.backgroundColor = '#f2f2f2';
+                                } else {
+                                    flip = 0;
+                                }
+                            }
+                            
+                            </script>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                </div>
+            </div>
+            <!--pagination-->
+            <!--<div style="padding:20px;" class="bs col-sm-6 col-sm-offset-3 col-xs-6 col-xs-offset-3 text-center">
+            <apex:outputPanel rendered="{!If(hasPrev,true,false)}"><span class="ci-hk-arrow-29 cigna-fg-orange-dark" style="padding-right:10px;" aria-hidden="true"/></apex:outputPanel>
+                <apex:outputText value="{!$Label.pagination}">
+                   <apex:param value="{!currentPage}" />
+                   <apex:param value="{!totalPages}" />
+                </apex:outputText> 
+            <apex:outputPanel rendered="{!If(hasNext,true,false)}"><span class="ci-hk-arrow-31 cigna-fg-orange-dark" style="padding-left:10px;" aria-hidden="true"/></apex:outputPanel>
+       </div>-->
+        </apex:form>
+    </div>
+</apex:page>

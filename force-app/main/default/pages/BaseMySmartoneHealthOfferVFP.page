@@ -1,0 +1,399 @@
+<!--Please change apex page title-->
+<apex:page docType="html-5.0" sidebar="false" cache="false" showHeader="false" title="BaseMySmartoneHealthOfferVFP" controller="BaseMySmartoneHealthOfferCtrl">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+        <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <style>
+           @media (max-width: 768px) {
+                .emailLayerClass{
+                    text-align: left;
+                    padding:0px;
+                }
+                .edmBodyClass{
+                  padding-left:0px;
+                }
+           }
+            @media (min-width: 768px) {
+                .emailLayerClass{
+                    text-align: right;
+                }
+                .edmBodyClass{
+                  padding-top: 20px;
+                  padding-left:0px;
+                }
+           }
+           .fileWrapper {
+              font-size:14px;
+              font-weight: bold;
+              padding-left: 0px;
+              padding-right: 0px; 
+              vertical-align: middle;          
+              cursor:pointer;
+              -moz-box-shadow:1px 3px 8px #919191; 
+              -webkit-box-shadow:1px 3px 8px #919191; 
+              box-shadow:1px 3px 8px #919191;
+              display: table;
+            }
+            .fw-icon{
+                width:25%;
+                padding:0px;
+                margin:0px;
+                text-align:center;                           
+                padding:0px;
+                /*display: inline-block;*/
+                display: table-cell;
+                vertical-align: middle;
+                background-color: #9BC93B;
+            }
+            .txt-filename{
+                overflow:hidden !important;
+                text-overflow:ellipsis !important;
+                white-space:nowrap !important;
+                word-break:keep-all !important;
+            }
+            @media (max-width: 1170px) {
+              .fw-filename{
+                font-size: 12px;
+                width:75%;
+                padding:0px;
+                margin:0px;
+                text-align:center;
+                vertical-align:middle !important;
+                /*display: inline-block;*/
+                display: table-cell;
+                padding-left: 6px;
+                padding-right: 10px;
+              }
+            }
+           @media (min-width: 1171px) {
+                .fw-filename{
+                  font-size: 14px;
+                  width:75%;
+                  padding:0px;
+                  margin:0px;
+                  text-align:center;
+                  vertical-align:middle !important;
+                  /*display: inline-block;*/
+                  display: table-cell;
+                  padding-left: 6px;
+                  padding-right: 12px;
+                }
+            }
+            .bs .panel-heading{
+                background-color: transparent !important;
+                color: black !important;
+                border:none;
+                border-bottom: 1px solid #ddd;
+            }
+        </style>
+        <script>
+            function changeSection(section){
+                var icon = $(section).find('i');               
+                
+                console.log('##changeSection');
+                if(icon.hasClass("ci-hk-arrow-28")){
+                    console.log($(section));
+                    icon.removeClass("ci-hk-arrow-28").addClass("ci-hk-arrow-27");
+                }else if(icon.hasClass("ci-hk-arrow-27")){
+                    icon.removeClass("ci-hk-arrow-27").addClass("ci-hk-arrow-28");
+                }
+            }
+            function validateSendEmail(){
+                var errCount =0;
+                var sj = $("input[id*='inputSubject']").val();
+                var et = $("input[id*='inputEmail']").val();
+                var cc = $("input[id*='inputCC']").val();
+                if (sj.trim()==""){
+                        errCount++;
+                    $("#errEmptySubject").show();
+                    $("#errEmptySubject").text("Please input subject.");
+                }
+                if (et.trim()==""){
+                        errCount++;
+                    $("#errEmptyEmail").show();
+                    $("#errEmptyEmail").text("Please input email.");
+                }
+                else if (  !isValidEmail(et.trim()) ){
+                    errCount++;
+                    $("#errEmptyEmail").show();
+                    $("#errEmptyEmail").text("Invalid email.");
+                }
+                if ( cc.trim()!='' && !isValidEmail(cc.trim()) ){
+                    errCount++;
+                    $("#errCC").show();
+                    $("#errCC").text("Invalid email.");
+                }
+                
+                if (errCount==0)
+                    return true;
+                else 
+                    return false;
+            }
+            function emailSent(){
+                $('#btnShare').show();$('#emailLayer').hide();$('#emailSent').show();
+                $("#errEmptySubject").hide();
+                $("#errEmptyEmail").hide();
+            } 
+            function emailClose(){
+                $('#btnShare').show();$('#emailLayer').hide();$('#emailSent').hide();
+            }
+            function isValidEmail(str){ 
+              var regex = /^([0-9a-zA-Z]([-_\\.]*[0-9a-zA-Z]+)*)@([0-9a-zA-Z]([-_\\.]*[0-9a-zA-Z]+)*)[\\.]([a-zA-Z]{2,9})$/; 
+                 //  var regex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+              if(!regex.test(str)){ 
+                 return false;
+              }else{
+                  return true;
+                }
+            }
+            $(document).ready(function(){
+                MySmartone.getPolicyDocTypeList();
+            });
+            function refreshFileNameANDDownload(){
+              //alert ('called');
+              var wid = $(window).width();
+              $(".txt-filename").each(function(){  
+                
+                var v = $(this).text();    
+                
+                if (Cigna.ValidationUtil.isEnglishOnlyExtend(v)){                        
+                  if (wid<768){
+                    if (v.length> 22 ){
+                      $(this).text(v.substring(0,19)+'...');
+                    }
+                  }else if (wid>1170){
+                    if (v.length> 21 ){
+                      $(this).text(v.substring(0,18)+'...');
+                    }
+                  }else{
+                    if (v.length> 19 ){
+                      $(this).text(v.substring(0,16)+'...');
+                    }
+                  }   
+                }else{
+                  if (wid<768){
+                    if (v.length> 11 ){
+                      $(this).text(v.substring(0,10)+'...');
+                    }
+                  }else if (wid>1170){
+                    if (v.length> 12 ){
+                      $(this).text(v.substring(0,11)+'...');
+                    }
+                  }else{
+                    if (v.length> 11 ){
+                      $(this).text(v.substring(0,10)+'...');
+                    }
+                  }  
+                }                       
+              });             
+            }
+        </script>
+    </head>
+    <apex:define name="additionalLibraries">
+         <!--additional css, bootstrap, jquery,js libraries-->
+         <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/Chart.min.js')}"></script>
+    </apex:define>
+
+    <apex:form id="MySmartone-page">
+        <apex:actionFunction name="sendEMedicalCardEmail" action="{!sendEMedicalCardEmail}" namespace="MySmartone" reRender="MySmartone-page" status="loader-icon" oncomplete="emailSent()"/>
+        <apex:actionFunction name="getPolicyDocTypeList" action="{!getPolicyDocTypeList}" namespace="MySmartone" reRender="MySmartone-page" status="loader-icon" oncomplete="MySmartone.getEMedicalCardImages();"/>
+        <apex:actionFunction name="getEMedicalCardImages" action="{!getEMedicalCardImages}" namespace="MySmartone" reRender="MySmartone-page" status="loader-icon" />
+        
+        <apex:actionFunction action="{!downloadDocument}" 
+                name="downloadDocument" 
+                namespace="MySmartone" 
+                reRender="open-attachment-link-panel">
+                        <apex:param name="attID" value="" assignTo="{!selectedDowlAttId}"/>
+                        <apex:param name="attKey" value="" assignTo="{!selectedDowlAttKey}"/>
+        </apex:actionFunction>  
+        <div class="bs col-sm-12 col-xs-12" style="padding:30px">
+            <!--Nicole_SMT_20210506-->
+            <apex:outputPanel rendered="{!policyDocList.size == 0 || (curFrontUrl==null && curBackUrl==null)}">
+                  <div class="bs col-xs-12 col-sm-12" style="padding:15px;">
+                       {!transField['MySmartoneNoDocGe'][$Label.Header_Language_Code_Current]}
+                  </div>
+            </apex:outputPanel>
+                  
+            <div class="bs col-sm-12" style="padding:15px;">
+                <!--Linus_SMT_20210512-->
+                <div id="NewPolicyDocumentPanelHeader" class="bs col-sm-12 panel-heading onclick-pointer" style="padding:10px 0;" >
+                    <b style="color:#0066a6;">{!transField['MySmartoneWellnessCoupon'][$Label.Header_Language_Code_Current]}</b>
+                    <i aria-hidden="true" class="ci-hk-arrow-28 ci-hk-sm pull-right"></i>
+                </div>
+                
+                <div id="NewPolicyDocumentPanel">
+                    <apex:outputPanel rendered="{!policyDocList.size != 0}">
+                        <div class="bs col-xs-12 col-sm-12">
+                            <apex:variable var="tmpIdx" value="{!0}" />  
+                            <apex:repeat id="NewPolicyDocList" value="{!policyDocList}" var="myList">
+                                    <div class="col-xs-11 col-sm-3" style="padding:35px 5px;">
+                                        <div class="fileWrapper col-xs-12 col-sm-12 {!if(myList.isNew,'newFile','')}"  data-atk="{!myList.attachmentKey}" data-brkatt="{!indDocAttIDList[tmpIdx]}" >
+                                            <div class="fw-icon">
+                                                <img src="{!URLFOR($Resource.efulfillment, 'icon.png')}" style='width:100%'/>
+                                            </div>
+                                            <div class="fw-filename">
+                                                <span class='txt-filename'>{!myList.Description}</span>
+                                            </div>
+                                        </div>          
+                                    </div>
+                                    <div style="display:none;">
+                                       <a id="dlink_{!indDocAttIDList[tmpIdx]}" href="{!downloadSitePrefix}apex/ComFileDownLoadVFP?lang={!curLang}&attID={!indDocAttIDList[tmpIdx]}&attKey={!myList.attachmentKey}&pol={!JSINHTMLENCODE(policyNumberI)}&appName=CUSTOMER_PORTAL"  target="_blank">
+                                        </a>
+                                        <apex:variable var="tmpIdx" value="{!tmpIdx+1}" />  
+                                    </div>
+                            </apex:repeat>
+                            <script>
+                                //CR-56_Link_20220214
+                                refreshFileNameANDDownload();
+                                $(".fileWrapper").on("click",function(){       
+                                    var atk = $(this).data("atk");
+                                    var brkatt = $(this).data("brkatt");                  
+                                    var indid = "#dlink_"+ brkatt;
+                                    console.log('indid '+indid );
+                                    // 20230921 - minghua - PI-129 Vulnerability follow up request - Pentest (FND-61951) High
+                                    // Rancho_PI142_20231214 - fix user could not open doc in iPad/iPhone website
+                                    var hrefBack=$(indid).attr("href");
+                                    if (Cigna.Util.checkWebView()) {
+                                        var href=hrefBack.split("/apex/");
+                                        var param="/apex/"+href[1];
+                                        if (Cigna.Util.isIOS()) {
+                                            var openURL=openDownload(param);
+                                            $(indid).attr("href",openURL);
+                                        }else{
+                                            $(indid).removeAttr("target");
+                                            $(indid).attr("href","javascript:void(0);");
+                                            $(indid).attr("onclick",openDownload(param));
+                                        }
+                                    }
+
+                                    $(indid)[0].click();
+                                    if (Cigna.Util.checkWebView()) {
+                                        $(indid).attr("href",hrefBack);
+                                    }                  
+                                });
+                            </script>
+                        </div>
+                    </apex:outputPanel>
+                    
+                    <apex:outputPanel rendered="{!policyDocList.size == 0}">
+                        <div class="bs col-xs-12 col-sm-12" style="padding:15px;">
+                            {!transField['MySmartoneNoWellnessCoupon'][$Label.Header_Language_Code_Current]}
+                        </div>
+                    </apex:outputPanel>
+                </div>
+            </div>
+            
+            <div class="bs col-sm-12 col-xs-12" style="padding:15px;">
+                <!--Linus_SMT_20210512-->
+               <div id="NewEMedicalCardPanel" class="bs col-sm-12 panel-heading onclick-pointer" style="padding:10px 0;">
+                    <b style="color:#0066a6;">{!transField['MySmartoneEmedicalCard'][$Label.Header_Language_Code_Current]}</b>
+                    <i aria-hidden="true" class="ci-hk-arrow-28 ci-hk-sm pull-right"></i>
+                </div>
+                
+                <div id="NewEMedicalCard">
+                    <apex:outputPanel rendered="{!curFrontUrl!=null && curBackUrl!=null}">
+                        <div class="bs col-xs-12 col-sm-12" style="padding:35px 5px;">
+                            <!-- Rancho_SMT144_20220411 - add style -->
+                            <div class='bs col-xs-12 col-sm-5' style='padding-left:20px;padding-bottom:20px;display:inline-block;margin-right:20px;'>       
+                                <p>
+                                    <img id='eMedicalCard_webfront' style='width:100%;max-width:324px;max-height:200px;border: 1px solid grey;' src='{!curFrontUrl}'/>
+                                </p>  
+                                <p>
+                                    <img id='eMedicalCard_webback' style='width:100%;max-width:324px;max-height:200px;border: 1px solid grey;'   src='{!curBackUrl}'/>
+                                </p>
+                                <!-- Rancho_SMT144_20220411 - add TC link -->
+                                <apex:outputText value="{!outpatientDiscountTCLink}" escape="false" style="padding-top:10px;"/>
+                            </div>
+                            <!-- Autumn_20210518_SMT -->
+                            <div class='bs col-xs-12 col-sm-6' style="display:inline-block;">
+                                 <div class='bs col-sm-12 col-xs-12'>
+                                    <div style='display:inline;padding:0px' class='bs col-sm-3 col-xs-4'>
+                                        <!-- smt 85 Can't save e-medical card in mobile app -->
+                                        <!-- <a id='btnSave' style="text-align: center; width:100%;display:inline;margin-right:30px;" class="btn cigna-fg-white cigna-bg-orange-dark " href="/customer/CusEMedicalCardPDF?isPDF=1&front={!curFronturl}&back={!curBackurl}" target="_blank" >{!$Label.EMC_Card_Button_Save_Text_Web}</a> -->  
+                                        <a id='btnSave' style="text-align: center; width:100%;display:inline;margin-right:30px;" class="btn cigna-fg-white cigna-bg-orange-dark " href="{!downloadSitePrefix}apex/CusEMedicalCardPDF?isPDF=1&front={!curFronturl}&back={!curBackurl}" target="_blank" >{!$Label.EMC_Card_Button_Save_Text_Web}</a>
+                                    </div>
+                                    <div id="printShare_Web" style='display:inline;padding:0px' class='bs col-sm-3 col-xs-4'>
+                                       <!-- smt 85 Can't save e-medical card in mobile app -->
+                                      <!-- <a id='btnPrint' style="text-align: center; width:100%;display:inline;margin-right:30px;" class="btn cigna-fg-white cigna-bg-orange-dark " href="/customer/CusEMedicalCardPDF?front={!curFronturl}&back={!curBackurl}" target="_blank" >{!$Label.EMC_Card_Button_Print_Text_Web}</a> -->
+                                      <a id='btnPrint' style="text-align: center; width:100%;display:inline;margin-right:30px;" class="btn cigna-fg-white cigna-bg-orange-dark " href="{!downloadSitePrefix}apex/CusEMedicalCardPDF?front={!curFronturl}&back={!curBackurl}" target="_blank" >{!$Label.EMC_Card_Button_Print_Text_Web}</a>
+                                    </div>
+                                    <div id="printShare_Web" style='display:inline;padding:0px' class='bs col-sm-3 col-xs-4'>
+                                         <div id='btnShare' style="text-align: center; width:100%;display:inline;" class="btn cigna-fg-white cigna-bg-orange-dark " onclick="$('#btnShare').hide();$('#emailLayer').show();" >{!$Label.EMC_Card_Button_Share_Text_Web}</div>
+                                    </div>
+                                </div>
+                                <div class='bs col-xs-12 col-sm-12' id='emailLayer' style='display:none;vertical-align:middle;'>
+                                    <div class='col-xs-12 col-sm-12' style='padding-top: 20px;padding-left:0px;'>
+                                        <div class='col-sm-5 emailLayerClass'>
+                                            {!$Label.EMC_Card_Email_To}: 
+                                        </div>
+                                        <div class='col-sm-7' style='padding:0px;'>
+                                            <apex:input id="inputEmail" value="{!edmTo}" type="email" styleClass="bs form-control"/>
+                                            <label id="errEmptyEmail" style="color:red;display:none;"></label>
+                                        </div>
+                                    </div>
+                                    <div class='col-xs-12 col-sm-12' style='padding-top: 20px;padding-left:0px;'>
+                                        <div class='col-sm-5 emailLayerClass'>
+                                            {!$Label.EMC_Card_Email_CC}:
+                                        </div>
+                                        <div class='col-sm-7' style='padding:0px;'>
+                                            <apex:input id="inputCC" value="{!edmCC}" type="email" styleClass="bs form-control" />
+                                            <label id="errCC" style="color:red;display:none;"></label>
+                                        </div>
+                                    </div>
+                                    <div class='col-xs-12 col-sm-12'  style='padding-top: 20px;padding-left:0px;'>
+                                        <div class='col-xs-12 col-sm-5 emailLayerClass' >
+                                            {!$Label.EMC_Card_Email_Subject}:
+                                        </div>
+                                        <div class='col-xs-12 col-sm-7' style='padding:0px;'>
+                                            <apex:input id="inputSubject" value="{!edmSubject}" styleClass="bs form-control" />
+                                            
+                                            <label id="errEmptySubject" style="color:red;display:none;"></label>
+                                        </div>
+                                    </div>
+                                    <!-- start -->
+                                    <div class='col-sm-12 col-xs-12'  style='padding-top: 20px;padding-left:0px;'>
+                                        <div class='col-xs-12 col-sm-5 emailLayerClass ' >
+                                            {!$Label.EMC_Card_Email_Body}:
+                                        </div>
+                                    </div>
+                                    <div class='col-xs-12 col-sm-12 edmBodyClass'>
+                                            <!--SMT Tovid 20210813 update the font from 10px to 14px-->
+                                            <apex:inputTextarea id="inputBody" value="{!edmBody}"  styleClass="bs form-control" style="height:120px;font-size: 14px"/>
+                                            <label id="errBody" style="color:red;display:none;"></label>
+                                    </div>
+                                    <!-- end -->
+                                    <div class='bs col-xs-12 col-sm-12'  style='padding-top: 20px;text-align: center;'>
+                                        <div id='btnSendEmail' style="text-align: center; width:100%;display:inline;" class="bs btn cigna-fg-white cigna-bg-orange-dark" onclick="if (validateSendEmail()){MySmartone.sendEMedicalCardEmail();}" >{!$Label.EMC_Card_Button_Send_Email_Web}
+                                        </div>
+                                        <div class="bs btn cigna-fg-white cigna-bg-orange-dark" style="text-align: center; width:100%;display:inline;" onclick="emailClose()">
+                                            {!$Label.Close}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class='bs col-sm-12 col-xs-12 cigna-fg-blue-medium' id='emailSent' style='display:none;padding-top:20px;'>
+                                        {!$Label.EMC_Card_Email_Sent} 
+                                </div>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!curFrontUrl==null && curBackUrl==null}">                 
+                        <div class="bs col-xs-12 col-sm-12" style="padding:15px;">
+                            {!transField['MySmartoneNoEmedicalCard'][$Label.Header_Language_Code_Current]}
+                        </div>
+                    </apex:outputPanel>
+                </div>
+            </div>
+            <script>
+                //CR-56_Link_20220214
+                $("#NewPolicyDocumentPanelHeader").on("click",function() {
+                    $("#NewPolicyDocumentPanel").toggle(null, null, changeSection(this));
+                });
+                $("#NewEMedicalCardPanel").on("click",function() {
+                    $("#NewEMedicalCard").toggle(null, null, changeSection(this));
+                });             
+            </script>                
+        </div>
+    </apex:form>
+</apex:page>

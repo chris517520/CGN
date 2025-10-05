@@ -1,0 +1,144 @@
+<apex:page controller="UsefulFormCTRL" docType="html-5.0" sidebar="false" showHeader="false" title="Useful Forms">
+    <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+        <style>
+            @media screen and (max-width: 767px) and (min-width: 0px){
+                .data-list-content{
+                    display: none;
+                }
+            }
+            #container{
+                width: 100%;
+            }
+            .category{
+                border-bottom: 1px solid #ccc;
+                padding: 10px 0px;
+            }
+            .data-list{
+                padding: 3px 0px;
+                padding-top: 15px;
+            }
+            .data-list a{
+                color: #333435 !important;
+                text-decoration: none !important;
+                cursor: pointer;
+            }
+            .data-list a:hover{
+                text-decoration: none !important;
+            }
+            .category_toggle_btn{
+                float: right;
+            }
+            
+            .display_label{
+                display: inline;
+                margin: 0px 15px;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            }
+            #displayIframe{
+                border: none;
+                width: 5000px;
+                height: 10000px;
+                background: #ccc;
+            }
+            #iframeDIV{
+                display:none;
+                position: fixed;
+                top: 0px;
+                bottom: 0px;
+                right: 0px;
+                left: 0px;
+                zoom: 70%;
+                z-index:100001;
+                -webkit-overflow-scrolling: touch !important;
+                overflow: scroll !important;
+            }
+            .small_btn{
+                position: fixed;
+                top: 70px;
+                left: 25px;
+                font-size: 40px;
+                z-index: 100003;
+            }
+        </style>
+        
+        <script>
+            
+            $(document).ready(function(){
+                //CR-56_Link_20220214
+                $(".category-title").on("click",function(){
+                    var contentList = $(this).parents(".category:first").find(".data-list-content");
+                    
+                    if( contentList.css("display") == 'none' ){
+                        $(this).find(".category_toggle_btn").removeClass("ci-hk-arrow-28");
+                        $(this).find(".category_toggle_btn").addClass("ci-hk-arrow-27");
+                        contentList.slideDown();
+                    }else{
+                        $(this).find(".category_toggle_btn").removeClass("ci-hk-arrow-27");
+                        $(this).find(".category_toggle_btn").addClass("ci-hk-arrow-28");
+                        contentList.slideUp();
+                    }
+                });
+            });
+            
+            function closeIframe(){
+                $("#iframeDIV").hide();
+                $("#displayIframe").attr("src","");
+            }
+            
+        </script> 
+    </head>
+    
+    
+    <div id="container" class="bs container-fluid" >
+        
+        <!-- Useful Forms -->
+        <apex:repeat value="{!categorySeqence}" var="category">
+            <div class="bs row listcontent-header category">
+                <div class="bs category-title">
+                    <i class="fa ci-hk-lg ci-hk-arrow-28 category_toggle_btn" aria-hidden="true"></i>
+                    <label style="max-width: 95%;">{!category}</label>
+                </div>
+                <div class="data-list-content">
+                    <apex:repeat value="{! usefulFormMap[category] }" var="form" >
+                        <div class="bs data-list">
+                            <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!form.Attachment_Id__c}" target="_blank">
+                                <i class="fa fa-download content-icon" aria-hidden="true"></i> <div class="display_label">{!form.Display_Name__c}</div>
+                            </a>
+                            
+                            <!--<a id="download_btn_{!form.Attachment_Id__c}" download="{!URLFOR($Action.Attachment.Download, form.Attachment_Id__c)}">
+                                <i class="fa fa-download content-icon" aria-hidden="true"></i> <div class="display_label">{!form.Display_Name__c}</div>
+                            </a>
+                            
+                            <script>
+                                
+                                $( "#download_btn_{!form.Attachment_Id__c}" ).click(function() {
+                                    
+                                    if ( navigator.userAgent.indexOf("Salesforce1") != -1 || Cigna.Util.isIOS() ){
+                                        //sforce.one.navigateToURL("{!form.Attachment_Id__c}",false);
+                                        $("#displayIframe").attr("src","{!URLFOR($Action.Attachment.Download, form.Attachment_Id__c)}")
+                                        $("#iframeDIV").show();
+                                    }else{
+                                        window.open("{!URLFOR($Action.Attachment.Download, form.Attachment_Id__c)}", "_blank");
+                                    }
+                                });
+                                
+                            </script>-->
+                        </div>
+                    </apex:repeat>
+                </div>
+            </div>
+        </apex:repeat>
+        
+        <div id="iframeDIV">
+            <input type="button" value="< Back" class="small_btn" onclick="closeIframe();"/>
+            <div>
+            <iframe id="displayIframe" scrolling="yes" />
+            </div>
+        </div>
+        
+    </div>
+    
+</apex:page>

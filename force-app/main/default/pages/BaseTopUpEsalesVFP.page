@@ -1,0 +1,259 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" title="Get Protected" controller="TopUpEsalesCtrl">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />        
+    
+    <style>
+        @media (max-width: 767px) {
+            body {
+                padding-top: 50px;
+            }
+            
+            div#reallocationSpecialBoxESales {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 100px auto 0px auto;
+                width: 90%;
+                height: 80%;
+                background: #FFF;
+                color: #000;
+                left: 5%;
+                padding: 20px;
+                border-radius: 5px;
+             }
+        }
+        @media (min-width: 768px) {
+            body {
+                padding-top: 50px;
+                min-height: 1024px;
+            }
+            
+            div#reallocationSpecialBoxESales {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 150px auto 0px auto;
+                width: 80%;
+                height: 60%;
+                background: #FFF;
+                color: #000;
+                left: 10%;
+                padding:20px;
+                border-radius:5px;
+              }
+        }      
+        .bs .cigna-btn-desktop {
+                width: 30%;
+                //text-transform: uppercase;
+                font-family: "Gotham SSm A", "Gotham SSm B", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+                font-style: normal;
+                font-weight: 500;
+        }                  
+    </style>
+    <script type="text/javascript">
+            var __sfdcSessionId = '{!GETSESSIONID()}';
+            var filesToUpload = '';  
+            var uploadedFile = 0;
+    </script>
+    <script src="/soap/ajax/32.0/connection.js" type="text/javascript"></script>
+
+    <script type="text/javascript">        
+        
+       function showLoadingIcon(id){
+                    $('#' + id).show();
+       }
+        
+       function hideLoadingIcon(id){
+                    $('#' + id).hide();
+       }
+       
+       var Cigna = Cigna || {};
+            Cigna.ESales = function(){  
+            
+            function goHome() {
+                    var userAgent = window.navigator.userAgent.toLowerCase();
+                    var sf1withoutBrowser = /salesforce1/i.test( userAgent );
+                    
+                    var sitePrefix = "{!$Site.Prefix}";
+                    var url = "";
+    
+                    if (Cigna.Util.isCustomerPortal()) {
+                        url = sitePrefix + "/apex/CustomerLandingPage";
+                    } else {
+                        var currentUrl = window.location.href.substring(window.location.href.lastIndexOf('/'));
+                        if (currentUrl.toLowerCase().indexOf('/cus') == 0) {
+                            url = "/apex/CustomerLandingPage"; 
+                        } else {
+                            url = "/apex/CustomerLandingPage"; 
+                        } 
+                    }
+    
+                    if (Cigna.Util.isSalesforce1()) {
+                        if(sf1withoutBrowser){
+                            sforce.one.navigateToURL(url, true);
+                        } else {
+                            window.location.href = url;
+                        }    
+                    } else {
+                        window.location.href = url;
+                    }
+                }
+                        
+                function viewOtherPlans() {
+                     Cigna.Util.navigateToVFP("GetProtectedVFP", null, null, true);                    
+                }
+                
+                function returnToPreviousPage(){
+                            PreviouPage();
+                }
+            return {      
+                goHome : goHome,          
+                viewOtherPlans : viewOtherPlans,
+                returnToPreviousPage : returnToPreviousPage
+            }
+        }();  
+        
+        $(document).ready(function(){
+            var currentStep = $('#esales-current-step').val();
+            if(currentStep == '{!STEP_PAYMENT}'){
+                epayment();
+            }
+            
+            var successPay = $('input[type="hidden"][id$="esales-afterPay"]').val();
+            console.log('###successPay: ' + successPay);
+            if(successPay=='true'){
+                console.log('###begin: ' + successPay);
+                eSalesDoneAndCallWS();
+                $('input[type="hidden"][id$="esales-afterPay"]').val(false);
+                console.log('###afterpay: ' + $('input[type="hidden"][id$="esales-afterPay"]').val());
+            }
+        });              
+    </script>
+    </head>
+        
+    <apex:outputPanel id="wrapper">  
+        <apex:outputPanel id="errmessage">
+            <div class="bs row">
+                <apex:pagemessages ></apex:pagemessages>
+            </div>
+        </apex:outputPanel>
+      
+        <apex:form id="form">
+            <!--Action function-->
+            <apex:actionFunction action="{!epayment}" name="epayment" reRender="wrapper"/>
+            <apex:actionFunction action="{!returnToPreviouPage}" name="PreviouPage" reRender="wrapper"/>
+            <apex:actionFunction action="{!eSalesDoneAndCallWS}" name="eSalesDoneAndCallWS" reRender="wrapper,wrapperApp" status="loader-icon"/>
+            <input type="hidden" id="esales-current-step" value="{!currentStep}" />            
+            <input type="hidden" id="esales-txn-id" value="{!txn.Id}" />
+            <apex:inputHidden id="esales-afterPay" value="{!afterPay}" />            
+                                                                                
+            <apex:outputPanel id="payment-gateway-section" rendered="{!currentStep > STEP_PAYMENT && isCustomerPortal && paymentResult != 'Failed'}" styleClass="bs row" layout="block">
+                <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+                    <i class="fa fa-check-circle-o content-active cigna-fg-green-medium" style="font-size:50px;" aria-hidden="true"></i>
+                </div>
+                <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+                    <p>
+                        <apex:outputText value="{!transField['TopUpEsalesCtrl_PaymentConfirmation'][$Label.Header_Language_Code_Current]}" rendered="{!contains(transKey, "~TopUpEsalesCtrl_PaymentConfirmation~")}"/>
+                    </p>
+                </div>
+            </apex:outputPanel>
+            <apex:outputPanel id="payment-gateway-section2" rendered="{!currentStep > STEP_PAYMENT && paymentResult == 'Failed'}" styleClass="bs row" layout="block">
+                
+                <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+                    <i class="bs cigna-fg-red-alert fa fa-times-circle fg-lg" style="font-size:50px;" aria-hidden="true"></i>
+                </div>
+                <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+                    <!--changed by Stripe CR 
+                    <p>{!$Label.Payment_Failed}{!txn.Payment_PSPReference__c}{!$Label.Payment_Failed_2}</p>-->
+                    <p>{!$Label.Payment_Failed}{!txn.Payment_PSPReference__c}{!$Label.Payment_Failed_2}</p>
+                    <br/>
+                </div>
+                <br/>
+                <div id="action-bar-desktop" class="bs hidden-xs text-center bs col-sm-12" style="padding-bottom: 100px;">
+                    <a id="eSales-previous-btn-desktop"  class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" 
+                        role="button" onclick="Cigna.ESales.returnToPreviousPage();">
+                        {!$Label.Return_to_previous_page}
+                    </a> 
+                </div>
+                <apex:outputPanel rendered="{!isCustomerPortal}">
+                    <div id="action-bar" class="bs cigna-floating-bottom-panel visible-xs">
+                        <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                            <a id="eSales-previous-btn" class="action-btn cigna-fg-white" 
+                                role="button" onclick="Cigna.ESales.returnToPreviousPage();">
+                                <i class="ci-hk-arrow-29" aria-hidden="true"></i><br/>{!$Label.Return_to_previous_page} 
+                            </a>    
+                        </div>
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel>
+                                   
+            <!--payment process-->
+            <apex:outputPanel rendered="{!currentStep == STEP_PAYMENT && paymenturl != ''}" styleClass="bs row" layout="block">
+            
+                <apex:outputPanel styleClass="wrap-iframe-third-party">
+                    <script>
+                    
+                    //Quick fix for IPad, avoid duplicate event trigger -- Kenneth Wong
+                    var already_run = false;
+                    $(window).on("message onmessage", function(evt){
+                        var event = evt.originalEvent;
+                        console.log('event.source:' + event.source);
+                        if(!already_run){
+                            if (event.origin != null && event.origin.toLowerCase() == window.location.origin) {
+                                if(event.data == '{!txn.Id}'){
+                                    already_run = true;
+                                    Cigna.Util.navigateToVFP("TopUpESalesVFP?afterPay=true&tid=" + event.data, null, null, true);
+                                }
+                            }
+                        }
+                    });
+                    </script>
+                    <apex:iframe src="{!paymenturl}" height="1024px" scrolling="true" />
+                </apex:outputPanel>
+                
+            </apex:outputPanel>           
+        </apex:form>  
+                              
+        <div id="web-app-padding" class="bs row" style="padding-bottom: 50px;">
+            <div class="bs col-xs-12"></div>
+        </div>
+        <div id="mobile-app-padding" class="bs row" style="display: none; padding-bottom: 120px;">
+            <div class="bs col-xs-12"></div>
+        </div>
+        <script>
+             if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                 $('#mobile-app-padding').css('display', 'block');
+             }
+        </script>
+        
+        <apex:outputPanel rendered="{!currentStep > STEP_PAYMENT && paymentResult != 'Failed'}" styleClass="bs row" layout="block">
+            <div id="action-bar-desktop" class="bs hidden-xs text-center" style="text-align: center;">
+                <a id="eSales-view-plans-btn2" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" 
+                   role="button" onclick="Cigna.ESales.viewOtherPlans();">
+                    {!$Label.View_Other_Plans}
+                </a>
+                <a id="eSales-home-btn2" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" 
+                    role="button" onclick="Cigna.ESales.goHome();">
+                    {!$Label.Home}
+                </a>
+            </div>
+            <apex:outputPanel rendered="{!isCustomerPortal}">
+                <div id="action-bar" class="bs cigna-floating-bottom-panel visible-xs">
+                    <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                        <a id="eSales-view-plans-btn" href="javascript:void(0);" class="action-btn cigna-fg-white" role="button"
+                           onclick="Cigna.ESales.viewOtherPlans();">
+                           <i class="ci-hk-modify" aria-hidden="true"></i><br/>
+                            {!$Label.View_Other_Plans}
+                        </a>
+                        <a id="eSales-home-btn" href="javascript:void(0);" class="action-btn cigna-fg-white" role="button" 
+                           onclick="Cigna.ESales.goHome();">
+                           <i class="ci-hk-home" aria-hidden="true"></i><br/>
+                            {!$Label.Home}
+                        </a> 
+                    </div>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>        
+    </apex:outputPanel>
+</apex:page>

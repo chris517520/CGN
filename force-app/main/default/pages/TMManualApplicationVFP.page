@@ -1,0 +1,138 @@
+<!--
+  @description       : page for manual application
+  @author            : Jackshao@deloitte.com.cn
+  @group             : Jack, Tovid
+  @last modified on  : 08-16-2021
+  @last modified by  : Jackshao@deloitte.com.cn 
+  Modifications Log
+  Ver   Date         Author                     Modification
+  1.0   08-16-2021   Jackshao@deloitte.com.cn   Initial Version
+-->
+<apex:page standardController="Manual_Application__c" extensions="TMManualApplicationCtrl"  title="New Manual Application" tabStyle="Opportunity" docType="html-5.0" readOnly="false" action="{!DMLInit}">
+    <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap_ns.css')}" />
+ 
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap.min.js')}"></script>
+    <apex:include pageName="CignaUtilJS"/>
+    <apex:includeScript value="/support/console/33.0/integration.js"/>
+    <!-- <apex:detail title="true" /> -->
+    <apex:form >
+        <apex:actionStatus id="loader-icon">
+            <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+        
+                </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 48%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Please Wait...</span>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+
+        <!-- actionfunction  -->
+        <apex:actionFunction name="deleteCoupon" action="{!deleteCoupon}" reRender="couponPanel" status="loader-icon">
+            <apex:param value="" name="couponNumber" />
+        </apex:actionFunction>
+        <apex:actionFunction name="saveManualApplication" action="{!saveManualApplication}">
+        </apex:actionFunction>
+        <br/>
+        <!-- actionfunction -->
+        <apex:outputPanel id="errorMessage">
+            <apex:pagemessages />
+        </apex:outputPanel>
+        <apex:pageBlock title="{!title}" mode="detail" id="detail" >
+            <apex:pageBlockButtons location="both">
+                <apex:commandButton value="Complete" onclick="saveManualApplication();" rendered="{!isSave}" reRender="false"  status="loader-icon"/>
+                <!-- <apex:commandButton value="Delete" action="{!deleteManualApplication}" rendered="{!isDelete}" reRender="false" status="loader-icon"/> -->
+                <apex:commandButton value="Share" action="{!share}" rendered="{!isShare}" reRender="false"/>
+                <apex:commandButton value="Cancel" action="{!cancel}" reRender="false"/>
+            </apex:pageBlockButtons>
+            <!-- baisc info of manual application -->
+            <!-- <apex:pageblockSection collapsible="false" columns="2" >
+                <apex:outputField value="{!manualApplication.OwnerId}" />
+                <apex:inputField value="{!manualApplication.Opportunity__c}" />
+                <apex:inputField value="{!manualApplication.Total_Annual_Premium__c}" />
+                <apex:inputField value="{!manualApplication.Product__c}" />
+            </apex:pageblockSection> -->
+            <apex:pageBlockSection rendered="{! !viewMode}">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel >{!$ObjectType.Manual_Application__c.Fields.OwnerId.Label}</apex:outputLabel>
+                    <apex:outputField value="{!manualApplication.OwnerId}"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel >{!$ObjectType.Manual_Application__c.Fields.Policy_Number__c.Label}</apex:outputLabel>
+                    <apex:outputText value="{!policyNo}"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel >{!$ObjectType.Manual_Application__c.Fields.Opportunity__c.Label}</apex:outputLabel>
+                    <apex:inputField value="{!manualApplication.Opportunity__c}" required="true" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel >{!$ObjectType.Manual_Application__c.Fields.Total_Annual_Premium__c.Label}</apex:outputLabel>
+                    <apex:inputField value="{!manualApplication.Total_Annual_Premium__c}" required="true"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel >{!$ObjectType.Manual_Application__c.Fields.Product__c.Label}</apex:outputLabel>
+                    <apex:inputField value="{!manualApplication.Product__c}" required="true"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.Coupon__c.Fields.Coupon_Number__c.Label}:" for="coupon__number" />
+                    <apex:outputPanel >
+                        <apex:inputText value="{!newCouponNumber}" id="coupon__number" disabled="{! !enableCoupon}"/>
+                        <apex:commandButton disabled="{! !enableCoupon}" action="{!validateCoupon}" value="Add" reRender="couponPanel" status="loader-icon"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection rendered="{!viewMode}">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel >{!$ObjectType.Manual_Application__c.Fields.OwnerId.Label}</apex:outputLabel>
+                    <apex:outputField value="{!manualApplication.OwnerId}"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel >{!$ObjectType.Manual_Application__c.Fields.Policy_Number__c.Label}</apex:outputLabel>
+                    <apex:outputText value="{!policyNo}"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel >{!$ObjectType.Manual_Application__c.Fields.Opportunity__c.Label}</apex:outputLabel>
+                    <apex:outputField value="{!manualApplication.Opportunity__c}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel >{!$ObjectType.Manual_Application__c.Fields.Total_Annual_Premium__c.Label}</apex:outputLabel>
+                    <apex:outputField value="{!manualApplication.Total_Annual_Premium__c}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel >{!$ObjectType.Manual_Application__c.Fields.Product__c.Label}</apex:outputLabel>
+                    <apex:outputField value="{!manualApplication.Product__c}" />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <!-- baisc info of manual application -->
+
+            <!-- coupon panel -->
+            <apex:pageBlockSection collapsible="true" columns="1" id="couponPanel">
+                <!-- <apex:pageBlockSectionItem >
+                    <apex:outputPanel >
+                        <apex:outputLabel value="Coupon Number:" for="coupon__number" />
+                        <apex:inputText value="{!newCouponNumber}" id="coupon__number" disabled="{! !enableCoupon}"/>
+                        <apex:commandButton disabled="{! !enableCoupon}" action="{!addCoupon}" value="Add" reRender="couponPanel" status="loader-icon">
+                        </apex:commandButton>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem> --> 
+                <apex:pageMessage rendered="{!IF(couponMsg == '', false, true)}" summary="{!couponMsg}" severity="warning" strength="2"/>
+                <apex:pageBlockTable value="{!couponMap}" var="couponNumber">
+                    <apex:column >
+                        <apex:outputPanel rendered="{!isCouponDelete}">
+                            <a onclick="deleteCoupon('{!couponMap[couponNumber].sojectCoupon.coupon_number__c}')">Delete</a>
+                        </apex:outputPanel>
+                    </apex:column>
+                    <apex:column headerValue="{!$ObjectType.Coupon__c.Fields.Coupon_Number__c.Label}" value="{!couponMap[couponNumber].sojectCoupon.coupon_number__c}"></apex:column>
+                    <apex:column headerValue="{!$ObjectType.Coupon__c.Fields.Coupon_Amount__c.Label}" value="{!couponMap[couponNumber].sojectCoupon.coupon_amount__c}"></apex:column>
+                    <apex:column headerValue="{!$ObjectType.Coupon__c.Fields.Coupon_Status__c.Label}" value="{!couponMap[couponNumber].sojectCoupon.coupon_status__c}"></apex:column>
+                    <apex:column headerValue="{!$ObjectType.Coupon__c.Fields.Error_Message__c.Label}" value="{!couponMap[couponNumber].sojectCoupon.Error_Message__c}"></apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+            <!-- coupon panel -->
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

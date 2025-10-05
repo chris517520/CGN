@@ -1,0 +1,199 @@
+<apex:page standardController="Policy_Change_Request__c" extensions="ManagePolicyChangeCRTL" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+    
+        <style>
+            .form-toggle-tab {
+                padding: 10px;
+                border-bottom: 1px solid #f2f2f2;
+                font-weight: bold;
+            }
+            
+            .form-toggle-content {
+                padding: 10px 0px 10px 0px;
+            }
+            
+            .short-form-field{
+                width: 30% !important;
+                text-align: center;
+            }
+            
+            select{
+                width: 100%;
+            }
+            
+            ul{
+                margin: 2px 0;
+            }
+            
+            li{
+                margin: 5px 0;
+            }
+            
+        </style>
+    
+
+        <apex:define name="additionalLibraries">
+             <!--additional css, bootstrap, jquery,js libraries-->
+             <!-- CR-56_Link_20220214 -->
+		     <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+             <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+             <apex:outputPanel rendered="{!userLanguage == 'zh_TW'}" layout="none">
+                 <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+             </apex:outputPanel>
+        </apex:define>
+    </head>
+
+    <div class="bs">
+        <div class="bs container">
+            <apex:form id="change-beneficiary">
+            <!--Form Information-->
+                <div class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light">
+                    {!$Label.Change_Beneficiary} 
+                </div>
+                <div class="bs row">
+                    <div class="bs row listcontent-header hidden-xs">
+                       <div class="bs col-sm-3">{!$ObjectType.Policy_Change_Request_Detail__c.fields.English_Name__c.Label}</div>
+                       <div class="bs col-sm-3">{!$ObjectType.Policy_Change_Request_Detail__c.fields.HKID_Birth_Cert_Passport_No__c.Label}</div>
+                       <div class="bs col-sm-3">{!$ObjectType.Policy_Change_Request_Detail__c.fields.Relationship_with_Person_Insured__c.Label}</div>
+                       <div class="bs col-sm-2">{!$ObjectType.Policy_Change_Request_Detail__c.fields.Share__c.Label}<br/>{!$Label.Total_Percentage}</div>
+                       <div class="bs col-sm-1">&nbsp;</div>
+                    </div>
+                    <apex:variable value="{!0}" var="rowNum"/>
+                    <apex:repeat value="{!ListRequestDetail}" var="requestDetail">
+                        <div class="bs row listcontent">
+                            <div class="bs col-xs-offset-11 col-xs-1 visible-xs" >
+                                <span id="removeBeneficiary-btn" class="glyphicon glyphicon-minus-sign fa-lg onclick-pointer"  onclick="removeRowBeneficiary({!rowNum},'{!requestDetail.Id}')" style="{!IF(ListRequestDetail.size == 1, 'display:none;', 'display:block;')}"/>
+                            </div>
+                            <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                               <div class="bs col-xs-6 visible-xs table-cell">{!$ObjectType.Policy_Change_Request_Detail__c.fields.English_Name__c.Label}</div>
+                               <div class="bs col-xs-6 col-sm-12 table-cell"><apex:inputField id="Required-List-Name-in-EnglishStrict" value="{!requestDetail.English_Name__c}" styleclass="form-field-style" /></div>
+                            </div>
+                            <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                               <div class="bs col-xs-6 visible-xs table-cell">{!$ObjectType.Policy_Change_Request_Detail__c.fields.HKID_Birth_Cert_Passport_No__c.Label}</div>
+                               <div class="bs col-xs-6 col-sm-12 table-cell"><apex:inputField id="Required-List-HKID-Birth-Cert-Passport-No" value="{!requestDetail.HKID_Birth_Cert_Passport_No__c}" styleclass="form-field-style" /></div>
+                            </div>
+                            <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                               <div class="bs col-xs-6 visible-xs table-cell">{!$ObjectType.Policy_Change_Request_Detail__c.fields.Relationship_with_Person_Insured__c.Label}</div>
+                               <div class="bs col-xs-6 col-sm-12 table-cell"><apex:inputField id="Required-List-Relationship-with-Person-Insured" value="{!requestDetail.Relationship_with_Person_Insured__c}" styleclass="form-field-style" /></div>
+                            </div>
+                            <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">
+                               <div class="bs col-xs-6 visible-xs table-cell">{!$ObjectType.Policy_Change_Request_Detail__c.fields.Share__c.Label}</div>
+                               <div class="bs col-xs-6 col-sm-12 table-cell"><apex:inputField id="Required-Number-List-Share-Percentage" value="{!requestDetail.Share__c}" styleclass="form-field-style" /></div>
+                            </div>
+                            <div class="bs table-row col-xs-12 col-sm-1 hidden-xs" style="padding:0px !important;">
+                               <div class="bs col-sm-12 table-cell">
+                                   <span class="glyphicon glyphicon-minus-sign fa-lg onclick-pointer" onclick="removeRowBeneficiary({!rowNum},'{!requestDetail.Id}')" style="{!IF(ListRequestDetail.size == 1, 'display:none;', 'display:block;')}" />
+                               </div>
+                            </div>
+                        </div>
+                        <apex:variable value="{!rowNum + 1}" var="rowNum"/>
+                    </apex:repeat>
+
+                        <div id="Share-Total-errMsg" class="col-xs-offset-6 col-xs-6 col-sm-offset-8 col-sm-4 error" style="display:none; padding:10px;">
+                            {!$Label.ErrMsg_total_100}
+                        </div> 
+                        <div class="bs col-sm-offset-11 col-sm-1 col-xs-offset-11 col-xs-1">
+                            <span id="addBeneficiary-btn" class="glyphicon glyphicon-plus-sign fa-lg onclick-pointer" onclick="addRowBeneficiary()" style="{!IF(ListRequestDetail.size == 4, 'display:none;', 'display:block;')}"/>
+                        </div>
+                    
+                </div>
+                    
+                <!--<apex:actionFunction name="addRowBeneficiary" action="{!addRowBeneficiary}" rerender="change-beneficiary,mobileNextFixJS" />-->
+                <apex:actionFunction name="addRowBeneficiary" action="{!addRowBeneficiary}" rerender="change-beneficiary,mobileNextFixJS,BeneficiaryFormJs"/>
+                <!--<apex:actionFunction name="reFreshBeneficiaryFormJs" reRender="BeneficiaryFormJs" />-->
+                <apex:actionFunction name="removeRowBeneficiary" action="{!removeRowBeneficiary}" rerender="change-beneficiary,mobileNextFixJS,BeneficiaryFormJs" oncomplete="reFreshBeneficiaryFormJsRemoval()">
+                      <apex:param name="rowIndex" value="" assignTo="{!rowIndex}"/>
+                      <apex:param name="deleteReqDetailId" value="" assignTo="{!deleteReqDetailId}"/>
+                </apex:actionFunction>
+                <!--<apex:actionFunction name="reFreshBeneficiaryFormJsRemoval" reRender="BeneficiaryFormJs" />-->
+                <apex:actionFunction name="SavePolicyChange" action="{!SavePolicyChange}" status="loader-icon" rerender="false" oncomplete="refreshAttlist()"/>
+                <apex:actionFunction name="SaveAndQuit" action="{!SavePolicyChange}" status="loader-icon" oncomplete="Cigna.Util.navigateToVFP('PolicyChangeVFP');" rerender="false"/>
+                <apex:actionFunction name="skipAttSavePolicyChange" action="{!SavePolicyChange}" rerender="false" status="loader-icon" oncomplete="submitPolicyChange();"/>
+            </apex:form>
+          </div>
+        </div>
+          
+          <script>
+          
+                var Beneficiary = Beneficiary || {};
+                Beneficiary.Validate = function(){
+                    function initBenificiary(){
+                        if($("#removeBeneficiary-btn").is(":visible") == false){
+                            // CR-56_Link_20220214
+                            $("#addBeneficiary-btn").trigger("click");
+                        }
+                    }
+                
+                    function formValidation(){
+                        
+                                    $("input[id*='Required-']").each(function(idx, elem){
+                            //alert('no.: '+idx +' elem:'+$(elem).val());
+                            $(elem).rules("add", {
+                                required: true
+                            });
+                        });
+                       
+                        //CR-56_Link_20220214
+                        $("input[id*='Required-Number-List-Share-Percentage']").on("blur",function(){
+                            checkShareTotal();
+                        });
+                    }
+                    
+                    function checkShareTotal(){
+                        var shareTotal = 0;
+                        $("input[id*='List-Share-Percentage']").each(function(idx, elem){
+                            shareTotal+= parseInt($(elem).val());
+                        });
+                        
+                        if(shareTotal=='100'){
+                            $('#Share-Total-errMsg').hide();
+                            return true;
+                            
+                       }else{
+                           $('#Share-Total-errMsg').show();
+                            return false;
+                            
+                       }
+                    }
+                    
+                    return {
+                        initBenificiary : initBenificiary,
+                        formValidation : formValidation,
+                        checkShareTotal : checkShareTotal
+                    }
+                    
+                }();
+                
+                jQuery.validator.addMethod("englishStrict", function(value, element) {
+                            return this.optional(element) || Cigna.ValidationUtil.isEnglishOnlyStrict(value);
+                        }, "{!$Label.English_Only}");
+                        
+            </script>
+            
+
+    <apex:outputPanel id="BeneficiaryFormJs">
+            <script>
+            
+            $("form[id*='change-beneficiary']").validate();
+                        
+            $("input[id*='Number-']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    digits: true
+                });
+            });
+                        
+            $("input[id*='-EnglishStrict']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    englishStrict: true
+                });
+            });
+            
+
+  
+            </script>
+            
+    </apex:outputPanel> 
+
+</apex:page>

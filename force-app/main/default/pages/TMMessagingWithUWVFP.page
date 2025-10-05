@@ -1,0 +1,149 @@
+<apex:page docType="html-5.0" id="MessagingWithUnderwriters" title="Messaging With Underwriters" Controller="TMMessagingWithUWCtrl">
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <apex:includeScript value="/support/console/33.0/integration.js"/>
+    <style>
+        .labelCol{text-align:left !important }
+        .apexp .bPageBlock p{margin-bottom:1em}
+        .title{font-weight:600;padding:4px}
+    </style>
+    <script type="text/javascript">
+        function openCreateTab(){
+            if (sforce.console.isInConsole()) {
+                 sforce.console.getFocusedPrimaryTabId(function(result){
+                    if(result.success){
+                        debugger
+                       sforce.console.openSubtab(result.id, '/apex/TMCreateUWMessageVFP?trackingid=' + $(".trackingId").val(), true,
+                            'Message with underwriters', null, null, null);
+                    }
+                    else{
+                        console.log('/////////' + result);
+                    }
+                 });
+            } else {
+                window.open('/apex/TMCreateUWMessageVFP');
+            }
+        }
+    
+        function refreshTab(){
+            if (sforce.console.isInConsole()) {
+                sforce.console.getEnclosingTabId(function(result){
+                    sforce.console.refreshSubtabById(result.id, false);
+                });
+            }
+        } 
+        
+        function getDoc(){
+            var txnName = $('input[type="hidden"][id$="fileURL"]').val();
+            if(txnName != null && txnName != ''){
+                window.open(txnName);
+            }
+        }
+    
+     $(document).ready(function(){
+        LoadUWcomments();
+    });
+    </script>
+    <apex:form id="MessageList">
+        <apex:input value="{!TrackingId}" style="display:none" styleClass="trackingId" />
+        <apex:actionFunction name="LoadUWcomments" action="{!LoadUWcomments}" status="loader-icon" reRender="MessageList"/>
+        <apex:actionFunction action="{!downloadFile}" name="downloadFile" status="loader-icon" reRender="fileURL" oncomplete="getDoc();">
+            <apex:param name="selectedDocId" assignTo="{!selectedDocId}" value=""/>
+        </apex:actionFunction>
+        <apex:inputHidden id="fileURL" value="{!docURL}"/>
+        
+        <apex:actionStatus id="loader-icon">
+            <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                    &nbsp;
+                </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 10% 45%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <!-- Comment Detail -->
+        <p>
+            <b><apex:outputLabel value="{!$Label.TM_Messaging_with_Underwriters_Title}" style="font-size:18px;"/></b>
+        </p>       
+        <apex:pageBlock >
+            <apex:pageBlockSection columns="2" >
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel >{!$Label.TM_TMR_Agent_ID}</apex:outputLabel>
+                    <apex:outputLabel >{!wrapper.agentID}</apex:outputLabel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel />
+                    <apex:outputLabel />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection columns="2" >
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel >{!$Label.TM_Policy_Holder_Name}</apex:outputLabel>
+                    <apex:outputLabel >{!wrapper.policyHolderName}</apex:outputLabel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel >{!$Label.TM_Policy_Holder_SSN}</apex:outputLabel>
+                    <apex:outputLabel >{!wrapper.policyHolderID}</apex:outputLabel>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection columns="2" >
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel >{!$Label.TM_Policy_Number}</apex:outputLabel>
+                    <apex:outputLabel >{!wrapper.policyNumber}</apex:outputLabel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel >{!$Label.TM_Policy_Status}</apex:outputLabel>
+                    <apex:outputLabel >{!wrapper.requestStatus}</apex:outputLabel>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            
+            <apex:commandButton value="Create" onclick="openCreateTab()" style="margin-left:30%;margin-bottom:8px;margin-bottom:8px" oncomplete="refreshTab()" rendered="{!canCreateMessage}"></apex:commandButton>            
+            <apex:commandButton value="Refresh" onclick="refreshTab()" style="margin-left:5%;margin-bottom:8px;margin-bottom:8px" ></apex:commandButton>            
+
+            <apex:pageBlockTable id="comments" value="{!comments}" var="com">
+                 <apex:column headerValue="Date & Time">
+                    <apex:outputText value="{!com.createDate}">
+                    </apex:outputText>
+                </apex:column>  
+                
+                <apex:column styleClass="onclick-pointer block-header_link" style="text-decoration:underline" headerValue="Message">
+                    
+                    <apex:repeat value="{!com.contentList}" var="con">
+                        <apex:commandLink value="{!con}" reRender="attachments" action="{!showAttachments}">
+                            <apex:param name="showAttachment" value="{!com.messageID}" assignTo="{!messageID}" />
+                        </apex:commandLink>
+                        <br></br>
+                    </apex:repeat>
+                </apex:column>
+
+                <apex:column headerValue="{!$Label.TM_Commenter}" value="{!com.commenter}"/>    
+
+                <apex:column headerValue="{!$Label.TM_Comment_Seen}">
+                    <apex:outputPanel rendered="{!com.isSeen}">
+                        <img width="21" height="16" title="Checked" alt="Checked" src="/img/checkbox_checked.gif" />
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!!com.isSeen}">
+                        <img width="21" height="16" title="Checked" alt="Checked" src="/img/checkbox_unchecked.gif" />
+                    </apex:outputPanel>
+                </apex:column>
+
+            </apex:pageBlockTable> 
+            <br/>
+            <div class="title">Attachment</div>
+            <apex:pageBlockTable value="{!attachments}" var="a" id="attachments">
+                    <apex:column headerValue="Date & Time">
+                        <apex:outputLabel value="{!a.CreatedDate}" />
+                    </apex:column>
+                    <apex:column headerValue="Document Name">
+                        <a href="javascript:void(0);" onclick="downloadFile('{!a.documentId}');return false">{!a.fileName}</a>
+                    </apex:column>
+                </apex:pageBlockTable>
+        </apex:pageBlock>
+      
+                 
+    </apex:form>
+    
+</apex:page>

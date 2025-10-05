@@ -1,0 +1,117 @@
+<apex:page Controller="MyClaimSubmitController" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+    <div class="content-question">
+         {!$Label.Please_select_the_policy}
+    </div>
+    <!-- select policy unselect / select need to clear data -->
+    <apex:outputPanel id="relatedPolicyListByAccountPanel_brk" layout="inline">
+        <apex:outputPanel rendered="{!if(cList.size>0, true,false)}">
+            <apex:form >
+                <div class="content-choice-block">
+                    <div class="bs row listcontent-header hidden-xs">
+                        <div class="bs col-sm-4" style="word-wrap: break-word;" >{!$Label.Plans}</div>
+                        <div class="bs col-sm-4" style="word-wrap: break-word;" >{!$Label.Policy_No}</div>
+                        <div class="bs col-sm-4" style="word-wrap: break-word;" >{!$Label.Status}</div>
+                    </div>
+                    <apex:variable value="{!0}" var="rowNum"/>
+                    <apex:repeat value="{!wPolicyList_PI}" var="pItem">
+                        <!-- <div class="bs row listcontent content-multi-choice fg-grey" onclick="isSelectUSPolicy( {!pItem.isUSDPolicy}, 'selectPolicy{!rowNum}');  selectPolicyToShowBenefit('{!pItem.policyNum}', {!pItem.benefitTypeListStr}); "> no need to check broker for isGroupPolicy( {!!pItem.isIndividualPolicy}, 'selectPolicy{!rowNum}');  -->
+                        <!-- <div id="brkSelectPolicy{!rowNum}" class="bs row listcontent content-multi-choice fg-grey" onclick="isSelectPolicyLessThan6Months( {!pItem.isLessThan6Months}, '{!pItem.policyNum}'); isSelectPolicyLessThan2Yrs( {!pItem.isLessThan2Yrs}, '{!pItem.policyNum}'); isSelectPolicyLessThan3Yrs( {!pItem.isLessThan3Yrs}, '{!pItem.policyNum}');  isSelectUSPolicy( {!pItem.isUSDPolicy}, '{!pItem.policyNum}'); isSelectIndividualLifePolicy( {!pItem.isIndividualPolicy} && {!pItem.isLifePolicy}, '{!pItem.policyNum}'); selectPolicyToShowClaimType('{!pItem.policyNum}', {!pItem.claimTypeListStr}); selectPolicyToShowBenefit('{!pItem.policyNum}', {!pItem.benefitTypeListStr}); hideNextButtonsWhenChangePolicyBrk();" > -->
+                         <!-- IBM KOU Wonder Woman CR Start -->                            
+                             <!-- 
+                        <div id="brkSelectPolicy{!rowNum}" class="bs row listcontent content-multi-choice fg-grey" onclick="isSelectPolicyLessThan6Months( {!pItem.isLessThan6Months},  '{!pItem.policyNum}'); isSelectPolicyLessThan2Yrs( {!pItem.isLessThan2Yrs}, '{!pItem.policyNum}'); isSelectPolicyLessThan3Yrs( {!pItem.isLessThan3Yrs}, '{!pItem.policyNum}');  isSelectUSPolicy( {!pItem.isUSDPolicy}, '{!pItem.policyNum}'); isSelectIndividualLifePolicy( {!pItem.isIndividualPolicy} && {!pItem.isLifePolicy}, '{!pItem.policyNum}'); selectPolicyToShowBenefit('{!pItem.policyNum}', {!pItem.benefitTypeListStr}); hideNextButtonsWhenChangePolicyBrk();" >-->
+                             <div id="brkSelectPolicy{!rowNum}" class="bs row listcontent content-multi-choice fg-grey" onclick="isSelectPolicyLessThan6Months( {!pItem.isLessThan6Months}, '{!pItem.policyNum}'); isSelectPolicyLessThan1Yr( {!pItem.isLessThan1Yr}, '{!pItem.policyNum}'); isSelectPolicyLessThan2Yrs( {!pItem.isLessThan2Yrs}, '{!pItem.policyNum}'); isSelectPolicyLessThan3Yrs( {!pItem.isLessThan3Yrs}, '{!pItem.policyNum}');  isSelectUSPolicy( {!pItem.isUSDPolicy}, '{!pItem.policyNum}'); isSelectIndividualLifePolicy( {!pItem.isIndividualPolicy} && {!pItem.isLifePolicy}, '{!pItem.policyNum}'); selectPolicyToShowBenefit('{!pItem.policyNum}', {!pItem.benefitTypeListStr}); hideNextButtonsWhenChangePolicyBrk();" >
+                                <!-- IBM KOU Wonder Woman CR End -->
+                            <!-- mobile -->
+                            <div style="width:100%; float: left; ">
+                                <div class="bs col-xs-4 visible-xs" style="word-wrap: break-word;" >{!$Label.Plans}</div>
+                                <div class="bs col-xs-8 visible-xs content-highlight" style="word-wrap: break-word;" >{!pItem.name}</div>
+                            </div>
+                            <div style="width:100%; float: left; ">
+                                <div class="bs col-xs-4 visible-xs" style="word-wrap: break-word;" >{!$Label.Policy_No}</div>
+                                <div class="bs col-xs-8 visible-xs content-highlight" style="word-wrap: break-word;" >{!pItem.policyNum}</div>
+                            </div>
+                            <div style="width:100%; float: left; ">
+                                <div class="bs col-xs-4 visible-xs" style="word-wrap: break-word;" >{!$Label.Status}</div>
+                                <div class="bs col-xs-8 visible-xs content-highlight" style="word-wrap: break-word;" >{!pItem.status}</div>
+                            </div>
+                            <!-- web -->
+                            <div class="bs hidden-xs">
+                                <div class="bs col-sm-4 content-highlight" style="word-wrap: break-word;" >{!pItem.name}</div>
+                                <div class="bs col-sm-4 content-highlight" style="word-wrap: break-word;" >{!pItem.policyNum}</div>
+                                <div class="bs col-sm-4 content-highlight" style="word-wrap: break-word;" >{!pItem.status}</div>
+                            </div>
+                            <!-- hidden field -->
+                            <input type="hidden" name="param-str" value="{!pItem.policyNum}" />
+                        </div>
+                        <apex:outputPanel rendered="{!if((CONTAINS(cList[0].Policy__c, pItem.policyNum) && pItem.policyNum != null && pItem.policyNum != ''),'true','false')}">
+                            <script>
+                                //simulate click
+                                $( "#brkSelectPolicy{!rowNum}" ).removeClass('fg-grey').addClass('fg-orange');
+                                //end simulate click
+                            </script>
+                        </apex:outputPanel>
+                        
+                        <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                    </apex:repeat>
+                    
+                    <!-- next button -->
+                    <!-- mobile -->
+                    <div id="mobile-app-padding" class="bs row nextStepBtnPaddingIn2" style="display: none; padding-bottom: 100px;">
+                        <div class="bs col-xs-12"></div>
+                    </div>
+                    
+                    <div id="action-bar" class="bs hidden-sm hidden-md hidden-lg cigna-floating-bottom-panel nextStepBtnIn2" style="left:0px; display:none;" onclick="nextStep();">
+                        <div id="callAction1" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                            <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</a>
+                        </div>
+                    </div>
+                    
+                    <!-- web -->
+                    <div class="bs row hidden-xs nextStepBtnIn2" style="padding-top: 20px; padding-bottom: 20px; display:none;">
+                        <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3 "></div>
+                        <div id="callAction2" class="bs col-sm-6 col-md-6 col-xs-6 col-lg-6 onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn" onclick="nextStep();">
+                            {!$Label.Next}
+                        </div>
+                        <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3"></div>
+                    </div>
+                    
+                    <!-- save record data -->
+                    <apex:inputHidden value="{!cList[0].Policy__c}" id="hiddenValue_ClaimSelectPolicyForBrkVFP"/>
+                    <apex:actionFunction status="loader-icon" name="SaveRecordBrkPolicyAtAction" action="{!SavePolicyRecord}" reRender="hiddenValue_ClaimSelectPolicyForBrkVFP, bankAccBrkPanel, bankAccBrkNextBtnPanel, bankAccCusPanel, jSPanel" oncomplete="refreshBtnJS();" /> <!--  Zoe working in progress for performance tuning - reloadJsPanel(); -->
+                    <script>
+                        /** working **/
+                        function saveRecordBrkPolicy(){
+                            SaveRecordBrkPolicyAtAction();
+                        }
+                        
+                        function hideNextButtonsWhenChangePolicyBrk(){
+                            hideNextBtnIn(3);
+                        }
+                    </script>
+                    <!-- end save record data -->
+                    
+                    <div class="bs row listcontent content-display fg-grey" style="{!if(wPolicyList_PI.size <= 0, '', 'display:none;')}" >
+                        <div class="bs col-xs-12 col-sm-12 content-highlight" >
+                            {!$Label.You_don_t_have_any_record}
+                        </div>
+                    </div>
+                </div>
+                
+                <apex:outputPanel rendered="{!IF(wPolicyList_PI != null && wPolicyList_PI.size != 0, true, false)}">
+                    <script>
+                
+                        $("div[id*='brkSelectPolicy']").each(function(idx, elem){
+                            if ($(elem).hasClass('fg-orange')){
+                                displayNextBtnIn(2);
+                            }
+                        });
+                            
+                    </script>
+                </apex:outputPanel>
+            </apex:form>
+            
+        </apex:outputPanel>
+        
+        
+    </apex:outputPanel>
+</apex:page>

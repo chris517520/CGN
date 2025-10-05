@@ -1,0 +1,1710 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" title="Cigna Third Party Signature" controller="ThirdPartySignatureCtrl" action="{!checkExpiration}">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+
+        <style type="text/css">
+
+            .cigna-fg-gray-dark {
+                color: #58595B !important;
+            }
+            .bs .cigna-form-section-header {
+                background: #eee;
+                padding-top: 20px;
+                padding-bottom: 20px;
+                margin-bottom: 15px;
+            }
+            .subtitle {
+                color: #39B54A;
+            }
+            .myInput {
+                border: none;
+                outline: none;
+                display: inline;
+                width: auto;
+                padding-left: 0px;
+            }
+            .textInput {
+                text-align: left;
+            }
+            .common-style {
+                margin-bottom: 30px;
+            }
+            .myError {
+                display: none;
+                color: red;
+            }
+            .holder {
+                display: none;
+            }
+            .font-bold {
+                font-weight: bold;
+            }
+
+            .bs .cigna-question-wrapper > p {
+                background: #fff;
+            }
+            .bs .cigna-question-wrapper > p > label {
+                margin-left: 10px;
+                margin-top: 5px;
+                font-weight: normal;
+                padding: 5px;
+                width: 100%;
+            }
+            
+            .bs .cigna-answer-question-same-address > p {
+                background: #fff;
+            }
+            .bs .cigna-answer-question-same-address > p > label {
+                //margin-left: 0px;
+                margin-top: 5px;
+                font-weight: normal;
+                padding: 5px 0px 5px 0px;
+                width: 100%;
+            }
+
+            .bs .form-control:focus {
+                box-shadow: none !important;
+                border-bottom: 1px solid #eac048 !important;
+            }
+
+            .bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select, .bs span.form-control  {
+                border-top: 0 !important;
+                border-left: 0 !important;
+                border-right: 0 !important;
+                border-bottom: 1px solid #58595B !important;
+                background: transparent;
+                width: 100%;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                background-color:#FFF!important;
+                font-weight: normal;
+            }
+
+        </style>
+
+        <script type="text/javascript">
+            var __sfdcSessionId = '{!GETSESSIONID()}';
+            var filesToUpload = '';  
+            var uploadedFile = 0;
+        </script>
+        <script src="/soap/ajax/32.0/connection.js" type="text/javascript"></script>
+
+        <script>
+
+            function onRadioChange(evt) {
+                var val = $(this).val();
+                var parent = $(this).parent();
+                $(parent).siblings('input[type="hidden"]').val(val).trigger('change');
+                console.log('onRadioChange# ' + val);
+                
+                if ($('#payment-method-first-01').is(':checked')) {
+                    $('#firstPaymentCreditCard').show();
+                    $('#paymentAmountDiv').show();
+                } else {
+                    $('#firstPaymentCreditCard').hide();
+                }
+
+                if ($('#payment-method-first-02').is(':checked')) {
+                    $('#firstPaymentCheque').show();
+                    $('#paymentAmountDiv').show();
+                    /*
+                    $('#cheque-number').show();
+                    var isIE = /(MSIE|Trident\/|Edge\/)/i.test(navigator.userAgent); 
+                    if(isIE){
+                        var x = $(document).scrollLeft(), y = $(document).scrollTop();
+                        $('[id$=cheque-number]').focus().blur();                                        
+                        window.scrollTo(x, y);
+                    }
+                    */
+                } else {
+                    $('#firstPaymentCheque').hide();
+                    //$('#cheque-number').hide();
+                }
+                evt.preventDefault();
+            }
+            
+            function onCheckboxChange(evt) {
+                var val = $(this).is(':checked');
+
+                console.log('### val: ' + val);
+                if(this.id.indexOf('payment-method-subseq-01') == 0 && val == true){
+                    val = 'Credit Card';
+                    $("#payment-method-subseq-02").prop("checked", false);
+                    $('input[type="hidden"][id$="TPP-paramPaymentMethodSubseq"]').val('Credit Card');
+                }
+
+                if(this.id.indexOf('payment-method-subseq-02') == 0 && val == true){
+                    val = 'Savings';
+                    $("#payment-method-subseq-01").prop("checked", false);
+                    $('input[type="hidden"][id$="TPP-paramPaymentMethodSubseq"]').val('Savings');
+                    console.log('### saving: ' + val);
+                }
+
+                if ($('#payment-method-subseq-01').is(':checked')) {
+                    $('#subsequentPaymentCreditCard').show();
+                    $('#subsequentPaymentSavings').hide();
+                }else{
+                    $('#subsequentPaymentCreditCard').hide();
+                }
+
+                if ($('#payment-method-subseq-02').is(':checked')) {
+                    $('#subsequentPaymentCreditCard').hide();
+                    $('#subsequentPaymentSavings').show();
+                }else{
+                    $('#subsequentPaymentSavings').hide();
+                }
+
+
+                $(this).siblings('input[type="hidden"]').val(val).trigger('change');
+
+            }
+
+            function showLoadingIcon(id){
+                $('#' + id).show();
+            }
+    
+            function hideLoadingIcon(id){
+                $('#' + id).hide();
+            }
+
+            
+            function uploadFile(parentId, attType){
+                
+                var SessionId = '{!GETSESSIONID()}';
+                console.log('SessionId: ' + SessionId);
+                showLoadingIcon('snd-loading-phurl');
+
+                $('#errNoFile').hide();
+
+                $("#"+attType).each(function(){
+        
+                  filesToUpload=$(this)[0].files[0];
+                  
+                });
+
+                var reader = new FileReader();
+        
+                // Keep a reference to the File in the FileReader so it can be accessed in callbacks
+                reader.file = filesToUpload;
+        
+                reader.onload = function(e)
+                {
+                    var maxFileSize = 7340032;
+                    var passFileSize;
+                    var passFileType;
+                    
+                    if(this.file.size>maxFileSize){
+                        $("#errFileSize").show();
+                        passFileType = false;
+                    }else{
+                        passFileSize = 'true';
+                        $("#errFileSize").hide();
+                    }
+                
+                    if(this.file.type!='application/vnd.openxmlformats-officedocument.wordprocessingml.document' && this.file.type!='application/msword' && this.file.type!='application/pdf' && this.file.type!='image/png' && this.file.type!='image/jpeg' && this.file.type!='image/tiff'){
+                        $("#errFileType").show();
+                    }else{
+                        passFileType  = 'true';
+                        $("#errFileType").hide();
+                    }
+                    
+                    if(passFileType=='true' && passFileSize=='true' && parentId && parentId!=undefined){
+
+                        //uploadFileAtt(parentId, attType+'_'+this.file.name, this.file.type, binary);
+                        
+                        if(SessionId != null && SessionId != undefined && SessionId != 'NULL_SESSION_ID'){
+                            //var att = new sforce.SObject("Attachment");
+                            //att.Name = attType+'_'+this.file.name;
+                            //att.ContentType = this.file.type;
+                            //att.ParentId = parentId;
+            
+                            var binary = "";
+                            var bytes = new Uint8Array(e.target.result);
+                            var length = bytes.byteLength;
+            
+                            for (var i = 0; i < length; i++)
+                            {
+                                binary += String.fromCharCode(bytes[i]);
+                            }
+            
+                            //att.Body = (new sforce.Base64Binary(binary)).toString();
+                            
+                            var attachment_object = {
+                                parentId: parentId,
+                                Body: window.btoa(binary), 
+                                Name: attType+'_'+this.file.name, 
+                                ContentType: this.file.type 
+                            };
+
+                            $.ajax({
+                                url: '{!$Site.BaseUrl}/services/data/v45.0/sobjects/Attachment',
+                                data: JSON.stringify(attachment_object),
+                                type: 'POST',
+                                processData: false,
+                                contentType: false,
+                                headers: {'Authorization': 'Bearer {!GETSESSIONID()}', 'Content-Type': 'application/json'},
+                                xhr: function(){
+                                    var xhr = new window.XMLHttpRequest();
+                                    //Upload progress
+                                    xhr.upload.addEventListener("progress", function(evt){
+                                        if (evt.lengthComputable) {
+                                            var percentComplete = evt.loaded / evt.total;
+                                            //Do something with upload progress
+                                            // add by minghua 20190806 - to show the progress
+                                            // $('#showProgress').html('<span>Upload File Progress:'+percentComplete*100+'%</span>');
+                                            // $('#showProgress').show();
+                                            console.log("Percentage:"+percentComplete);
+                                        }
+                                    }, false);
+                                    return xhr;
+                                },
+                                success: function(response) {
+                                    console.log('success response:'+response);
+                                    hideLoadingIcon('snd-loading-phurl');
+                                    refreshAttlist();
+                                    //checkAtt();
+                                    if(attType!='auwAtt'){
+                                        $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                                    }
+                                },
+
+                                error: function(xhr, status, error) {
+                                    var errorMessage = xhr.status + ': ' + xhr.statusText
+                                    console.log('ERROR:'+ errorMessage);
+                                    alert(errorMessage );
+                                    hideLoadingIcon('snd-loading-phurl');
+                                }
+                            });
+
+                            /*
+                            sforce.connection.create([att],
+                            {
+                                onSuccess : function(result, source)
+                                {
+                                    if (result[0].getBoolean("success"))
+                                    {
+                                        console.log("new attachment created with id " + result[0].id);
+                                        hideLoadingIcon('snd-loading-phurl');
+                                        refreshAttlist();
+                                        //checkAtt();
+                                        if(attType!='auwAtt'){
+                                            $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                                        }
+                                        
+            
+                                    }
+                                    else
+                                    {
+                                        console.log("failed to create attachment " + result[0]);
+                                        //alert("failed to create attachment " + result[0]);
+                                        hideLoadingIcon('snd-loading-phurl');
+                                        
+                                    }
+                                },
+                                onFailure : function(error, source)
+                                {
+                                    console.log("an error has occurred " + error);
+                                    //alert("an error has occurred " + error);
+                                    hideLoadingIcon('snd-loading-phurl');
+                                }
+                            });
+                            */
+                        }else{
+                            //for guest user
+                            var binary = "";
+                            var bytes = new Uint8Array(e.target.result);
+                            var length = bytes.byteLength;
+            
+                            for (var i = 0; i < length; i++)
+                            {
+                                binary += String.fromCharCode(bytes[i]);
+                            }
+                            
+                            console.log('##test site guest user 1');
+                            
+                            //var b64encoded = btoa(String.fromCharCode.apply(null, bytes));
+                            //var b64encoded = btoa(Uint8ToString(bytes));
+                            var b64encoded = window.btoa(binary);
+
+                            uploadFileAtt(parentId, attType+'_'+this.file.name, this.file.type, b64encoded);
+
+                        }
+                        
+                        
+                    }else{
+                        hideLoadingIcon('snd-loading-phurl');
+                    }
+                };
+                
+                if(filesToUpload!='' || filesToUpload!='1'){
+                    reader.readAsArrayBuffer(filesToUpload);
+                    $("#errNoFile").hide();
+                }else{
+                    finishSubmission();
+                    $("#errNoFile").show();
+                }
+            } 
+
+            function Uint8ToString(u8a){
+                var CHUNK_SZ = 0x8000;
+                var c = [];
+                for (var i=0; i < u8a.length; i+=CHUNK_SZ) {
+                    c.push(String.fromCharCode.apply(null, u8a.subarray(i, i+CHUNK_SZ)));
+                }
+                return c.join("");
+            }
+            
+            function getCreditCardNo1(){
+                    
+                var num1 = $("form[id*='paymentFrm'] input[id$='paramCreditCardNum1']").val();
+                var num2 = $("form[id*='paymentFrm'] input[id$='paramCreditCardNum2']").val();
+                var num3 = $("form[id*='paymentFrm'] input[id$='paramCreditCardNum3']").val();
+                var num4 = $("form[id*='paymentFrm'] input[id$='paramCreditCardNum4']").val();
+                var creditCardNo1 = num1 + num2 + num3 + num4;
+
+                $("input[id*='Credit-Card-Number1']").val(creditCardNo1);
+                
+                $("form[id*='paymentFrm']").validate();
+                $("input[id*='Credit-Card-Number1']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        creditCard: function(element) {
+                                        return '{!paramCardNum}' != creditCardNo1;}
+                    });
+                });
+
+                if (creditCardNo1 == 16){
+                    //CR-56_Link_20220214
+                    $("input[id*='Credit-Card-Number1']").trigger("focus");
+                }
+            }
+
+            function getCreditCardNo(){
+                    
+                var num1 = $("form[id*='paymentFrm'] input[id$='creditCardNum1']").val();
+                var num2 = $("form[id*='paymentFrm'] input[id$='creditCardNum2']").val();
+                var num3 = $("form[id*='paymentFrm'] input[id$='creditCardNum3']").val();
+                var num4 = $("form[id*='paymentFrm'] input[id$='creditCardNum4']").val();
+                var creditCardNo = num1 + num2 + num3 + num4;
+                     
+                $("input[id*='Credit-Card-Number']").val(creditCardNo);
+                
+                $("form[id*='paymentFrm']").validate();
+                $("input[id*='Credit-Card-Number']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        creditCard: function(element) {
+                                        return '{!paramSubCardNum}' != creditCardNo;}
+                    });
+                });
+                
+                if (creditCardNo == 16){
+                    //CR-56_Link_20220214
+                    $("input[id*='Credit-Card-Number']").trigger("focus");
+                }
+            }
+
+            
+            $(document).ready(function(){
+                sforce.connection.serverUrl = "{!$Site.Prefix}/services/Soap/u/32.0";
+            });
+
+        </script>
+    </head>
+
+    <apex:define name="additionalLibraries">
+        <!-- CR-56_Link_20220214 -->
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+        <apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+            <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+        </apex:outputPanel>
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    </apex:define>
+
+
+    <div class="bs" id="mainPart">
+        <div class="bs form-group">
+            <div class="cigna-fg-gray-dark cigna-form-section-header" style="padding-left: 30px;">
+                <h4>{!$Label.E_Signature_Email}</h4>
+            </div>
+        </div>
+        <apex:outputPanel rendered="{! isLinkExpired}">
+            <div class="bs col-xs-12 form-horizontal">
+                Sorry but your link has expired.
+            </div>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{! !isLinkExpired && status == 'Saved'}" styleClass="bs row" layout="block">
+            <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+                <i class="fa fa-check-circle-o content-active cigna-fg-green-medium" style="font-size:50px;" aria-hidden="true"></i>
+            </div>
+            
+            <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+                <p>{!$Label.eSales_Acknowledgement_With_Third_Party_Payer}</p>
+            </div>
+
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{! !isLinkExpired && status != 'Saved'}">
+            <div class="bs form-group">
+                <div class="common-style">
+                    <strong style="display: inline;">
+                        {! payerName}
+                    </strong>
+                    <strong>
+                        {!$Label.third_party_payment_brief}
+                    </strong>
+                </div>
+
+                <div class="subtitle common-style">
+                    <h4>{!$Label.Policy_Details}</h4>
+                </div>
+
+                <div class="common-style">
+                    <div>
+                        <strong>{!$Label.TPP_Policy_Holder}: </strong>
+                        <span>{! policyholderfirstName}</span>
+                        <span>{! policyholderlastName}</span>
+                    </div>
+                    <div>
+                        <strong>{!$Label.Policy_Number}: </strong>
+                        <span>{! policyNumberPH}</span>
+                        <span>{! policyNumberPI}</span>
+                        <span>{! policyNumberC1}</span>
+                        <span>{! policyNumberC2}</span>
+                        <span>{! policyNumberC3}</span>
+                    </div>
+                    <div>
+                        <strong>{!$Label.Product}: </strong>
+                        <span>{! productName}</span>
+                    </div>
+                </div>
+
+                <div class="subtitle common-style">
+                    <h4>{!$Label.Details}</h4>
+                    <div onclick="onEditInfo()" style="display: inline;">
+                        <i aria-hidden="true" class="ci-hk-pencil" style="margin-left: 5px;"></i>
+                    </div>
+                </div>
+                <apex:form id="paymentFrm">
+
+                    <apex:actionFunction action="{!uploadFileAtt}" name="uploadFileAtt" reRender="uploadDocAtt" oncomplete="refreshAttlist();"> 
+                        <apex:param name="paramParentId" assignTo="{!attParentid}" value=""/>
+                        <apex:param name="fileName" assignTo="{!attfileName}" value=""/>
+                        <apex:param name="fileType" assignTo="{!attfileType}" value=""/>
+                        <apex:param name="attbinary" assignTo="{!attbinary}" value=""/>
+                    </apex:actionFunction>
+
+                    <apex:actionFunction name="refreshAttlist" rerender="uploadDocAtt" status="loader-icon"/>
+                    <apex:actionFunction name="removeAttachment" action="{!removeAtt}" rerender="uploadDocAtt" status="loader-icon">
+                        <apex:param name="id" value="" assignTo="{!removeAttId}" />
+                    </apex:actionFunction>
+
+                    <apex:outputPanel layout="block" styleClass="common-style">
+                        <div class="bs">
+                            <div id="firstPaymentDiv" class="bs col-xs-12 form-horizontal">
+                                <div class="bs form-group">
+                                    <p>{!$Label.Choose_the_payment_method_for_the_1st_payment} ({!IF(payMode=='Annually', $Label.Annually, $Label.Monthly)} - {!$Label.HKD} 
+                                    <apex:outputText value="{0, Number,#####0}">
+                                                <apex:param value="{!IF(payMode=='Annually',annuallyAmount,monthlyAmount)}"/>
+                                    </apex:outputText>{!IF(payMode=='Annually','',' x2')}):</p>
+
+                                </div>
+                                <div class="bs cigna-question-wrapper myInput">
+                                    <p>
+                                        <input type="radio" id="payment-method-first-01" value="Credit Card" name="payment-method-first" class="bs cigna-question-radio" />
+                                        <label for="payment-method-first-01">{!$Label.Credit_Card}</label>
+                                    </p>
+                                    <p>
+                                        <input type="radio" id="payment-method-first-02" value="Cheque" name="payment-method-first" class="bs cigna-question-radio" />
+                                        <label for="payment-method-first-02">{!$Label.Cheque}</label>
+                                    </p>
+                                    <!--<p id="cheque-number" style="background: #fff; display: none;">
+                                        <apex:inputText id="cheque-number" value="{!chequeNumber}" styleClass="bs form-control" 
+                                                        html-placeholder="{!$Label.eSales_Cheque_Number}"
+                                        />
+                                        <br/>
+                                        <apex:outputText style="padding-left: 0px;font-size: 0.8em;padding-top: 50px;">{!$Label.eSales_Cheque_Message_Life}</apex:outputText>
+                                    </p>-->
+                                    <apex:inputHidden value="{!firstpaymentMethod}" id="TPP-paramPaymentMethod"
+                                                      html-class="cigna-validation"
+                                                      html-data-msg-required="{!$Label.Error_Please_choose_a_payment_method}" />
+                                </div>
+                            </div>
+                            <div id="subsequentPaymentDiv" class="bs col-xs-12 form-horizontal">
+                                <div class="bs col-xs-12"><hr /></div>
+                                <div class="bs form-group">
+                                        
+                                    <p>{!$Label.Choose_the_payment_method_for_the_subsequent_payment} ({!IF(payMode=='Annually', $Label.Annually, $Label.Monthly)} - {!$Label.HKD} 
+                                    <apex:outputText value="{0, Number,#####0}">
+                                                <apex:param value="{!IF(payMode=='Annually',annuallyAmount,monthlyAmount)}"/>
+                                    </apex:outputText>):</p>
+
+                                </div>
+                                <div class="bs cigna-question-wrapper">
+                                    <p>
+                                        <input type="checkbox" id="payment-method-subseq-01" value="Credit Card" name="payment-method-subseq" class="bs cigna-question-checkbox" />
+                                        <label for="payment-method-subseq-01">{!$Label.Credit_Card}</label>
+                                    </p>
+                                    <p>
+                                        <input type="checkbox" id="payment-method-subseq-02" value="Savings" name="payment-method-subseq" class="bs cigna-question-checkbox" />
+                                        <label for="payment-method-subseq-02">{!$Label.Savings_Current_Account}</label>
+                                    </p>
+                                    <apex:inputHidden value="{!subsequentPaymentMethod}" id="TPP-paramPaymentMethodSubseq"
+                                                      html-class="cigna-validation"
+                                                      html-data-msg-required="{!$Label.Error_Please_choose_a_payment_method}" />
+                                </div>
+                                <hr />
+                            </div>
+
+                            <script>
+                                //CR-56_Link_20220214
+                                $('input.cigna-question-radio').on("change",onRadioChange);
+                                $('input.cigna-question-checkbox').on("change",onCheckboxChange);
+                                /*
+                                var firstMethod = $("input[id$='paramPaymentMethod']").val();
+                                if(firstMethod == 'Credit Card'){
+                                    $("#payment-method-first-01").prop("checked", true);
+                                    $("#payment-method-first-02").prop("checked", false);
+                                    $('#firstPaymentCreditCard').show();
+                                    $('#paymentAmountDiv').show();
+                                }else if(firstMethod == 'Cheque'){
+                                    $("#payment-method-first-01").prop("checked", false);
+                                    $("#payment-method-first-02").prop("checked", true);
+                                    $('#firstPaymentCheque').show();
+                                    $('#paymentAmountDiv').show();
+                                }
+
+                                var subseqMethod = $("input[id$='TPP-paramPaymentMethodSubseq']").val();
+                                if(subseqMethod == 'Credit Card'){
+                                    $("#payment-method-subseq-01").prop("checked", true);
+                                    $("#payment-method-subseq-02").prop("checked", false);
+                                    $('#subsequentPaymentCreditCard').show();
+                                    $('#subsequentPaymentSavings').hide();
+                                }else if(subseqMethod == 'Savings'){
+                                    $("#payment-method-subseq-01").prop("checked", false);
+                                    $("#payment-method-subseq-02").prop("checked", true);
+                                    $('#subsequentPaymentSavings').show();
+                                    $('#subsequentPaymentCreditCard').hide();
+                                }
+                                */                
+                            </script>
+                            
+                            <div id="firstPaymentCreditCard" class="bs col-xs-12 form-horizontal" style="display:none">
+                                <div class="bs form-group">
+                                    <p><strong>{!$Label.First_Payment}</strong></p>
+                                </div>
+
+                                <apex:outputPanel layout="block" styleClass="bs form-group" >
+                                    <div class="bs col-sm-3 col-xs-12">
+                                        <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.First_Pay_Credit_Card_Holder_Full_Name__c.Label}"/>
+                                    </div>
+                                    <div class="bs col-sm-9 col-xs-12">
+                                        <apex:inputText id="TPP-DDA-Credit-Card-Holder1" value="{!paramFirstPayFullName}" styleClass="bs form-control myInput" />
+                                    </div>
+                                </apex:outputPanel>
+                                <apex:outputPanel layout="block" styleClass="bs form-group">
+                                    <div class="bs col-sm-3 col-xs-12">
+                                        <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.First_Pay_Name_of_Card_Issuing_Bank__c.Label}"/>
+                                    </div>
+                                    <div class="bs col-sm-9 col-xs-12">
+                                        <apex:inputText id="TPP-DDA-Card-Issuing-Bank1" value="{!paramFirstPayBankName}" styleClass="bs form-control myInput" />
+                                    </div>
+                                </apex:outputPanel>
+                                <apex:outputPanel layout="block" styleClass="bs form-group">
+                                    <div class="bs col-sm-3 col-xs-12">
+                                        <apex:outputText value="{!$Label.Credit_Card_Number_VISA_MasterCard}" />
+                                    </div>
+
+                                    <div class="bs col-sm-9 col-xs-12">
+                                        <apex:input type="tel" value="{!paramCardNum1}" 
+                                                               html-maxlength="4" 
+                                                               styleClass="bs form-control text-center credit-card-box1 myInput"
+                                                               size="6"
+                                                               style="display: inline; width: auto;padding:3px;"
+                                                               id="paramCreditCardNum1"
+                                                               onblur="getCreditCardNo1();"
+                                        />
+                                        <span>-&nbsp;</span>
+                                        <apex:input type="tel" value="{!paramCardNum2}" 
+                                                               html-maxlength="4" 
+                                                               styleClass="bs form-control text-center credit-card-box1 myInput"
+                                                               size="6"
+                                                               style="display: inline; width: auto;padding:3px;"
+                                                               id="paramCreditCardNum2"
+                                                               onblur="getCreditCardNo1();"
+                                        />
+                                        <span>-&nbsp;</span>
+                                        <apex:input type="tel" value="{!paramCardNum3}" 
+                                                               html-maxlength="4" 
+                                                               styleClass="bs form-control text-center credit-card-box1 myInput"
+                                                               size="6"
+                                                               style="display: inline; width: auto;padding:3px;"
+                                                               id="paramCreditCardNum3"
+                                                               onblur="getCreditCardNo1();"
+                                        />
+                                        <span>-&nbsp;</span>
+                                        <apex:input type="tel" value="{!paramCardNum4}" 
+                                                               html-maxlength="4" 
+                                                               styleClass="bs form-control text-center credit-card-box1 myInput"
+                                                               size="6"
+                                                               style="display: inline; width: auto;padding:3px;"
+                                                               id="paramCreditCardNum4"
+                                                               onblur="getCreditCardNo1();"
+                                        />
+                                        
+                                    </div>
+                                     <script>
+                                       function hiddenonblur(element){
+                                            //CR-56_Link_20220214
+                                            $(element).trigger("blur");
+                                        }
+                                     </script>
+
+                                    <div class="bs col-sm-offset-3 col-sm-9 col-xs-12">
+                                        <apex:inputText id="Credit-Card-Number1" 
+                                                        style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none" 
+                                                        onfocus="hiddenonblur(this)" tabindex="-1"/>
+                                    </div>
+                                    
+                                    <script>
+                                        //CR-56_Link_20220214
+                                        $('input.credit-card-box1').on("keyup",function(evt) {
+                                            if (this.value.length == this.maxLength && evt.keyCode >= 48 && evt.keyCode <= 57) {
+                                                var $next = $(this).nextAll('.credit-card-box1');
+                                                if ($next.length > 0){
+                                                    $(this).nextAll('.credit-card-box1')[0].focus();
+                                                } else {
+                                                    //CR-56_Link_20220214
+                                                    $(this).trigger("blur");
+                                                }
+                                            } else if (this.value.length == 0 && evt.keyCode == 8) {
+                                                // Backspace
+                                                var $prev = $(this).prevAll('.credit-card-box1');
+                                                if ($prev.length > 0){
+                                                    $(this).prevAll('.credit-card-box1')[0].focus();
+                                                } else {
+                                                    //CR-56_Link_20220214
+                                                    $(this).trigger("blur");
+                                                }
+                                            }
+                                        });
+                                        
+                                    </script>
+                                </apex:outputPanel>
+                                <apex:outputPanel layout="block" styleClass="bs form-group">
+                                    <div class="bs col-sm-3 col-xs-12">
+                                        <apex:outputText value="{!$Label.Credit_Card_Expiry_Date_MM_YYYY}"/>
+                                    </div>
+                                    <div class="bs col-sm-9 col-xs-12">
+                                        <apex:inputText id="card-expiry-month1" value="{!paramExpriyMonth}" 
+                                                             maxlength="2" 
+                                                             html-placeholder="{!$Label.MM}"
+                                                             size="4"
+                                                             styleClass="bs form-control text-center credit-card-expiry myInput"
+                                                             style="display: inline; width: auto;"
+                                        />
+                                        <span>&nbsp;/&nbsp;</span>
+                                        <apex:inputText id="card-expiry-year1" value="{!paramExpiryYear}" 
+                                                         maxlength="4" 
+                                                         html-placeholder="{!$Label.YYYY}" 
+                                                         styleClass="bs form-control text-center credit-card-expiry myInput"
+                                                         size="6"
+                                                         style="display: inline; width: auto;"
+                                        />
+                                    </div>
+                                    <div class="bs col-sm-offset-3 col-sm-9 col-xs-12">
+                                        <apex:inputText id="Credit-Card-Expiry-Date1" 
+                                                        style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none" 
+                                                        onfocus="hiddenonblur(this)" tabindex="-1"/>
+                                    </div>
+
+                                    <script>
+                                        //CR-56_Link_20220214
+                                        $('input.credit-card-expiry').on("keyup",function(evt) {
+                                            if (this.value.length == this.maxLength && evt.keyCode >= 48 && evt.keyCode <= 57) {
+                                                var $next = $(this).nextAll('.credit-card-expiry');
+                                                if ($next.length > 0){
+                                                    $(this).nextAll('.credit-card-expiry')[0].focus();
+                                                } else {
+                                                    //CR-56_Link_20220214
+                                                    $(this).trigger("blur");
+                                                }
+                                            } else if (this.value.length == 0 && evt.keyCode == 8) {
+                                                // Backspace
+                                                var $prev = $(this).prevAll('.credit-card-expiry');
+                                                if ($prev.length > 0){
+                                                    $(this).prevAll('.credit-card-expiry')[0].focus();
+                                                } else {
+                                                    //CR-56_Link_20220214
+                                                    $(this).trigger("blur");
+                                                }
+                                            }
+                                        });
+                                    </script>
+                                </apex:outputPanel>
+
+
+                            </div>
+
+                            <div id="firstPaymentCheque" class="bs col-xs-12 form-horizontal" style="display:none;">
+                                <div class="bs form-group">
+                                    <p><strong>{!$Label.First_Payment}</strong></p>
+                                </div>
+                                <div class="bs form-horizontal">
+                                    <div class="bs col-sm-3 col-xs-12">
+                                        <span>{!$Label.Cheque_Number}:</span>
+                                    </div>
+                                    <div class="bs col-sm-9 col-xs-12">
+                                        <apex:inputText id="TPP-cheque-number" value="{!chequeNumber}" styleClass="bs form-control myInput" 
+                                                        html-placeholder="{!$Label.eSales_Cheque_Number}"
+                                        />
+                                        <br/>
+                                        <apex:outputText style="padding-left: 0px;font-size: 0.8em;padding-top: 50px;">
+                                            {!$Label.eSales_Cheque_Message_Life}
+                                        </apex:outputText>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="paymentAmountDiv" class="bs col-xs-12 form-horizontal" style="display: none">
+                                <apex:outputPanel layout="block" styleClass="bs form-group" >
+                                    <div class="bs col-sm-3 col-xs-12">
+                                        <apex:outputText value="{!$Label.Amount}"/>
+                                    </div>
+                                    <div class="bs col-sm-9 col-xs-12">
+                                        <apex:outputText id="paymentAmt" value="{!paymentAmount}" styleClass="bs form-control" />
+                                    </div>
+                                </apex:outputPanel>
+                            </div>
+
+                            <div id="subsequentPaymentCreditCard" class="bs col-xs-12 form-horizontal" style="display:none">
+                                <div class="bs form-group">
+                                    <br/>
+                                    <p><strong>{!$Label.Subsequent_Annual_Payment}</strong></p>
+                                </div>
+
+                                    <apex:outputPanel layout="block" styleClass="bs form-group" >
+                                        <div class="bs col-sm-3 col-xs-12">
+                                            <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Credit_Card_Holder_Full_Name__c.Label}"/>
+                                        </div>
+                                        <div class="bs col-sm-9 col-xs-12">
+                                            <apex:inputText id="TPP-DDA-Credit-Card-Holder" value="{!paramFullName}" styleClass="bs form-control myInput" />
+                                        </div>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="bs form-group">
+                                        <div class="bs col-sm-3 col-xs-12">
+                                            <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Name_of_Card_Issuing_Bank__c.Label}"/>
+                                        </div>
+                                        <div class="bs col-sm-9 col-xs-12">
+                                            <apex:inputText id="TPP-DDA-Card-Issuing-Bank" value="{!paramSubBankName}" styleClass="bs form-control myInput" />
+                                        </div>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="bs form-group">
+                                        <div class="bs col-sm-3 col-xs-12">
+                                            <apex:outputText value="{!$Label.Credit_Card_Number_VISA_MasterCard}" />
+                                        </div>
+
+                                        <div class="bs col-sm-9 col-xs-12">
+                                            <apex:input type="tel" value="{!paramSubCardNum1}" 
+                                                                   html-maxlength="4" 
+                                                                   styleClass="bs form-control text-center credit-card-box myInput"
+                                                                   size="6"
+                                                                   style="display: inline; width: auto;padding: 3px;"
+                                                                   id="creditCardNum1"
+                                                                   onblur="getCreditCardNo();"
+                                            />
+                                            <span>-&nbsp;</span>
+                                            <apex:input type="tel" value="{!paramSubCardNum2}" 
+                                                                   html-maxlength="4" 
+                                                                   styleClass="bs form-control text-center credit-card-box myInput"
+                                                                   size="6"
+                                                                   style="display: inline; width: auto;padding: 3px;"
+                                                                   id="creditCardNum2"
+                                                                   onblur="getCreditCardNo();"
+                                            />
+                                            <span>-&nbsp;</span>
+                                            <apex:input type="tel" value="{!paramSubCardNum3}" 
+                                                                   html-maxlength="4" 
+                                                                   styleClass="bs form-control text-center credit-card-box myInput"
+                                                                   size="6"
+                                                                   style="display: inline; width: auto;padding: 3px;"
+                                                                   id="creditCardNum3"
+                                                                   onblur="getCreditCardNo();"
+                                            />
+                                            <span>-&nbsp;</span>
+                                            <apex:input type="tel" value="{!paramSubCardNum4}" 
+                                                                   html-maxlength="4" 
+                                                                   styleClass="bs form-control text-center credit-card-box myInput"
+                                                                   size="6"
+                                                                   style="display: inline; width: auto;padding: 3px;"
+                                                                   id="creditCardNum4"
+                                                                   onblur="getCreditCardNo()"
+                                            />
+                                            
+                                        </div>
+                                         <script>
+                                           function hiddenonblur(element){
+                                                //CR-56_Link_20220214
+                                                $(element).trigger("blur");
+                                            }
+                                         </script>
+
+                                        <div class="bs col-sm-offset-3 col-sm-9 col-xs-12">
+                                            <apex:inputText id="Credit-Card-Number" 
+                                                            style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none" 
+                                                            onfocus="hiddenonblur(this)" tabindex="-1"/>
+                                        </div>
+                                        
+                                        <script>
+                                            //CR-56_Link_20220214
+                                            $('input.credit-card-box').on("keyup",function(evt) {
+                                                if (this.value.length == this.maxLength && evt.keyCode >= 48 && evt.keyCode <= 57) {
+                                                    var $next = $(this).nextAll('.credit-card-box');
+                                                    if ($next.length > 0){
+                                                        $(this).nextAll('.credit-card-box')[0].focus();
+                                                    } else {
+                                                       //CR-56_Link_20220214
+                                                       $(this).trigger("blur");
+                                                    }
+                                                } else if (this.value.length == 0 && evt.keyCode == 8) {
+                                                    // Backspace
+                                                    var $prev = $(this).prevAll('.credit-card-box');
+                                                    if ($prev.length > 0){
+                                                        $(this).prevAll('.credit-card-box')[0].focus();
+                                                    } else {
+                                                        //CR-56_Link_20220214
+                                                        $(this).trigger("blur");
+                                                    }
+                                                }
+                                            });
+                                            
+                                        </script>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="bs form-group">
+                                        <div class="bs col-sm-3 col-xs-12">
+                                            <apex:outputText value="{!$Label.Credit_Card_Expiry_Date_MM_YYYY}"/>
+                                        </div>
+                                        <div class="bs col-sm-9 col-xs-12">
+                                            <apex:inputText id="card-expiry-month" value="{!paramExpriyMonth2}" 
+                                                                 maxlength="2" 
+                                                                 html-placeholder="{!$Label.MM}"
+                                                                 size="4"
+                                                                 styleClass="bs form-control text-center credit-card-expiry myInput"
+                                                                 style="display: inline; width: auto;"
+                                            />
+                                            <span>&nbsp;/&nbsp;</span>
+                                            <apex:inputText id="card-expiry-year" value="{!paramExpiryYear2}" 
+                                                             maxlength="4" 
+                                                             html-placeholder="{!$Label.YYYY}" 
+                                                             styleClass="bs form-control text-center credit-card-expiry myInput"
+                                                             size="6"
+                                                             style="display: inline; width: auto;"
+                                            />
+                                        </div>
+                                        <div class="bs col-sm-offset-3 col-sm-9 col-xs-12">
+                                            <apex:inputText id="Credit-Card-Expiry-Date" 
+                                                            style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none" 
+                                                            onfocus="hiddenonblur(this)" tabindex="-1"/>
+                                        </div>
+
+                                        <script>
+                                            //CR-56_Link_20220214
+                                            $('input.credit-card-expiry').on("keyup",function(evt) {
+                                                if (this.value.length == this.maxLength && evt.keyCode >= 48 && evt.keyCode <= 57) {
+                                                    var $next = $(this).nextAll('.credit-card-expiry');
+                                                    if ($next.length > 0){
+                                                        $(this).nextAll('.credit-card-expiry')[0].focus();
+                                                    } else {
+                                                        //CR-56_Link_20220214
+                                                        $(this).trigger("blur");
+                                                    }
+                                                } else if (this.value.length == 0 && evt.keyCode == 8) {
+                                                    // Backspace
+                                                    var $prev = $(this).prevAll('.credit-card-expiry');
+                                                    if ($prev.length > 0){
+                                                        $(this).prevAll('.credit-card-expiry')[0].focus();
+                                                    } else {
+                                                        //CR-56_Link_20220214
+                                                        $(this).trigger("blur");
+                                                    }
+                                                }
+                                            });
+                                        </script>
+                                    </apex:outputPanel>
+
+                            </div>
+
+                            <div id="subsequentPaymentSavings" class="bs col-xs-12 form-horizontal" style="display:none;">
+                                <div class="bs form-group">
+                                    <br/>
+                                    <p><strong> {!$Label.Subsequent_Annual_Payment} </strong></p>
+                                </div>
+
+                                <apex:outputPanel id="firstHolder" layout="block" styleClass="bs form-group">
+                                    <div class="bs col-sm-3 col-xs-12">
+                                        <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Name_of_Account_Holder_in_English__c.Label}" />
+                                    </div>
+                                    <div class="bs col-sm-9 col-xs-12">
+                                        <apex:inputText id="TPP-DDA-Account-Holder-Name" value="{!firstHolder}" styleClass="bs form-control myInput" />
+                                    </div>
+                                </apex:outputPanel>
+                                <!--
+                                <div id="secondHolderDiv" style="display:none">
+                                    <apex:outputPanel id="secondHolder" layout="block" styleClass="bs form-group">
+                                        
+                                        <div class="bs col-sm-3" id="secondHolderLabel">
+                                            <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Credit_Card_Second_Holder_Full_Name__c.Label}" />
+                                        </div>
+                                        <div class="bs col-sm-9" id="secondHolderValue">
+                                            <apex:inputText id="DDA-Account-Holder-Name2" value="{!secondHolder}" styleClass="bs form-control" />
+                                        </div>
+                                        
+                                    </apex:outputPanel>
+                                </div>
+                                
+                                <div id="thirdHolderDiv" style="display:none">
+                                    <apex:outputPanel id="thirdHolder" layout="block" styleClass="bs form-group">
+                                        
+                                        <div class="bs col-sm-3" id="thirdHolderLabel">
+                                            <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Credit_Card_Third_Holder_Full_Name__c.Label}"/>
+                                        </div>
+                                        <div class="bs col-sm-9" id="thirdHolderValue">
+                                            <apex:inputText id="DDA-Account-Holder-Name3" value="{!thirdHolder}" styleClass="bs form-control" />
+                                        </div>
+                                    </apex:outputPanel>
+                                </div>
+                                -->
+                                <apex:outputPanel layout="block" styleClass="bs form-group">
+                                    <div class="bs col-sm-3 col-xs-12">
+                                        <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Bank_Name__c.Label}" />
+                                    </div>
+                                    <div class="bs col-sm-9 col-xs-12">
+                                        <apex:inputText id="TPP-DDA-Bank-Name" value="{!bankName}" styleClass="bs form-control myInput" />
+                                    </div>
+                                </apex:outputPanel>
+                                <apex:outputPanel layout="block" styleClass="bs form-group">
+                                    <div class="bs col-sm-3 col-xs-12">
+                                        <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Branch_Name__c.Label}" />
+                                    </div>
+                                    <div class="bs col-sm-9 col-xs-12">
+                                        <apex:inputText id="TPP-DDA-Branch-Name" value="{!branchName}" styleClass="bs form-control myInput" />
+                                    </div>
+                                </apex:outputPanel>
+                                <apex:outputPanel layout="block" styleClass="bs form-group">
+                                    <div class="bs col-sm-3 col-xs-12">
+                                        <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Bank_Account_No__c.Label}"/>
+                                    </div>
+                                    <div class="bs col-sm-9 col-xs-12">
+                                        <apex:input id="bank-code" type="tel" value="{!bankAccountNo1}" 
+                                                               html-maxlength="3" 
+                                                               styleClass="bs form-control text-center bank-acc-no myInput"
+                                                               size="4"
+                                                               style="display: inline; width: auto;"
+                                        />
+                                        <span>&nbsp;-&nbsp;</span>
+                                        <apex:input id="branch-code" type="tel" value="{!bankAccountNo2}" 
+                                                               html-maxlength="3" 
+                                                               styleClass="bs form-control text-center bank-acc-no myInput"
+                                                               size="4"
+                                                               style="display: inline; width: auto;"
+                                        />
+                                        <span>&nbsp;-&nbsp;</span>
+                                        <apex:input id="bank-account-code" type="tel" value="{!bankAccountNo3}" 
+                                                               html-maxlength="9" 
+                                                               styleClass="bs form-control text-center bank-acc-no myInput"
+                                                               size="10"
+                                                               style="display: inline; width: auto;"
+                                        />
+
+                                    </div>
+
+                                    <script>
+                                       function hiddenonblur(element){
+                                            //CR-56_Link_20220214
+                                            $(element).trigger("blur");
+                                        }
+                                    </script>
+                                    <div class="bs col-sm-offset-3 col-sm-9 col-xs-12">
+                                        <apex:inputText id="Bank-Account-Number" 
+                                                        style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none" 
+                                                        onfocus="hiddenonblur(this)" tabindex="-1"/>
+                                    </div>
+                                    
+                                    <script>
+                                        //CR-56_Link_20220214
+                                        $('input.bank-acc-no').on("keyup",function(evt) {
+                                            if (this.value.length == this.maxLength && evt.keyCode >= 48 && evt.keyCode <= 57) {
+                                                var $next = $(this).nextAll('.bank-acc-no');
+                                                if ($next.length > 0){
+                                                    $(this).nextAll('.bank-acc-no')[0].focus();
+                                                } else {
+                                                    //CR-56_Link_20220214
+                                                    $(this).trigger("blur");
+                                                }
+                                            } else if (this.value.length == 0 && evt.keyCode == 8) {
+                                                // Backspace
+                                                var $prev = $(this).prevAll('.bank-acc-no');
+                                                if ($prev.length > 0){
+                                                    $(this).prevAll('.bank-acc-no')[0].focus();
+                                                } else {
+                                                    //CR-56_Link_20220214
+                                                    $(this).trigger("blur");
+                                                }
+                                            }
+                                        });
+                                            
+                                    </script>
+
+                                </apex:outputPanel>
+                                <apex:outputPanel layout="block" styleClass="bs form-group">
+                                    <div class="bs col-sm-3 col-xs-12">
+                                        <apex:outputText value="{!$Label.Effective_Month_of_the_First_Debit}"/>
+                                    </div>
+                                    <div class="bs col-sm-9 col-xs-12">
+                                        <apex:selectList value="{!effectiveMonth}" multiselect="false" size="1" styleClass="bs form-control" disabled="true">
+                                            <apex:selectOptions value="{!CHItems}" rendered="{!$Label.User_Language == 'zh_tw'}"/>
+                                            <apex:selectOptions value="{!items}" rendered="{!$Label.User_Language == 'en'}"/>
+                                        </apex:selectList>
+                                    </div>
+                                </apex:outputPanel>
+
+                            </div>
+
+                        </div>
+                        <br/>
+                    </apex:outputPanel>
+
+                    <div class="bs form-group col-xs-12">
+                        <hr/>
+                        <strong>{!$Label.Third_Party_Payer_Information} </strong>
+                        <br/>
+
+                    </div>
+
+                    <!---questions for payer is individual start-->
+                    <apex:outputPanel id="PayerIsIndividual" layout="block" rendered="{!thirdPartyPayer=='Individual'}">
+
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputText value="{!$Label.Esales_Third_Party_Relationship}" />
+                            </div>
+                        
+                            <div class="bs col-xs-12">
+                                <apex:inputText value="{!thirdPartyRelationship}" id="ThirdParty-PayerRelationship" styleClass="bs form-control myInput"/>
+                            </div>
+                        </div>
+                        
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputLabel value="{!$Label.Esales_Third_Party_Payer_Information}"/>
+                            </div>
+                        </div>
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Third_Party_Payer_Full_Name__c.Label}"/>
+                            </div>
+                        
+                            <div class="bs col-xs-12">
+                                <apex:inputText value="{!payerName}" id="ThirdParty-PayerFullName" styleClass="bs form-control myInput"/>
+                            </div>
+                        </div>
+
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Third_Party_Payer_HKID__c.Label}"/>
+                            </div>
+                        
+                            <div class="bs col-xs-12">
+                                <apex:inputText value="{!thirdPartyHKID}" id="ThirdParty-PayerHKID" styleClass="bs form-control myInput"/>
+                            </div>
+                        </div>
+
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Third_Party_Payer_Contact_No__c.Label}" />
+                            </div>
+                        
+                            <div class="bs col-xs-12">
+                                <apex:inputText value="{!thirdPartyContactNo}" id="ThirdParty-ContactNo-Payer" styleClass="bs form-control myInput"/>
+
+                            </div>
+                        </div>
+
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Third_Party_Payer_Nationality__c.Label}"/>
+                            </div>
+                        
+                            <div class="bs col-xs-12">
+                                <!-- Rancho_IA_AML_Inspection_20211005: update nationality field to use ws list -->
+                                <!-- <apex:inputText value="{!thirdPartyNationality}" id="ThirdParty-PayerNationality" styleClass="bs form-control myInput"/> -->
+                                <apex:selectList id="ThirdParty-PayerNationality" value="{!thirdPartyNationality}" size="1" styleClass="bs form-field-style-select myInput">
+                                    <apex:selectOptions value="{!nationalityList}"/>
+                                </apex:selectList>
+                            </div>
+                        </div>
+
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Third_Party_Payer_Date_of_Birth__c.Label}"/>
+                            </div>
+                        
+                            <div class="bs col-xs-12">
+
+                                <apex:input id="Val-DOB-Day-Payer" type="tel" value="{!payerDOBDay}" 
+                                                       html-maxlength="2" 
+                                                       styleClass="bs form-control text-center dob-input dob-day question-kid-age myInput"
+                                                       size="5"
+                                                       style="display: inline; width: auto;"
+                                                       html-placeholder="{!$Label.DD}" 
+                                                       onblur="getCheckDOB('Payer day',this)"    
+                                />
+                                <apex:input id="Val-DOB-Month-Payer" type="tel" value="{!payerDOBMonth}" 
+                                                       html-maxlength="2" 
+                                                       styleClass="bs form-control text-center dob-input dob-month question-kid-age myInput"
+                                                       size="5"
+                                                       style="display: inline; width: auto;"
+                                                       html-placeholder="{!$Label.MM}"
+                                                       onblur="getCheckDOB('Payer month',this)"  
+                                />
+                                <apex:input id="Val-DOB-Year-Payer" type="tel" value="{!payerDOBYear}" 
+                                                       html-maxlength="4" 
+                                                       styleClass="bs form-control text-center dob-input dob-year question-kid-age myInput"
+                                                       size="7"
+                                                       style="display: inline; width: auto;"
+                                                       html-placeholder="{!$Label.YYYY}"
+                                                       onblur="getCheckDOB('Payer year',this)"
+                                />
+                               
+                            </div>
+                            <div class="bs col-xs-12" >
+                                <apex:inputText id="Payer-Day-DOB-Check" value="{!payerDOB}" Styleclass="hidden-input-field" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" onfocus="hiddenonblur(this)" />
+                                <apex:inputText id="Third-Party-DOB-Payer" style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none;" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                            </div> 
+
+                        </div>
+                        
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputText value="{!$Label.Esales_Third_Party_Residential_Address}"/>
+                            </div>
+                        
+                            <div class="bs col-xs-12">
+                                <apex:inputText value="{!payerAddress1}" id="ThirdParty-PayerResAddress1" styleClass="bs form-control myInput" 
+                                           html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Payer_Residential_Address_1__c.Label}"/>
+                                <apex:inputText value="{!payerAddress2}" id="PayerResAddress2" styleClass="bs form-control" 
+                                           html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Payer_Residential_Address_2__c.Label}"/>
+                                <apex:inputText value="{!payerAddress3}" id="PayerResAddress3" styleClass="bs form-control" 
+                                           html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Payer_Residential_Address_3__c.Label}"/>
+                                <apex:inputText value="{!payerAddress4}" id="PayerResAddress4" styleClass="bs form-control" 
+                                           html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Payer_Residential_Address_4__c.Label}"/>
+                            </div>
+                        </div>
+                        
+                    </apex:outputPanel>
+                    <!---questions for payer is individual end-->
+
+                    <!---questions for payer is company start-->
+                    <apex:outputPanel id="PayerIsCompany" layout="block" rendered="{!thirdPartyPayer=='Company Institute'}">
+
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputLabel value="{!$Label.Esales_Third_Party_Payer_Information}"/>
+                            </div>
+                        </div>
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Name_of_Company__c.Label}"/>
+                            </div>
+                        
+                            <div class="bs col-xs-12">
+                                <apex:inputText value="{!companyName}" id="ThirdParty-PayerCompanyName" styleClass="bs form-control myInput"/>
+                            </div>
+                        </div>
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Company_Contact_No__c.Label}"/>
+                            </div>
+                        
+                            <div class="bs col-xs-12">
+                                <apex:inputText value="{!companyContactNo}" id="ThirdParty-ContactNo-Company" styleClass="bs form-control myInput"/>
+                            </div>
+                        </div>
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputText value="{!$Label.Business_Registration_Incorporation_Number}"/>
+                            </div>
+                        
+                            <div class="bs col-xs-12">
+                                <apex:inputText value="{!companyincorporationNo}" id="ThirdParty-CompanyResNo" styleClass="bs form-control myInput"/>
+                            </div>
+                        </div>
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Date_of_Incorporation__c.Label}"/>
+                            </div>
+                        
+                            <div class="bs col-xs-12">
+
+                                <apex:input id="Val-DOI-Day" type="tel" value="{!companyDOIDay}" 
+                                                       html-maxlength="2" 
+                                                       styleClass="bs form-control text-center dob-input dob-day question-kid-age myInput"
+                                                       size="5"
+                                                       style="display: inline; width: auto;"
+                                                       html-placeholder="{!$Label.DD}" 
+                                                       onblur="getCheckDOB('com day',this)"    
+                                                                                              
+                                />
+                                <apex:input id="Val-DOI-Month" type="tel" value="{!companyDOIMonth}" 
+                                                       html-maxlength="2" 
+                                                       styleClass="bs form-control text-center dob-input dob-month question-kid-age myInput"
+                                                       size="5"
+                                                       style="display: inline; width: auto;"
+                                                       html-placeholder="{!$Label.MM}"
+                                                       onblur="getCheckDOB('com month',this)"  
+                                />
+                                <apex:input id="Val-DOI-Year" type="tel" value="{!companyDOIYear}" 
+                                                       html-maxlength="4" 
+                                                       styleClass="bs form-control text-center dob-input dob-year question-kid-age myInput"
+                                                       size="7"
+                                                       style="display: inline; width: auto;"
+                                                       html-placeholder="{!$Label.YYYY}"
+                                                       onblur="getCheckDOB('com year',this)"
+                                                       
+                                />
+                               
+                            </div>
+                            <div class="bs col-xs-12" >
+                                <apex:inputText id="Day-DOI-Check" value="{!companyDOI}" Styleclass="hidden-input-field" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" onfocus="hiddenonblur(this)" />
+                                <apex:inputText id="Third-Party-DOB-com" style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none;" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                            </div> 
+
+                        </div>
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Place_of_Incorporation__c.Label}"/>
+                            </div>
+                            <div class="bs col-xs-12">
+                                <apex:inputText value="{!companyplace}" id="ThirdParty-CompanyPlace" styleClass="bs form-control myInput"/>
+                            </div>
+                        </div>
+
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputText value="{!$Label.Esales_Third_Party_Registered_Office_Address}"/>
+                            </div>
+                        
+                            <div class="bs col-xs-12">
+                                <apex:inputText value="{!companyRegAdd1}" id="ThirdParty-CompanyAddress1" styleClass="bs form-control myInput" html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Registered_Office_Address_1__c.Label}"/>
+
+                                <apex:inputText value="{!companyRegAdd2}" id="ThirdParty-CompanyAddress2" styleClass="bs form-control myInput" html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Registered_Office_Address_2__c.Label}"/>
+
+                                <apex:inputText value="{!companyRegAdd3}" id="ThirdParty-CompanyAddress3" styleClass="bs form-control myInput" html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Registered_Office_Address_3__c.Label}"/>
+
+                                <apex:inputText value="{!companyRegAdd4}" id="ThirdParty-CompanyAddress4" styleClass="bs form-control myInput" html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Registered_Office_Address_4__c.Label}"/>
+                            </div>
+                            
+                        </div>
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputText value="{!$Label.Esales_Third_Party_Business_Address}"/>
+                            </div>
+                        
+                            <div class="bs col-xs-12">
+                                <apex:inputText value="{!companyBussAdd1}" id="ThirdParty-CompanyBusAddress1" styleClass="bs form-control myInput" html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Business_Address_1__c.Label}"/>
+
+                                <apex:inputText value="{!companyBussAdd2}" id="ThirdParty-CompanyBusAddress2" styleClass="bs form-control myInput" html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Business_Address_2__c.Label}"/>
+
+                                <apex:inputText value="{!companyBussAdd3}" id="ThirdParty-CompanyBusAddress3" styleClass="bs form-control myInput" html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Business_Address_3__c.Label}"/>
+
+                                <apex:inputText value="{!companyBussAdd4}" id="ThirdParty-CompanyBusAddress4" styleClass="bs form-control myInput" html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Business_Address_4__c.Label}"/>
+                            </div>
+                            
+                        </div>
+                        <br/>
+
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputText value="{!$Label.Name_of_person_acting_on_behalf_of_the_company_institution}"/>
+                            </div>
+                        
+                            <div class="bs col-xs-12">
+                                <apex:inputText value="{!companyPersonName}" id="ThirdParty-PersonOnBehalf" styleClass="bs form-control myInput"/>
+                            </div>
+                        </div>
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Person_HKID_Passport__c.Label}"/>
+                            </div>
+                            <div class="bs col-xs-12">
+                                <apex:inputText value="{!companyPersonHKID}" id="ThirdParty-PersonHKID" styleClass="bs form-control myInput"/>
+                            </div>
+                        </div>
+
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Designation__c.Label}"/>
+                            </div>
+                            <div class="bs col-xs-12">
+                                <apex:inputText value="{!companyDesignation}" id="ThirdParty-PersonDesignation" styleClass="bs form-control myInput"/>
+                            </div>
+                        </div>
+                        <div class="bs form-group">
+                            <div class="bs col-xs-12">
+                                <br/>
+                                <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Person_Contact_Number__c.Label}"/>
+                            </div>
+                            <div class="bs col-xs-12">
+                                <apex:inputText value="{!companyPersonContactNo}" id="ThirdParty-ContactNo-Person" styleClass="bs form-control myInput"/>
+                            </div>
+                        </div>
+
+                    </apex:outputPanel>
+                    <!---questions for payer is company end-->
+
+
+                    <apex:outputPanel id="uploadDocAtt" styleClass="bs row" layout="block">
+
+                        <div class="snd-loading-div">
+                            <span id="snd-loading-phurl" style="display: none;">
+                                <div class="bs col-xs-12 col-lg-12 loading-div">
+                                    <span class="loading-helper"></span>
+                                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                            </span>
+                        </div>
+
+                        <div class="bs col-xs-12 form-horizontal">
+                            <div class="bs" style="padding: 20px 0px;">
+                                <h4 class="bs cigna-fg-blue-medium">{!$Label.eSales_upload_attachments}</h4>
+                            </div>
+
+                            <div id="errFileSize" class="alert alert-danger" role="alert" style="display:none;">
+                                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                                {!$Label.File_size_exceeds_7M}
+                            </div>
+                            <div id="errFileType" class="alert alert-danger" role="alert" style="display:none;">
+                                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                                {!$Label.Please_upload_a_valid_file} (i.e. .docx/.doc/.pdf/.jpeg/.png/.tiff)
+                            </div>
+                            <div id="errNoFile" class="alert alert-danger" role="alert" style="display:none;">
+                                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                                {!$Label.ErrMasg_Upload_Att}
+                            </div>
+                            <div id="errUpdateAllFile" class="alert alert-danger" role="alert" style="display:none;">
+                                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                                {!$Label.eSales_uploadfile_required}
+                            </div>
+                            <div id="errUpdateCPDFile" class="alert alert-danger" role="alert" style="display:none;">
+                                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                                {!$Label.eSales_uploadfile_CPD_required}
+                            </div>
+
+                            <apex:outputPanel id="uploadatt">
+                                <script>
+                                    //CR-56_Link_20220214
+                                    $('[data-toggle="tooltip"]').tooltip();
+                                </script>
+                                
+                                <!--HKID Attachment-->
+                                <div class="bs row content-choice">
+                                    <div class="col-xs-2 col-sm-1">
+                                        <input id="PendingMemoAtt" type="file" class="fileInput cigna-validation" onchange="uploadFile('{!paramESalesId}','PendingMemoAtt');" style="display:none;"/>
+                                        <label for="PendingMemoAtt"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true"/></label>
+                                    </div>
+                                    <div class="col-xs-8 col-sm-10">{!$Label.eSales_id_copy}</div>
+                                    <div class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!$Label.Upload_Tooltip_7M}" aria-hidden="true"></i></div>
+                                    <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                                    <div style="padding:20px;">
+                                        <apex:outputPanel id="hkidlist">
+                                            <apex:repeat value="{!IDAttList}" var="idAtt">
+                                                <div att-type="PendingMemoAtt" class="col-xs-12 col-sm-12 uploaded-filelist">
+                                                {!idAtt.Name}
+                                                <i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!idAtt}');" aria-hidden="true"></i></div>
+                                                <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                                            </apex:repeat>
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+
+                            </apex:outputPanel>
+                        </div>
+
+                    </apex:outputPanel>
+
+                <apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}">
+                    <div id="showDeclaration" class="bs col-xs-12" style="padding-left: 0px;font-size: 0.8em;padding-top: 50px;font-weight: normal;">
+                        <strong>聲明書</strong><br/><br/>
+
+                        <p>本人(吾等)，作為保單持有人/申請人及第三者付款人，謹此共同及個別地作出以下聲明: </p>
+                        <p>(1) 有關此聲明書之作答及陳述，不論由本人(吾等)親筆書寫與否，據本人(吾等)所知及所信，均屬完整及屬實無訛；</p>
+                        <p>倘若以第三者付款方式繳付保費，應付保費已獲保單持有人/申請人的同意並且付款人純粹代表保單持有人/申請人繳付上述保單/投保申請之保費，而付款人就是項繳款並沒有獲委任何利益或合法權益亦沒有因作為第三者付款人而獲委任何利益或合法權益；</p>
+                        <p>(3) 用以繳付上述所列保單及/或投保申請之應付保費款項根據香港法例或任何其他司法管轄權之法例是從合法途徑獲得；及</p>
+                        <p>(4) 本人(吾等)同意信諾可根據其上述有關個人資料收集的聲明使用及/或披露本人(吾等)之個人資料。本人(吾等)確認已閱讀及明白此聲明之內容。</p>
+                    </div>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!$Label.User_Language == 'en'}">
+                    <div id="showDeclaration" class="bs col-xs-12" style="padding-left: 0px;font-size: 0.8em;padding-top: 50px;font-weight: normal;">
+                        <strong>Declaration</strong><br/><br/>
+
+                        <p>I(We), the Payor, hereby jointly and severally declare that:</p>
+                        <p>(1) the information given by me(us) in this declaration form, whether or not written by my(our) own hand, is true and accurate to the best of my(our) knowledge;</p>
+                        <p>where the payment is made by a third-party, the consent has been given by the Policyholder / Applicant to the third-party payment and such payment is being made by the Payer solely for and on behalf of the Policyholder / Applicant for payment of premium of the aforementioned policy / application number(s) stated and no interest and/or any legal right is vested or will be vested to the Payer as a result of such third-party payment made by the Payer;</p>
+                        <p>(3) the sums payable for the premium of the aforementioned policy(ies) and/or application(s) are from legitimate source(s) under the laws of Hong Kong or any other jurisdiction; and</p>
+                        <p>(4) I(we) agree that Cigna may use and/or disclose my(our) personal information in accordance with the above statement in relation to personal information collection and I(we) acknowledge that I(we) have read and understood the content thereof.</p>
+                    </div>
+                </apex:outputPanel>
+
+                    <apex:actionFunction action="{!saveSignature}" name="saveSignature" namespace="ServerESales" reRender="false" oncomplete="sendReply();">
+                        <apex:param name="imgDataParam" assignTo="{!imgData}" value=""/>
+                        <apex:param name="isInfoEditedParam" assignTo="{!isInfoEdited}" value="false"/>
+                        <apex:param name="effectiveMonthParam" assignTo="{!effectiveMonth}" value="false"/>
+                    </apex:actionFunction>
+                    
+                    <apex:actionFunction action="{!sendReply}" name="sendReply" reRender="false"/> 
+        
+                    <apex:outputPanel layout="block" styleClass="bs col-xs-12 col-sm-12 form-group">
+                        <c:eSignatureComp emailAddress="" 
+                                          displayPICS="false"
+                                          displayTC="false"
+                                          eSalesThirdParty="true"
+                                          isBroker="true"
+                        />
+                    </apex:outputPanel>
+                </apex:form>
+
+                    <script>
+                        var isEditable = true;
+                        nextStepSection('esignature-sign-div');
+                        $("#esignature-choice").hide();
+                        $(".cigna-answer-wrapper").hide();
+                        $("#signature-pad1").hide();
+                        $("#btnClearSignature1").hide();
+                        $("#thirdPartPayer-esignature-email-div").hide();
+                        $("#padTitle").html("{!$Label.TPP_confirm_and_agree}").css('font-weight', '900');
+                        init();
+
+                        jQuery.extend(jQuery.validator.messages, {
+                            required: "{!$Label.ESales_Required_Field_Error_Message}"
+                        });
+
+                        jQuery.validator.addMethod("creditCard", function(value, element) {
+                            return Cigna.ValidationUtil.isValidCreditCard(value);
+                        }, "{!$Label.Error_Message_Invalid_Credit_Card_No}");
+
+                        $("form[id*='paymentFrm']").validate({
+                            ignore: ':hidden:not(.cigna-validation)'
+                        });
+
+                        $("input[id*='TPP-']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                required : true
+                            });
+                        });
+
+                        $("input[id*='ThirdParty-']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                required : true
+                            });
+                        });
+
+                        function creditCardValidation(index) {
+                            var ccInput = $("#creditCard" + index + " input");
+                            var ccn = ccInput[0].value + ccInput[1].value + ccInput[2].value + ccInput[3].value;
+                            if (ccn.includes("*")) $("#CCNMaskError" + index).show();
+                            else if (!Cigna.ValidationUtil.isValidCreditCard(ccn)) $("#CCNError" + index).show();
+                        }
+
+                        function expiryDateValidation(index) {
+                            var edInput = $("#expiryDate" + index + " input");
+                            var month = edInput[0].value;
+                            var year = edInput[1].value;
+                            var current = new Date();
+                            if ((month + year).length != 6) $("#EDEmptyError" + index).show();
+                            if (isNaN(month + year)) $("#EDFormatError" + index).show();
+                            if (month < 0 || month > 12 || year < 1990 || year > 2999) $("#EDInvalidError" + index).show();
+                            if (year < current.getFullYear() || (year == current.getFullYear() && month <= current.getMonth() + 1)) $("#EDDateError" + index).show();
+                        }
+                        function bankAccountValidation() {
+                            var input = $("#bankAccountNo input");
+                            var acc = input[0].value + input[1].value + input[2].value
+                            if (acc.includes("*")) $("#AccMaskError").show();
+                            else if (isNaN(acc)) $("#AccError").show();
+                        }
+
+                        function validate() {
+                            $(".myError").hide();
+                            if (document.getElementById("creditCard1") != null) {
+                                creditCardValidation(1);
+                                expiryDateValidation(1);
+                            }
+                            if (document.getElementById("creditCard2") != null) {
+                                creditCardValidation(2);
+                                expiryDateValidation(2);
+                            }
+                            if (document.getElementById("bankAccountNo") != null) {
+                                bankAccountValidation();
+                            }
+
+                            var cnt = 0;
+                            $(".myError").each(function(index, element) {
+                                if (element.style.display != 'none') cnt++;
+                            })
+                            return cnt == 0;
+                        }
+
+                        function validateForm() {
+                            console.log('### validateForm ' + $("form[id*='paymentFrm']").validate().form())
+                            return $("form[id*='paymentFrm']").validate().form();
+                        }
+
+                        function init() {
+                            $(".myInput").attr("readonly", "true");
+                            $("#effectiveMonth").attr("disabled", "true");
+
+                            var firstMethod = $("input[id$='paramPaymentMethod']").val();
+                            if(firstMethod == 'Credit Card'){
+                                $("#payment-method-first-01").prop("checked", true);
+                                $("#payment-method-first-02").prop("checked", false);
+                                $('#firstPaymentCreditCard').show();
+                                $('#paymentAmountDiv').show();
+                            }else if(firstMethod == 'Cheque'){
+                                $("#payment-method-first-01").prop("checked", false);
+                                $("#payment-method-first-02").prop("checked", true);
+                                $('#firstPaymentCheque').show();
+                                $('#paymentAmountDiv').show();
+                            }
+
+                            var subseqMethod = $("input[id$='TPP-paramPaymentMethodSubseq']").val();
+                            if(subseqMethod == 'Credit Card'){
+                                $("#payment-method-subseq-01").prop("checked", true);
+                                $("#payment-method-subseq-02").prop("checked", false);
+                                $('#subsequentPaymentCreditCard').show();
+                                $('#subsequentPaymentSavings').hide();
+                            }else if(subseqMethod == 'Savings'){
+                                $("#payment-method-subseq-01").prop("checked", false);
+                                $("#payment-method-subseq-02").prop("checked", true);
+                                $('#subsequentPaymentSavings').show();
+                                $('#subsequentPaymentCreditCard').hide();
+                            }
+
+                            isEditable = false;
+                        }
+
+                        Cigna.ESignatureComp.saveSignature = function() {
+                            console.log('### isEditable: ' + isEditable + 'validateForm(): ' + validateForm() + 'validate(): ' + validate());
+                            //if (isEditable && !validateForm()){
+
+                            var paymodevalid = 1;
+                            if($('input[type="hidden"][id$="TPP-paramPaymentMethod"]').val()==''){
+                                console.log('###test TPP-paramPaymentMethod');
+                               //CR-56_Link_20220214
+                               $('input[type="hidden"][id$="TPP-paramPaymentMethod"]').trigger("focus");
+                                paymodevalid=0;
+                            }else{
+                                paymodevalid=1;;
+                            }
+                            if($('input[type="hidden"][id$="TPP-paramPaymentMethodSubseq"]').val()==''){
+                                console.log('###test TPP-paramPaymentMethodSubseq');
+                                //CR-56_Link_20220214
+                                $('input[type="hidden"][id$="TPP-paramPaymentMethodSubseq"]').trigger("focus");
+                                paymodevalid=0;
+                            }else{
+                                paymodevalid=1;;
+                            }
+
+                            if (!validateForm() && !paymodevalid){
+                                console.log('### test: ');
+                                //CR-56_Link_20220214
+                                $("html,body").animate({ scrollTop: ($("form[id*='paymentFrm']")).find(":input.error:first").offset().top - $(window).height()/2},"slow",function(){($("form[id*='paymentFrm']")).find(":input.error:first").trigger("focus");} );
+
+                                return;
+                            }
+
+                            var signature3Image = '';
+                            if (Cigna.ESignatureComp.isEmptyCanvas(3)) {
+                                $("#errEmptySignature3").show();
+                                return;
+                            } else {
+                                $("#errEmptySignature3").hide();
+                            }
+                            signature3Image = Cigna.ESignatureComp.getSignatureImage(3);
+
+                            ServerESales.saveSignature(signature3Image, isEditable, $("select").val());
+
+                            $("html, body").animate({ scrollTop: 0 }, "fast");
+
+
+                            $("#mainPart").hide();
+                            $("#success").show();
+                        }
+
+                        function onEditInfo() {
+                            $(".myInput").removeAttr("readonly");
+                            $("select").removeAttr('disabled');
+                            //CR-56_Link_20220214
+                            $(".myInput").eq(0).trigger("focus");
+                            isEditable = true;
+                        }
+
+                    </script>
+                
+            </div>
+        </apex:outputPanel>
+    </div>
+    <div id="success" class="bs col-xs-12 form-horizontal" style="display: none;">
+        <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+            <i class="fa fa-check-circle-o content-active cigna-fg-green-medium" style="font-size:50px;" aria-hidden="true"></i>
+        </div>
+        
+        <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+            <p>{!$Label.eSales_Acknowledgement_With_Third_Party_Payer}</p>
+        </div>
+    </div>
+    <!-- Link_IA_AML_Inspection_20220119 -->
+    <script>
+        function checkNationality(value){
+            var codeList = {!isSanctionCodeListNa};
+            var count = 0;
+            console.log("value:"+value);
+            console.log("codeList:"+codeList);
+            codeList.forEach((data)=>{
+                if(value == data.toString()){
+                    count++;
+                }
+            });
+            if(count>0){
+                return false;
+            }
+            return true;
+        }
+        
+        jQuery.validator.addMethod("validateNationality", function(value, element) {
+            return checkNationality(value);
+        }, "{!$Label.Sanctioned_Jurisdiction_Message_Nationality}");
+        
+        $("[id*='ThirdParty-PayerNationality']").each(function(idx, elem){
+            $(elem).rules("add", {
+                validateNationality:true
+            });
+        });
+    </script>
+</apex:page>

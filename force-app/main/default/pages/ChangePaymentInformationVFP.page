@@ -1,0 +1,1307 @@
+<apex:page standardController="Policy_Change_Request__c" extensions="ManagePolicyChangeCRTL" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+    <style>
+        .form-toggle-tab {
+            padding: 10px;
+            border-bottom: 1px solid #f2f2f2;
+            font-weight: bold;
+        }
+        
+        .form-content {
+            padding: 10px;
+        }
+        
+        .form-addremove-btn{
+            
+            right:5px;
+        }
+        
+        ul li, ol li {
+            margin-left: 0;
+        }
+        
+    </style>
+    
+    <div class="bs">
+        <div id="form-container" class="bs container">
+            <apex:form id="change-payment-info">
+                <div class="bs row form-field col-sm-12 col-xs-12">
+                    {!$Label.What_do_you_want_to_change}
+                </div>
+                <div class="bs row form-field">
+                    <div class="bs col-sm-3 col-xs-12">
+                        {!$ObjectType.Policy_Change_Request__c.fields.Change_of_Premium_Paying_Frequency__c.Label}
+                    </div>
+                    <div class="bs col-sm-9 col-xs-12">
+                        <apex:inputField id="Choose-Paying-Frequency" value="{!Request.Change_of_Premium_Paying_Frequency__c}" styleclass="form-field-style-select"  />
+                    </div>
+                </div>
+                
+                <div class="bs row form-field">
+                    <!-- 20200610 - minghua - levyII -->
+                    <div class="bs col-sm-3 col-xs-12">
+                        {!$ObjectType.Policy_Change_Request__c.fields.Direct_Debit_Method__c.Label}*
+                    </div>
+                    <div class="bs col-sm-9 col-xs-12">
+                        <apex:inputField id="Choose-DD-Method" value="{!Request.Direct_Debit_Method__c}"  styleclass="form-field-style-select" onchange="getDDMethodChoice(this.value)" />
+                    </div>
+                    <div class="bs col-sm-12 col-xs-12">
+                        {!transField['Levy_If_autoplay_payment_option_has_been'][$Label.Header_Language_Code_Current]}
+                    </div>
+                </div>
+<!--Direct Debit via Savings/Current Account (Applicable to subsequent premium payment only)-->
+         <div id="viaAccount" style="display:none;">
+            <div class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light">
+                {!$Label.Direct_Debit_via_Savings_Current_Account}    
+            </div>
+            <div class="bs col-xs-12 col-sm-12 form-content">
+<!--Life Insurance-->
+                <div class="bs row form-field" id="lifePolicySection" style="display:none;">
+                    <!-- Rancho_JOBR144_20220811 - remove bank info -->
+                    <div class="bs col-sm-12 col-md-12 col-xs-12 pull-left">
+                       <apex:outputText value="{!$Label.Name_and_Account_Number_to_be_credited}" escape="false" />
+                    </div>
+                    <div class="bs col-xs-12 visible-xs" style="padding:10px;"></div>
+                    <!-- <div class="bs col-sm-9 col-md-6 col-xs-12 form-group" style="padding-left:0px;">
+                        <span class="bs col-xs-12 visible-xs">{!$Label.Bank_No}</span>
+                        <span class="bs col-sm-3 col-xs-12"><apex:inputText disabled="true" html-placeholder="004" styleClass="myaccount form-control" /></span><span class="bs col-sm-1 hidden-xs">-</span>
+                        <span class="bs col-xs-12 visible-xs">{!$Label.Branch_No}</span>
+                        <span class="bs col-sm-3 col-xs-12"><apex:inputText disabled="true" html-placeholder="808" styleClass="myaccount form-control" /></span><span class="bs col-sm-1 hidden-xs">-</span>
+                        <span class="bs col-xs-12 visible-xs">{!$Label.Account_No}</span>
+                        <span class="bs col-sm-4 col-xs-12"><apex:inputText disabled="true" html-placeholder="194971-001" styleClass="myaccount form-control" /></span>
+                        <br/>
+                        <span class="bs col-sm-4 hidden-xs">{!$Label.Bank_No}</span>
+                        <span class="bs col-sm-4 hidden-xs">{!$Label.Branch_No}</span>
+                        <span class="bs col-sm-4 hidden-xs">{!$Label.Account_No}</span>
+                    </div> -->
+                    <div class="bs col-sm-12 col-xs-12" style="margin-top: 20px;">{!$Label.Only_applicable_for_policy} {!strIsLifePolicy}</div>
+                </div>
+                
+<!--General-->
+                <div class="bs row form-field" id="generalPolicySection" style="display:none;">
+                    <!-- Rancho_JOBR144_20220811 - remove bank info -->
+                    <div class="bs col-sm-12 col-md-12 col-xs-12 pull-left">
+                       <apex:outputText value="{!$Label.Name_and_Account_Number_to_be_credited_general}" escape="false" />
+                    </div>
+                    <div class="bs col-xs-12 visible-xs" style="padding:10px;margin-top: 10px;"></div>
+                        <!-- <div class="bs col-sm-9 col-md-6 col-xs-12 form-group" style="padding-left:0px;">
+                            <span class="bs col-xs-12 visible-xs">{!$Label.Bank_No}</span>
+                            <span class="bs col-sm-3 col-xs-12"><apex:inputText disabled="true" html-placeholder="004" styleClass="myaccount form-control" /></span><span class="bs col-sm-1 hidden-xs">-</span>
+                            <span class="bs col-xs-12 visible-xs">{!$Label.Branch_No}</span>
+                            <span class="bs col-sm-3 col-xs-12"><apex:inputText disabled="true" html-placeholder="808" styleClass="myaccount form-control" /></span><span class="bs col-sm-1 hidden-xs">-</span>
+                            <span class="bs col-xs-12 visible-xs">{!$Label.Account_No}</span>
+                            <span class="bs col-sm-4 col-xs-12"><apex:inputText disabled="true" html-placeholder="194963-001" styleClass="myaccount form-control" /></span>
+                            <br/>
+                            <span class="bs col-sm-4 hidden-xs">{!$Label.Bank_No}</span>
+                            <span class="bs col-sm-4 hidden-xs">{!$Label.Branch_No}</span>
+                            <span class="bs col-sm-4 hidden-xs">{!$Label.Account_No}</span>
+                        </div> -->
+                        <div class="bs col-sm-12 col-xs-12" style="margin-top: 20px;">{!$Label.Only_applicable_for_policy} {!strIsGeneralPolicy}</div>
+                    </div>
+                
+                <div class="bs row form-field">
+                    <div class="bs col-sm-3 col-xs-12">
+                        {!$ObjectType.Policy_Change_Request__c.fields.Bank_Name__c.Label}
+                    </div>
+                    <div class="bs col-sm-9 col-xs-12">
+                        <apex:inputField id="DD-Account-BankName" value="{!Request.Bank_Name__c}" styleclass="form-field-style" />
+                    </div>
+                </div>
+
+                <div class="bs row form-field">
+                    <div class="bs col-sm-3 col-xs-12">
+                        {!$ObjectType.Policy_Change_Request__c.fields.Branch_Name__c.Label}
+                    </div>
+                    <div class="bs col-sm-9 col-xs-12">
+                        <apex:inputField id="DD-Account-BranchName" value="{!Request.Branch_Name__c}" styleclass="form-field-style" />
+                    </div>
+                </div>
+                
+                <div class="bs row form-field">
+                    <div class="bs col-sm-3 col-md-3 col-xs-12 pull-left">
+                        {!$ObjectType.Policy_Change_Request__c.fields.Bank_Account_No__c.Label}
+                    </div>
+                    <div class="bs col-xs-12 visible-xs" style="padding:10px;"></div>
+                    <div class="bs col-sm-9 col-md-6 col-xs-12 form-group" style="padding-left:0px;">
+                        <span class="bs col-xs-12 visible-xs">{!$Label.Bank_No}</span>
+                        <span class="bs col-sm-3 col-xs-12"><apex:inputField type="tel" id="DD-Account-Number-Bank-BankNo" html-maxlength="3" value="{!Request.Bank_No__c}" styleClass="myaccount form-control" /></span><span class="bs col-sm-1 hidden-xs">-</span>
+                        <span class="bs col-xs-12 visible-xs">{!$Label.Branch_No}</span>
+                        <span class="bs col-sm-3 col-xs-12"><apex:inputField type="tel" id="DD-Account-Number-Bank-BranchNo" html-maxlength="3" value="{!Request.Branch_No__c}" styleClass="myaccount form-control" /></span><span class="bs col-sm-1 hidden-xs">-</span>
+                        <span class="bs col-xs-12 visible-xs">{!$Label.Account_No}</span>
+                        <span class="bs col-sm-4 col-xs-12"><apex:inputField type="tel" id="DD-Account-Number-Bank-AccountNo" value="{!Request.Bank_Account_No__c}" styleClass="myaccount form-control" /></span>
+                        <br/>
+                    </div> 
+                    <div class="bs col-sm-offset-3 col-md-offset-3 col-sm-9 col-md-6 col-xs-12 form-group" style="padding-left:0px;">   
+                        <span class="bs col-sm-4 hidden-xs">{!$Label.Bank_No}</span>
+                        <span class="bs col-sm-4 hidden-xs">{!$Label.Branch_No}</span>
+                        <span class="bs col-sm-4 hidden-xs">{!$Label.Account_No}</span>
+                    </div> 
+                </div>
+                <div class="bs col-sm-12 col-xs-12 form-note"><apex:outputText escape="false" value="{!$Label.Payment_Information_DD_Account_Note}"/></div>
+            </div>
+        </div>
+<!--Direct Debit via Credit Card-->
+            <div id="viaCreditCard" style="display:none;">
+                <div class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light">
+                    {!$Label.Direct_Debit_via_Credit_Card}
+                </div>
+                <div class="bs col-xs-12 col-sm-12 form-content">
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Name_of_Card_Issuing_Bank__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField id="DD-Credit-Issuing-Bank" value="{!Request.Name_of_Card_Issuing_Bank__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                    
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Country_of_Card_Issuing_Bank__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField id="DD-Credit-Country" value="{!Request.Country_of_Card_Issuing_Bank__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                    
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.VisaMaster_Card_Credit_Card_Account__c.Label}
+                        </div>
+                        <!--<div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField value="{!Request.VisaMaster_Card_Credit_Card_Account__c}" styleclass="form-field-style" />
+                        </div>-->
+                        
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:input type="tel" id="Number-Credit-Card-1" style="width:20%; padding:0px;" value="{!creditCardNo1}" html-maxlength="4" styleclass="text-center form-field-style" onblur="getCreditCardNo()" />
+                            <apex:input type="tel" id="Number-Credit-Card-2" style="width:20%; padding:0px;" value="{!creditCardNo2}" html-maxlength="4" styleclass="text-center form-field-style" onblur="getCreditCardNo()">&nbsp;-&nbsp;</apex:input>
+                            <apex:input type="tel" id="Number-Credit-Card-3" style="width:20%; padding:0px;" value="{!creditCardNo3}" html-maxlength="4" styleclass="text-center form-field-style" onblur="getCreditCardNo()">&nbsp;-&nbsp;</apex:input>
+                            <apex:input type="tel" id="Number-Credit-Card-4" style="width:20%; padding:0px;" value="{!creditCardNo4}" html-maxlength="4" styleclass="text-center form-field-style" onblur="getCreditCardNo()">&nbsp;-&nbsp;</apex:input>
+                        </div>
+                        <div class="bs col-sm-offset-3 col-sm-9 col-xs-12">
+                            <apex:inputText id="DD-Credit-Check-Credit-Card" style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                        </div>
+                    </div>
+                    
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$Label.Card_Expiry_Date}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField type="tel" id="DD-Credit-Number-Month-Exp" style="width:30%" value="{!Request.Card_Expiry_Date_Month__c}" html-maxlength="2" html-placeholder="{!$Label.MM}" styleclass="form-field-style text-center" onblur="CheckCreaditcardDate()">&nbsp;/&nbsp;</apex:inputField>
+                            <apex:inputField type="tel" id="DD-Credit-Number-Year-Exp" style="width:60%" value="{!Request.Card_Expiry_Date_Year__c}" html-maxlength="4" html-placeholder="{!$Label.YYYY}" styleclass="form-field-style text-center" onblur="CheckCreaditcardDate()" />
+                        </div>
+                        <div class="bs col-sm-offset-3 col-sm-9 col-xs-12" >
+                            <!--<div class="bs col-sm-12 col-xs-12" style="padding:-15px !important;">-->
+                                <apex:inputText id="Sum-CreditCard-Check" style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none;" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                            <!--</div>-->
+                            <!--<div class="bs col-sm-12 col-xs-12" style="padding:-15px !important;">
+                                <apex:inputText id="Year-CreditCard-Check" style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none;" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                                </div>-->
+                        </div>
+                    </div>
+                    <div class="bs col-sm-12 col-xs-12 form-note">
+                        <!-- Rancho_JOBR144_20220811 - display entity name dynamically based on policy -->
+                        <apex:outputText escape="false" value="{!$Label.Payment_Information_DD_Credit_Card_Note}{!$Label.Payment_Information_DD_Credit_Card_Note_Two}">
+                            <apex:param value="{!if(isLife && !isGeneral, $Label.Life_Entity_Name, if(!isLife && isGeneral, $Label.GI_Entity_Name, $Label.Cigna_Worldwide_Life_Insurance_Company_Limited_Cigna_Worldwide_General_Insuran))}"/>
+                        </apex:outputText>
+                    </div>
+                </div>
+            </div>
+<!--General Information-->
+                <div class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light">
+                    {!$Label.General_Information}
+                </div>
+                <div class="bs col-xs-12 col-sm-12 form-content">
+                    <div id="accountHolder1-group" class="bs col-sm-12 col-xs-12 " style="background-color:#f2f2f2;">
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-3 col-xs-12">
+                                {!$ObjectType.Policy_Change_Request__c.fields.I_D_Number_of_Account_Holder_1__c.Label}
+                            </div>
+                            <div class="bs col-sm-8 col-xs-10">
+                                <apex:inputField id="General-Info-Id-No-H1" value="{!Request.I_D_Number_of_Account_Holder_1__c}" styleclass="form-field-style" />
+                            </div>
+                        </div>
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-3 col-xs-12">
+                                {!$ObjectType.Policy_Change_Request__c.fields.I_D_Type_of_Account_Holder_1__c.Label}
+                            </div>
+                            <div class="bs col-sm-8 col-xs-10">
+                                <apex:inputField id="General-Info-Id-Type-H1" value="{!Request.I_D_Type_of_Account_Holder_1__c}" styleclass="form-field-style-select" />
+                            </div>
+                        </div>
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-3 col-xs-12">
+                                {!$ObjectType.Policy_Change_Request__c.fields.Name_of_Account_Holder_1_in_English__c.Label}
+                            </div>
+                            <div class="bs col-sm-8 col-xs-10">
+                                <apex:inputField id="General-Info-Acc-Holder-H1-EnglishStrict" value="{!Request.Name_of_Account_Holder_1_in_English__c}" styleclass="form-field-style" />
+                            </div>
+                        </div>
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-offset-11 col-sm-1 col-xs-offset-10 col-xs-1 form-addremove-btn">
+                                <span class="glyphicon glyphicon-plus-sign fa-lg onclick-pointer" onclick="addAccountHolder('2')" />
+                            </div>
+                        </div>    
+                        
+                    </div>
+                    <div id="accountHolder2-group-padding" class="bs col-sm-12 col-xs-12" style="display:none; padding:5px;"/>
+                    <div id="accountHolder2-group" class="bs col-sm-12 col-xs-12" style="background-color:#f2f2f2; display:none;">
+                        <apex:inputHidden id="accountHolder2-hasAccountHolder2" value="{!Request.hasAccountHolder2__c}" />
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-offset-11 col-sm-1 col-xs-offset-10 col-xs-1 form-addremove-btn">
+                                <span class="glyphicon glyphicon-minus-sign fa-lg onclick-pointer"  onclick="removeAccountHolder('2')"/>
+                            </div>
+                        </div>
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-3 col-xs-12">
+                                {!$ObjectType.Policy_Change_Request__c.fields.I_D_Number_of_Account_Holder_2__c.Label}
+                            </div>
+                            <div class="bs col-sm-8 col-xs-10">
+                                <apex:inputField id="accountHolder2-IDNo" value="{!Request.I_D_Number_of_Account_Holder_2__c}" styleclass="form-field-style" />
+                            </div>
+                        </div>
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-3 col-xs-12">
+                                {!$ObjectType.Policy_Change_Request__c.fields.I_D_Type_of_Account_Holder_2__c.Label}
+                            </div>
+                            <div class="bs col-sm-8 col-xs-10">
+                                <apex:inputField id="accountHolder2-IDType" value="{!Request.I_D_Type_of_Account_Holder_2__c}" styleclass="form-field-style-select" />
+                            </div>
+                        </div>
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-3 col-xs-12">
+                                {!$ObjectType.Policy_Change_Request__c.fields.Name_of_Account_Holder_2_in_English__c.Label}
+                            </div>
+                            <div class="bs col-sm-8 col-xs-10">
+                                <apex:inputField id="accountHolder2-Name-EnglishStrict" value="{!Request.Name_of_Account_Holder_2_in_English__c}" styleclass="form-field-style" />
+                            </div>
+                        </div>
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-offset-11 col-sm-1 col-xs-offset-10 col-xs-1 form-addremove-btn">
+                                <span class="glyphicon glyphicon-plus-sign fa-lg onclick-pointer" onclick="addAccountHolder('3')" />
+                            </div>
+                        </div>
+                    </div>
+                    <div id="accountHolder3-group-padding" class="bs col-sm-12 col-xs-12" style="display:none; padding:5px;"/>
+                    <div id="accountHolder3-group" class="bs col-sm-12 col-xs-12" style="background-color:#f2f2f2; display:none;">
+                        <apex:inputHidden id="accountHolder3-hasAccountHolder3" value="{!Request.hasAccountHolder3__c}"/>
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-offset-11 col-sm-1 col-xs-offset-10 col-xs-1 form-addremove-btn">
+                                <span class="glyphicon glyphicon-minus-sign fa-lg onclick-pointer"  onclick="removeAccountHolder('3')"/>
+                            </div>
+                        </div>
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-3 col-xs-12">
+                                {!$ObjectType.Policy_Change_Request__c.fields.I_D_Number_of_Account_Holder_3__c.Label}
+                            </div>
+                            <div class="bs col-sm-8 col-xs-10">
+                                <apex:inputField id="accountHolder3-IDNo" value="{!Request.I_D_Number_of_Account_Holder_3__c}" styleclass="form-field-style" />
+                            </div>
+                        </div>
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-3 col-xs-12">
+                                {!$ObjectType.Policy_Change_Request__c.fields.I_D_Type_of_Account_Holder_3__c.Label}
+                            </div>
+                            <div class="bs col-sm-8 col-xs-10">
+                                <apex:inputField id="accountHolder3-IDType" value="{!Request.I_D_Type_of_Account_Holder_3__c}" styleclass="form-field-style-select" />
+                            </div>
+                        </div>
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-3 col-xs-12">
+                                {!$ObjectType.Policy_Change_Request__c.fields.Name_of_Account_Holder_3_in_English__c.Label}
+                            </div>
+                            <div class="bs col-sm-8 col-xs-10">
+                                <apex:inputField id="accountHolder3-Name-EnglishStrict" value="{!Request.Name_of_Account_Holder_3_in_English__c}" styleclass="form-field-style" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bs col-sm-12 col-xs-12" style="padding:10px;"/>
+                    <div class="bs row form-field" id="paymentDateOption" style="display:none;">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Choice_of_Payment_Date__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField value="{!Request.Choice_of_Payment_Date__c}" styleclass="form-field-style-select" />
+                        </div>
+                        <div class="bs col-sm-12 col-xs-12">
+                            {!$Label.Only_applicable_for_policy} {!strAllowChangePolicy}
+                        </div>
+                    </div>
+                </div>
+             <apex:outputPanel rendered="{!IsThirdParty}">
+                    <div class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light">
+                        {!$Label.Source_of_funds}
+                    </div>
+                    <div class="bs col-xs-12 col-sm-12 form-content">
+                        <div class="bs row form-field">
+                            <div class="bs col-sm-3 col-xs-12">
+                                {!$ObjectType.Policy_Change_Request__c.fields.Source_of_Fund__c.Label}
+                            </div>
+                            <div class="bs col-sm-9 col-xs-12">
+                                <apex:inputField value="{!Request.Source_of_Fund__c}"  id="Third-Party-Choose-Source-Of-Fund" styleclass="form-field-style-select"  onchange="getSourceOfFundChoice(this.value)"/>
+                            </div>
+                        </div>
+                        <div id="otherSourceOfFund" class="bs row form-field" style="display:none;">
+                        <!--if payment method is other then show-->
+                            <div class="bs col-sm-3 col-xs-12">
+                                {!$ObjectType.Policy_Change_Request__c.fields.Funds_by_Others__c.Label}
+                            </div>
+                            <div class="bs col-sm-9 col-xs-12">
+                                <apex:inputField id="Third-Party-Other-Source" value="{!Request.Funds_by_Others__c}" styleclass="form-field-style" />
+                            </div>
+                        </div>       
+                      </div>
+                
+
+<!--Third-Party Payer’s details -->       
+            <div class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light">
+                {!$Label.Third_Party_Payer_s_details}
+            </div>
+            <div class="bs col-xs-12 col-sm-12 form-content">   
+            <div class="bs col-sm-12 col-xs-12 form-note"><apex:outputText escape="false" value="{!$Label.Third_Party_Payment_Note}"/></div>
+            <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>      
+                <div class="bs row form-field">
+                    <div class="bs col-sm-3 col-xs-12">
+                        {!$ObjectType.Policy_Change_Request__c.fields.X3rd_Party_Payer__c.Label}
+                    </div>
+                    <div class="bs col-sm-9 col-xs-12">
+                        <apex:inputField id="Third-Party-Choose-Third-Party" value="{!Request.X3rd_Party_Payer__c}" styleclass="form-field-style-select" onchange="getThirdPartyChoice(this.value)"/>
+                    </div>
+                </div>
+
+                <!--For Individual-->
+                <div id="indi-thirdParty">      
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Full_Name_of_3rd_party_payer__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField id="Third-Party-Indi-Name" value="{!Request.Full_Name_of_3rd_party_payer__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.HKID_Passport_No__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField id="Third-Party-Indi-Id" value="{!Request.HKID_Passport_No__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$Label.Relationship_to_Policyholder_Applicant}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:selectList id="Third-Party-Indi-Relationship" value="{!Request.Relationship_with_Policyholder_Applica__c}" size="1" styleClass="bs form-field-style-select">
+                                <apex:selectOptions value="{!ThirdPartyRelationshipList}"/>
+                            </apex:selectList>
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Contact_No__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <span class="bs col-xs-4 col-sm-4" style="padding-left:0px !important;"><apex:inputField id="Third-Party-Indi-Contact-No-3rd-code" type="tel" html-placeholder="+852" value="{!Request.Contact_No_Country_Code__c}" styleclass="form-field-style" /></span>
+                            <span class="bs col-xs-8 col-sm-8" style="padding-right:0px !important;"><apex:inputField id="Third-Party-Indi-Contact-No-3rd" type="tel" value="{!Request.Contact_No__c}" styleclass="form-field-style" /></span>
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Nationality__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <!-- Rancho_IA_AML_Inspection_20211005: update nationality field to use ws list -->
+                            <!-- <apex:inputField id="Third-Party-Indi-nation" value="{!Request.Nationality__c}" styleclass="form-field-style" /> -->
+                            <apex:selectList id="Third-Party-Indi-nation" value="{!Request.Nationality_Code__c}" size="1" styleClass="bs form-field-style-select">
+                                <apex:selectOptions value="{!nationalityList}"/>
+                            </apex:selectList>
+                        </div>
+                    </div>             
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Date_of_Birth__c.Label}
+                        </div>
+                       <!-- <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField type="date" value="{!Request.Date_of_Birth__c}" style="padding-left:0px;padding-right:0px;" styleclass="form-field-style col-sm-6 col-xs-12" showDatePicker="false" />
+                        </div>-->
+                    <div class="bs col-sm-9 col-xs-12" >
+                        <apex:input type="tel" id="Day-DOB-Val" style="width:20%;" value="{!ddDOB}"  html-placeholder="{!$Label.DD}" html-maxlength="2" styleClass="text-center form-field-style question-kid-age" onblur="getCheckDOB('day',this)"/>
+                        <apex:input type="tel" id="Month-DOB-Val" style="width:20%;" value="{!mmDOB}" html-placeholder="{!$Label.MM}" html-maxlength="2" styleClass="text-center form-field-style question-kid-age" onblur="getCheckDOB('month',this)">&nbsp;/&nbsp;</apex:input>
+                        <apex:input type="tel" id="Year-DOB-Val" style="width:40%;" value="{!yyyyDOB}" html-placeholder="{!$Label.YYYY}" html-maxlength="4" styleClass="text-center form-field-style question-kid-age" onblur="getCheckDOB('year',this)">&nbsp;/&nbsp;</apex:input>
+                    </div>
+                    <div class="bs col-sm-offset-3 col-sm-9 col-xs-12" >
+                        <apex:inputText id="DOB-Check" style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none;" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                        <apex:inputText id="Third-Party-Indi-DOB" style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none;" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                    </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Residential_Address__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputTextarea id="Third-Party-Indi-Address-English" styleClass="form-field-style-textarea" value="{!Request.Residential_Address__c}" />
+                        </div>
+                    </div>
+                    
+                     <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Permanent_Address__c.Label}
+                        </div>
+                        <div class="bs col-xs-12 col-sm-9">
+                            <span class="bs col-xs-12 col-sm-12" style="padding-left:0px !important;">
+                                <apex:inputField id="PaymentInfo-samePerAdd" value="{!Request.PAddress_same_as_RAddress__c}"/>&nbsp;&nbsp;{!$Label.Same_as_Residential_Address}
+                            </span>
+                            <span class="bs col-xs-12 col-sm-12" id="PaymentInfo-PerAdd" style="padding-left:0px !important;">
+                                <apex:inputTextarea id="Third-Party-PerAdd-English" styleClass="form-field-style-textarea" value="{!Request.Permanent_Address__c}"/>
+                            </span>
+                        </div>
+                    </div>
+                         
+                </div> 
+         <!--For Company or Institution-->
+                <div id="company-thirdParty">
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Name_of_Company_Institution__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField id="Third-Party-Comp-Name" value="{!Request.Name_of_Company_Institution__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Contact_No_of_Company_Institution__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <span class="bs col-xs-4 col-sm-4" style="padding-left:0px !important;"><apex:inputField id="Third-Party-Comp-Contact-No-Company-code" type="tel" html-placeholder="+852" value="{!Request.Contact_No_of_Company_Country_Code__c}" styleclass="form-field-style" /></span>
+                            <span class="bs col-xs-8 col-sm-8" style="padding-right:0px !important;"><apex:inputField type="tel" id="Third-Party-Comp-Contact-No-Company" value="{!Request.Contact_No_of_Company_Institution__c}" styleclass="form-field-style" /></span>
+                        </div>
+    
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$Label.Business_Registration_Incorporation_Number}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField id="Third-Party-Comp-BR" value="{!Request.BR_Number__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Date_of_Incorporation__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <!--<apex:inputField type="date" id="Third-Party-Comp-Date-Incorporation-date-format" value="{!Request.Date_of_Incorporation__c}" style="padding-left:0px;padding-right:0px;" styleclass="form-field-style col-sm-6 col-xs-12" showDatePicker="false" />-->
+                        <input type="text" id="Third-Party-Comp-Incorporation-date-format" class="form-field-style"
+                               disabled="true" data-date-yyyy-mm-dd="{!Request.Date_of_Incorporation__c}" data-altField-id="incorporation-datepicker-hidden" />
+                        <apex:inputHidden id="incorporation-datepicker-hidden" value="{!incorporationDateTimestamp}" />
+                        
+                        
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Place_of_Incorporation__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField id="Third-Party-Comp-Place-Incorporation" value="{!Request.Place_of_Incorporation__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Registered_Office_Address__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputTextarea id="Third-Party-Comp-Office-Address-English" styleClass="form-field-style-textarea" value="{!Request.Registered_Office_Address__c}" />
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Business_Address__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputTextarea id="Third-Party-Comp-Business-Address-English" styleClass="form-field-style-textarea" value="{!Request.Business_Address__c}" />
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$Label.Name_of_person_acting_on_behalf_of_the_company_institution}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField id="Third-Party-Comp-Person-Acting" value="{!Request.Name_of_person_acting_on_behalf_of_the_c__c}" styleclass="form-field-style" />
+                        </div>
+                    </div> 
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.HKID_Passport_No__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField id="Third-Party-Comp-Id" value="{!Request.HKID_Passport_No_Company__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Designation__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField id="Third-Party-Comp-Designation" value="{!Request.Designation__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Contact_No_Acting__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <span class="bs col-xs-4 col-sm-4" style="padding-left:0px !important;"><apex:inputField id="Third-Party-Comp-Contact-No-3rd-acting-code" type="tel" html-placeholder="+852" value="{!Request.Contact_No_Acting_Country_Code__c}" styleclass="form-field-style" /></span>
+                            <span class="bs col-xs-8 col-sm-8" style="padding-right:0px !important;"><apex:inputField type="tel" id="Third-Party-Comp-Contact-No-3rd-acting" styleClass="form-field-style" value="{!Request.Contact_No_Acting__c}" /></span>
+                        </div>
+                    </div>
+                </div> 
+            </div>
+            <div class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light">
+                {!$Label.Reason_for_third_party_payment}    
+            </div>
+            <div class="bs col-xs-12 col-sm-12 form-content"> 
+                <div class="bs col-sm-12 col-xs-12 form-note">
+                    <apex:outputText value="{!$Label.Please_provide_reason_for_payment_by_Third_party_Payer}"/>
+                </div>
+                <div class="bs col-xs-12 col-sm-12" style="padding:10px;"></div>  
+                <div class="bs row form-field">
+                    <div class="bs col-sm-3 col-xs-12">
+                        {!$ObjectType.Policy_Change_Request__c.fields.Reason_for_3rd_party_payment__c.Label}
+                    </div>
+                    <div class="bs col-sm-9 col-xs-12">
+                        <apex:inputTextarea id="Third-Party-Reason" styleClass="form-field-style-textarea" value="{!Request.Reason_for_3rd_party_payment__c}" />
+                    </div>
+                </div>
+            </div>  
+    </apex:outputPanel> 
+            <apex:actionFunction name="SavePolicyChange" action="{!SavePolicyChange}" status="loader-icon" rerender="false" oncomplete="refreshAttlist();"/>     
+            <apex:actionFunction name="SaveAndQuit" action="{!SavePolicyChange}" status="loader-icon" oncomplete="Cigna.Util.navigateToVFP('PolicyChangeVFP');" rerender="false"/>
+        </apex:form>
+    </div>
+</div>
+    <script>
+        
+        $(document).ready(function(){
+            initDatePicker();
+        });
+        
+        /*Document Ready*/
+       //CR-56_Link_20220214
+       $(".inputs").on("keyup",function () {
+            if (this.value.length == this.maxLength) {
+                var $next = $(this).next('.inputs');
+                if ($next.length){
+                     //CR-56_Link_20220214
+                     $(this).next('.inputs').trigger("focus");
+                }else{
+                    $(this).trigger("blur");
+                }
+            }
+        });
+        
+        $("[id$='Third-Party-Indi-Contact-No-3rd-code']").val('+852');
+        $("[id$='Third-Party-Comp-Contact-No-Company-code']").val('+852');
+        $("[id$='Third-Party-Comp-Contact-No-3rd-acting-code']").val('+852');
+
+        if($("[id$='PaymentInfo-samePerAdd']").prop('checked') == true){
+            $("#PaymentInfo-PerAdd").hide();
+        }
+        
+        //CR-56_Link_20220214
+        $("[id$='PaymentInfo-samePerAdd']").on("click",function() {
+            $("#PaymentInfo-PerAdd").toggle();
+        });
+        
+        if ($("input[id*='DD-Credit-Number-Year-Exp']").val().length >= 1 || $("input[id*='DD-Credit-Number-Month-Exp']").val().length >= 1){
+            
+            var creditCardExpiryDate = $("input[id*='DD-Credit-Number-Year-Exp']").val() + $("input[id*='DD-Credit-Number-Month-Exp']").val();
+            
+            $("input[id*='Sum-CreditCard-Check']").val(creditCardExpiryDate);
+        
+        }
+        
+      /*control display panel after retrieving record*/
+        var ddMethodChoice = '{!Request.Direct_Debit_Method__c}';
+        if(ddMethodChoice.includes('Account')){
+            $('#viaAccount').show();
+            $('#viaCreditCard').hide();
+            /*validateDDAccount();
+            validateGeneralInfo();*/
+        }else if(ddMethodChoice.includes("Credit")){
+            $('#viaAccount').hide();
+            $('#viaCreditCard').show();
+            /*validateDDCreditCard();
+            validateGeneralInfo();*/
+        }else{
+            $('#viaAccount').hide();
+            $('#viaCreditCard').hide();
+        }
+    
+        var thirdPartyChoice = '{!Request.X3rd_Party_Payer__c}';
+        if(thirdPartyChoice.includes("Company")){
+            $('#company-thirdParty').show();
+            $('#indi-thirdParty').hide();
+            //validateThirdPartyComp();
+        }else if(thirdPartyChoice.includes("Indi")){
+            $('#company-thirdParty').hide();
+            $('#indi-thirdParty').show();
+            //validateThirdPartyIndi();
+        }else{
+            $('#company-thirdParty').hide();
+            $('#indi-thirdParty').hide();
+        }
+        
+        var sourceOfFundChoice = '{!Request.Source_of_Fund__c}';
+        if(sourceOfFundChoice.includes("Others")){
+            $('#otherSourceOfFund').show();
+            //validationOtherSource();
+        }else{
+            $('#otherSourceOfFund').hide();
+        }
+        
+        
+        if($("input:hidden[id*='hasAccountHolder2']").val()=='true'){
+            addAccountHolder('2');
+        }
+        
+        if($("input:hidden[id*='hasAccountHolder3']").val()=='true'){
+            addAccountHolder('3');
+        }
+        
+        if('{!isAllowChangePaymentDate}' == 'true'){
+            $('#paymentDateOption').show();
+        }
+    
+        if('{!isLife}' == 'true'){
+            $('#lifePolicySection').show();
+        }
+        
+        if('{!isGeneral}' == 'true'){
+            $('#generalPolicySection').show();
+        }
+        
+        getCreditCardNo();  
+        
+        function initDatePicker(){
+            Cigna.DatepickerUtil.init("input[id*='-date-format']");
+        }
+
+        function getDDMethodChoice(choice){
+            if(choice.includes("Account")){
+                $('#viaAccount').show();
+                $('#viaCreditCard').hide();
+                /*validateDDAccount();
+                validateGeneralInfo();*/
+            }else if(choice.includes("Credit")){
+                $('#viaAccount').hide();
+                $('#viaCreditCard').show();
+                /*validateDDCreditCard();
+                validateGeneralInfo();*/
+            }else{
+                $('#viaAccount').hide();
+                $('#viaCreditCard').hide();
+            }
+        }
+        
+        function getThirdPartyChoice(choice){
+            if(choice.includes("Company")){
+                $('#company-thirdParty').show();
+                $('#indi-thirdParty').hide();
+                //validateThirdPartyComp();
+            }else if(choice.includes("Indi")){
+                $('#company-thirdParty').hide();
+                $('#indi-thirdParty').show();
+                //validateThirdPartyIndi();
+            }else{
+                $('#company-thirdParty').hide();
+                $('#indi-thirdParty').hide();
+            }
+        }
+        
+        function getSourceOfFundChoice(choice){
+            if(choice.includes("Others")){
+                $('#otherSourceOfFund').show();
+                //validationOtherSource();
+            }else{
+                $('#otherSourceOfFund').hide();
+            }
+        }
+        
+
+        
+        function addAccountHolder(index){
+            $("#accountHolder" + index + "-group").show(); 
+            $("#accountHolder" + index + "-group-padding").show();
+
+             $("input:hidden[id*='accountHolder" + index + "-hasAccountHolder" + index + "']").val(true);
+        }
+        
+        function removeAccountHolder(index){
+            
+            if(index=='2' && $("input:hidden[id*='accountHolder2-hasAccountHolder2']").val()=='true' && $("input:hidden[id*='accountHolder3-hasAccountHolder3']").val()=='true'){
+                $("input[id*='accountHolder2-IDNo']").val($("input[id*='accountHolder3-IDNo']").val());
+                $("input[id*='accountHolder2-IDType']").val($("input[id*='accountHolder3-IDType']").val());
+                $("input[id*='accountHolder2-Name']").val($("input[id*='accountHolder3-Name']").val());
+    
+               
+                $("#accountHolder3-group").hide();
+                $("#accountHolder3-group-padding").hide();
+                
+                $("select[id*='accountHolder3']").rules("add", {
+                    required: false
+                });
+                
+                $("select[id*='accountHolder3']").val('');
+                
+                $("input[id*='accountHolder3']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        required: false
+                    });
+                    
+                    $(elem).val('');
+                });
+                
+                $("input:hidden[id*='accountHolder3-hasAccountHolder3']").val(false);
+                
+            }else{
+                
+                $("#accountHolder" + index + "-group").hide();
+                $("#accountHolder" + index + "-group-padding").hide();
+        
+                $("select[id*='accountHolder" + index+"']").rules("add", {
+                    required: false
+                });
+                
+                $("select[id*='accountHolder" + index+"']").val('');
+                
+                $("input[id*='accountHolder" + index+"']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        required: false
+                    });
+                    
+                    $(elem).val('');
+                });
+                
+                $("input:hidden[id*='accountHolder" + index + "-hasAccountHolder" + index + "']").val(false);
+            }
+        }
+        
+        
+        
+
+        
+        var creditCardNo = '';
+        function getCreditCardNo(){
+            
+            creditCardNo = $("input[id$='Number-Credit-Card-1']").val()
+                            + $("input[id$='Number-Credit-Card-2']").val()
+                            + $("input[id$='Number-Credit-Card-3']").val()
+                            + $("input[id$='Number-Credit-Card-4']").val();
+            
+            $("input[id*='Check-Credit-Card']").val(creditCardNo);
+
+            /*$("form[id*='change-payment-info']").validate();
+            $("input[id*='Check-Credit-Card']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    creditCard: true,
+                    maskedCreditCard: true
+                });
+            });*/
+            
+            if(creditCardNo.length == 16 ){
+                //CR-56_Link_20220214
+                $("input[id*='Check-Credit-Card']").trigger("focus");
+            }
+        }
+        
+        //Nicole's Update
+            function isNumberKey(charCode, min, max) {
+            if ((charCode >= 48 && charCode <= 57) || 
+                $.inArray(charCode, [8, 127]) !== -1) {
+                if (!isNaN(min) && !isNaN(max) && typeof min != undefined && typeof max != undefined) {
+                    if ((charCode - 48) >= min && (charCode - 48) <= max) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return true;
+                }
+            } else {
+                return false;
+            }
+        }
+            
+        function onKidAgeChange(evt) {
+            return isNumberKey(evt.charCode);
+        }
+            
+        //CR-56_Link_20220214
+        $('.question-kid-age').on("keypress",onKidAgeChange);
+            
+        function hiddenonblur(input){
+            var InputId = input.id;
+            //$("input[id*='Check-Credit-Card']").blur();
+            //CR-56_Link_20220214
+            $("input[id*='" + InputId + "']").trigger("blur");
+        }
+        
+        function isSavedCreditCardValue(value){
+            return value == '{!savedCreditCardWithMask}';
+        }
+        
+        function getCheckDOB(datetype , input){
+            
+            $("input[id*='DOB-Check']").val('');
+                
+            var day = $("input[id*='Day-DOB-Val']").val();
+            var month = $("input[id*='Month-DOB-Val']").val();
+            var year = $("input[id*='Year-DOB-Val']").val()
+            console.log(day+'/'+month+'/'+year);    
+            
+            if(day!='' && month!='' && year!=''){
+                $("input[id*='DOB-Check']").val(day+'/'+month+'/'+year);
+                console.log($("input[id*='DOB-Check']").val()); 
+            }
+            //CR-56_Link_20220214
+            $("input[id*='DOB-Check']").trigger("focus");
+                
+            PaymentInfo.Validate.checkDOBRequired();
+            $("input[id*='Third-Party-Indi-DOB']").trigger("focus");
+
+        }
+            
+        function validateDOB(){
+                
+                var day = $("input[id*='Day-DOB-Val']").val();
+                var month = $("input[id*='Month-DOB-Val']").val();
+                var year = $("input[id*='Year-DOB-Val']").val();
+                console.log('input'+year+'/'+month+'/'+day);
+                
+                var thedate=new Date();
+                var nowYear=thedate.getFullYear();
+                var nowMonth=thedate.getMonth()+1;
+                var nowDay=thedate.getDate();
+                console.log('now'+nowYear+'/'+nowMonth+'/'+nowDay);
+                
+                if(day=='' || month=='' || year==''){
+                        return true;
+                }
+                    
+                if(day!='' ){
+                    console.log('day'+day);
+                    if(day==0 || day>31){
+                        return false;
+                    }else if(year==nowYear && month==nowMonth &&　day>nowDay){
+                        return false;
+                    }
+                    
+                    if(month==2){
+                        if(day>29) return false;
+                        if(day == 29){
+                            console.log('Feb'+year%4);
+                            if(year%4!=0) return false;
+                        }
+                    }
+                    
+                    if(month==4 || month==6 || month==9 || month==11){
+                        if(day>30) return false;
+                    }
+                }
+                if(month!=''){    
+                    console.log('month'+month);
+                    if(month==0 || month>12){
+                         return false;
+                    }else if(year==nowYear && month>nowMonth){
+                        return false;
+                    }
+                }
+                if(year!=''){      
+                    console.log('year'+year);                  
+                    if(year<1900 || year>nowYear){
+                         return false;
+                    }
+                }
+                return true;
+        }
+
+        //$("input[id*='Day-DOB-Check']").val($("input[id*='Day-DOB-Val']").val());
+        //$("input[id*='Month-DOB-Check']").val($("input[id*='Month-DOB-Val']").val());
+        //$("input[id*='Year-DOB-Check']").val($("input[id*='Year-DOB-Val']").val());
+        
+        
+        
+        function CheckCreaditcardDate(){
+            
+            var creditCardExpiryDate = '';
+        
+            creditCardExpiryDate = $("input[id*='DD-Credit-Number-Year-Exp']").val() + $("input[id*='DD-Credit-Number-Month-Exp']").val();
+            
+            if( ($("input[id*='DD-Credit-Number-Year-Exp']").val().length >= 1 && $("input[id*='DD-Credit-Number-Month-Exp']").val().length >= 1) || creditCardExpiryDate == '' ){
+            
+                $("input[id*='Sum-CreditCard-Check']").val(creditCardExpiryDate);
+                //CR-56_Link_20220214
+                $("input[id*='Sum-CreditCard-Check']").trigger("focus");
+            
+            }
+
+        }
+        
+        var PaymentInfo = PaymentInfo || {};
+        PaymentInfo.Validate = function(){
+        
+            function formValidation(){
+                
+                
+                if('{!IsThirdParty}'){ 
+                
+                    $("select[id*='Third-Party-Choose']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            required: true
+                        });
+                    }); 
+                    
+                    $("textarea[id*='Third-Party-Reason']").rules("add", {
+                        required: true
+                    });
+                
+                }                
+                
+                if ($("#viaAccount").css('visibility') == 'visible') {
+                    validateDDAccount();
+                    validateGeneralInfo();
+                }
+                
+                if ($("#viaCreditCard").css('visibility') == 'visible'){
+                    validateDDCreditCard();
+                    validateGeneralInfo();
+                }
+                
+                if ($("#company-thirdParty").css('visibility') == 'visible'){
+                    validateThirdPartyComp();
+                }
+                
+                if ($("#indi-thirdParty").css('visibility') == 'visible'){
+                    validateThirdPartyIndi();
+                }
+                
+                if ($("#otherSourceOfFund").css('visibility') == 'visible'){
+                    validationOtherSource();
+                }
+                
+                if($("input:hidden[id*='hasAccountHolder2']").val()=='true'){
+                    $("select[id*='accountHolder2']").rules("add", {
+                        required: true
+                    });
+                    $("input[id*='accountHolder2']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            required: true
+                        });
+                    });
+                }
+                
+                if($("input:hidden[id*='hasAccountHolder3']").val()=='true'){
+                    $("select[id*='accountHolder3']").rules("add", {
+                        required: true
+                    });
+                    $("input[id*='accountHolder3']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            required: true
+                        });
+                    });
+                }
+                
+                
+            }
+            
+            function OnChangeValidation(){
+            
+                $("form[id*='change-payment-info']").validate();
+
+                jQuery.validator.addMethod("creditCard", function(value, element) {
+                    return this.optional(element) || Cigna.ValidationUtil.isValidCreditCard(value) || isSavedCreditCardValue(value);
+                }, "{!$Label.Error_Message_Invalid_Credit_Card_No}");
+                
+                
+                jQuery.validator.addMethod("maskedCreditCard", function(value, element) {
+                    return this.optional(element) || isSavedCreditCardValue(value) || /^([0-9]*)$/.test(value); 
+                }, "{!$Label.Err_Msg_invalid_saved_credit_card}");
+                
+                
+                jQuery.validator.addMethod("english", function(value, element) {
+                    return this.optional(element) || Cigna.ValidationUtil.isEnglishOnly(value);
+                }, "{!$Label.English_Only}");
+                
+                jQuery.validator.addMethod("englishStrict", function(value, element) {
+                    return this.optional(element) || Cigna.ValidationUtil.isEnglishOnlyStrict(value);
+                }, "{!$Label.English_Only}");
+                
+                jQuery.validator.addMethod("expiryDate", function(value, element) {
+                    return this.optional(element) || isValidCreditCardExpiryDate(value); //|| value.length != 6 
+                }, "{!$Label.Error_Message_Invalid_Expiry_Date}");
+                
+                jQuery.validator.addMethod("validateDOB", function(value, element) {
+                   return validateDOB();
+                }, "{!$Label.ESales_Invalid_DOB}");
+                
+                $("input[id*='Number-Bank']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        digits: true
+                    });
+                });
+                
+                $("input[id*='Number-Contact']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        digits: true
+                    });
+                });
+                
+                var today = new Date();
+                var thisYear = today.getFullYear();
+                var thisMonth = today.getMonth()+1;
+                
+                $("input[id*='Sum-CreditCard-Check']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        digits: true,
+                        expiryDate: true
+
+                    });
+                });
+                
+                 $("textarea[id*='-English']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        english: true
+                    });
+                });
+                
+                $("input[id*='-EnglishStrict']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        englishStrict: true
+                    });
+                });
+                
+                $("input[id*='Third-Party-Comp-Incorporation-date-format']").rules("add", {
+                        date:true
+                });
+                
+                
+                
+                $("input[id*='Check-Credit-Card']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        creditCard: true,
+                        maskedCreditCard: true
+                    });
+                });
+                
+                if ($("#indi-thirdParty").css('visibility') == 'visible'){
+                    $("input[id*='Third-Party-Indi-DOB']").rules("add", {
+                        digits: true
+                    });
+                }
+                
+                $("input[id*='DOB-Check']").rules("add", {
+                    validateDOB:true
+                });
+            
+            }
+            
+            function isValidCreditCardExpiryDate(value) {
+                
+                if (value == ''){
+                    return true;
+                }
+                
+                if (value.length != 6){
+                    return false;
+                }
+                else{
+                    var todayDate = new Date();
+                    var thisYear = todayDate.getFullYear();
+                    var thisMonth = todayDate.getMonth() + 1; // 0 = January, 1 = Feburary, ...
+                    if (value.substring(0,4) < thisYear){
+                        return false;
+                    }
+                    else if (value.substring(0,4) > thisYear && value.substring(4,6) <= 12 && value.substring(4,6) != 0 ){
+                        return true;
+                    }
+                    else{
+                        if ( value.substring(4,6) > 12 || value.substring(4,6) < thisMonth){
+                            return false;
+                        }
+                        else{
+                            return true;
+                        }
+                    }
+                }
+            }   
+            
+            function validateDDAccount(){
+                $("form[id*='change-payment-info']").validate();
+        
+                $("input[id*='DD-Account']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        required: true
+                    });
+                });
+            }
+            
+            function validateDDCreditCard(){
+        
+                $("input[id*='DD-Credit']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        required: true
+                    });
+                });
+                
+                $("input[id*='Sum-CreditCard-Check']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        required: true
+                    });
+                });
+                
+                $("input[id*='DD-Credit-Number']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        required: false
+                    });
+                });
+                
+                //$("input[id*='Month-CreditCard-Check']").val($("input[id*='DD-Credit-Number-Month-Exp']").val());
+                
+                
+            }
+            
+            function validateGeneralInfo(){
+               
+                $("input[id*='General-Info']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        required: true
+                    });
+                });
+                
+                $("select[id*='General-Info-Id-Type']").rules("add", {
+                    required: true
+                });
+            }
+                
+            function validateThirdPartyIndi(){
+                $("form[id*='change-payment-info']").validate();
+        
+                $("input[id*='Third-Party-Indi']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        required: true
+                    });
+                });
+                
+                $("select[id*='Third-Party-Indi']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        required: true
+                    });
+                });
+                
+                $("textarea[id*='Third-Party-Indi']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        required: true
+                    });
+                });
+                
+                /*$("input[id*='Third-Party-Indi-DOB']").rules("add", {
+                    digits: true
+                });*/
+            }
+                
+                
+            function validateThirdPartyComp(){
+        
+                $("input[id*='Third-Party-Comp']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        required: true
+                    });
+                });
+                
+                $("select[id*='Third-Party-Comp']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        required: true
+                    });
+                });
+                
+                $("textarea[id*='Third-Party-Comp']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        required: true
+                    });
+                });
+                
+            }
+        
+            function validationOtherSource(){
+                $("input[id*='Third-Party-Other-Source']").rules("add", {
+                    required: true
+                });
+            }
+        
+        
+        
+            function checkDOBRequired(){
+            
+                $("input[id*='Third-Party-Indi-DOB']").val('');
+                var DOB =''; 
+                
+                if ( $("input[id*='Day-DOB-Val']").val()!='' &&
+                     $("input[id*='Month-DOB-Val']").val()!=''&&
+                     $("input[id*='Year-DOB-Val']").val()!=''){
+                     
+                     DOB = $("input[id*='Day-DOB-Val']").val()+
+                           $("input[id*='Month-DOB-Val']").val()+
+                           $("input[id*='Year-DOB-Val']").val();
+                           
+                     $("input[id*='Third-Party-Indi-DOB']").val(DOB);
+
+                 }
+            }
+            
+            return {
+                        validateDDAccount : validateDDAccount,
+                        validateGeneralInfo : validateGeneralInfo,
+                        validateThirdPartyComp : validateThirdPartyComp,
+                        validateThirdPartyIndi : validateThirdPartyIndi,
+                        validationOtherSource : validationOtherSource,
+                        formValidation : formValidation,
+                        checkDOBRequired : checkDOBRequired,
+                        OnChangeValidation : OnChangeValidation
+                    }
+            }();
+                
+            PaymentInfo.Validate.OnChangeValidation();
+            
+    </script>
+    <!-- Link_IA_AML_Inspection_20220119 -->
+    <script>
+        function checkNationality(value){
+            var codeList = {!isSanctionCodeListNa};
+            var count = 0;
+            console.log("value:"+value);
+            console.log("codeList:"+codeList);
+            codeList.forEach((data)=>{
+                if(value == data.toString()){
+                    count++;
+                }
+            });
+            if(count>0){
+                return false;
+            }
+            return true;
+        }
+        
+        jQuery.validator.addMethod("validateNationality", function(value, element) {
+            return checkNationality(value);
+        }, "{!$Label.Sanctioned_Jurisdiction_Message_Nationality}");
+        
+        $("[id*='Third-Party-Indi-nation']").each(function(idx, elem){
+            $(elem).rules("add", {
+                validateNationality:true
+            });
+        });
+    </script>
+</apex:page>

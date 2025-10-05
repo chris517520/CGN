@@ -1,0 +1,109 @@
+<apex:page Controller="MyClaimSubmitController" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+    <div class="content-question">
+        {!$Label.Who_would_you_like_to_lodge_a_claim_for}
+    </div>
+    <apex:outputPanel id="relatedAccountListPanel">
+        <apex:outputPanel rendered="{!isLoadPIFromWS}">
+        <apex:form >
+            <div>
+                <input type="hidden" id="piCountInputHidden" value="{!PICount}" />
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:repeat value="{!allSsnNamePIMap}" var="tmpMapItem">
+                    <div id="selectPI{!rowNum}" class="bs content-choice " onclick="resetAllFields(this);" >
+                        <i class="ci-hk-user content-icon" aria-hidden="true"></i>{!if(allSsnNamePIMap != null && tmpMapItem != null && allSsnNamePIMap[tmpMapItem] != null && allSsnNamePIMap[tmpMapItem]['fullName'] != null, allSsnNamePIMap[tmpMapItem]['fullName'],'N/A')}
+                        <!-- hidden field -->
+                        <input type="hidden" name="param-str" value="{!tmpMapItem}" />
+                    </div>
+                    <apex:outputPanel rendered="{!if(cList[0].Person_s_Insured__c == tmpMapItem,'true','false')}">
+                        <script>
+                            $( "#selectPI{!rowNum}" ).removeClass('fg-grey').addClass('fg-orange');
+                            console.log('tmpMapItem ' + tmpMapItem);
+                            
+                            $('input[type="hidden"][id$="hiddenValue_CusPI"]').val(tmpMapItem);
+                            console.log('hiddenValue_CusPI ' + $('input[type="hidden"][id$="hiddenValue_CusPI"]').val());
+                            
+                        </script>
+                    </apex:outputPanel>
+                    
+                    <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                    
+                </apex:repeat>
+                
+                <!-- next button -->
+                <!-- mobile -->
+                <div id="action-bar" class="bs action-bar hidden-sm hidden-md hidden-lg cigna-floating-bottom-panel nextStepBtnIn1" style="left:0px; display:none;" onclick="nextStep();">
+                    <div id="callAction1" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                        <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</a>
+                    </div>
+                </div>
+                <!-- web -->
+                <div class="bs row hidden-xs nextStepBtnIn1" style="padding-top: 20px; padding-bottom: 20px; display:none;">
+                    <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3 "></div>
+                    <div id="callAction2" class="bs col-sm-6 col-md-6 col-xs-6 col-lg-6 onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn" onclick="nextStep();">
+                        {!$Label.Next}
+                    </div>
+                    <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3"></div>
+                </div>
+                
+                <!-- save record data -->
+                <apex:inputHidden value="{!cList[0].Person_s_Insured__c}" id="hiddenValue_CusPI" />
+                <!-- cannot save if first step -->
+                <apex:actionFunction status="loader-icon" name="SaveRecordCusPIAtAction" action="{!updatePIRecord}" 
+                                     reRender="hiddenValue_CusPI, relatedPolicyListByAccountPanel_cus, relatedPolicyListByAccountPanel_brk, jSPanel"/> <!-- questionPanel -->
+                <script>
+                    function resetAllFields(evt){
+                        if($(evt).hasClass('fg-grey')){
+                            console.log('to see grey');
+                            //force reload oldClaimRecordBenefitType 
+                            oldClaimRecordBenefitType = '';
+                            hideAfterwardQuestion('q1');
+                            resetTypesOfBenefitCanChoose();
+                            //resetQuestionFlag();
+                            planCodeFlagReset();
+                            policyBenefitListMap.clear();
+                            policyClaimTypeListMap.clear();
+                            renderBenefitTypeNextBtn();
+                        }
+                    }
+                    
+                    function saveRecordCusPI(){
+                        console.log('start saveRecordCusPI');
+                        console.log('***** policy selected before select PI:' + policyBenefitListMap.get('3018'));
+                        SaveRecordCusPIAtAction();
+                        //resetAllFields();
+                        console.log('***** policy selected after select PI:' + policyBenefitListMap.get('3018'));
+                        
+                        if ($('.content-step[data-step="2"]').length > 0) {
+                            $('.content-step:visible').fadeOut(function(){
+                                $('.content-step[data-step="2"]').fadeIn();
+                            });
+                        }
+                        return false;    //return false at isPass, will not do next steps at BaseMyClaimSubmitVFP
+                    }
+                </script>
+                <!-- end save record data -->
+            </div>
+            
+            <apex:outputPanel rendered="{!IF(PICount != 0, true, false)}">
+                <script>
+            
+                    $("div[id*='selectPI']").each(function(idx, elem){
+                        if ($(elem).hasClass('fg-orange')){
+                            displayNextBtnIn(1);
+                        }
+                    });
+                        
+                </script>
+            </apex:outputPanel>
+        </apex:form>
+        
+        <apex:outputPanel rendered="{!if(!isContainPI || allSsnNamePIMap ==null || wPolicyList_unchanged == null || wPolicyList_unchanged.size==0, true, false)}">
+            <div class="bs row col-xs-12 col-sm-12 text-center" style="padding:20px;">
+                <span class="fa fa-smile-o"/> {!$Label.You_don_t_have_any_record}
+            </div>
+        </apex:outputPanel>
+        </apex:outputPanel>
+        
+    </apex:outputPanel>
+    
+</apex:page>

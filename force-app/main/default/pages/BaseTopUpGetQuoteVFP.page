@@ -1,0 +1,516 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" title="{!$Label.Get_a_Quote}" controller="TopUpGetQuoteCtrl" >
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    
+        <style>
+        .bs .cigna-quote-summaryTop {
+            width: 100%;
+            min-height: 50px;
+            background: #D9D9D6;
+            color: #58595B;
+            padding: 10px 0px;
+            position: fixed;
+            top: 50px;
+            height: 9999px;
+        }
+        .bs .cigna-quote-summary {
+            width: 100%;
+            min-height: 50px;
+            background: #D9D9D6;
+            color: #58595B;
+            padding: 10px 0px;
+        }
+        @media (min-width: 768px) {
+            .bs .cigna-floating-bottom-panel {
+                position: relative;
+            }
+        }
+        @media (max-width: 767px) {
+            .bs .cigna-floating-bottom-panel {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+            }
+        }        
+        
+        .bs .cigna-quote-amount {
+            margin: 0 !important;
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+        .bs .cigna-quote-amount div{
+            font-size: 0.9em;
+            font-weight: bold;
+            vertical-align: text-top;
+        }
+        .bs .cigna-plan-bullet {
+            font-size: 0.9em;
+            line-height: 1.5;
+            padding:0 0 0 17px !important;
+            z-index: -10 !important;
+            border-left:0 !important;
+        }
+        label.error{color: #337ab7;}
+    
+        .cigna-top-up-pull-left{
+            padding-left:0px;
+        }  
+        
+        .cigna-top-up-header{
+            padding: 35px 0 0 0;
+        }
+        
+        .cigna-top-up-content-block{
+            padding: 10px 0 0 0;
+        }
+        
+        .cigna-top-up-content{
+            padding: 10px 0 0 75px;
+        }
+        
+        .cigna-top-up-content-dark{
+            padding: 0 0 0 75px;
+            color: #AAAAAA;
+        }
+        
+        .cigna-quote-question-block{
+            padding-top: 0px;
+            padding-left:0px;
+        }
+        .cigna-quote-question-separate-start{
+            padding: 15px 0 0 0;
+        }         
+        .cigna-quote-question-separate{
+            border-bottom: 1px solid #D9D9D6; 
+            padding: 15px 0 15px 0;
+        } 
+        
+        .cigna-quote-question{
+            padding: 0;
+        }
+              
+        .cigna-quote-answer{
+            padding: 10px 0 0 50px;
+        }      
+        
+        label.error{color: #337ab7;}
+        </style>
+        
+        <script>
+        $(document).ready(function(){
+            
+            //add by Raistlin-reset checkbox and radio when page loading-20190906
+            $(document).find(".bs input[type='radio']").prop('checked', false);
+            $(document).find(".bs input[type='checkbox']").prop('checked', false);
+            
+            getCustomerBasic();
+            
+            //CR-56_Link_20220214
+            $(window).on("scroll",function(){           
+                if($(window).scrollTop() > 200 && $(window).width() >= 768){
+                    $('#cigna-quote-summary-desktop').css('top', $(window).scrollTop() - 200);
+                } else if ($(window).width() >= 768) {
+                    $('#cigna-quote-summary-desktop').css('top', 0);
+                } else {
+                    $('#cigna-quote-summary-desktop').removeAttr('style');
+                }
+            });
+            
+            if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isCustomerPortal()) {
+                $('html').css('position', 'fixed').css('overflow', 'auto').css('width', '100%').css('height', '100%');
+                $('body').css('position', 'fixed').css('overflow-x', 'scroll').css('width', '100%').css('height', '100%');
+            }
+            
+            if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isCustomerPortal()) {
+                var result = document.getElementById('resultDiv');
+                result.style.display='none';
+            }
+            
+            var attachmentId = "{!TopUpBrochureId}";
+            $('#click_here').attr('href','{!$Setup.Portal_Settings__c.File_Download_URL__c}'+attachmentId);
+        });
+        
+        function changetoDetail(){
+            console.log('##changetoDetail');        
+            ServerQuote.getQuoteDetails();            
+        }
+        
+        function changetoSummary(){
+            console.log('##changetoSummary');   
+            ServerQuote.getQuoteSummary();         
+        } 
+        
+        function validate() {
+            var questionsAnswered = $("form[id$='form']").validate().form();    
+            return questionsAnswered;        
+        }
+        
+        var isGetQuoteComplete = false;
+        function startGetQuote(evt) {
+            console.log("start get quote");
+            console.log("Validation"+validate());
+            if(validate()){
+                getQuoteAmount();
+                isGetQuoteComplete = true;
+            }else if(isGetQuoteComplete){
+                //clearQuoteSammry();
+                isGetQuoteComplete = false;
+            }
+        } 
+        
+        //Bob_20201109_Name Screening
+        function checkThirdPartyPay(){
+            $('#overlaythirdPartyAlert').css('opacity', '0.95');
+            $('#overlaythirdPartyAlert').show();
+            $('#alertthirdPartyAlert').show();
+        }
+        
+        function confirmThirdPartyPay(option){
+            if(option=='true') {
+                redirectToESales();
+            } else {
+                $('#overlaythirdPartyAlert').hide();
+                $('#alertthirdPartyAlert').hide();
+            }
+        }
+        var thirdPayerDeclare = false;
+
+        function buyNow() {
+            console.log('buyNow'+validate());
+            var personNum=$('input[type="hidden"][id$="person-number"]').val();
+            if (validate()&&parseInt(personNum)>0) {
+                 if (thirdPayerDeclare) {
+                    console.log('thirdPayerDeclare'+thirdPayerDeclare);
+                    checkThirdPartyPay();
+                }else{
+                    redirectToESales();
+                }
+            } else {
+                if ($(".error:visible").length > 0) {
+                    $('html, body').animate({
+                        scrollTop: $(".error:visible").first().parent().parent().offset().top - 50
+                    }, 400);
+                } else if ($('#quote-question-num-kids').is(':visible')) {
+                    $('html, body').animate({
+                        scrollTop: $("#quote-question-num-kids").first().parent().parent().offset().top - 50
+                    }, 400);
+                }
+            }
+        }
+        //END Bob_20201109_Name Screening
+        
+        function openESalesPage() {
+            // 20200902 - minghua - Check Sensitivity code for e-sales
+            var hasSensitivityCode = $('input[type=hidden][id$=hasSensitivityCode]').val();
+            console.log('hasSensitivityCode:'+hasSensitivityCode);
+            if (hasSensitivityCode == 'true') {
+                return null;
+            }else{
+                Cigna.Util.navigateToVFP("TopUpEsalesVFP?" + $('input[type="hidden"][id$="param-esales"]').val(), null, null, true);
+            }
+        }
+
+        //add by minghua - 20190830 - for 'goBack' button
+        function goBack(evt) {
+                Cigna.Util.navigateToVFP("GetProtectedVFP?pc={!JSINHTMLENCODE(selectedProduct)}&Category={!JSINHTMLENCODE(paramCategory)}", null, null, true);                                  
+            }
+        </script>
+    </head>
+    
+    <apex:define name="additionalLibraries">
+    <!--additional css, bootstrap, jquery,js libraries-->
+    <!-- CR-56_Link_20220214 -->
+    <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+    <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+    <apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+    <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+    </apex:outputPanel>
+    <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    </apex:define>
+    
+    <apex:form id="form">
+        <!-- Back Button -->
+        <apex:outputPanel layout="block" styleClass="bs row" id="quote-back-btn-div">
+        <div class="bs col-xs-12">
+             <p><a id="quote-back-btn" class="bs cigna-fg-orange-medium onclick-pointer" onclick="goBack();"><i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a></p>
+        </div>
+        </apex:outputPanel>
+        
+        <!-- Person Detail Panel -->
+        <apex:outputPanel id="initPersonDetailPanel">
+             <apex:outputPanel layout="block" styleClass="bs row" id="personDetailPanel" style="width:500px;" rendered="{!isCustomerPortal}">
+                <div class="bs col-xs-12 cigna-fg-green-medium">
+                       <h4>{!$Label.QUOTATION_FOR}</h4>
+                </div>
+                <div class="bs col-xs-12 cigna-fg-gray-dark">
+                    <h3>                        
+                        <apex:outputText value="{0} ({1}, {2})" rendered="{!!showPHfullName}">
+                            <apex:param value="{!PHfirstName & ' ' & PHlastName}"/>                                                        
+                            <apex:param value="{!PHgender}" />      <!-- Added by Linus 2021-08-30 -->
+                            <apex:param value="{!PHage}" />
+                        </apex:outputText>
+                        
+                        <apex:outputText value="{0} ({1}, {2})" rendered="{!showPHfullName}">
+                            <apex:param value="{!PHfullName}"/>                                                        
+                            <apex:param value="{!PHgender}" />      <!-- Added by Linus 2021-08-30 -->
+                            <apex:param value="{!PHage}" />
+                        </apex:outputText>
+                    </h3>
+                </div>
+            </apex:outputPanel>
+            <!-- 20200902 - minghua - Check Sensitivity code for e-sales -->
+            <apex:outputPanel id="errmessage">
+                <div class="bs row">
+                    <apex:pagemessages ></apex:pagemessages>
+                </div>
+            </apex:outputPanel> 
+        </apex:outputPanel>
+        
+        <!-- Insured Detail Panel -->
+        <apex:outputPanel id="insuredDetailPannel">
+            <div class="bs col-xs-12 col-sm-6 col-lg-7 cigna-top-up-pull-left">
+                <apex:actionFunction action="{!getCustomerBasic}" name="getCustomerBasic"  status="loader-icon"  reRender="personDetailPanel" /> 
+                <apex:actionFunction action="{!getQuoteDetails}" namespace="ServerQuote" name="getQuoteDetails" reRender="resultPanel" />
+                <apex:actionFunction action="{!getQuoteSummary}" namespace="ServerQuote" name="getQuoteSummary" reRender="resultPanel" />
+                <apex:actionFunction action="{!getQuoteAmount}" name="getQuoteAmount" reRender="resultPanel,param-panel" status="loader-icon"/>
+                <!-- 20200902 - minghua - Check Sensitivity code for e-sales -->
+                <apex:actionFunction action="{!redirectToESales}" name="redirectToESales" reRender="param-panel,errmessage" oncomplete="openESalesPage();" status="loader-icon" />
+                 <!--Nicole_Name Screening_20201025-->
+                <apex:actionFunction name="onTirdPayerChange" reRender="third-payer-panel,validation-Panel" status="loader-icon"/>
+
+                <apex:outputPanel id="param-panel">
+                    <apex:inputHidden value="{!params}" id="param-esales"/>   
+                    <apex:inputHidden value="{!personNum}" id="person-number"/>
+                    <!-- 20200902 - minghua - Check Sensitivity code for e-sales -->
+                    <apex:inputHidden value="{!hasSensitivityCode}" id="hasSensitivityCode" /> 
+                </apex:outputPanel>
+    
+                    <!--Eligible Member List-->
+                    <apex:outputPanel id="eligible-member-list-panel">
+                        <div class="bs col-xs-12 cigna-top-up-pull-left">
+                            <div class="cigna-top-up-header">
+                                {!translationMap[ESALES_LABEL_THE_PLAN_WILL_COVER]}                   
+                            </div>
+                            
+                            <div id="available-Insured-List-Div" class="cigna-top-up-content-block">
+                                <!-- Employee -->
+                                <apex:outputPanel rendered="{!LoginMember!=null && !isLoginMemberAlreadyTopUp}">
+                                    <div class="bs col-xs-12 cigna-top-up-content">
+                                        {!LoginMember.firstName}&nbsp;{!LoginMember.lastName},&nbsp;{!LoginMember.Age}
+                                    </div>
+                                </apex:outputPanel>
+                                
+                                <!-- Checkbox -->
+                                <apex:outputPanel rendered="{!topUpFamilyQuestionEnable}">
+                                    <div class="bs col-xs-12 cigna-top-up-pull-left">
+                                        <c:EsaleCheckboxes idPrefix="{!TopUpFamilyQuestion.questionId}" esaleQuestion="{!TopUpFamilyQuestion}" queationRendered="false" onchange="startGetQuote"/>
+                                    </div>
+                                </apex:outputPanel>
+                                    
+                                <!-- Family List -->
+                                <apex:repeat value="{!avalibleMemberMapTopUp}" var="index">
+                                    <apex:outputPanel rendered="{!avalibleMemberMapTopUp[index].SSN!=customerSSN}">
+                                        <div class="bs col-xs-12 cigna-top-up-content">
+                                            {!avalibleMemberMapTopUp[index].firstName},&nbsp;{!avalibleMemberMapTopUp[index].lastName}&nbsp;{!avalibleMemberMapTopUp[index].Relationship},&nbsp;{!avalibleMemberMapTopUp[index].Age}
+                                        </div>
+                                    </apex:outputPanel>
+                                </apex:repeat>                                              
+                            </div>
+                            <div class="bs col-xs-12 cigna-quote-question-separate" />
+                        </div>
+                    </apex:outputPanel>
+                    
+                    <!--Already Top Up Member List-->
+                    <apex:outputPanel id="already-top-up-member-list-panel" rendered="{!memberListAlreadyTopUp.size>0}">
+                        <div class="bs col-xs-12 cigna-top-up-pull-left">
+                            <div class="cigna-top-up-header">
+                                {!translationMap[ESALES_LABEL_ALREADY_TOP_UP]}
+                            </div>
+                            
+                            <div id="available-Insured-List-Div" class="cigna-top-up-content-block">
+                                <!-- Employee -->
+                                <apex:outputPanel rendered="{!LoginMember!=null && isLoginMemberAlreadyTopUp}">
+                                    <div class="bs col-xs-12 cigna-top-up-content-dark">
+                                        {!LoginMember.firstName}&nbsp;{!LoginMember.lastName},&nbsp;{!LoginMember.Age}
+                                    </div>
+                                </apex:outputPanel>
+                                
+                                <!--Label Your Dependent-->
+                                <apex:outputPanel rendered="{!memberListAlreadyTopUp.size>1}">
+                                    <div class="bs col-xs-12 cigna-top-up-content-dark">
+                                        {!translationMap[ESALES_LABEL_YOUR_DEPENDENT]}
+                                    </div>
+                                </apex:outputPanel>
+                                
+                                <!-- Family List -->
+                                <apex:repeat value="{!memberListAlreadyTopUp}" var="member">
+                                    <apex:outputPanel rendered="{!member.SSN!=customerSSN}">
+                                        <div class="bs col-xs-12 cigna-top-up-content-dark">
+                                            {!member.firstName},&nbsp;{!member.lastName}&nbsp;{!member.Relationship},&nbsp;{!member.Age}
+                                        </div>
+                                    </apex:outputPanel>
+                                </apex:repeat>                                              
+                            </div>
+                            <div class="bs col-xs-12 cigna-quote-question-separate" />
+                        </div>
+                    </apex:outputPanel>
+                    
+                    <!--Not Eligible Member List-->
+                    <apex:outputPanel id="not-eligible-member-list-panel" rendered="{!memberListNotEligibleTopUp.size>0}">
+                        <div class="bs col-xs-12 cigna-top-up-pull-left">
+                            <div class="cigna-top-up-header">
+                                {!translationMap[ESALES_LABEL_NOT_ELIGIBLE]}                   
+                            </div>
+                            
+                            <apex:repeat value="{!memberListNotEligibleTopUp}" var="member">
+                                <div class="bs col-xs-12 cigna-top-up-content-dark">
+                                    {!member.firstName},&nbsp;{!member.lastName}&nbsp;{!member.Relationship},&nbsp;{!member.Age}                            
+                                </div>
+                           </apex:repeat>
+                           
+                           <div class="bs col-xs-12 cigna-quote-question-separate" />
+                        </div>
+                    </apex:outputPanel>
+                    
+                    <!-- Plan Question List -->
+                    <apex:outputPanel id="plan-level-question-list-panel" rendered="{!!isLoginMemberAlreadyTopUp}">
+                        <div class="bs col-xs-12 cigna-quote-question-block">
+                            <apex:repeat rendered="{!IF(questions.size>0,True,False)}" value="{!questions}" var="q">
+                                <div class="bs col-xs-12 cigna-quote-question-separate-start" />
+                                
+                                <apex:outputPanel rendered="{!q.questionType = radioQuestionType}">
+                                    <c:ESaleRadio idPrefix="question-ans-{!q.questionId}" esaleQuestion="{!q}" onchange="startGetQuote" isMandatory="{!If(q.questionId==TOP_UP_QUESTION_2_KEY,false,true)}" />
+                                </apex:outputPanel>
+                                
+                                <apex:outputPanel rendered="{!q.questionType = checkboxesQuestionType}">
+                                    <c:EsaleCheckboxes idPrefix="question-ans-{!q.questionId}" esaleQuestion="{!q}" onchange="startGetQuote" />
+                                </apex:outputPanel>
+                                
+                                <div class="bs col-xs-12 cigna-quote-question-separate" />
+                            </apex:repeat>                           
+                        </div>
+                    </apex:outputPanel>
+                                        
+                    <!-- Already Cover Plan -->
+                    <apex:outputPanel id="already-covered-plan-panel" rendered="{!isLoginMemberAlreadyTopUp}">
+                        <div class="bs col-xs-12 cigna-top-up-pull-left">
+                            <div class="cigna-top-up-header">
+                                {!translationMap[ESALES_LABEL_COVERED_PLAN]}&nbsp;<apex:outputLabel value="{!ProductName}"/>
+                            </div>
+                        </div>
+                        <div class="bs col-xs-12 cigna-quote-question-separate" />
+                    </apex:outputPanel>                    
+                    
+                    <!-- brochure section -->
+                    <apex:outputPanel id="download-brochure-panel"> 
+                        <div class="bs col-xs-12 cigna-top-up-pull-left">
+                            <div class="cigna-top-up-header">
+                                <apex:outputLabel value="{!translationMap[ESALES_LABEL_CLICK_HERE]}" escape="false"/>
+                            </div>
+                        </div>
+                        <div class="bs col-xs-12 cigna-quote-question-separate" />
+                    </apex:outputPanel>
+                    
+                    <!--Nicole_Name Screening_20201025-->
+                    <apex:outputPanel id="third-payer-panel"> 
+                        <div class="bs col-xs-12 cigna-fg-green-medium cigna-top-up-pull-left">
+                            <div class="cigna-top-up-header">
+                                <apex:outputText value="{!transField['TUP_3rd_Payer'][$Label.Header_Language_Code_Current]}" rendered="{!contains(transKey, "~TUP_3rd_Payer~")}" escape="false"/>
+                            </div>
+                        </div>
+                        <div class="bs col-xs-12 cigna-top-up-pull-left">
+                            <div class="cigna-top-up-header">
+                                <apex:outputText value="{!transField['TUP_3rd_Payer_Defination'][$Label.Header_Language_Code_Current]}" rendered="{!contains(transKey, "~TUP_3rd_Payer_Defination~")}" escape="false"/>
+                            </div>
+                        </div>
+                        <div class="bs col-xs-12 cigna-top-up-pull-left">
+                            <div class="cigna-top-up-content-block">
+                                <apex:outputText value="{!transField['TUP_3rd_Payer_Defination_Detaill'][$Label.Header_Language_Code_Current]}" rendered="{!contains(transKey, "~TUP_3rd_Payer_Defination_Detaill~")}" escape="false"/>
+                            </div>
+                        </div>
+                        
+                        <apex:outputPanel rendered="{!thirdPayerQuestionEnable}">
+                            <div class="bs col-xs-12 cigna-top-up-pull-left">
+                                <div class="cigna-top-up-header">
+                                    <c:ESaleRadio idPrefix="question-ans-{!thirdPayerQuestion.questionId}" esaleQuestion="{!thirdPayerQuestion}" onchange="onTirdPayerChange" isMandatory="false" />
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                                                                            
+                        <apex:outputPanel rendered="{!thirdPayerRelationshipQuestionEnable}">
+                            <script>           
+                                thirdPayerDeclare = true;
+                            </script>
+                            <div class="bs col-xs-12 cigna-top-up-pull-left">
+                                <div class="cigna-top-up-header">
+                                    <c:ESaleRadio idPrefix="question-ans-{!thirdPayerRelationshipQuestion.questionId}" esaleQuestion="{!thirdPayerRelationshipQuestion}" isMandatory="true" hasTooltip="true" onchange="startGetQuote"/>                               
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+
+                        <apex:outputPanel rendered="{!!thirdPayerRelationshipQuestionEnable}">
+                            <script>           
+                                thirdPayerDeclare = false;
+                            </script>
+                        </apex:outputPanel>
+                        
+                        <div class="bs col-xs-12 cigna-quote-question-separate" />
+                    </apex:outputPanel>
+            </div>
+        </apex:outputPanel>
+        
+        <!-- Quotation Detail Panel -->
+        <apex:outputPanel id="quotationDetailPannel">
+            <div class="bs col-sm-6 col-lg-5" id="Quote-Result-Table">
+                <div id="cigna-quote-summary-desktop" class="bs cigna-floating-bottom-panel">
+                    <c:EsalesQuotationSummary QuoteTable="{!quoteTable}" productName="{!productName}" showSummary="{!showSummary}" showDetail="{!showDetail}" buyNowAction="buyNow" isCustomerPortal="{!isCustomerPortal}"
+                        isBuyNowEnable="{!isBuyNowEnable}" isContactMeEnable="false" haveMonthlyMethod="false" haveDiscount="False"/>
+                </div>
+            </div>
+        </apex:outputPanel>
+
+        <!-- Bob_20201109_Name Screening -->
+        <apex:outputPanel >
+            <div id="overlaythirdPartyAlert" class="overlay" style="display:none;">
+                <div id="alertthirdPartyAlert" class="ConfirmBox">
+                   <div id="thirdPartymsg" class="alertmsg" style="padding-top:20px;">
+                      {!transField['Levy_Detail_Declare_Ttle'][$Label.Header_Language_Code_Current]}
+                      <BR/>
+                      {!transField['Levy_Detail_Declare'][$Label.Header_Language_Code_Current]}
+                   </div>
+                   <div class="bs col-xs-6 col-sm-6">
+                      <i class="glyphicon glyphicon-ok-sign oksign onclick-pointer" onclick="confirmThirdPartyPay('true')"></i>
+                   </div>
+                   <div class="bs col-xs-6 col-sm-6">
+                      <i class="glyphicon glyphicon-remove-sign cancelsign onclick-pointer" onclick="confirmThirdPartyPay('false')"></i>
+                   </div>
+                </div>
+             </div>
+        </apex:outputPanel>
+        
+        <!-- web app padding Panel -->
+        <apex:outputPanel id="webAppPaddingPanel">
+            <div class="bs row" style="padding-bottom: 220px;">
+                <div class="bs col-xs-12"></div>
+            </div>
+        </apex:outputPanel>
+        
+        <!-- Validation panel -->
+        <apex:outputPanel id="validation-Panel">
+        <script>           
+            $("form[id$='form']").validate({
+                ignore: ':not(.answer-validation)'                 
+            }); 
+            
+            $(".answer-validation").each(function(idx, elem){
+                $(elem).rules("add", {
+                    required:true
+                });
+            });
+        </script>
+        </apex:outputPanel>
+    </apex:form>
+</apex:page>

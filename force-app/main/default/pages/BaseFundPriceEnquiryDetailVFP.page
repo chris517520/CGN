@@ -1,0 +1,260 @@
+<apex:page Controller="FundPriceEnquiryCtrl" docType="html-5.0" sidebar="false" showHeader="false" title="Fund Price Enquiry Detail">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <apex:include pageName="CignaCommonCSS" />
+        
+        <style>
+            .table {
+                border-collapse: collapse;
+            }
+            
+            .bs .two-column-table-body div {
+                line-height: 2;
+            }
+            
+            @media (max-width:768px){
+            
+                 .title-row {
+                     padding-top : 20px;
+                 }
+            }
+             #reallocationtccontent {
+                padding:10px;
+                color:#000;
+                font-size:13px;
+                width: 100%;
+                height: 95%;
+                overflow-y:auto;
+          }
+        </style>
+
+
+        
+    </head>
+    <apex:define name="additionalLibraries">
+        <!--additional css, bootstrap, jquery libraries-->
+        <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.3.0/Chart.min.js" /> -->
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/Chart.min.js')}"></script>
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    </apex:define>
+    
+    <div class="bs cigna-fg-orange-medium onclick-pointer" onclick="Cigna.Util.navigateToVFP('FundPriceEnquiryPageVFP', null, null, true)">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i> {!$Label.Back}
+    </div>
+    
+    <!-- Start of the page template -->
+    <div class="bs">
+        <!-- Start of the main body -->
+        <apex:form id="f">
+            <apex:pagemessages ></apex:pagemessages>
+            <apex:actionFunction name="initFundDetail" action="{!initFundDetail}" reRender="chartPanel"/>
+            <div class="bs col-sm-5 col-lg-4 col-md-4 col-lg-offset-2 col-md-offset-2 col-sm-offset-1 col-xs-12">
+               
+                <div class="bs two-column-table-body">
+                    <div class="bs row title-row" style="padding-bottom: 10px">
+                        <div class="bs col-sm-6 col-lg-6 col-md-6 col-xs-6" style="font-weight: bold;" >{!$Label.Fund_Information}</div>
+                    </div>
+                    
+                    <div class="bs row">
+                        <div class="bs col-sm-6 col-lg-6 col-md-6 col-xs-6">{!$Label.Fund_Name}</div>
+                        <div class="bs col-sm-6 col-lg-6 col-md-6 col-xs-6" style="font-weight: bold;">{!selectedFundName}</div>
+                    </div>
+                    
+                    <div class="bs row">
+                        <div class="bs col-sm-6 col-lg-6 col-md-6 col-xs-6">{!$Label.Fund_Unit_Price}</div>
+                        <div class="bs col-sm-6 col-lg-6 col-md-6 col-xs-6" style="font-weight: bold;"><apex:outputText value="{0, number, ###,###,###,###,##0.00}"><apex:param value="{!selectedUnitValue}"/></apex:outputText></div>
+                    </div>
+                    
+                    <div class="bs row">
+                        <div class="bs col-sm-6 col-lg-6 col-md-6 col-xs-6">{!$Label.Fund_Valuation_Date}</div>
+                        <div class="bs col-sm-6 col-lg-6 col-md-6 col-xs-6" style="font-weight: bold;"><apex:OutputText value="{0,date,yyyy/MM/dd}"><apex:Param value="{!selectedValuationDate}"/></apex:OutputText></div>
+                    </div>
+                    <!--
+                    <div class="bs col-lg-12 col-xs-12"><apex:commandButton value="{!$Label.Button_DownLoad_Fact_Sheet_PDF}" onclick="openAttachment()" disabled="{!!showButton}" styleClass="bs btn" />
+                    </div>
+                    -->
+                   <div class="bs row" style="padding-top: 10px;">
+                        <!--<div class="bs btn cigna-fg-white cigna-bg-orange-dark" style="margin-left: 15px;width: 90%;">-->
+                            <!--<a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!attachmentId}" class="action-btn cigna-fg-white" role="button" target="_blank" >{!$Label.Button_DownLoad_Fact_Sheet_PDF}</a>-->
+                            <!--<a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!attachmentId}" target="_blank" class="bs col-sm-12 col-lg-12 col-md-12 col-xs-12 btn cigna-btn-desktop-no-width cigna-fg-white cigna-bg-orange-dark ">{!$Label.Button_DownLoad_Fact_Sheet_PDF}</a>
+                        
+                        </div>-->
+                        <div class="bs col-xs-12 text-center ex-link" style="width: 90%;" onclick="if({!!hasAttachment}){return false;}">
+                            <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!attachmentId}" target="_blank" class="bs col-sm-12 col-lg-12 col-md-12 col-xs-12 btn cigna-btn-desktop-no-width cigna-fg-white cigna-bg-orange-dark">{!$Label.Button_DownLoad_Fact_Sheet_PDF}</a>
+                                     
+                        </div>
+                       
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bs col-sm-6 col-lg-4 col-md-4 col-xs-12" style="padding-left : 20px">
+                
+                <div class="bs two-column-table-body">
+                    
+                    <div class="bs row  title-row" style="padding-bottom: 10px;">
+                        <div class="bs col-sm-12 col-lg-12 col-md-12 col-xs-12" style="font-weight: bold;">{!$Label.Fund_Performance}</div>
+                    </div>
+                    
+                    <div class="bs row">
+                        <!--<div class="bs col-sm-6 col-lg-6 col-md-6 col-xs-6 form-group">-->
+                        <div class="bs col-sm-10 col-lg-8 col-md-8 col-xs-6 form-group">
+                            <apex:selectList style="width: 100%;" value="{!selectedTimeFrame}" multiselect="false" size="1" styleClass="bs form-control">
+                                <apex:selectOptions value="{!timeFrameList}"/>
+                                <apex:actionSupport event="onchange" action="{!initFundDetail}" rerender="chartPanel" />
+                            </apex:selectList>
+                        </div>
+                        <!--
+                        <div class="bs col-sm-2 col-lg-2 col-md-2 col-xs-2 form-group">    
+                            <div class="bs btn cigna-fg-white cigna-bg-orange-dark" style="font-size: 12px">
+                                <a href="#" class="action-btn cigna-fg-white" role="button" onclick="openAttachment()">{!$Label.Button_Show}</a>
+                            </div>
+                        </div>
+                        -->
+                   </div>
+                    
+                    <div class="bs row">
+                        <apex:outputPanel id="chartPanel" layout="block" rendered="{!showChart}" styleClass="bs col-xs-10 col-md-8 col-sm-10">
+                            <canvas id="chart-fund-perf" width="200" height="200"></canvas>
+                            <script type="text/javascript">
+                                var ChartLabel = new Array();
+                                ChartLabel = '{!ChartLabel}';
+                                var cLabel = new Array();
+
+                                var j = 0, k = 0;
+
+                                for (var i = 0; i < ChartLabel.length; i++) {
+                                    if (ChartLabel[i] == ',' || ChartLabel[i] == ']') {
+                                        if(j == 0) {
+                                            for (var g = 1; g < i; g++) {
+                                                if (g == 1) {
+                                                    cLabel[k] = ChartLabel[g];
+                                                }else {
+                                                    cLabel[k] = cLabel[k] + ChartLabel[g];
+                                                }
+                                            }
+                                            k++; 
+                                            j = i;
+                                        } else {
+                                            for(var g=j+1; g<i; g++){
+                                                if(g==j+1) {
+                                                    cLabel[k] = ChartLabel[g];
+                                                }else {
+                                                    cLabel[k]=cLabel[k]+ChartLabel[g];
+                                                }
+                                            }
+                                            k++; 
+                                            j = i;
+                                        }
+                                    }
+                                }
+
+
+                                var ChartData = new Array();
+                                ChartData = '{!ChartData}';
+                                var cDate = new Array();
+                                j = 0;
+                                k = 0;
+
+                                for(var i=0; i<ChartData.length; i++) {
+                                    if(ChartData[i]==',' || ChartData[i]==']'){
+                                        if(j == 0) {
+                                            for(var g = 1; g < i; g++){
+                                                if (g==1) {
+                                                    cDate[k] = ChartData[g];
+                                                } else {
+                                                    cDate[k]=cDate[k]+ChartData[g];
+                                                }
+                                            }
+                                            k++; 
+                                            j=i;
+                                        } else {
+                                            for(var g=j+1; g<i; g++){
+                                                if(g==j+1) {
+                                                    cDate[k] = ChartData[g];
+                                                } else {
+                                                    cDate[k]=cDate[k]+ChartData[g];
+                                                }
+                                            }
+                                            k++; 
+                                            j=i;
+
+                                        } 
+                                    }
+                                }
+                                var data = {
+                                    labels:cLabel,
+                                    datasets:[{
+                                        label:"{!$Label.Fund_Unit_Price}",
+                                        data:cDate,
+                                        backgroundColor:['rgba(207,207,207,81)'],
+                                        borderColor:['rgba(207,207,207,81)'],
+                                        borderWidth:1
+                                    }]
+                                };
+
+                                var ctx = $("#chart-fund-perf");
+                                var myChart = new Chart(ctx,{
+                                    type:'line',
+                                    data:data,
+                                    options: {
+                                        responsive: true,
+                                        scales:{yAxes:[{ticks:{beginAtZero:true}}]}}
+                                });
+                            </script>
+                        </apex:outputPanel> <!-- <div class="bs col-xs-6 col-xs-offset-3 col-sm-4 col-sm-offset-4"> -->
+                     
+                    </div>
+                </div> <!-- <div class="bs panel-body two-column-table-body"> -->
+            </div>
+            <br/>
+            <div id="reallocationtccontent" style="text-align:left;padding-top:50px">
+                 <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'zh_TW'}">
+                     <b style="font-size:14px;">Remarks</b>
+                     <br/><br/>
+                     Please note that investment involves risks and that the value of the investments and the yield from our investment linked insurance plans may go down as well as up as a consequence of the general nature of varied investments and possible exchange or interest rate fluctuations. The fund prices shown above are not indicative of future performance of the plans. These funds are the investment options of several CIGNA Worldwide Life Insurance Company Limited investment linked insurance plans. Please read the fund information in conjunction with the CIGNA Funds brochure and the related principle brochure of related insurance plans.
+                 </apex:outputPanel>
+                 <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'en_US'}">
+                     <b style="font-size:14px;">備註︰</b>
+                     <br/><br/>
+                     由於投資涉及風險及投資項目的性質不同，以及匯率和利率的波動，各項投資價值及收益均可升可降，以上基金價格並不代表將來之表現。此等基金為信諾環球人壽保險有限公司數個投資相連保險計劃之基金選擇。閲讀有關基金資料須一併參閱「信諾基金系列」簡介及有關之主要銷售刊物。
+                 </apex:outputPanel>
+            </div>              
+       </apex:form>
+    </div>
+    <script type="text/javascript">
+        initFundDetail();
+    </script>
+    <script>
+            
+            if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                $(document).ready(function(){
+                    /*
+                    var targetHeight = window.screen.height;
+                    var sfOneHeaderHeight = 44 + 20; //window.parent.document.getElementsByClassName('oneHeader')[0].offsetHeight;
+                    
+                    if($(window).width() > $(window).height()){
+                        targetHeight = window.screen.width;   
+                    }
+                    
+                    //$('body').css('height', (targetHeight  - (targetHeight * 0.09)) + 'px');
+                    $('body').css('height', (targetHeight - sfOneHeaderHeight) + 'px');
+                    $('body').bind('touchmove', function(e){$('#action-bar').css('opacity', '0');});
+                    $('body').bind('touchend', function(e){setTimeout(function(){$('#action-bar').css('opacity', '1');}, 700);});
+                    */
+                    
+                    $('html').css('position', 'fixed').css('overflow', 'auto').css('width', '100%').css('height', '100%');
+                    $('body').css('position', 'fixed').css('overflow-x', 'scroll').css('width', '100%').css('height', '100%');
+                });
+                
+                $('#mobile-app-padding').css('display', 'block');
+                
+                $("a").attr("target","");
+                
+                
+            }
+            
+            
+        </script>
+    <!--</apex:composition>-->
+</apex:page>

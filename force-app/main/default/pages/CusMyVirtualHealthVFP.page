@@ -1,0 +1,329 @@
+<!--Please change apex page id and Portal Template Page-->
+<apex:page docType="html-5.0" id="CustomerPortalTemplatePage" controller="MyVirtualHealthController" showHeader="false" title="{!$Label.NavBar_My_Health}">
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+        <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <style>
+            @media (min-width: 768px) {
+                .header-bar {
+                    background-image: url({!$Resource.virtualhealth});
+                    background-size: cover;
+                    background-position-y: 37%;
+                }
+            }
+            @media (max-width: 767px) {
+                .header-bar {
+                    background-image: url({!$Resource.virtualhealth});
+                    background-size: cover;
+                    background-position-y: 48%;
+                }
+            }
+            .fileWrapper {
+              font-size:14px;
+              font-weight: bold;
+              padding-left: 0px;
+              padding-right: 0px; 
+              vertical-align: middle;          
+              cursor:pointer;
+              -moz-box-shadow:1px 3px 8px #919191; 
+              -webkit-box-shadow:1px 3px 8px #919191; 
+              box-shadow:1px 3px 8px #919191;
+              display: table;
+            }
+            .fw-icon{
+                width:25%;
+                padding:0px;
+                margin:0px;
+                text-align:center;                           
+                /*display: inline-block;*/
+                display: table-cell;
+                vertical-align: middle;
+                background-color: #9BC93B;
+            }
+            .txt-filename{
+                overflow:hidden !important;
+                text-overflow:ellipsis !important;
+                white-space:nowrap !important;
+                word-break:keep-all !important;
+            }
+            @media (max-width: 1170px) {
+              .fw-filename{
+                font-size: 12px;
+                width:75%;
+                padding:0px;
+                margin:0px;
+                text-align:center;
+                vertical-align:middle !important;
+                /*display: inline-block;*/
+                display: table-cell;
+                padding-left: 6px;
+                padding-right: 10px;
+              }
+            }
+           @media (min-width: 1171px) {
+                .fw-filename{
+                  font-size: 14px;
+                  width:75%;
+                  padding:0px;
+                  margin:0px;
+                  text-align:center;
+                  vertical-align:middle !important;
+                  /*display: inline-block;*/
+                  display: table-cell;
+                  padding-left: 6px;
+                  padding-right: 12px;
+                }
+            }
+            
+            .disabled-link {
+                pointer-events: none;
+                background-color: gray !important;
+              }
+
+        </style>
+
+    </head>
+
+    <!-- Start of the page template -->
+    <apex:composition template="CustomerPageTemplate">
+        <!--common css, bootstrap, jquery libraries-->
+        <apex:define name="additionalLibraries">
+            <!-- CR-56_Link_20220214 -->
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap3.4.1.css')}" />
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+            <!-- Bootstrap Core CSS -->
+            <!-- CR-56_Link_20220214 -->
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-3.6.0.min.js')}"/>
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-migrate-3.3.2.js')}"/>
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap3.4.1.min.js')}"/>
+            
+            <apex:include pageName="CignaUtilJS"/>
+        </apex:define>
+
+        <!-- Start of the main body -->
+        <apex:define name="body">
+
+            <apex:actionStatus id="loader-icon">
+                <apex:facet name="start">
+                    <div id="loader" class="bs col-xs-12 col-lg-12 loading-div" style="padding: 0px;">
+                        <span class="loading-helper"></span>
+                        <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </apex:facet>
+            </apex:actionStatus>
+            
+            <apex:outputPanel >
+            <div class="bs header-bar">
+                <p style="position: relative; top: 45%; text-align:center; text-transform: uppercase;">
+                        {!$Label.NavBar_My_Health}
+                </p>
+            </div>
+            <br/>
+            <div class="bs col-sm-12 col-xs-12">
+                <div id="smtDocMsg" class="bs col-sm-12 col-xs-12" style="text-align:left;font-size: 10px;padding-top:30px;color: #f8617a;">
+                    <apex:outputPanel rendered="{!contains(transKey,'~SMT_DOC_MSG~')}">{!transField['SMT_DOC_MSG'][$Label.Header_Language_Code_Current]}</apex:outputPanel>
+                </div>
+                 <!--SMT79 Tovid 20210713 move the Start Virtual Consultation button at the top of the page -->
+                <div id="printShare_Web" class="col-xs-12 col-sm-12">
+                    <div class="bs col-xs-12 col-sm-3">
+                    </div>
+                    <div class="bs col-xs-12 col-sm-6" style="text-align:center;font-size: 20px;padding-top:30px;">
+                        <a id='btnStart' style="text-align: center; width:100%;display:inline;padding:6px;" class="col-xs-12 btn cigna-fg-white cigna-bg-orange-dark" href="" target="_blank" >{!transField['SMT_DOC_SYVCN'][$Label.Header_Language_Code_Current]}</a>
+                    </div>
+                    <div class="bs col-xs-12 col-sm-3">
+                    </div>                    
+                </div>
+                <div class="bs col-xs-12 col-sm-12" style="text-align:center;">
+                    <!-- <apex:repeat id="docList" value="{!docList}" var="doc">  -->
+                        <apex:outputPanel rendered="{!($Label.Header_Language_Code_Current == 'en_US')}">   
+                            <div class="col-xs-12 col-sm-4" style="padding:35px 15px;">
+                                <div class="fileWrapper"  data-atk="{!tdUserGuideEn.id}" data-brkatt="{!tdUserGuideEn.id}" >
+                                    <div class="fw-icon">
+                                        <img src="{!URLFOR($Resource.efulfillment, 'icon.png')}" style='width:100%'/>
+                                    </div>
+                                    <div class="fw-filename"><span>{!transField['SMT_DOC_GUIDE'][$Label.Header_Language_Code_Current]}</span>
+                                    </div>
+                                </div>          
+                            </div>
+                            <div style="display:none;">
+                                <a id="dlink_{!tdUserGuideEn.Id}" href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!tdUserGuideEn.Id}"  target="_blank"></a>
+                            </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!($Label.Header_Language_Code_Current == 'zh_TW')}">   
+                            <div class="col-xs-12 col-sm-4" style="padding:35px 15px;">
+                                <div class="fileWrapper"  data-atk="{!tdUserGuideZh.id}" data-brkatt="{!tdUserGuideZh.id}" >
+                                    <div class="fw-icon">
+                                        <img src="{!URLFOR($Resource.efulfillment, 'icon.png')}" style='width:100%'/>
+                                    </div>
+                                    <div class="fw-filename"><span>{!transField['SMT_DOC_GUIDE'][$Label.Header_Language_Code_Current]}</span>
+                                    </div>
+                                </div>          
+                            </div>
+                            <div style="display:none;">
+                                <a id="dlink_{!tdUserGuideZh.Id}" href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!tdUserGuideZh.Id}"  target="_blank"></a>
+                            </div>
+                        </apex:outputPanel>
+                     <!-- </apex:repeat> -->
+                </div>
+                <!--SMT79 Tovid 20210713 move the Start Virtual Consultation button at the top of the page -->
+                <!--
+                <div id="printShare_Web" class="col-xs-12 col-sm-12">
+                    <div class="bs col-xs-12 col-sm-3">
+                    </div>
+                    <div class="bs col-xs-12 col-sm-6" style="text-align:center;font-size: 20px;padding-top:35px;">
+                        <a id='btnPrint' style="text-align: center; width:100%;display:inline;padding:6px;" class="col-xs-12 btn cigna-fg-white cigna-bg-orange-dark" href="" target="_blank" >{!transField['SMT_DOC_SYVCN'][$Label.Header_Language_Code_Current]}</a>
+                    </div>
+                    <div class="bs col-xs-12 col-sm-3">
+                    </div>                   
+                </div>
+                -->
+            </div>
+            <div id="appCodeDiv" class="bs col-sm-12 col-xs-12">
+                <div class="bs col-sm-12 col-sm-12" style="font-size: 20px;padding-top:30px;">
+                    <apex:outputPanel rendered="{!contains(transKey,'~CusMyHealthVFP_Msg~')}">{!transField['CusMyHealthVFP_Msg'][$Label.Header_Language_Code_Current]}</apex:outputPanel>
+                </div>
+                <br/>
+                <div class="bs col-sm-4 col-xs-12" style="padding-top:35px;text-align:center;">
+                    <div class="bs col-sm-6 col-xs-12"  style="min-width: 200px;">
+                        <div >
+                            <div>
+                                <apex:image id="Google_QRcode" value="{!$Resource.Google_QRcode}" width="200px" height="200px" />
+                            </div>
+                            <div>
+                                <!--<apex:image id="Google_Download" styleClass="onclick-pointer" value="{!$Resource.Google_Download}" width="200px" height="80px" onclick="window.open('https://play.google.com/store/apps/details?id=com.cigna.mobile.mycigna&hl=en')"/>-->
+                                <apex:image id="Google_Download" styleClass="onclick-pointer" value="{!$Resource.Google_Download}" width="200px" height="80px" onclick="window.open('{!$Label.GoogleStore_MyCignaHK_App_Link}')"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bs col-sm-6 col-xs-12"  style="min-width: 200px;">
+                        <div>
+                            <div>
+                                <apex:image id="IOS_QRcode" value="{!$Resource.IOS_QRcode}" width="200px" height="200px" />
+                            </div>
+                            <div>
+                                <!--<apex:image id="IOS_Download" styleClass="onclick-pointer" value="{!$Resource.IOS_Download}" width="200px" height="80px" onclick="window.open('https://apps.apple.com/us/app/mycigna-hk/id1202342855')"/>-->
+                                <apex:image id="IOS_Download" styleClass="onclick-pointer" value="{!$Resource.IOS_Download}" width="200px" height="80px" onclick="window.open('{!$Label.IOSStore_MyCignaHK_App_Link}')"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bs col-sm-4 col-xs-12">
+                </div>
+                <div class="bs col-sm-4 col-xs-12"></div>
+            </div>
+            <!--SMT115-add CS Contact-20220104-kirk-->
+            <div class="bs col-xs-12 col-sm-12">    
+                <div class="col-xs-12 col-sm-4" style="padding:35px 15px;">
+                    <div><span>{!transField['SMT_CS_CONTACT1'][$Label.Header_Language_Code_Current]}</span></div>
+                    <br/>
+                    <div><span style="text-decoration: underline;">{!transField['SMT_CS_CONTACT2'][$Label.Header_Language_Code_Current]}</span></div>
+                    <div><span>{!transField['SMT_CS_CONTACT3'][$Label.Header_Language_Code_Current]}</span></div>
+                    <div><span>{!transField['SMT_CS_CONTACT4'][$Label.Header_Language_Code_Current]}</span></div>
+                    <div><span><a>{!transField['SMT_CS_CONTACT5'][$Label.Header_Language_Code_Current]}</a></span></div>
+                    <br/>
+                    <div><span style="text-decoration: underline;">{!transField['SMT_CS_CONTACT6'][$Label.Header_Language_Code_Current]}</span></div>
+                    <div><span>{!transField['SMT_CS_CONTACT7'][$Label.Header_Language_Code_Current]}</span></div>
+                </div>
+            </div>
+
+            <div class="bs col-sm-12 col-xs-12" style="padding-bottom: 150px;"></div>
+            </apex:outputPanel>
+            <script>
+                //CR-56_Link_20220214
+                $(".fileWrapper").on("click",function(){     
+                    var atk = $(this).data("atk");
+                    var brkatt = $(this).data("brkatt");                  
+                    var indid = "#dlink_"+ brkatt;
+                    console.log('indid '+indid );
+                    $(indid)[0].click();                           
+                });
+                
+                function toggleLink(){
+                    var startTDBtn = $('#btnStart');
+                    if(startTDBtn) {
+                        if(startTDBtn.hasClass('disabled-link')){
+                            $('#printShare_Web').on('click',getToken);
+                        } else {
+                            $('#printShare_Web').off('click',getToken);
+                        }
+                        startTDBtn.toggleClass('disabled-link');
+                        startTDBtn.toggleClass('cigna-bg-orange-dark');
+                    } 
+                }
+            
+                function getToken(){
+                    toggleLink();
+                    console.log('getToken----');
+                    console.log('checkAndroidView----'+Cigna.Util.isAndroid());
+                    console.log('checkIOSView----'+Cigna.Util.isIOS());
+                    // Rancho_SMT113_20211201: navigate to maintanance page if the Virtual_Health_In_Mantainance__c in SMT_General_Setting__c is true
+                    if({!virtualHealthInMantain}){
+                        Cigna.Util.navigateToVFP('VirtualHealthInMaintenancePage');
+                        return;
+                    }
+                    CustomerPageTemplateCtrl.getTelaDocToken(function (result, event){
+                        console.log('result----'+result);
+                        if(event.status){
+                            if(result!=null){
+                                window.location=result;
+                            }else{
+                                alert( '{!$Label.NavBar_My_Health_Error}' );
+                            }
+                        } else {
+                            if(event.message.indexOf('{!$Label.JS_Remoting_Err_guest_user}') !== -1){
+                                Cigna.Util.navigateToVFP('CustomerLoginVFP', null, null, false, false)
+                            } else {
+                                alert('{!$Label.NavBar_My_Health_Error}' );    
+                            }
+                        }
+                        toggleLink();
+                    })
+                }
+                function showLoading(){
+                    $('#loader').show();
+                }
+                function hideLoading(){
+                    $('#loader').hide();
+                }
+                if(Cigna.Util.isMobile() || Cigna.Util.isIOS() || Cigna.Util.isAndroid()){
+                    var ua = navigator.userAgent.toLowerCase();
+                    $('#appCodeDiv').attr('style','display:none');
+                    if(Cigna.Util.isIOS()){
+                        if (ua.indexOf('safari') >0 || ua.indexOf('chrome') >0) {
+                            //$('#printShare_Web').attr('data-applink','cignacustomerportal://app');
+                            //$('#printShare_Web').attr('onclick','window.location.href=\'https://itunes.apple.com/hk/app/mycigna-hk/id1202342855\'');
+                            $('#appCodeDiv').attr('style','display:display');
+                            $('#printShare_Web').attr('style','display:none');
+                            $('#smtDocMsg').attr('style','display:none');
+                        }else{
+                           $('#printShare_Web').on('click',getToken);
+                        }
+                    }else if(Cigna.Util.isAndroid()){
+                        var hasVersion = /Version\/[.0.9]*/i.test(ua);
+                        if(hasVersion){
+                            $('#printShare_Web').on('click',getToken);
+                        }else{
+                            //$('#printShare_Web').attr('data-applink','cignacustomerportal://app');
+                            //Nicole SMT 47
+                            //$('#printShare_Web').attr('onclick','window.location.href=\'https://play.google.com/store/apps/details?id=com.cigna.mobile.mycigna&hl=en\'');
+                            $('#appCodeDiv').attr('style','display:display');
+                            $('#printShare_Web').attr('style','display:none');
+                            $('#smtDocMsg').attr('style','display:none');
+                        }
+                    }
+                }else{
+                    $('#printShare_Web').attr('style','display:none');
+                    $('#smtDocMsg').attr('style','display:none');
+                }
+            </script>
+   
+         </apex:define>
+        <!-- End of the main body -->
+
+    </apex:composition>
+    <!-- End of the page template -->
+</apex:page>

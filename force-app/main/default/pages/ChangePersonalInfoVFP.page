@@ -1,0 +1,1074 @@
+<apex:page standardController="Policy_Change_Request__c" extensions="ManagePolicyChangeCRTL" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+    </head>
+    <style>
+        .form-toggle-tab {
+            padding: 10px;
+            border-bottom: 1px solid #f2f2f2;
+            font-weight: bold;
+        }
+        
+        .form-toggle-content {
+            padding: 10px 0px 10px 0px;
+        }
+        
+        .hidden-input-field{
+            height:0px; 
+            width:0px; 
+            border:0px !important;
+            webkit-appearance: none;
+        }
+    </style>
+
+       
+
+
+    <div class="bs">
+        <div class="bs container">
+         <div class="bs col-sm-12 col-xs-12 form-note">{!$Label.NoteofChangePersonalParticularsPage}</div>
+            <div class="bs col-sm-12 col-xs-12" style="padding:10px;"/>
+            <apex:form id="change-personal-information">
+            
+               <apex:actionFunction name="checkIsPersonalParti" action="{!checkAttDisplay}" rerender="false">
+                   <apex:param name="IsPersonalParti" value="" assignTo="{!IsPersonalParti}"/>
+               </apex:actionFunction>
+               <apex:actionFunction name="checkIsAddress" action="{!checkAttDisplay}" rerender="false">
+                   <apex:param name="IsAddress" value="" assignTo="{!IsAddress}"/>
+               </apex:actionFunction>
+               
+                <div id="personal-info-panel" class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light onclick-pointer" style="{!IF(isCustomerSiteGuestUser,'display:none;','')}">
+                    {!$Label.Personal_Information}<i class="fa fa-chevron-down pull-right" aria-hidden="true"></i>
+                </div>
+                <apex:inputHidden id="ChangePP" value="{!Request.ChangePersonalParticular__c}"/>
+                <div id="personal-info" class="bs col-sm-12 col-xs-12 form-toggle-content" style="display:none;">
+                    
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Policy_Holder_Insured_Name_in_English__c.Label}
+                        </div>
+                        <div class="bs col-sm-9">
+                           <apex:inputField id="PP-HolderNameEnglish-EnglishStrict" value="{!Request.Policy_Holder_Insured_Name_in_English__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Policy_Holder_Insured_Name_in_Chinese__c.Label}
+                        </div>
+                        <div class="bs col-sm-9">
+                            <apex:inputField id="PP-HolderNameChinese-ChineseStrict" value="{!Request.Policy_Holder_Insured_Name_in_Chinese__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                
+                
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Gender__c.Label}
+                        </div>
+                        <div class="bs col-sm-9">
+                            <apex:inputField id="PP-HolderSex" value="{!Request.Gender__c}" styleclass="form-field-style-select" />
+                        </div>
+                    </div>
+                
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Place_of_Birth__c.Label}
+                        </div>
+                        <div class="bs col-sm-9">
+                            <apex:inputField id="PP-HolderPBirth" value="{!Request.Place_of_Birth__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Date_of_Birth__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12" >
+                            <apex:input type="tel" id="Day-DOB-Val" style="width:20%;" value="{!ddDOB}"  html-placeholder="{!$Label.DD}" html-maxlength="2" styleClass="text-center form-field-style question-kid-age" onblur="getCheckDOB('day',this)" />
+                            <apex:input type="tel" id="Month-DOB-Val" style="width:20%;" value="{!mmDOB}" html-placeholder="{!$Label.MM}" html-maxlength="2" styleClass="text-center form-field-style question-kid-age" onblur="getCheckDOB('month',this)" >&nbsp;/&nbsp;</apex:input>
+                            <apex:input type="tel" id="Year-DOB-Val" style="width:40%;" value="{!yyyyDOB}" html-placeholder="{!$Label.YYYY}" html-maxlength="4" styleClass="text-center form-field-style question-kid-age" onblur="getCheckDOB('year',this)" >&nbsp;/&nbsp;</apex:input>
+                        </div>
+                        <div class="bs col-sm-offset-3 col-sm-9 col-xs-12" >
+                            <apex:inputText id="DOB-Check" Styleclass="hidden-input-field" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                            <apex:inputText id="PP-DOB" Styleclass="hidden-input-field" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                        </div>
+                        
+                    </div>
+                
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Nationality__c.Label}
+                        </div>
+                        <div class="bs col-sm-9">
+                            <!-- Rancho_IA_AML_Inspection_20211005: update nationality field to use ws list -->
+                            <!-- <apex:inputField id="PP-HolderNationality" value="{!Request.Nationality__c}" styleclass="form-field-style" /> -->
+                            <apex:selectList id="PP-HolderNationality" value="{!Request.Nationality_Code__c}" size="1" styleClass="bs form-field-style-select">
+                                <apex:selectOptions value="{!nationalityList}"/>
+                            </apex:selectList>
+                        </div>
+                    </div>
+                
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.HKID_Passport_No__c.Label}
+                        </div>
+                        <div class="bs col-sm-9">
+                            <apex:inputField id="PP-HolderHKIDPass" value="{!Request.HKID_Passport_No__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                    
+                </div>
+
+                <div id="address-info-panel" class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light onclick-pointer">
+                    {!$Label.Address_Information}<i class="fa fa-chevron-down pull-right" aria-hidden="true"/>
+                </div>
+                <div id="BasicInfo-ADD-errMsg" class="error" style="display:none;">
+                    {!$Label.Personal_Information_Validation}
+                </div>
+                <apex:inputHidden id="ChangeADD" value="{!Request.ChangeAddress__c}"/>
+                <div id="address-info" class="bs col-sm-12 col-xs-12 form-toggle-content" style="display:none;">
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Residential_Address__c.Label}
+                        </div>
+                        <div class="bs col-sm-9">
+                            <span class="bs col-xs-12 col-sm-12" style="padding-left:0px !important;"><apex:inputTextarea id="ADD-ResidentialAddress-English" styleClass="form-field-style-textarea" value="{!Request.Residential_Address__c}" /></span>
+                        </div>
+                    </div>
+
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Permanent_Address__c.Label}
+                        </div>
+                        <div class="bs col-xs-12 col-sm-9">
+                            <span class="bs col-xs-12 col-sm-12" style="padding-left:0px !important;"><apex:inputField id="ADD-samePerAdd" value="{!Request.PAddress_same_as_RAddress__c}" onclick="BasicInfo.Validate.checkAddChange();" />&nbsp;&nbsp;{!$Label.Same_as_Residential_Address}</span>
+                            <span class="bs col-xs-12 col-sm-12" id="PerAdd" style="padding-left:0px !important;"><apex:inputTextarea id="ADD-PermanentAddress-English" styleClass="form-field-style-textarea" value="{!Request.Permanent_Address__c}" /></span>
+                        </div>
+                    </div>
+    
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Correspondence_Address__c.Label}
+                        </div>
+                        <div class="bs col-xs-12 col-sm-9">
+                            <span class="bs col-xs-12 col-sm-12" style="padding-left:0px !important;"><apex:inputField id="ADD-sameCorrAdd" value="{!Request.CAddress_same_as_RAddress__c}" onclick="BasicInfo.Validate.checkAddChange();" />&nbsp;&nbsp;{!$Label.Same_as_Residential_Address}</span>
+                            <span class="bs col-xs-12 col-sm-12" id="CorrAdd" style="padding-left:0px !important;"><apex:inputTextarea id="ADD-CorrespondenceAddress-English" styleClass="form-field-style-textarea" value="{!Request.Correspondence_Address__c}" /></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="contact-info-panel" class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light onclick-pointer" style="{!IF(isCustomerSiteGuestUser,'display:none;','')}">
+                    {!$Label.Contact_Information}<i class="fa fa-chevron-down pull-right" aria-hidden="true"/>
+                </div>
+                <div id="BasicInfo-CI-errMsg" class="error" style="display:none;">
+                    {!$Label.Personal_Information_Validation}
+                </div>
+                <apex:inputHidden id="ChangeCI" value="{!Request.ChangeContactInfo__c}"/>
+                <div id="contact-info" class="bs col-sm-12 col-xs-12 form-toggle-content" style="display:none;">
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Mobile_Number__c.Label}
+                        </div>
+                        <div class="bs col-xs-12 col-sm-9">
+                            <span class="bs col-xs-4 col-sm-4" style="padding-left:0px !important;"><apex:inputField id="CI-Mobile-code"  styleClass="form-field-style" html-placeholder="+852"  value="{!Request.Mobile_Number_Country_Code__c}" /></span>
+                            <span class="bs col-xs-8 col-sm-8" style="padding-right:0px !important;"><apex:inputField id="CI-Number-Mobile"  styleClass="form-field-style" value="{!Request.Mobile_Number__c}"  /></span>
+                        </div>
+                    </div>
+
+
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Residential_Number__c.Label}
+                        </div>
+                        <div class="bs col-xs-12 col-sm-9">
+                            <span class="bs col-xs-4 col-sm-4" style="padding-left:0px !important;"><apex:inputField id="CI-Residential-code"  styleClass="form-field-style" html-placeholder="+852"  value="{!Request.Residential_Number_Country_Code__c}" /></span>
+                            <span class="bs col-xs-8 col-sm-8" style="padding-right:0px !important;"><apex:inputField id="CI-Number-Residential" styleClass="form-field-style"  value="{!Request.Residential_Number__c}" /></span>
+                        </div>
+                    </div>
+
+
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Office_Number__c.Label}
+                        </div>
+                        <div class="bs col-xs-12 col-sm-9">
+                            <span class="bs col-xs-4 col-sm-4" style="padding-left:0px !important;"><apex:inputField id="CI-Office-code" styleClass="form-field-style" html-placeholder="+852"  value="{!Request.Office_Number_Country_Code__c}"  /></span>
+                            <span class="bs col-xs-8 col-sm-8" style="padding-right:0px !important;"><apex:inputField id="CI-Number-Office"  styleClass="form-field-style"  value="{!Request.Office_Number__c}" /></span>
+                        </div>
+                    </div>
+                    
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3 col-xs-12">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Email_Address__c.Label}
+                        </div>
+                        <div class="bs col-sm-9 col-xs-12">
+                            <apex:inputField id="CI-Email-Address" value="{!Request.Email_Address__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="occupation-info-panel" class="bs col-sm-12 col-xs-12 form-toggle-tab cigna-fg-blue-light onclick-pointer" style="{!IF(isCustomerSiteGuestUser,'display:none;','')}">
+                    {!$Label.Occupation_Information}<i class="fa fa-chevron-down pull-right" aria-hidden="true"/>
+                </div>
+                <apex:inputHidden id="ChangeOCC" value="{!Request.ChangeOccupation__c}"/>
+                <div id="occupation-info" class="bs col-sm-12 col-xs-12 form-toggle-content" style="display:none;">
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Occupation_Job_Title__c.Label}
+                        </div>
+                        <div class="bs col-sm-9">
+                            <apex:inputField id="OCC-JobTitle" value="{!Request.Occupation_Job_Title__c}" styleClass="form-field-style" />
+                        </div>
+                    </div>
+                
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Industry__c.Label}
+                        </div>
+                        <div class="bs col-sm-9">
+                            <apex:inputField id="OCC-NatureBusiness" value="{!Request.Industry__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Exact_Job_Duties__c.Label}
+                        </div>
+                        <div class="bs col-sm-9">
+                            <apex:inputField id="OCC-JobDuties" value="{!Request.Exact_Job_Duties__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Name_of_Employer__c.Label}
+                        </div>
+                        <div class="bs col-sm-9">
+                            <apex:inputField id="OCC-EmployerName" value="{!Request.Name_of_Employer__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Monthly_Income__c.Label}&nbsp;({!$Label.HKD})
+                        </div>
+                        <div class="bs col-sm-9">
+                            <apex:inputField id="OCC-Currency-Income" value="{!Request.Monthly_Income__c}" styleclass="form-field-style" />
+                        </div>
+                    </div>
+                
+                    <div class="bs row form-field">
+                        <div class="bs col-sm-3">
+                            {!$ObjectType.Policy_Change_Request__c.fields.Business_Address__c.Label}
+                        </div>
+                        <div class="bs col-sm-9">
+                            <apex:inputTextarea id="OCC-BusinessAddress" styleClass="form-field-style-textarea" value="{!Request.Business_Address__c}" />
+                        </div>
+                    </div>
+                </div>
+                
+                <apex:actionFunction name="SavePolicyChange" action="{!SavePolicyChange}" status="loader-icon" rerender="false" oncomplete="refreshAttlist()"/>
+                <apex:actionFunction name="SaveAndQuit" action="{!SavePolicyChange}" status="loader-icon" oncomplete="Cigna.Util.navigateToVFP('PolicyChangeVFP');" rerender="false"/>
+                <apex:actionFunction name="skipAttSavePolicyChange" action="{!SavePolicyChange}" rerender="false" status="loader-icon" oncomplete="submitPolicyChange();"/>
+            </apex:form>
+            
+            <script>
+            /*Document Ready*/
+                
+            
+                var isChangePP = false;
+                var isChangeCI = false;
+                var isChangeADD = false;
+                var isChangeOCC = false;
+                
+                var BasicInfo = BasicInfo || {};
+                BasicInfo.Validate = function(){
+                
+                    function checkReqiredSectionFields(section){
+    
+                    
+                        $("textarea[id*='" + section + "']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                required : true
+                            });
+                        });
+                    
+                        $("select[id*='" + section + "']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                required : true
+                            });
+                        });
+                        
+                        $("input[id*='" + section + "']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                required : true
+                            });
+                        });
+                        
+                        // Updated by Linus 18 Feb 2020
+                        // JR1812 - Disable Chinese field manadatory checking   
+                        $("[id$='PP-HolderNameChinese-ChineseStrict']").rules("add", {
+                            required : false
+                        });
+    
+                    }
+                    
+                   function formValidation(){
+                    
+                        $("form[id*='change-personal-information']").validate();
+    
+                        //Part Final
+                        if($("input:hidden[id*='ChangePP']").val()== 'true'){
+                            checkReqiredSectionFields('PP-');
+                        }
+                        
+                        if($("input:hidden[id*='ChangeOCC']").val()== 'true'){
+                            checkReqiredSectionFields('OCC-');
+                        }
+                        
+                       
+    
+                        if($("#personal-info").is(':visible')){
+                            var isBlankPersonal = 0;
+                            $("input[id*='PP-']").each(function(idx, elem){
+                                if($(elem).val() != ''){
+                                    isBlankPersonal += 1;
+                                }
+                            });
+                            
+                            $("select[id*='PP-']").each(function(idx, elem){
+                                if($(elem).val() != ''){
+                                    isBlankPersonal += 1;
+                                }
+                            });
+                            if(isBlankPersonal!=0){
+                                checkReqiredSectionFields('PP-'); //Part 3
+                            }
+                        }
+                        else{
+                            checkReqiredSectionFields('PP-'); //Part 4
+                        }
+                        
+                        if($("#occupation-info").is(':visible')){
+                            var isBlankOCC = 0;
+                            $("input[id*='OCC-']").each(function(idx, elem){
+                                if($(elem).val() != ''){
+                                    isBlankOCC += 1;
+                                }
+                            });
+                            
+                            $("textarea[id*='OCC-']").each(function(idx, elem){
+                                if($(elem).val() != ''){
+                                    isBlankOCC += 1;
+                                }
+                            });
+                            if(isBlankOCC!=0){
+                                checkReqiredSectionFields('OCC-'); //Part 5
+                            }
+                        }else{
+                            checkReqiredSectionFields('OCC-'); //Part 6
+                        }
+                        
+                        
+                        //Ray's Updates
+                        /*
+                        jQuery.validator.addMethod("emailStrict", function(value, element) {
+                            return this.optional(element) || Cigna.ValidationUtil.isValidEmail(value);
+                        }, "{!$Label.Your_Email_Address_is_invalid}");
+                        
+                        jQuery.validator.addMethod("english", function(value, element) {
+                            return this.optional(element) || Cigna.ValidationUtil.isEnglishOnly(value);
+                        }, "{!$Label.English_Only}");
+                        
+                        jQuery.validator.addMethod("englishStrict", function(value, element) {
+                            return this.optional(element) || Cigna.ValidationUtil.isEnglishOnlyStrict(value);
+                        }, "{!$Label.English_Only}");
+                        
+                        jQuery.validator.addMethod("chineseStrict", function(value, element) {
+                            return this.optional(element) || Cigna.ValidationUtil.isChineseOnlyStrict(value);
+                        }, "{!$Label.Chinese_Only}");
+                        
+                        $("input[id*='-ChineseStrict']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                chineseStrict: true
+                            });
+                        }); 
+    
+                        $("input[id*='Currency-']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                number: true
+                            });
+                        });
+                        
+                        $("input[id*='Email-']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                emailStrict: true
+                            });
+                        });
+                        
+                        var today = new Date();
+                        var thisYear = today.getFullYear();
+                        var thisMonth = today.getMonth()+1;
+                        
+                        $("textarea[id*='-English']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                english: true
+                            });
+                        });
+                        
+                        $("input[id*='-EnglishStrict']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                englishStrict: true
+                            });
+                        }); */
+                        
+                        //Ray's Updates End
+                                           
+                        /* $("input[id*='Number-']").each(function(idx, elem){
+                            $(elem).rules("add", {
+                                digits: true
+                            });
+                        });*/
+                    }
+                    
+                                   
+                    function checkAddChange(){
+                        $("form[id*='change-personal-information']").validate();
+                        var PerAddChange  = false;
+                        var CorrAddChange = false;
+                        var ResiAddChange = false;
+                        var changeAddComplete  = false;
+    
+                        if ($("#address-info").is(':visible')){
+                            if($("[id$='ADD-samePerAdd']").prop('checked')!=false || $("textarea[id*='ADD-PermanentAddress']").val()!=''){
+                                PerAddChange = true;
+                            }
+                            
+                            if($("[id$='ADD-sameCorrAdd']").prop('checked')!=false || $("textarea[id*='ADD-CorrespondenceAddress']").val()!=''){
+                                CorrAddChange = true;
+                            }
+                            
+                            if($("textarea[id*='ADD-ResidentialAddress']").val()!=''){
+                                ResiAddChange = true;
+                            }
+                            
+                            if(PerAddChange || CorrAddChange || ResiAddChange ){
+                            
+                              changeAddComplete = true;
+                            }
+                            
+    
+                            if($("[id$='ADD-sameCorrAdd']").prop('checked') == false && $("[id$='ADD-samePerAdd']").prop('checked') ==false){
+                                $("textarea[id*='ADD-ResidentialAddress']").rules("add", {
+                                    required : false
+                                });
+                            }else if($("textarea[id*='ADD-ResidentialAddress']").val() == ''){
+                            
+                                $("textarea[id*='ADD-ResidentialAddress']").rules("add", {
+                                        required : true
+                                });
+                            
+                            }
+    
+    
+                        }else{
+                        
+                            changeAddComplete = true;
+                        }
+                            
+                        return changeAddComplete;
+                    
+                    }
+                    
+                    function checkCIChange(){
+                        $("form[id*='change-personal-information']").validate();
+                        var checkCIcomplete = false;
+                        if($("#contact-info").is(':visible')){
+                            $("input[id*='CI-']").each(function(idx, elem){
+                                if($(elem).val()!='' && $(elem).val()!='+852'){
+                                    checkCIcomplete = true;
+                                }
+                            });
+                            
+                            if ($("[id$='CI-Mobile-code']").val()!='' && $("[id$='CI-Mobile-code']").val()!='+852') {
+                                $("[id$='CI-Number-Mobile']").rules("add", {
+                                    required : true
+                                });
+                            }else{
+                                $("[id$='CI-Number-Mobile']").rules("add", {
+                                        required : false
+                                });
+                            }
+                            
+                            
+                            if ($("[id$='CI-Number-Mobile']").val()!=''){
+                                $("[id$='CI-Mobile-code']").rules("add", {
+                                    required : true
+                                });
+                            }else{
+                                $("[id$='CI-Mobile-code']").rules("add", {
+                                    required : false
+                                });
+                            
+                            }
+                            
+                            if ($("[id$='CI-Residential-code']").val()!='' && $("[id$='CI-Residential-code']").val()!='+852') {
+                                $("[id$='CI-Number-Residential']").rules("add", {
+                                    required : true
+                                });
+                            }else{
+                                $("[id$='CI-Number-Residential']").rules("add", {
+                                    required : false
+                                });
+                            
+                            }
+                            
+                            if ($("[id$='CI-Number-Residential']").val()!=''){
+                                $("[id$='CI-Residential-code']").rules("add", {
+                                    required : true
+                                });
+                            }else{
+                                $("[id$='CI-Residential-code']").rules("add", {
+                                    required : false
+                                });
+                            }
+                            
+                            if ($("[id$='CI-Office-code']").val()!='' && $("[id$='CI-Office-code']").val()!='+852') {
+                                $("[id$='CI-Number-Office']").rules("add", {
+                                    required : true
+                                });
+                            }else{
+                                $("[id$='CI-Number-Office']").rules("add", {
+                                    required : false
+                                });
+                            }
+                            
+                            if ($("[id$='CI-Number-Office']").val()!=''){
+                                $("[id$='CI-Office-code']").rules("add", {
+                                    required : true
+                                });
+                            }else{
+                                $("[id$='CI-Office-code']").rules("add", {
+                                    required : false
+                                });
+                            }
+    
+                        }else{
+                            checkCIcomplete = true;
+                        }
+                        return checkCIcomplete;
+                    }
+                    
+                    
+                    function checkAnyChangeInBasicInfo(){
+                    
+                        if (isChangePP == false && isChangeCI == false && isChangeADD == false && isChangeOCC == false){
+                            return false;
+                        }else{
+                            return true;
+                        }
+                    }
+                    
+                    
+                    function checkDOBRequired(){
+                
+                        $("input[id*='PP-DOB']").val('');
+                        var DOB =''; 
+                        
+                        if ( $("input[id*='Day-DOB-Val']").val()!='' &&
+                             $("input[id*='Month-DOB-Val']").val()!=''&&
+                             $("input[id*='Year-DOB-Val']").val()!=''){
+                             
+                             DOB = $("input[id*='Day-DOB-Val']").val()+
+                                   $("input[id*='Month-DOB-Val']").val()+
+                                   $("input[id*='Year-DOB-Val']").val();
+                                   
+                             $("input[id*='PP-DOB']").val(DOB);
+                         }
+                    }
+                    
+                    
+                    return {
+                        formValidation : formValidation,
+                        checkAddChange : checkAddChange,
+                        checkCIChange : checkCIChange,
+                        checkAnyChangeInBasicInfo : checkAnyChangeInBasicInfo,
+                        checkDOBRequired : checkDOBRequired
+                    
+                    }
+                }();
+
+                $("[id$='CI-Mobile-code']").val('+852');
+                $("[id$='CI-Residential-code']").val('+852');
+                $("[id$='CI-Office-code']").val('+852');
+
+                if($("[id$='ADD-samePerAdd']").prop('checked') == true){
+                    $( "#PerAdd" ).hide();
+                }
+                
+                if($("[id$='ADD-sameCorrAdd']").prop('checked') == true){
+                    $( "#CorrAdd" ).hide();
+                }
+                
+                //Part 1
+                if($("input:hidden[id*='ChangePP']").val()== 'true'){
+                    $("#personal-info").show();
+                    isChangePP = true;
+                    //checkReqiredSectionFields('PP-');
+                }
+                
+                if($("input:hidden[id*='ChangeADD']").val()== 'true'){
+                    $("#address-info").show();
+                    isChangeADD = true;
+                    BasicInfo.Validate.checkAddChange();
+                    
+                }
+                
+                if($("input:hidden[id*='ChangeCI']").val()== 'true'){
+                    $("#contact-info").show();
+                    isChangeCI = true;
+                    
+                }
+                
+                //Part 2
+                if($("input:hidden[id*='ChangeOCC']").val()== 'true'){
+                    $("#occupation-info").show();
+                    isChangeOCC = true;
+                    //checkReqiredSectionFields('OCC-');
+                }
+                
+                //CR-56_Link_20220214
+                $("[id$='ADD-samePerAdd']").on("click",function() {
+                     $( "#PerAdd" ).toggle();
+                });
+                
+                $("[id$='ADD-sameCorrAdd']").on("click",function() {
+                     $( "#CorrAdd" ).toggle();
+                });
+                
+                //CR-56_Link_20220214
+                $("#personal-info-panel").on("click",function() {
+                    if($("#personal-info").is(':visible')){
+                        BasicInfo.Validate.checkDOBRequired();
+                        var isBlankPersonal = 0;
+                        $("input[id*='PP-']").each(function(idx, elem){
+                            if($(elem).val() != ''){
+                                isBlankPersonal += 1;
+                            }
+                        });
+                        
+                        $("select[id*='PP-']").each(function(idx, elem){
+                            if($(elem).val() != ''){
+                                isBlankPersonal += 1;
+                            }
+                        });
+                        
+                        if(isBlankPersonal==0){
+                           $("#personal-info").hide(changeSection(this));
+                           $("input:hidden[id*='ChangePP']").val(false);
+                           clearFieldVal('PP-');
+                           isChangePP = false;
+                        }else{
+                            //checkReqiredSectionFields('PP-'); //Part 3
+                        }
+                         
+                    }else{
+                         $("#personal-info").show(changeSection(this));
+                         $("input:hidden[id*='ChangePP']").val(true);
+                         //checkReqiredSectionFields('PP-'); //Part 4
+                         isChangePP = true;
+                    } 
+                    
+
+                    checkNeedAtt();
+                    checkIsPersonalParti(isChangePP);
+                });
+                
+               //CR-56_Link_20220214
+               $("#contact-info-panel").on("click",function() {
+                
+                    if($("#contact-info").is(':visible')){
+                        var isBlankContact = 0;
+                        $("input[id*='CI-']").each(function(idx, elem){
+                            if($(elem).val() != '' && $(elem).val() != '+852'){
+                                isBlankContact += 1;
+                            }
+                        });
+                        
+                        if(isBlankContact==0){
+                           $("#contact-info").hide(changeSection(this));
+                           $("#BasicInfo-CI-errMsg").hide();
+                           $("input:hidden[id*='ChangeCI']").val(false);
+                            clearFieldVal('CI-');
+                            isChangeCI = false;
+                        }
+                    
+                    }else{
+                        $("#contact-info").show(changeSection(this));
+                        $("input:hidden[id*='ChangeCI']").val(true);
+                        isChangeCI = true;
+                        BasicInfo.Validate.checkCIChange();
+                    }
+                    
+                    checkNeedAtt();
+                });
+
+                //CR-56_Link_20220214
+                $("#address-info-panel").on("click",function() {
+                    if($("#address-info").is(':visible')){
+                        var isBlankADD = 0;
+                        $("textarea[id*='ADD-']").each(function(idx, elem){
+                            if($(elem).val() != '' || $("[id$='ADD-samePerAdd']").prop('checked')!=false || $("[id$='ADD-sameCorrAdd']").prop('checked')!=false){
+                                isBlankADD += 1;
+                            }
+                        });
+                        
+                        if(isBlankADD==0){
+                           $("#address-info").hide(changeSection(this));
+                           $("#BasicInfo-ADD-errMsg").hide();
+                           $("input:hidden[id*='ChangeADD']").val(false);
+                            clearFieldVal('ADD-');
+                            isChangeADD = false;
+                        }
+                    
+                    }else{
+                        $("#address-info").show(changeSection(this));
+                        $("input:hidden[id*='ChangeADD']").val(true);              
+                        isChangeADD = true;
+                        BasicInfo.Validate.checkAddChange();
+                    }
+
+                    checkIsAddress(isChangeADD);
+                    checkNeedAtt();
+                });
+                
+                //CR-56_Link_20220214
+                $("#occupation-info-panel").on("click",function() {
+                
+                    if($("#occupation-info").is(':visible')){
+                        var isBlankOCC = 0;
+                        $("input[id*='OCC-']").each(function(idx, elem){
+                            if($(elem).val() != ''){
+                                isBlankOCC += 1;
+                            }
+                        });
+                        
+                        $("textarea[id*='OCC-']").each(function(idx, elem){
+                            if($(elem).val() != ''){
+                                isBlankOCC += 1;
+                            }
+                        });
+                        
+                        if(isBlankOCC==0){
+                           $("#occupation-info").hide(changeSection(this));
+                           $("input:hidden[id*='ChangeOCC']").val(false);
+                            clearFieldVal('OCC-');
+                            isChangeOCC = false;
+                        }else{
+                            //checkReqiredSectionFields('OCC-'); //Part 5
+                        }
+                    
+                    }else{
+                        $("#occupation-info").show(changeSection(this));
+                        $("input:hidden[id*='ChangeOCC']").val(true);
+                        //checkReqiredSectionFields('OCC-'); //Part 6
+                        isChangeOCC = true;
+                    }
+                    checkNeedAtt();
+                }); 
+                
+                
+                checkNeedAtt();
+
+                function changeSection(section){
+                    var icon = $(section).find('i');
+                    
+                    if(icon.hasClass("fa-chevron-down")){
+                        icon.removeClass("fa-chevron-down").addClass("fa-chevron-up");
+                    }else if(icon.hasClass("fa-chevron-up")){
+                        icon.removeClass("fa-chevron-up").addClass("fa-chevron-down");
+                    }
+                }
+                
+                function checkNeedAtt(){
+                    if('{!sitePrefix}' != '/broker'){
+                        if(isChangePP == false){
+                            $("#submitForm-desktop-btn").attr("onclick","submitForm('personal','7')");
+                            $("#submitForm-mobile-btn").attr("onclick","submitForm('personal','7')");
+                            
+                            if ($('#mobileformNext-btn-icon').hasClass('ci-hk-arrow-31')) {
+                                $('#mobileformNext-btn-icon').removeClass('ci-hk-arrow-31').addClass('ci-hk-document-send');
+                            }
+                            $('#mobileformNext-btn-text').html('{!$Label.Submit}');
+                            $('#formNext-btn-text').html('{!$Label.Submit}');
+    
+                        }else{
+                            $("#submitForm-desktop-btn").attr("onclick","submitForm('personal')");
+                            $("#submitForm-mobile-btn").attr("onclick","submitForm('personal')");
+                            
+                            if ($("#mobileformNext-btn-icon").hasClass('ci-hk-document-send')) {
+                                $('#mobileformNext-btn-icon').removeClass('ci-hk-document-send').addClass('ci-hk-arrow-31');
+                            }
+                            $('#mobileformNext-btn-text').html('{!$Label.Next}');
+                            $('#formNext-btn-text').html('{!$Label.Next}'); 
+                        }
+                        
+                        if(isChangePP){
+                            $("#PIPHHKIDAtt").show();
+                        }else{
+                            $("#PIPHHKIDAtt").hide();
+                        }
+                        
+                        //20190726 - David Zhang - No attachment for address change
+                        $("#PIPHAddressAtt").hide();
+                        /*
+                        if(isChangeADD){
+                            $("#PIPHAddressAtt").show();
+                        }else{
+                            $("#PIPHAddressAtt").hide();
+                        }
+                        */
+                    }
+                }
+
+            //Ray's Updates
+            
+            
+ 
+            
+            function clearFieldVal(section){
+                
+                $("[id$='ADD-sameCorrAdd']").attr('checked', false);
+                $( "#CorrAdd" ).show();
+                
+                $("[id$='ADD-samePerAdd']").attr('checked', false);
+                $( "#PerAdd" ).show();
+            
+                $("input[id*='" + section + "']").each(function(idx, elem){
+                    $(elem).val('');
+                });
+                        
+                $("select[id*='" + section + "']").each(function(idx, elem){
+                    $(elem).val('');
+                });
+                
+                $("textarea[id*='" + section + "']").each(function(idx, elem){
+                    $(elem).val('');
+                });
+                
+                if(section == 'CI-'){
+                    $("[id$='CI-Mobile-code']").val('+852');
+                    $("[id$='CI-Residential-code']").val('+852');
+                    $("[id$='CI-Office-code']").val('+852');
+                }
+
+            }
+            //Nicole's Update
+            function isNumberKey(charCode, min, max) {
+                if ((charCode >= 48 && charCode <= 57) || 
+                    $.inArray(charCode, [8, 127]) !== -1) {
+                    if (!isNaN(min) && !isNaN(max) && typeof min != undefined && typeof max != undefined) {
+                        if ((charCode - 48) >= min && (charCode - 48) <= max) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    } else {
+                        return true;
+                    }
+                } else {
+                    return false;
+                }
+            }
+            
+            function onKidAgeChange(evt) {
+                return isNumberKey(evt.charCode);
+            }
+            
+            //CR-56_Link_20220214
+            $('.question-kid-age').on("keypress",onKidAgeChange);
+            
+            function hiddenonblur(input){
+                var InputId = input.id;
+                //CR-56_Link_20220214
+                $("input[id*='" + InputId + "']").trigger("blur");
+            }
+            
+            function getCheckDOB(datetype , input){
+            
+                $("input[id*='DOB-Check']").val('');
+                var day = $("input[id*='Day-DOB-Val']").val();
+                var month = $("input[id*='Month-DOB-Val']").val();
+                var year = $("input[id*='Year-DOB-Val']").val()
+                
+                if(day!='' && month!='' && year!=''){
+                    $("input[id*='DOB-Check']").val(day+'/'+month+'/'+year);
+                }
+                //CR-56_Link_20220214
+                $("input[id*='DOB-Check']").trigger("focus");
+                
+                BasicInfo.Validate.checkDOBRequired();
+                $("input[id*='PP-DOB']").trigger("focus");
+
+            }
+            
+            function validateDOB(){
+                
+                var day = $("input[id*='Day-DOB-Val']").val();
+                var month = $("input[id*='Month-DOB-Val']").val();
+                var year = $("input[id*='Year-DOB-Val']").val();
+                console.log('input'+year+'/'+month+'/'+day);
+                
+                var thedate=new Date();
+                var nowYear=thedate.getFullYear();
+                var nowMonth=thedate.getMonth()+1;
+                var nowDay=thedate.getDate();
+                console.log('now'+nowYear+'/'+nowMonth+'/'+nowDay);
+                
+                if(day=='' || month=='' || year==''){
+                        return true;
+                }
+                    
+                if(day!='' ){
+                    console.log('day'+day);
+                    if(day==0 || day>31){
+                        return false;
+                    }else if(year==nowYear && month==nowMonth &&　day>nowDay){
+                        return false;
+                    }
+                    
+                    if(month==2){
+                        if(day>29) return false;
+                        if(day == 29){
+                            console.log('Feb'+year%4);
+                            if(year%4!=0) return false;
+                        }
+                    }
+                    
+                    if(month==4 || month==6 || month==9 || month==11){
+                        if(day>30) return false;
+                    }
+                }
+                if(month!=''){    
+                    console.log('month'+month);
+                    if(month==0 || month>12){
+                         return false;
+                    }else if(year==nowYear && month>nowMonth){
+                        return false;
+                    }
+                }
+                if(year!=''){      
+                    console.log('year'+year);                  
+                    if(year<1900 || year>nowYear){
+                         return false;
+                    }
+                }
+                return true;
+            }
+            
+            //$("input[id*='Day-DOB-Check']").val($("input[id*='Day-DOB-Val']").val());
+            //$("input[id*='Month-DOB-Check']").val($("input[id*='Month-DOB-Val']").val());
+            //$("input[id*='Year-DOB-Check']").val($("input[id*='Year-DOB-Val']").val());
+            
+            //Ray's Updates 
+            $("form[id*='change-personal-information']").validate();
+            
+            jQuery.validator.addMethod("emailStrict", function(value, element) {
+                return this.optional(element) || Cigna.ValidationUtil.isValidEmail(value);
+            }, "{!$Label.Your_Email_Address_is_invalid}");
+            
+            jQuery.validator.addMethod("english", function(value, element) {
+                return this.optional(element) || Cigna.ValidationUtil.isEnglishOnly(value);
+            }, "{!$Label.English_Only}");
+            
+            jQuery.validator.addMethod("englishStrict", function(value, element) {
+                return this.optional(element) || Cigna.ValidationUtil.isEnglishOnlyStrict(value);
+            }, "{!$Label.English_Only}");
+            
+            jQuery.validator.addMethod("chineseStrict", function(value, element) {                
+                return this.optional(element) || Cigna.ValidationUtil.isChineseOnlyStrict(value);                
+            }, "{!$Label.Chinese_Only}");
+            
+            jQuery.validator.addMethod("validateDOB", function(value, element) {
+                   return validateDOB();
+            }, "{!$Label.ESales_Invalid_DOB}");
+            
+             $("input[id*='-ChineseStrict']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    chineseStrict: true
+                });
+            }); 
+
+            $("input[id*='Currency-']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    number: true
+                });
+            });
+            
+            $("input[id*='Email-']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    emailStrict: true
+                });
+            });
+            
+            var today = new Date();
+            var thisYear = today.getFullYear();
+            var thisMonth = today.getMonth()+1;
+             
+            $("textarea[id*='-English']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    english: true
+                });
+            });
+            
+            $("input[id*='-EnglishStrict']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    englishStrict: true
+                });
+            });
+            
+            $("input[id*='DOB-Check']").rules("add", {
+                validateDOB:true
+            });
+            
+            //Ray's Updates End
+            
+            
+            
+            //Ray's Updates
+            //BasicInfo.Validate.formValidation();
+
+            </script>
+        </div>
+    </div>
+    <!-- Link_IA_AML_Inspection_20220119 -->
+    <script>
+        function checkNationality(value){
+            var codeList = {!isSanctionCodeListNa};
+            var count = 0;
+            console.log("value:"+value);
+            console.log("codeList:"+codeList);
+            codeList.forEach((data)=>{
+                if(value == data.toString()){
+                    count++;
+                }
+            });
+            if(count>0){
+                return false;
+            }
+            return true;
+        }
+        
+        jQuery.validator.addMethod("validateNationality", function(value, element) {
+            return checkNationality(value);
+        }, "{!$Label.Sanctioned_Jurisdiction_Message_Nationality}");
+        
+        $("[id*='PP-HolderNationality']").each(function(idx, elem){
+            $(elem).rules("add", {
+                validateNationality:true
+            });
+        });
+    </script>
+</apex:page>

@@ -1,0 +1,320 @@
+<apex:page docType="html-5.0" sidebar="false" cache="false" showHeader="false" title="Get Protected" controller="PersonalChoiceProductCtrl" action="{!saveQuote}">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+         <style>
+            <!--additional inline css-->
+            .sfdc_richtext li {
+                margin-bottom: 5px;
+            }
+            .bs .cigna-belly-button-wrapper {
+                top: -55px;
+                position: absolute;
+                left: 45%;
+                background: #fff;
+                border-radius: 100%;
+            }
+            .bs .cigna-belly-button {
+                font-size: 30px !important;
+                -webkit-border-radius: 1100%;
+                -moz-border-radius: 100%;
+                -o-border-radius: 100%;
+                border-radius: 100%;
+                border: 3px solid #39B54A;
+                text-align: center;
+                display: table-cell !important;
+                vertical-align: middle;
+                width: 60px;
+                height: 60px;
+            }
+            .bs .cigna-content-area {
+                padding: 20px;
+            }
+            .bs .cigna-btn-desktop {
+                width: 30%;
+                //text-transform: uppercase;
+                font-family: "Gotham SSm A", "Gotham SSm B", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+                font-style: normal;
+                font-weight: 500;
+            }
+            .bs .cigna-btn-desktop-no-width {
+                //text-transform: uppercase;
+                font-family: "Gotham SSm A", "Gotham SSm B", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+                font-style: normal;
+                font-weight: 500;
+            }
+            .bs .cigna-list-group {
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
+            .bs .cigna-list-group-item {
+                position: relative;
+                display: block;
+                padding: 20px 30px 20px 15px;
+                background-color: #fff;
+                border-bottom: 1px solid #ddd;
+                color: #58595B;
+            }
+            .bs .cigna-list-group-item:hover {
+                text-decoration: none;
+                color: #58595B;
+            }
+            .bs .cigna-list-group-item:last-child {
+                border: 0;
+            }
+            .bs .cigna-list-group-item i.item-right-arrow {
+                position: absolute;
+                right: 15px;
+                top: 40%;
+            }
+            .bs .cigna-list-group-item div.item-right-arrow {
+                position: absolute;
+                right: 0px;
+                top: 40%;
+            }
+            .bs .cigna-list-group-item > div {
+                position: relative;
+            }
+            .bs .cigna-list-group-item { cursor: pointer; }
+            @media (min-width: 768px) {
+                .bs .cigna-div-table {
+                    display: table !important;
+                    table-layout: fixed;
+                    width: 100%;
+                    height: 100%;
+                }
+                .bs .cigna-div-table-left {
+                    display: table-cell;
+                    height: 100%;
+                    float: none;
+                    vertical-align: middle;
+                    text-align: center;
+                    border-right: 1px #D9D9D6 solid;
+                }
+                .bs .cigna-div-table-right {
+                    display: table-cell;
+                    height: 100%;
+                    float: none;
+                }
+            }
+            .bs .display-block {
+                display: block !important;
+            }
+            .sfdc_richtext {
+                font-family: "Gotham SSm A", "Gotham SSm B", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif !important;
+            }
+            
+        </style>
+        <script>
+            <!--additional inline js-->
+            function preventDefault(event){
+                if(event.preventDefault){
+                    event.preventDefault();
+                }
+                else{
+                        window.event.returnValue=false;
+                        return false;
+
+                }
+            }
+
+            var Cigna = Cigna || {};
+            Cigna.GetProtected = function(){
+
+                function getQuote() {
+                    
+                    var param = $('#param-panel input[type="hidden"]').val();
+                    param = param+'&lang={!$Label.Header_Language_Code_Current}';
+                    console.log('11111111111'+param);
+                    var selectedCode = $('#current-product-code').val();
+                    Cigna.Util.navigateToVFP("CusPersonalChoiceGetQuoteVFP?plan=" + $('#current-product-code').val() + param, null, null,null, false);
+                }
+                
+                function init() {
+                    var prdname = "{!selectedProduct.Name}";
+                    if (prdname!=""){
+                        var lang='{!userLanguage}';
+                        if (lang.substring(0,2)=='en')
+                            lang = 'en_us';
+                        GTMProductClickPush(prdname,lang);
+                    }
+                    $('#product-button-customer-portable').show();                 
+                }
+
+                return {
+                    getQuote : getQuote,
+                    init : init
+                }
+            }();
+            
+            $(document).ready(function(){  
+                Cigna.GetProtected.init();
+
+                var categoryCodeParam = '{!JSINHTMLENCODE($CurrentPage.Parameters.Category)}';
+                if(categoryCodeParam != null){
+                    $('#current-select-Category').val(categoryCodeParam);
+                }
+                
+               // For customer portal app
+                if (Cigna.Util.checkWebView() && !Cigna.Util.isBrokerPortal()) {
+                
+                    var categoryCodeParam = '{!JSINHTMLENCODE($CurrentPage.Parameters.Category)}';
+                    var productCodeParam = '{!JSINHTMLENCODE($CurrentPage.Parameters.pc)}';
+                    
+                    if(categoryCodeParam != null && categoryCodeParam != "" && productCodeParam != null && productCodeParam != ""){
+                        
+                        $('#product-filter-wrapper').hide();
+                        $('#product-selection-wrapper').hide();
+                        Cigna.GetProtected.finishLoading(['#product-info-wrapper', '#action-bar', '#product-back']);
+                              
+                        $('#current-select-Category').val(categoryCodeParam);
+                      
+                        $('#product-selection-wrapper').fadeOut();
+                        $('#product-back').fadeOut();
+                        $('#content-placeholder-area').fadeIn();
+                        
+                        $('#current-step').val('product-info');
+                        $('#current-product-code').val(productCodeParam);
+                        ServerGetProtected.loadProduct(productCodeParam);                      
+                    }
+                    
+                }
+                // if({!!isWithIn}){
+                //     Cigna.Util.navigateToVFP("CusPersonalChoicePaymentVFP?lang={!$Label.Header_Language_Code_Current}&afterPay=true&hasExpired=true", null, null,null, false);
+                // }
+                // if({!noExistEVP}){
+                //     Cigna.Util.navigateToVFP('CustomerLoginVFP', null, null, false, false);
+                // }
+                // if({!txn.Current_Step__c}==2){
+                //     var param = '&tid={!txn.id}';
+                //     param = param+'&lang={!$Label.Header_Language_Code_Current}';
+                //     console.log('11111111111'+param);
+                //     var selectedCode = $('#current-product-code').val();
+                //     Cigna.Util.navigateToVFP("CusPersonalChoiceGetQuoteVFP?plan=PBT"+ param, null, null,null, false);
+                // }
+                // if({!txn.Current_Step__c}==3||{!txn.Current_Step__c}==13){
+                //    Cigna.Util.navigateToVFP("CusPersonalChoiceComfirmationVFP?tid={!txn.id}&lang={!$Label.Header_Language_Code_Current}", null, null,null, false); 
+                // }
+                // console.log('Current_Step__c='+{!txn.Current_Step__c});
+                // if({!txn.Current_Step__c}==14){
+                //     Cigna.Util.navigateToVFP("CusPersonalChoicePaymentVFP?tid={!txn.id}&lang={!$Label.Header_Language_Code_Current}&afterPay=true", null, null,null, false);
+                // }
+                
+            });
+            
+        </script>
+    </head>
+    <apex:form >
+        <div id="param-panel" style="display: none;">
+            <apex:outputPanel id="param-panel">
+                <apex:inputHidden value="{!params}" id="param-esales"/>
+            </apex:outputPanel>
+        </div>
+        <div id="param-language" style="display: none;">
+            <apex:outputPanel id="param-language">
+                <apex:inputHidden value="{!languageParam}" id="param-language-esales"/>
+            </apex:outputPanel>
+            <script>    
+                        var val=$('#param-language input[type="hidden"]').val();
+                        console.log('test lihao111'+val);
+                        val='?lang={!$Label.Header_Language_Code}'+val;
+                        console.log('test lihao'+val);
+                        $('#isGuestuser-true-diasplay-lang-href > a').attr('href',val);
+                        $('#isGuestuser-personalchoice-Header_Change_Language').attr('href',val);
+                        // $('#isGusetuser-cigna-logo > a').attr('onclick','Cigna.Util.navigateToVFP(\'PersonalChoiceVFP?token={!txn.Personal_Choice_Token__c}\', null, null, false, false)');   
+                    </script>
+        </div>
+        <input id="current-step" type="hidden" value="" />
+        <input id="current-product-code" type="hidden" value="{!selectedProductCode}" />
+       <apex:actionFunction action="{!saveQuote}" name="saveQuote" reRender="param-panel"/>
+        <apex:actionFunction action="{!nextStep}" name="nextStep" oncomplete="Cigna.GetProtected.getQuote();" />
+        <div id="product-info-wrapper">
+            <div id="product-info" class="bs row cigna-content-area cigna-fg-gray-dark" style="padding-bottom: 50px;">
+                <apex:outputPanel id="product-info" layout="block">
+                <div class="bs col-xs-12" style="position: relative;">
+                    <div class="bs cigna-belly-button-wrapper cigna-fg-green-medium">
+                        <i class="fa fa-ambulance fa-lg cigna-belly-button" aria-hidden="true"></i>
+                    </div>
+                </div>
+                <div class="bs col-xs-12">
+                    <apex:outputPanel >
+                        <div class="bs col-xs-2 cigna-fg-green-medium"><i class="fa fa-hospital-o fa-2x" aria-hidden="true"></i></div>
+                    </apex:outputPanel>
+                    <div class="bs col-sm-11 col-xs-9"><h3 class="bs cigna-fg-green-medium" style="text-transform: uppercase;">
+                        <apex:outputField value="{!selectedProduct.Name}" rendered="{!$Label.Header_Language_Code_Current != 'zh_TW'}" />
+                        <apex:outputField value="{!selectedProduct.Name_CH__c}" rendered="{!$Label.Header_Language_Code_Current == 'zh_TW'}" />
+                    </h3></div>
+                </div>
+                <apex:outputPanel >
+                <div class="bs col-xs-12">
+                    <p><br/>
+                        <apex:outputField value="{!selectedProduct.Short_Description_EN__c}" rendered="{!$Label.Header_Language_Code_Current != 'zh_TW'}" />
+                        <apex:outputField value="{!selectedProduct.Short_Description_CH__c}" rendered="{!$Label.Header_Language_Code_Current == 'zh_TW'}" />
+                    </p>
+
+                </div>
+                </apex:outputPanel>
+               
+                <div class="bs col-xs-12" style="{!IF(selectedProduct.Product_Code__c != 'VHIS','padding-bottom: 15px;','display:none')}">
+                    <div class="bs cigna-fg-blue-light"><h4 style="text-transform: uppercase;"><br/>{!$Label.Product_Highlights}</h4></div>
+                </div>
+                 <!--IBM JING PORTABLE CR 0419 START-->
+                 <apex:include pageName="ProductFeatures_PBT"/>
+                 <div class="bs col-xs-12" style="{!IF(selectedProduct.Product_Code__c != 'VHIS','padding-bottom: 15px;','display:none')}">
+                    <div class="bs cigna-fg-blue-light"><h4 style="text-transform: uppercase;"><br/>{!$Label.Plan_Benefit}</h4></div>
+                </div>
+             
+                <div class="bs col-xs-12">
+                    <apex:outputField value="{!selectedProduct.Product_Highlight__c}" rendered="{!$Label.Header_Language_Code_Current != 'zh_TW'}" />
+                    <apex:outputField value="{!selectedProduct.Product_Highlight_CH__c}" rendered="{!$Label.Header_Language_Code_Current == 'zh_TW'}" />
+                </div>
+                <div class="bs col-xs-12 text-center ex-link" style="margin-top: 15px;">
+                    <apex:outputPanel >
+                        <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!attachmentId}" target="_blank" class="bs btn cigna-btn-desktop-no-width cigna-fg-white cigna-bg-orange-dark col-xs-12 col-sm-4 col-sm-offset-4">{!$Label.View_Product_Details}</a>
+                        
+                    </apex:outputPanel>
+                </div>
+                <div class="bs col-xs-12" style="padding-bottom: 15px;">
+                    <div class="bs cigna-fg-blue-light"><h4 style="text-transform: uppercase;"><br/>{!$Label.Coverage_Details}</h4></div>
+                </div>
+                <div class="bs col-xs-12">
+                  <apex:include pageName="CoverageDetails_PBT"/>
+                </div>
+                <div class="bs col-xs-12" style="padding-bottom: 15px;">
+                <apex:outputPanel >
+                <div class="bs cigna-fg-blue-light"><h4 style="text-transform: uppercase;"><br/>{!$Label.Coverage_Recommend_Additional_Bene}</h4></div>
+                </apex:outputPanel>
+                    
+                </div>
+                <div class="bs col-xs-12">
+                    <apex:include pageName="CoverageDetails_PBT1"/>
+                </div>
+
+                <div class="bs col-xs-12" style="padding-bottom: 15px;" >
+                <apex:outputPanel >
+                <div class="bs cigna-fg-blue-light"><h4 style="text-transform: uppercase;"><br/>{!$Label.Eligibility_Rules}</h4></div>
+                </apex:outputPanel>
+                </div>
+
+
+                <div class="bs col-xs-12">
+                  <apex:include pageName="EligibiltyRules_PBT"/>
+                </div>
+                </apex:outputPanel>
+            </div>
+            <div id="product-button-customer-portable" style="margin-bottom: 45px;">
+                <div id="action-bar" class="bs row cigna-floating-bottom-panel visible-xs">
+                    <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                       <a href="#" id="customerGetQuoteMobile" class="action-btn cigna-fg-white" role="button" onclick="preventDefault(event);nextStep(); return false;">
+                            <span class="ci-hk-dollars" aria-hidden="true"></span><br/>{!$Label.Get_a_Quote}</a>
+                    </div>
+                </div>
+                <div id="action-bar-desktop" class="bs row hidden-xs text-center">
+                    <a href="#" id="customerGetQuoteDesktop" class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" onclick="preventDefault(event);nextStep();">{!$Label.Get_a_Quote}</a>
+                </div>
+            </div>
+           
+            <div/>
+            
+        </div>
+    </apex:form>
+</apex:page>

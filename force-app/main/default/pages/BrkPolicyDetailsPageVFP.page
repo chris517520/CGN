@@ -1,0 +1,151 @@
+<!--Please change apex page title-->
+<apex:page docType="html-5.0" sidebar="false" showHeader="true" Controller="policyDetailsController" title="{!$Label.My_Portfolio}" tabStyle="My_Portfolio__tab">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <apex:include pageName="CignaBrokerCommonCSS" />
+        <apex:include pageName="CignaCommonCSS" />
+        <style type="text/css">
+            .header-bar {
+                color: #FFF;
+                background-image: url({!$Resource.Policy});
+                /* Rancho_HKITSFDC264_20250903 - update font */
+                /* font-size: 1.25em; */
+                font-size: 48px;
+                font-family: ValueSerifBold !important;
+                text-align: center;
+                height:150px;
+                position: relative;
+             }
+            
+            @media (min-width: 768px) {
+                .header-bar {
+                    background-image: url({!$Resource.MenMeeting});
+                    background-size: cover;
+                    background-position-y: 43%;
+                }
+            }
+            @media (max-width: 767px) {
+                .header-bar {
+                    background-image: url({!$Resource.MenMeeting});
+                    background-size: cover;
+                    background-position-y: 30%;
+                }
+            }
+            
+            .mainwrapper {
+                 width: 100vw;
+                 height: 100vh;
+                 overflow-y: scroll;
+                 -webkit-overflow-scrolling: touch;
+             }
+        </style>
+    </head>
+
+        <!--common css, bootstrap, jquery libraries-->
+        <apex:define name="additionalLibraries">
+            <apex:stylesheet value="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+            <!-- CR-56_Link_20220214 -->
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap3.4.1.css')}" />
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+            
+            <!-- Bootstrap Core CSS -->
+            <!-- CR-56_Link_20220214 -->
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-3.6.0.min.js')}"/>
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-migrate-3.3.2.js')}"/>
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap3.4.1.min.js')}"/>
+            
+            <apex:include pageName="CignaUtilJS"/> 
+
+        </apex:define>
+
+        <!-- Start of the main body -->
+        <apex:define name="body">
+            <div class="bs">
+                <apex:actionStatus id="loader-icon">
+                    <apex:facet name="start">
+                        <div class="bs col-xs-12 col-lg-12 loading-div" style="padding: 0px;">
+                            <span class="loading-helper"></span>
+                            <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                    </apex:facet>
+                </apex:actionStatus>
+                
+                <div id="maincontent" class="bs">
+                    <div class="bs header-bar">
+                        <!-- Rancho_HKITSFDC264_20250903 - update font -->
+                        <p style="position: relative; top: 35%; text-align:center;">
+                            {!$Label.My_Portfolio}
+                        </p>
+                    </div>
+                    
+                    <div class="bs container-fluid">    
+                        <!-- Please include your page here -->
+                        <apex:include pageName="BasePolicyDetailsPageVFP"/>
+                    </div>
+                </div>
+                
+                <!-- Mobile Button-->
+                <apex:outputPanel id="brkMobileButtonApex" layout="block" rendered="{! isBrokerUser && !isGroup}">
+                    <div id="brkMobileButton" class="bs cigna-floating-bottom-panel hidden-lg hidden-sm hidden-md">
+                        <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" style="/*font-size:0.625em !important*/">
+                            <!-- Rancho_PI61_20220222: disable button -->
+                            <!-- align the button display logic with Make a Claim, only inactive days < 90 days policy can submit claim -->
+                            <a href="javascript:void(0);" onclick="sessionStorage.setItem('policy-detail-back-url','PolicyDetailsPageVFP?policyNumber={!policyNumber}&policyType={!policyType}&SHA256Key={!SHA256Key}');Cigna.Util.navigateToVFP('MyClaimSubmitVFP')" class="action-btn cigna-fg-white {!if(over90Days, 'needDisable', '')}" role="button" style="{!IF(isGroup && isBrokerUser,'display:none','')}">
+                                <span class="ci-hk-clipboard" aria-hidden="true" style="padding-right:10px;"></span><br/>
+                                {!$Label.pol_make_a_claim_button}
+                            </a>
+                            <!-- align the button display logic with Policy Change, both inforce and lapsed policy could change policy -->
+                            <a href="javascript:void(0);" style="{!IF(isGroup || isBrokerUser,'display:none','')}" onclick="Cigna.Util.navigateToVFP('PolicyChangeSubmitVFP')" class="action-btn cigna-fg-white" role="button">
+                                <span class="ci-hk-fix" aria-hidden="true" style="padding-right:10px;"></span><br/>
+                                {!$Label.pol_Make_a_Change_in_Policy}
+                            </a>
+
+                            <a href="javascript:void(0);" style="{!IF(!isGroup && isBrokerUser,'','display:none')}" onclick="Cigna.Util.navigateToVFP('PolicyChangeSubmitVFP?BrkPolicyChangeSubmitVFP?tab=all&phid={!holder.ssnNumber}&phname={!holder.fullName}&phemail={!holder.emailAddress}&pclist=false')" class="action-btn cigna-fg-white {!if(CONTAINS(eligibleStatusStr,policy.policyStatusDisplayName), '', 'needDisable')}" role="button">
+                                <span class="ci-hk-fix" aria-hidden="true" style="padding-right:10px;"></span><br/>
+                                {!$Label.pol_Make_a_Change_in_Policy}
+                            </a>
+                            
+                            <!-- only inforce IPMI policy could submit GOP -->
+                            <a href="javascript:void(0);" style="{!IF(isGroup || isILAS ||!showPreApprovalButton,'display:none','')}" onclick="Cigna.Util.navigateToVFP('SubmitHospitalVFP?policyNo={!policyNumber}')" class="action-btn cigna-fg-white {!if(CONTAINS(inforceStatusStr,policy.policyStatusDisplayName), '', 'needDisable')}" role="button">
+                                <span class="ci-hk-clipboard" aria-hidden="true" style="padding-right:10px; "></span><br/>
+                                {!$Label.Pol_Apply_Admission_PreApproval_Button}
+                            </a>
+                            
+                            <a href="javascript:void(0);" style="{!IF(isILAS,'','display:none')}" onclick="Cigna.Util.navigateToVFP('FundManagementVFP?policyNumber={!policyNumber}&type=ILAS&SHA256Key={!SHA256Key}')" class="action-btn cigna-fg-white" role="button">
+                                <span class="ci-hk-linegraph" aria-hidden="true" style="padding-right:10px;"></span><br/>
+                                {!$Label.Pol_Manage_Fund_Button}
+                            </a>
+                        </div>
+                    </div>
+
+                    <script>
+                        // Rancho_PI61_20220222
+                        var nodeList = document.querySelectorAll(".needDisable");
+                        for(var i = 0; i < nodeList.length; i++){
+                            var node = nodeList[i];
+                            if(typeof node !== 'undefined'){
+                                node.setAttribute("disabled", "true");
+                                node.style.pointerEvents = "none";
+                                node.style.backgroundColor = "#ED8F5D";
+                            }
+                        }
+                    </script>
+                </apex:outputPanel>
+                <!-- Mobile Button End-->
+            </div>
+        </apex:define>
+        <!-- End of the main body -->
+        <script>
+          if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+            //Ray's Updates
+            $('html').css('position', 'fixed').css('overflow', 'hidden').css('width', '100%').css('height', '100%');
+            $('body').css('position', 'fixed').css('overflow', 'hidden').css('width', '100%').css('height', '100%');
+            $('#maincontent').addClass('mainwrapper');
+          }
+          
+          var buttonHeight = $('#brkMobileButton').height();
+          $('#mobile-app-padding').css('padding-bottom',buttonHeight+20);
+        </script>
+         
+</apex:page>

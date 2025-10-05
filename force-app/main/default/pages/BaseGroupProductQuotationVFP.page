@@ -1,0 +1,2041 @@
+<apex:page docType="html-5.0" controller="GroupQuatationCtrl">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <apex:include pageName="CignaCommonCSS" />
+        <style>
+            .tooltip-inner{
+            
+            }
+        
+            .bs .h4fontsize-group {
+                font-size:16px;
+                
+            }
+                        
+            .middle-content-group {
+                display: tale-cell;
+                height: 100%;
+                min-height: 100%;
+                float: none !important;
+                vertical-align: middle;
+            }
+            
+            .bs input{
+                text-align: center;
+            }            
+            
+            .bs .cigna-group-input {
+                border-top: 0 !important;
+                border-left: 0 !important;
+                border-right: 0 !important;
+                //border-bottom: 1px solid #58595B !important;
+                background: transparent;
+                width: 100%;
+                //box-shadow: none !important;
+                -webkit-box-shadow:0 0 0px 1000px white inset !important;
+                border-radius: 0 !important;
+                background-color:#FFF!important;
+            }
+            
+            .bs .cigna-group-label{
+                color: #555;
+            }
+            
+            .bs .cigna-group-label-header{
+                font-weight: 500;
+            }
+            
+            .bs .plan-header-name{
+                border: 0 !important;
+                text-align: left;
+                //box-shadow: none !important;
+                -webkit-box-shadow:0 0 0px 1000px white inset !important;
+                padding-top:0px !important;
+                
+            } 
+            
+            .bs .cigna-group-plan-detail {
+                border-top: 5px solid #40ABF7;
+                border-left: 1px solid #D9D9D6;
+                border-bottom: 1px solid #D9D9D6;
+                border-right: 1px solid #D9D9D6;
+                border-radius: 3px;
+            }
+            
+            .bs .cigna-group-plan-detail-information {
+                background-color:#F5F5F5!important;
+                padding:0 0 0 30px !important;
+                border-bottom: 1px solid #D9D9D6;
+            }    
+            
+            .bs .cigna-person-insured-distribution{
+                background-color:#FAFAFA!important;
+                padding:30px 15px 5px 15px!important;
+            }        
+            
+            .bs .cigna-group-plan-detail-selector{
+                 border:0px;
+                 background: url('{!$Resource.select_arrow_style}') no-repeat 100% 50% !important;
+                  background-size: 7px 7px !important;
+                  padding-right:10px;
+                  padding-left:10px;
+                  -moz-appearance: none; 
+                  -webkit-appearance: none; 
+                  appearance: none;
+                  width: auto;
+                  border-radius: 0px;
+                  //height:34px !important;
+            }
+            
+            .bs .cigna-group-plan-detail-radio{
+                background: #fff !important;
+                height:18px;
+                width:18px;
+                float:left;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+            
+            .cigna-text-blue {
+                color:#40ABF7 !important;
+            }
+            
+            .cigna-text-center {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .cigna-text-right{
+                width: 100%;
+                text-align: right;
+            }
+            
+            .cigna-text-left{
+                width: 100%;
+                text-align: left;
+            }
+                                               
+            .bs .cigna-quote-summary {
+                width: 100%;
+                min-height: 50px;
+                background: #D9D9D6;
+                color: #58595B;
+                padding: 10px 0px;
+            }
+            
+            .bs .cigna-quote-summaryTop {
+                width: 100%;
+                min-height: 50px;
+                background: #D9D9D6;
+                color: #58595B;
+                padding: 10px 0px;
+                position: fixed;
+                top: 200px;
+                height: 9999px;
+            }
+            
+            .bs .cigna-quote-amount {
+                margin: 0 !important;
+                display: table;
+                table-layout: fixed;
+                width: 100%;
+            }
+            .bs .cigna-quote-amount > div {
+                display: table-cell;
+                float: none !important;
+            }
+            .bs .cigna-quote-amount div{
+                font-size: 0.9em;
+                font-weight: bold;
+                vertical-align: text-top;
+            }
+            .bs .cigna-quote-amount span {
+                font-size: inherit;
+                font-weight: bold;
+                vertical-align: text-top;
+            }
+            .bs .cigna-quote-question {
+                counter-reset: numOfKid;
+            }
+            .bs .question-kid-age-label:after {
+                counter-increment: numOfKid;
+                content: " " counter(numOfKid);
+            }
+            .bs .cigna-plan-bullet {
+                font-size: 0.9em;
+                line-height: 1.5;
+                margin-top: -10px;
+                z-index: -10;
+            }
+            .bs .cigna-quote-summary-desktop {
+                position: relative !important;
+                min-height: 50px;
+                background: #D9D9D6;
+                color: #58595B;
+                padding: 10px;
+            }
+            
+            .bs .quote-action-btn-group {
+                display: table;
+                //width: 100%;
+                table-layout: fixed;
+                border-collapse: separate;
+                position: relative;
+                vertical-align: middle;
+                min-height: 40px;
+            }
+            .bs .quote-action-btn-group > .quote-action-btn {
+                display: table-cell;
+                width: 1%;
+                position: relative;
+                padding: 6px 12px;
+                margin-bottom: 0;
+                font-size: 0.9em;
+                font-weight: 400;
+                line-height: 1.42857143;
+                text-align: center;
+                vertical-align: middle;
+                cursor: pointer;
+                font-family: "Gotham SSm A", "Gotham SSm B", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+                font-style: normal;
+                font-weight: 500;
+                text-decoration: none;
+                word-wrap: break-word;
+                white-space: normal;
+                 background: #E35205;
+            }
+            .bs .quote-action-btn-group > .quote-action-btn-retrieve {
+                display: table-cell;
+                width: 1%;
+                position: relative;
+                margin-bottom: 0;
+                font-size: 0.9em;
+                font-weight: 400;
+                line-height: 1.42857143;
+                text-align: center;
+                vertical-align: middle;
+                cursor: pointer;
+                font-family: "Gotham SSm A", "Gotham SSm B", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+                font-style: normal;
+                font-weight: 500;
+                text-decoration: none;
+                word-wrap: break-word;
+                white-space: normal;
+                 background: #E35205;
+            }                      
+        
+            .bs .h4fontsize {
+                font-size:16px;
+            }
+
+            @media (min-width: 768px) {
+                .bs .cigna-floating-bottom-panel {
+                    position: relative;
+                }
+            }
+            @media (max-width: 767px) {
+                .bs .cigna-floating-bottom-panel {
+                    position: fixed !important;
+                    bottom: 0 !important;
+                    left: 0 !important;
+                    width: 100% !important;
+                }
+            }
+
+            .borderUp{
+                border-top:1px solid #aaa;
+            }
+
+            .borderDown{
+                border-bottom:1px solid #aaa;
+            }
+            
+            label.error{
+                /* color: #337ab7;  */
+                font-weight:500;
+                color: red;
+            }
+
+            .bs .form-control:focus {
+                //box-shadow: none !important;
+                -webkit-box-shadow:0 0 0px 1000px white inset !important;
+                border-bottom: 1px solid #eac048 !important;
+            }
+
+            
+            
+        </style>
+    </head>
+    <apex:define name="additionalLibraries">
+         <!--additional css, bootstrap, jquery,js libraries-->
+         <!-- CR-56_Link_20220214 -->
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+         <apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+         </apex:outputPanel>
+         <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+         
+    </apex:define>
+     
+    
+    <!-- Questions -->
+    <apex:form id="frmGetQuote"> 
+
+        <apex:actionFunction action="{!getQuoteAmount}" namespace="ServerQuote" name="getQuoteAmount" reRender="resultPanel,resultPanelApp,param-panel,validationRulePanel"  oncomplete="isPhone();" status="loader-icon"/>
+        <apex:actionFunction name="addPersonInsured" action="{!addPersonInsured}" namespace="ServerQuote" reRender="person-insured-list-panel" Oncomplete="Cigna.GroupQuote.getQuoteAmount();">
+            <apex:param name="planIndex" value="" assignTo="{!planIndex}"/>
+        </apex:actionFunction>
+        <apex:actionFunction name="removePersonInsured" action="{!removePersonInsured}" namespace="ServerQuote" Oncomplete="Cigna.GroupQuote.calculateTotalPI({!planIndex});" reRender="person-insured-list-panel">
+            <apex:param name="rowIndexPI" value="" assignTo="{!rowIndexPI}"/>
+            <apex:param name="planIndex" value="" assignTo="{!planIndex}"/>
+        </apex:actionFunction>
+        <apex:actionFunction name="refreshageBandOption" action="{!refreshageBandOption}" namespace="ServerQuote" reRender="person-insured-list-panel" Oncomplete="Cigna.GroupQuote.getQuoteAmount();">
+            <apex:param name="planIndex" value="" assignTo="{!planIndex}"/>
+        </apex:actionFunction>
+        <apex:actionFunction name="onChangeBasicPlan" action="{!onChangeBasicPlan}" namespace="ServerQuote" reRender="basic-plan-detail-panel,basic-plan-code-panel,supplementary-rider-panel" Oncomplete="Cigna.GroupQuote.getQuoteAmount();">
+            <apex:param name="planIndex" value="" assignTo="{!planIndex}"/>
+        </apex:actionFunction>
+        <apex:actionFunction name="onChangeOutpatient" action="{!onChangeOutpatient}" namespace="ServerQuote" reRender="outpatient-detail-panel,outpatient-plan-code-panel" Oncomplete="Cigna.GroupQuote.getQuoteAmount();">
+            <apex:param name="planIndex" value="" assignTo="{!planIndex}"/>
+        </apex:actionFunction>                
+        
+        <apex:actionFunction name="onChangeLevel" action="{!onChangeLevel}" namespace="ServerQuote" reRender="plan-list-details-panel,validationRulePanel" Oncomplete="Cigna.GroupQuote.getQuoteAmount();" />        
+        <apex:actionFunction name="onChangeExistingEmplyees" action="{!onChangeExistingEmplyees}" namespace="ServerQuote" reRender="plan-list-details-panel,selected-plan-level" Oncomplete="Cigna.GroupQuote.getQuoteAmount();" />        
+        <apex:actionFunction name="reOrderPIList" action="{!reOrderPIList}" namespace="ServerQuote" reRender="person-insured-list-panel" />       
+        <apex:actionFunction action="{!getQuoteDetails}" namespace="ServerQuote" name="getQuoteDetails" reRender="resultPanel,resultPanelApp,param-panel" oncomplete="isPhone();"/>
+        <apex:actionFunction action="{!getQuoteSummary}" namespace="ServerQuote" name="getQuoteSummary" reRender="resultPanel,resultPanelApp,param-panel" oncomplete="isPhone();"/>
+        <apex:actionFunction action="{!redirectToESales}" namespace="ServerQuote" name="redirectToESales" reRender="esalesIdPanel" oncomplete="Cigna.GroupQuote.redirectToESales();" status="loader-icon" />
+
+        <apex:actionFunction action="{!cfmBackStep}" namespace="GroupESales" name="goPrevStep"  status="loader-icon"/>
+        <apex:actionFunction action="{!saveConfirm}" namespace="GroupESales" name="cfmSave" reRender="frmGetQuote" status="loader-icon"/>
+        <apex:actionFunction action="{!saveQuote}" namespace="ServerQuote" name="saveQuote" oncomplete="Cigna.GroupQuote.redirectToSaveQuote();isPhone();" reRender=" esalesIdPanel" status="loader-icon"/>
+        
+        <apex:actionFunction action="{!redirectToEmailQuote}" namespace="ServerQuote" name="redirectToEmailQuote" reRender="param-panel,esalesIdPanel" oncomplete="Cigna.GroupQuote.redirectToSendEmail();isPhone();" />
+   
+        <apex:outputPanel id="esalesIdPanel">          
+            <apex:inputhidden value="{!esalesId}" id="esales-Id" />
+        </apex:outputPanel>
+        
+        <apex:outputPanel layout="block" styleClass="bs row" >
+            <div class="bs col-xs-12" style="margin-top:{!IF(isQuotation, '10px', '-10px')};" >
+                <p class= 'bs pull-left'>
+                <apex:outputPanel layout="inline"  styleClass="bs pull-left">
+                <a id="quote-back-btn" class="bs cigna-fg-orange-medium onclick-pointer" onclick="{!IF(isQuotation, 'Cigna.GroupQuote.goBack();', 'Cigna.GroupQuote.goPrevStep();')}"><i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a>
+                </apex:outputPanel>
+                </p>
+                <p class="bs pull-right"   >
+                    <apex:outputPanel layout="inline" rendered="{!!isQuotation}" styleClass="bs pull-right">
+                    <a id="eSales-save-btn" class="bs cigna-fg-orange-medium onclick-pointer" style="text-decoration:none;" onclick="if (cfmSaveValidation()) {GroupESales.cfmSave();} " >{!$Label.Save} <i class="ci-hk-briefcase" aria-hidden="true"></i> </a> 
+                    </apex:outputPanel>
+                    </p>
+            </div>
+        </apex:outputPanel>
+        <div  >
+                <apex:outputPanel layout="block"  rendered="{!!isQuotation}"  styleClass="bs col-xs-12">
+                <div class="bs hidden-xs col-sm-12 cigna-progress-bar desktopProgressBar">
+                    <div class="bs cigna-progress-bar-inner">
+                        <div class="bs ">{!$Label.Client_Details}</div>
+                        <div class="bs  ">{!$Label.LHB_Upload_Census}</div>
+                        <div class="bs active">{!$Label.Confirmation}</div>
+                        <div class="bs }">{!$Label.LHB_Acknowledgement}</div>
+                    </div>
+                </div>
+                </apex:outputPanel>
+         </div>
+        
+        <div class="bs col-xs-12 col-sm-7 cigna-group-label" id="group-plan-list" >
+            
+            <div class="bs col-xs-12 col-sm-12 cigna-fg-green-medium" style="display: table;padding-bottom:30px;">
+                <div class="bs col-xs-2 col-sm-1 middle-content">
+                     <i aria-hidden="true" class="ci-hk-add-cart ci-hk-2x pull-left" ></i>
+                </div>
+                <div class="bs col-xs-10 col-sm-11 middle-content-group" style="padding-top:8px;padding-left:0px;">
+                    <apex:outputPanel rendered="{!isQuotation}"><h3 style="font-weight:500;">{!$Label.Quotation}</h3></apex:outputPanel>
+                    <apex:outputPanel rendered="{!!isQuotation}"><h3 style="font-weight:500;">{!$Label.Confirmation}</h3></apex:outputPanel>
+                </div>
+            </div>
+            
+            <apex:outputPanel id="quotePanelTop" rendered="{!isQuotation}">
+
+            <div class="bs col-xs-12 col-sm-12 form-group" style="padding-bottom:25px;">
+                <div class="bs col-xs-12 col-sm-12">
+                    <h4 class="h4fontsize-group cigna-text-blue">{!$Label.Group_Quotation_Note_5}</h4>
+                </div>
+            </div>
+            <div class="bs col-xs-12 col-sm-12" style="padding-bottom:15px;" >
+                <div class="bs col-xs-12 col-sm-5 form-group" style="padding-right:0px;">
+                    <h4 class="h4fontsize-group">{!$Label.The_employee_benefit_will_cover}</h4>
+                </div>
+                <div class="bs col-xs-12 col-sm-7 form-group" style="padding:0px;">
+                    <apex:outputPanel rendered="{!isQuotation}">
+                        <div class="bs col-xs-4 col-sm-4" style="padding-right:0px;">
+                            <apex:inputField id="group-quote-cover-employee-num" value="{!txn.Group_Existing_Employee__c}" styleClass="bs form-control cigna-group-label-header" onchange="Cigna.GroupQuote.hiddenonfocus('group-quote-cover-employee-num');ServerQuote.onChangeExistingEmplyees();Cigna.GroupQuote.onChangeExistingNum('group-quote-cover-employee-num');Cigna.GroupQuote.getQuoteAmount();" />
+                        </div>
+                        <div class="bs col-xs-8 col-sm-8 cigna-fg-green-medium">
+                            <h4 class="h4fontsize-group">{!$Label.Esales_Existing_Employee_s}</h4>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!!isQuotation}">
+                        <div class="bs col-xs-12 col-sm-12 cigna-fg-green-medium">
+                            <h4 class="h4fontsize-group">{!txn.Group_Existing_Employee__c} {!$Label.Esales_Existing_Employee_s}</h4>
+                        </div>
+                    </apex:outputPanel>
+                </div>
+                <div class="bs col-xs-12 col-sm-offset-5 col-sm-7" style="margin-top:-15px;">
+                    <apex:outputPanel rendered="{!isQuotation}">
+                        <apex:inputText id="param-group-quote-cover-employee-num" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" onfocus="Cigna.GroupQuote.hiddenonblur(this)" tabindex="-1"/>                        
+                    </apex:outputPanel>                    
+                </div>
+                <div class="bs col-xs-12 col-sm-offset-5 col-sm-7 form-group" style="padding:0px;">
+                    <apex:outputPanel rendered="{!isQuotation}">
+                        <div class="bs col-xs-4 col-sm-4" style="padding-right:0px;">
+                            <apex:inputField id="group-quote-cover-dependent-num" value="{!txn.Group_Existing_Dependent__c}" styleClass="bs form-control cigna-group-label-header" onchange="Cigna.GroupQuote.onChangeExistingNum('group-quote-cover-dependent-num');Cigna.GroupQuote.getQuoteAmount();"/>
+                        </div>
+                        <div class="bs col-xs-8 col-sm-8 cigna-fg-green-medium">
+                            <h4 class="h4fontsize-group">{!$Label.Esales_Existing_Dependent_s}</h4>
+                        </div>
+                    </apex:outputPanel>
+                   
+                </div>
+                <div class="bs col-xs-12 col-sm-12">
+                    <apex:inputText id="check-quantity-consistency" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1"/>
+                </div>
+            </div>
+            
+            <div class="bs col-xs-12 col-sm-12 form-group" style="padding-bottom:25px;">
+                <div class="bs col-xs-12 col-sm-12">
+                    <h4 class="h4fontsize-group">{!$Label.Group_Quotation_Note_1}</h4>
+                </div>
+            </div>
+            
+            <div class="bs col-xs-12 col-sm-12 form-group" style="padding-bottom:25px;border-bottom: 1px solid #D9D9D6;{!IF(isQuotation,'','display:none')}">
+                <div class="bs col-xs-12 col-sm-12" style="padding-bottom:10px;">
+                    <h4 class="h4fontsize-group">{!$Label.The_scheme_will_have} 
+                    <apex:selectList value="{!planLevel}" id="selected-plan-level" size="1" multiselect="false" style="display: inline; width: auto;text-align:center;" styleClass="bs form-control" onchange="ServerQuote.onChangeLevel();">
+                         <apex:selectOptions value="{!planLevelOption}"></apex:selectOptions>
+                    </apex:selectList>
+                    <apex:outputLabel styleclass="cigna-fg-green-medium" style="padding-left:5px;">{!$Label.level_s}</apex:outputLabel>
+                    {!$Label.of_benefit}
+                    </h4>
+                </div>
+            </div>
+            
+            <div class="bs col-xs-12 col-sm-12 form-group">
+                <div class="bs col-xs-12 col-sm-12">
+                    <h4 class="h4fontsize-group">{!$Label.Group_Quotation_Note_3}</h4>
+                </div>
+
+               
+                 
+            </div>            
+            </apex:outputPanel>
+
+            <apex:outputPanel id="cfmPanelTop" rendered="{!!isQuotation}">  
+             <div class="bs col-xs-12 col-sm-12 form-group">
+                <div class="bs col-xs-12 col-sm-12">
+                    <h4 class="h4fontsize-group">{!$Label.LHB_CFM_Compare_Header_Text}</h4>
+                </div>
+
+            </div>
+            <div class="bs col-xs-12 col-sm-12 form-group">
+                <div class="bs col-xs-12 col-sm-12 cigna-fg-blue-dark">
+                    <h4 class="h4fontsize-group">{!premiumChangeText}</h4>
+                </div>
+            </div>
+            <div class="bs col-xs-12 col-sm-12" style="padding-bottom:15px;" >
+                <div class="bs col-xs-12 col-sm-5 form-group" style="padding-right:0px;">
+                    <h4 class="h4fontsize-group">{!$Label.The_employee_benefit_will_cover}</h4>
+                </div>
+                <div class="bs col-xs-12 col-sm-7 form-group" style="padding:0px;">
+                     <div class="bs col-xs-6 col-sm-6 cigna-fg-green-medium">
+                        <h4 class="h4fontsize-group">{!txn.Group_Upload_Employee_Count__c} {!$Label.Esales_Existing_Employee_s}</h4>
+                    </div>
+                     <div class="bs col-xs-6 col-sm-6 cigna-fg-blue-medium">
+                        <h4 class="h4fontsize-group">({!$Label.LHB_CFM_Original} {!txn.Group_Existing_Employee__c}) </h4>
+                    </div>
+                </div>
+                <div class="bs hidden-xs col-sm-5 form-group">
+                </div>
+                <div class="bs col-xs-12 col-sm-7 form-group" style="padding:0px;">
+                    <div class="bs col-xs-6 col-sm-6 cigna-fg-green-medium">
+                        <h4 class="h4fontsize-group">{!txn.Group_Upload_Dependent_Count__c} {!$Label.Esales_Existing_Dependent_s}</h4>
+                    </div>
+                    <div class="bs col-xs-6 col-sm-6 cigna-fg-blue-medium">
+                        <h4 class="h4fontsize-group">({!$Label.LHB_CFM_Original} {!txn.Group_Existing_Dependent__c}) </h4>
+                    </div>
+                </div>
+             </div>
+                
+            
+              
+             <div class="bs col-xs-12 col-sm-12 form-group">
+                <div class="bs col-xs-12 col-sm-12">
+                    <h4 class="h4fontsize-group">
+                        {!$Label.Effective_Date_Label_Group}
+                        <apex:outputText value="{!$Label.Effective_Date_Group}" rendered="{!txn.Waiting_Month__c=='0' || txn.Waiting_Month__c==null}"/>
+                        <apex:outputText value="{!$Label.Effective_Month_Group}" rendered="{!!(txn.Waiting_Month__c=='0' || txn.Waiting_Month__c==null)}">
+                            <apex:param value="{!txn.Waiting_Month__c}"/>
+                        </apex:outputText>
+                    </h4>
+                </div>
+            </div>
+
+             <div class="bs col-xs-12 col-sm-12 form-group">
+                <div class="bs col-xs-12 col-sm-12">
+                    <h4 class="h4fontsize-group">{!$Label.LHB_EffDate}:
+                         <apex:input id="Day-POL2" type="tel" value="{!policyEffDay}" 
+                                                   html-maxlength="2" 
+                                                   styleClass="bs form-control text-center dob-input dob-day question-kid-age"
+                                                   size="5"
+                                                   style="display: inline; width: auto;"
+                                                   html-placeholder="{!$Label.DD}" 
+                                                   onblur="getCheckDate2('POL day',this)"                                                                                              
+                            />
+                            <apex:input id="Month-POL2" type="tel" value="{!policyEffMonth}" 
+                                                   html-maxlength="2" 
+                                                   styleClass="bs form-control text-center dob-input dob-month question-kid-age"
+                                                   size="5"
+                                                   style="display: inline; width: auto;"
+                                                   html-placeholder="{!$Label.MM}"
+                                                   onblur="getCheckDate2('POL month',this)"  
+                            />
+                            <apex:input id="Year-POL2" type="tel" value="{!policyEffYear}" 
+                                                   html-maxlength="4" 
+                                                   styleClass="bs form-control text-center dob-input dob-year question-kid-age"
+                                                   size="7"
+                                                   style="display: inline; width: auto;"
+                                                   html-placeholder="{!$Label.YYYY}"
+                                                   onblur="getCheckDate2('POL year',this)"                                                   
+                            />
+                    </h4>
+                    <apex:inputText id="Check-POL2" value="{!policyEffDate}" Styleclass="hidden-input-field" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;"  tabindex="-1" onfocus="hiddenonblur(this); " OnChange="Cigna.GroupQuote.getQuoteAmount();"/>
+                                
+                </div>
+                
+            </div>                                                                        
+            </apex:outputPanel>
+            
+            <div class="bs col-xs-12 col-sm-12" id="plan-list-div">
+                <div class="bs col-xs-12 col-sm-12" id="plan-list-details">
+                    <apex:outputPanel id="plan-list-details-panel" styleClass="cigna-group-quote-question">
+                        <apex:repeat value="{!planList}" var="plan">
+                            
+                            <div class="bs col-xs-12 col-sm-12 cigna-group-plan-detail" style="padding:15px 0 0 0;">                            
+                                <div id="plan-list-details-header" class="bs col-xs-12 col-sm-12" style="padding:0px;">
+                                    <div class="bs col-xs-12 col-sm-12 form-group">
+                                        <div class="bs col-xs-10 col-sm-10" style="padding-left:0px;">
+                                            <apex:outputPanel rendered="{!!isQuotation}" >
+                                                <h4 style="font-size:18px;padding-left:15px;" class="bs cigna-text-blue">{!$Label.Quotation_Plan_No} {!plan.PlanLevel} - {!plan.planName}</h4>
+                                            </apex:outputPanel>
+                                            <apex:outputPanel rendered="{!isQuotation}" style="font-size:18px;padding-left:15px;" styleClass="bs cigna-text-blue"> 
+                                                {!$Label.Quotation_Plan_No} {!plan.PlanLevel} -</apex:outputPanel>
+                                            <apex:outputPanel rendered="{!isQuotation}">                                                
+                                                  <apex:input id="Quote-group-quote-plan-name" style="font-size:18px;border-bottom:0 !important;width:auto;display: inline;" styleClass="bs plan-header-name form-control cigna-text-blue" Value="{!plan.planName}" onfocus="Cigna.GroupQuote.onFocusPlanName(this);" onblur="Cigna.GroupQuote.onBlurPlanName(this);"/>                                               
+                                            </apex:outputPanel>
+                                        </div>
+                                        
+                                        <div class="bs col-xs-2 col-sm-2" style="cursor: pointer;padding-right:0px;{!IF(isQuotation,'','display:none')}" onclick="Cigna.GroupQuote.onEditPlanName(this);">
+                                            <i aria-hidden="true" class="ci-hk-pencil pull-right" ></i>
+                                        </div>
+                                        <div class="bs col-xs-12 col-sm-12" style="padding-right:0px;">
+                                            <div class="bs col-xs-12 col-sm-12" style="border-bottom: 1px solid #D9D9D6;"/>
+                                        </div>
+                                     </div>                                                                     
+                                     
+                                     <div class="bs col-xs-12 col-sm-12 form-group" >
+                                        <div class="bs col-xs-10 col-sm-10" >
+                                               <h4 class="h4fontsize-group">
+                                                    {!$Label.Hospitalization_Surgical_Benefits}
+                                                    <i class="fa fa-info-circle cigna-text-blue" data-toggle="tooltip" data-placement="right" title="{!$Label.Tooltip_Hospitalization_Surgical_Benefits}" aria-hidden="true"></i>
+                                               </h4>
+                                        </div>
+                                        <div class="bs col-xs-2 col-sm-2">
+                                            <i id="plan-list-details-information-{!plan.PlanLevel}-show-icon" class="fa fa-angle-down pull-right" onclick="Cigna.GroupQuote.showDetail('plan-list-details-information-'+{!plan.PlanLevel});"></i>
+                                            <i id="plan-list-details-information-{!plan.PlanLevel}-hide-icon" class="fa fa-angle-up pull-right hidden" onclick="Cigna.GroupQuote.hideDetail('plan-list-details-information-'+{!plan.PlanLevel});"></i>
+                                        </div>
+                                        <script>
+                                           $('[data-toggle="tooltip"]').tooltip();
+                                        </script>
+                                     </div>
+
+                                     <apex:outputPanel id="basic-plan-code-panel">
+                                         <div class="bs col-xs-12 col-sm-12 form-group" style="border-bottom: 1px solid #D9D9D6;margin-bottom:0;padding-bottom:15px;">
+                                             <div class="bs col-xs-12 col-sm-12" style="font-size:14px;color:#aaa;">
+                                                {!$Label.Plan} {!plan.BasicPlanCode}
+                                             </div>
+                                         </div>
+                                     </apex:outputPanel>
+                                 </div>   
+                                 
+                                 <div id="plan-list-details-information-{!plan.PlanLevel}" class="bs col-xs-12 col-sm-12 cigna-group-plan-detail-information" style="padding-top:15px;padding-bottom:15px !important;display:none;">
+                                     <apex:outputPanel id="basic-plan-detail-panel">
+                                     <div class="bs col-xs-12 col-sm-12 form-group" style="padding-top:15px;">
+                                        <div class="bs col-xs-12 col-sm-12" style="padding-left:5px;">
+                                            <h4 class="h4fontsize-group">
+                                               <apex:outputPanel >
+                                                   <apex:selectList value="{!plan.BasicPlanCode}" size="1" multiselect="false" style="width: auto;height:34px !important;border-bottom:0 !important;" styleClass="bs cigna-text-blue cigna-group-plan-detail-selector" onchange="ServerQuote.onChangeBasicPlan({!plan.PlanLevel});">
+                                                         <apex:selectOptions value="{!planOption}"></apex:selectOptions>
+                                                   </apex:selectList>
+                                                </apex:outputPanel>
+                                                <apex:outputPanel rendered="{!!isQuotation}" styleClass="bs cigna-text-blue" style="padding-left:5px; display:none;">
+                                                    {!plan.BasicPlanCode}
+                                                </apex:outputPanel>
+                                            </h4>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="bs col-xs-12 col-sm-12 " >
+                                        <div class="bs col-xs-12 col-sm-12" style="text-align:right;font-size:10px !important;">
+                                            {!$Label.HKD_Label}
+                                        </div> 
+                                    </div>
+                                    
+                                    <div class="bs col-xs-12 col-sm-12 " style="padding-top:10px;padding-bottom:10px;">
+                                        <div class="bs col-xs-6 col-sm-6" style="paaing-right:0px;">
+                                            <h5>
+                                                {!$Label.LHB_Area_of_Cover}&nbsp;
+                                            </h5>
+                                        </div>
+                                        <div class="bs col-xs-3 col-sm-3" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/>                                       
+                                        <div class="bs col-xs-3 col-sm-3" style="text-align:right;padding-left:0px;">
+                                            <h5>
+                                                {!$Label.LHB_Worldwide}
+                                            </h5>
+                                        </div> 
+                                    </div>
+                                    
+                                    <div class="bs col-xs-12 col-sm-12 " style="padding-top:10px;padding-bottom:10px;">
+                                        <div class="bs col-xs-6 col-sm-6" style="paaing-right:0px;">
+                                            <h5>
+                                                {!$Label.LHB_Room_Type}&nbsp;
+                                            </h5>
+                                        </div>
+                                        <div class="bs col-xs-3 col-sm-3" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/>                                       
+                                        <div class="bs col-xs-3 col-sm-3" style="text-align:right;padding-left:0px;">
+                                            <h5 style="{!IF(plan.BasicPlanDetail.Room_Type__c == 'Ward' ,'','display:none')}">
+                                                {!$Label.LHB_Ward}
+                                            </h5>
+                                            <h5 style="{!IF(plan.BasicPlanDetail.Room_Type__c == 'Semi-Private' ,'','display:none')}">
+                                                {!$Label.LHB_SemiPrivate}                                            
+                                            </h5>
+                                            <h5 style="{!IF(plan.BasicPlanDetail.Room_Type__c == 'Standard Private' ,'','display:none')}">
+                                                {!$Label.LHB_StandardPrivate}    
+                                            </h5>
+                                        </div> 
+                                    </div>
+                                    
+                                    <div class="bs col-xs-12 col-sm-12 " style="padding-top:10px;padding-bottom:10px;">
+                                        <div class="bs col-xs-6 col-sm-6" style="paaing-right:0px;">
+                                            <h5>
+                                                {!$ObjectType.Custom_Group_Product_Details__c.Fields.Reimbursement_percentage__c.Label}&nbsp;
+                                            </h5>
+                                        </div>
+                                        <div class="bs col-xs-3 col-sm-3" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/>                                       
+                                        <div class="bs col-xs-3 col-sm-3" style="text-align:right;padding-left:0px;">
+                                            <h5>
+                                                {!plan.BasicPlanDetail.Reimbursement_percentage__c}
+                                            </h5>
+                                        </div> 
+                                    </div>
+                                    
+                                    <div class="bs col-xs-12 col-sm-12 " style="padding-top:10px;padding-bottom:10px;">
+                                            <div class="bs col-xs-6 col-sm-6" style="paaing-right:0px;">
+                                                <h5>
+                                                    {!$Label.LHB_Per_Disability}&nbsp;
+                                                </h5>
+                                            </div>
+                                            <div class="bs col-xs-3 col-sm-3" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/>                                       
+                                            <div class="bs col-xs-3 col-sm-3" style="text-align:right;padding-left:0px;">
+                                                <h5>
+                                                    {!plan.BasicPlanDetail.Per_disability__c}
+                                                </h5>
+                                            </div> 
+                                            <div class="bs col-xs-12 col-sm-12" style="padding-right:0px;padding-top:10px;">
+                                                 <div class="bs col-xs-12 col-sm-12" style="paaing-right:0px;">
+                                                     <h5 style="font-weight:normal;font-style:italic;">{!$ObjectType.Custom_Group_Product_Details__c.Fields.Room_Board_max_120_days__c.Label}&nbsp;
+                                                        <apex:outputText value="{!$Label.LHB_Up_to_max_days}">
+                                                            <apex:param value="120"/>
+                                                        </apex:outputText>
+                                                    </h5>
+                                                 </div>
+                                            </div>
+                                            
+                                            <div class="bs col-xs-12 col-sm-12" style="padding-right:0px;padding-top:10px;">
+                                                 <div class="bs col-xs-12 col-sm-12" style="paaing-right:0px;">
+                                                     <h5 style="font-weight:normal;font-style:italic;">{!$ObjectType.Custom_Group_Product_Details__c.Fields.Intensive_Care_max_10_days__c.Label}&nbsp;
+                                                    </h5>
+                                                 </div>
+                                            </div>
+                                            
+                                            <div class="bs col-xs-12 col-sm-12" style="padding-right:0px;padding-top:10px;">
+                                                 <div class="bs col-xs-12 col-sm-12" style="paaing-right:0px;">
+                                                     <h5 style="font-weight:normal;font-style:italic;">{!$Label.LHB_Miscellaneous_Hospital_Expenses}</h5>
+                                                 </div>
+                                            </div>
+                                            
+                                            <div class="bs col-xs-12 col-sm-12" style="padding-right:0px;padding-top:10px;">
+                                                 <div class="bs col-xs-12 col-sm-12" style="paaing-right:0px;">
+                                                     <h5 style="font-weight:normal;font-style:italic;">{!$ObjectType.Custom_Group_Product_Details__c.Fields.Inpatient_Doctor_Visit_max_120_days__c.Label}&nbsp;
+                                                        <apex:outputText value="{!$Label.LHB_Up_to_max_days}">
+                                                            <apex:param value="120"/>
+                                                        </apex:outputText>
+                                                    </h5>
+                                                 </div>
+                                            </div>
+
+                                            <div class="bs col-xs-12 col-sm-12" style="padding-right:0px;padding-top:10px;">
+                                                 <div class="bs col-xs-12 col-sm-12" style="paaing-right:0px;">
+                                                     <h5 style="font-weight:normal;font-style:italic;">{!$Label.Surgery_Benefit}</h5>
+                                                 </div>
+                                            </div>
+                                            
+                                            <div class="bs col-xs-12 col-sm-12" style="padding-right:0px;padding-top:10px;">
+                                                 <div class="bs col-xs-12 col-sm-12" style="paaing-right:0px;">
+                                                     <h5 style="font-weight:normal;font-style:italic;">{!$Label.Post_hospitalization_Outpatient_Visits}</h5>
+                                                 </div>
+                                            </div>
+                                    </div>
+                                    
+                                    <div class="bs col-xs-12 col-sm-12 " style="padding-top:10px;padding-bottom:10px;">
+                                        <div class="bs col-xs-6 col-sm-6" style="paaing-right:0px;">
+                                            <h5>{!$Label.Hospital_Cash_for_HK_govt_ward_max_120_days}&nbsp;
+                                                <apex:outputText value="{!$Label.LHB_Up_to_max_days}">
+                                                    <apex:param value="120"/>
+                                                </apex:outputText>
+                                            </h5>
+                                        </div>
+                                        <div class="bs col-xs-3 col-sm-3" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/>                                       
+                                        <div class="bs col-xs-3 col-sm-3" style="text-align:right;padding-left:0px;">
+                                            <h5><!--{!plan.BasicPlanDetail.Hospital_Cash_for_HK_gov_t_ward_max12D__c} {!$Label.Unit_Day}-->
+                                                <apex:outputText value="{!$Label.Unit_Day}">
+                                                    <apex:param value="{!plan.BasicPlanDetail.Hospital_Cash_for_HK_gov_t_ward_max12D__c}"/>
+                                                </apex:outputText>
+                                            </h5>
+                                        </div> 
+                                    </div>
+                                    <!--
+                                    <apex:outputPanel rendered="{!plan.BasicPlanDetail.Clinical_Surgery__c!=null && plan.BasicPlanDetail.Clinical_Surgery__c!=''}">
+                                        <div class="bs col-xs-12 col-sm-12 " style="padding-top:10px;padding-bottom:10px;">
+                                            <div class="bs col-xs-3 col-sm-3" style="paaing-right:0px;">
+                                                <h5>{!$ObjectType.Custom_Group_Product_Details__c.Fields.Clinical_Surgery__c.Label}</h5>  
+                                            </div>
+                                            <div class="bs col-xs-3 col-sm-3" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/>                                       
+                                            <div class="bs col-xs-6 col-sm-6" style="text-align:right;padding-left:0px;">
+                                                <h5><apex:outputText value="{!IF(plan.BasicPlanDetail.Clinical_Surgery__c!=null,$Label.Clinical_Surgery_Value,'')}"/></h5>
+                                            </div> 
+                                        </div>
+                                    </apex:outputPanel>
+                                    -->
+                                    <div class="bs col-xs-12 col-sm-12 " style="padding-top:10px;padding-bottom:10px;">
+                                        <div class="bs col-xs-6 col-sm-6" style="paaing-right:0px;">
+                                            <h5>{!$Label.Employee_Assistance_Program}</h5>
+                                        </div>
+                                        <div class="bs col-xs-2 col-sm-2" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/>                                       
+                                        <div class="bs col-xs-4 col-sm-4" style="text-align:right;padding-left:0px;">
+                                            <h5><apex:outputText value="{!IF(plan.BasicPlanDetail.EAP_EE_only__c!=null,$Label.Employee_Assistance_Program_Value,'')}"/></h5>
+                                        </div> 
+                                    </div>
+                                    
+                                    <div class="bs col-xs-12 col-sm-12 " style="padding-top:10px;padding-bottom:10px;">
+                                        <div class="bs col-xs-6 col-sm-6" style="paaing-right:0px;">
+                                            <h5>{!$Label.Worldwide_Emergency_Assistance}</h5>
+                                        </div>
+                                        <div class="bs col-xs-3 col-sm-3" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/>                                       
+                                        <div class="bs col-xs-3 col-sm-3" style="text-align:right;padding-left:0px;">
+                                            <h5><apex:outputText value="{!IF(plan.BasicPlanDetail.Worldwide_Emergency_Assistance__c=='Yes',$Label.Yes,$Label.No)}"/></h5>
+                                        </div> 
+                                    </div>
+                                    </apex:outputPanel>
+                                 </div> 
+                                 
+                                 <div id="additional-benefit" class="bs col-xs-12 col-sm-12 " style="padding:15px 0 0 0;border-bottom: 1px solid #D9D9D6;">
+                                     <div class="bs col-xs-12 col-sm-12 form-group" >
+                                         <div class="bs col-xs-10 col-sm-10" >
+                                               <h4 class="h4fontsize-group">
+                                                    <!--{!$Label.Additional_Benefit}-->
+                                                    {!$Label.Outpatient_Benefits}
+                                               </h4>
+                                         </div>
+                                         <div class="bs col-xs-2 col-sm-2">
+                                            <i id="additional-benefit-information-{!plan.PlanLevel}-show-icon" class="fa fa-angle-down pull-right" onclick="Cigna.GroupQuote.showDetail('additional-benefit-information-'+{!plan.PlanLevel});"></i>
+                                            <i id="additional-benefit-information-{!plan.PlanLevel}-hide-icon" class="fa fa-angle-up pull-right hidden" onclick="Cigna.GroupQuote.hideDetail('additional-benefit-information-'+{!plan.PlanLevel});"></i>                                        
+                                         </div>
+                                         <apex:outputPanel id="outpatient-plan-code-panel">
+                                             <div class="bs col-xs-12 col-sm-12" style="padding-top:10px;" >
+                                                 <h5 style="font-weight:normal;color:#aaa;">
+                                                     {!$Label.Plan} {!plan.OutpatientRiderCode} 
+                                                 </h5>
+                                             </div>
+                                         </apex:outputPanel>
+                                     </div>
+                                 </div> 
+                                 
+                                 <div id="additional-benefit-information-{!plan.PlanLevel}" class="bs col-xs-12 col-sm-12 cigna-group-plan-detail-information" style="display:none;">
+                                                                         
+                                    <!--<apex:outputPanel rendered="{!hasSupplementary}" id="supplementary-rider-panel">                                   
+                                    <div class="bs col-xs-12 col-sm-12 " style="padding:10px 15px 10px 0;">
+                                        <div class="bs col-xs-9 col-sm-9" style="padding-left:0px;">
+                                            <div id="supplementary-{!plan.PlanLevel}" class="bs col-xs-3 col-sm-3 cigna-group-plan-detail-radio" style="padding:0px;" onclick="Cigna.GroupQuote.onRadiochange(this);">
+                                                <span class="glyphicon glyphicon-ok form-control-feedback cigna-fg-green-medium hidden" style="left:-10px;top:-8px;background:#transparent;" id="supplementary-selector-{!plan.PlanLevel}"></span>                                                                  
+                                            </div>
+                                            <div class="bs col-xs-9 col-sm-9" style="padding-left:10px;padding-right:0;">
+                                                <h5>{!$ObjectType.Custom_Group_Product_Details__c.Fields.Supplementary_Major_Medical__c.Label}</h5>
+                                            </div>
+                                            <apex:inputHidden value="{!plan.SupplementaryMajorMedical}" id="Quote-supplementary-selector" />
+                                        </div>
+                                        <script>
+                                            var id = "supplementary-"+"{!plan.PlanLevel}";
+                                            var elementVal = $('#'+id).siblings('input[type="hidden"]').val();
+                                            var checkId = $('#'+id).children().attr('id');
+                                            
+                                            if(elementVal == 'false'){
+                                                $('#'+checkId ).addClass('hidden');
+                                                $('#' + id + '-yes').addClass('hidden');
+                                                $('#' + id + '-no').removeClass('hidden');
+                                            } else {
+                                                $('#'+checkId ).removeClass('hidden');
+                                                $('#' + id + '-no').addClass('hidden');
+                                                $('#' + id + '-yes').removeClass('hidden');
+                                            }
+                                        </script>
+                                        
+                                        <div class="bs col-xs-3 col-sm-3" style="text-align:right;padding-left:0px;">
+
+                                            <h5>{!plan.BasicPlanDetail.Supplementary_Major_Medical__c}</h5>
+                                        </div> 
+                                    </div>
+                                    </apex:outputPanel>-->
+                                    
+                                    <apex:outputPanel id="outpatient-detail-panel">
+                                    <div class="bs col-xs-12 col-sm-12 " style="padding:10px 15px 15px 0;">
+                                        <div class="bs col-xs-12 col-sm-12" style="padding-right:0px;padding-left:0px;">
+                                            <!--<div class="bs col-xs-12 col-sm-12" style="padding:0;">
+                                                <div id="outpatient-benefit-{!plan.PlanLevel}" class="bs col-xs-3 col-sm-3 cigna-group-plan-detail-radio" style="padding:0px;" onclick="Cigna.GroupQuote.onRadiochange(this);">
+                                                    <span class="glyphicon glyphicon-ok form-control-feedback cigna-fg-green-medium hidden" style="left:-10px;top:-8px;background:#transparent;" id="outpatient-benefit-selector--{!plan.PlanLevel}"></span>                                                                  
+                                                </div>
+                                                <div class="bs col-xs-9 col-sm-9" style="padding-left:10px;padding-right:0;">
+                                                    <h5>{!$Label.Outpatient_Benefits}</h5>
+                                                </div>
+                                                <apex:inputHidden value="{!plan.OutpatientBenefits}" id="Quote-outpatient-benefit-selector" />
+                                            </div>-->
+                                            <script>
+                                                var id = "outpatient-benefit-"+"{!plan.PlanLevel}";
+                                                var elementVal = $('#'+id).siblings('input[type="hidden"]').val();
+                                                var checkId = $('#'+id).children().attr('id');
+                                                
+                                                if(elementVal == 'false'){
+                                                    $('#'+checkId ).addClass('hidden');
+                                                    $('#' + id + '-yes').addClass('hidden');
+                                                    $('#' + id + '-no').removeClass('hidden');
+                                                } else {
+                                                    $('#'+checkId ).removeClass('hidden');
+                                                    $('#' + id + '-no').addClass('hidden');
+                                                    $('#' + id + '-yes').removeClass('hidden');
+                                                }
+                                            </script>
+                                        
+                                            <div class="bs col-xs-12 col-sm-12" style="padding-left:30px;padding-right:0px;">
+                                                <div class="bs col-xs-12 col-sm-12" style="padding-top:10px;">
+                                                    <apex:selectList value="{!plan.OutpatientRiderCode}" size="1" multiselect="false" style="font-size: 14px;font-weight: 500;display: inline; width: auto;height:34px !important;border-bottom:0 !important;" styleClass="bs cigna-text-blue cigna-group-plan-detail-selector" onchange="ServerQuote.onChangeOutpatient({!plan.PlanLevel});">
+                                                         <apex:selectOptions value="{!outpatientOption}"></apex:selectOptions>
+                                                    </apex:selectList>
+                                                </div>
+                                                <!--
+                                                <div class="bs col-xs-12 col-sm-12 " style="padding-top:10px;">
+                                                    <div class="bs col-xs-12 col-sm-12" style="text-align:right;font-size:10px !important;">
+                                                        {!$Label.HKD_Label}
+                                                    </div> 
+                                                 </div>
+                                                <div class="bs col-xs-12 col-sm-12" style="padding-top:10px;">
+                                                     <div class="bs col-xs-6 col-sm-6" style="paaing-right:0px;">
+                                                         <h5 style="font-weight:normal;font-style:italic;">Reimbursement percentage</h5>
+                                                     </div>
+                                                     <div class="bs col-xs-3 col-sm-3" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/>
+                                                         <div class="bs col-xs-3 col-sm-3" style="text-align:right;padding-right:0px;padding-left:0px;">
+                                                             <apex:outputPanel rendered="{!isQuotation}">
+                                                                 <apex:selectList value="{!plan.OPBReimbursement }" size="1" multiselect="false" style="font-size: 14px;font-weight: 500;" styleClass="bs cigna-group-plan-detail-selector" onchange="Cigna.GroupQuote.getQuoteAmount();">
+                                                                     <apex:selectOptions value="{!reimbursementOption}"></apex:selectOptions>
+                                                                 </apex:selectList>
+                                                             </apex:outputPanel>
+                                                             <apex:outputPanel rendered="{!!isQuotation}" styleClass="bs cigna-text-blue">
+                                                                 {!plan.OPBReimbursement}
+                                                             </apex:outputPanel>
+                                                         </div> 
+                                                </div>-->
+                                                <div class="bs col-xs-12 col-sm-12" style="padding-right:0px;padding-top:10px;">
+                                                     <div class="bs col-xs-6 col-sm-6" style="paaing-right:0px;">
+                                                          <h5 style="font-weight:normal;font-style:italic;">{!$Label.LHB_Area_of_Cover}</h5>
+                                                     </div>
+                                                     <div class="bs col-xs-3 col-sm-3" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/>
+                                                     <div class="bs col-xs-3 col-sm-3" style="text-align:right;padding-left:0px;">
+                                                         <h5>{!$Label.LHB_Worldwide}</h5>
+                                                     </div> 
+                                                </div>
+                                                
+                                                <div class="bs col-xs-12 col-sm-12" style="padding-right:0px;padding-top:10px;">
+                                                     <div class="bs col-xs-6 col-sm-6" style="paaing-right:0px;">
+                                                          <h5 style="font-weight:normal;font-style:italic;">{!$ObjectType.Custom_Group_Product_Details__c.Fields.Reimbursement_percentage__c.Label}</h5>
+                                                     </div>
+                                                     <div class="bs col-xs-3 col-sm-3" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/>
+                                                     <div class="bs col-xs-3 col-sm-3" style="text-align:right;padding-left:0px;">
+                                                         <h5>{!plan.OutpatientDetail.Reimbursement_percentage__c}</h5>
+                                                     </div> 
+                                                </div>
+                                                
+                                                <div class="bs col-xs-12 col-sm-12" style="padding-right:0px;padding-top:10px;">
+                                                     <div class="bs col-xs-6 col-sm-6" style="paaing-right:0px;">
+                                                          <h5 style="font-weight:normal;font-style:italic;">1.  {!$ObjectType.Custom_Group_Product_Details__c.Fields.General_Practitioner__c.Label}
+                                                              <i class="fa fa-info-circle cigna-text-blue" data-toggle="tooltip" data-placement="right" title="{!$Label.Tooltip_OPB_General_Practitioner}" aria-hidden="true"></i>                                              
+                                                          </h5>
+                                                          <script>
+                                                            $('[data-toggle="tooltip"]').tooltip();
+                                                          </script>
+                                                     </div>
+                                                     <div class="bs col-xs-3 col-sm-3" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/>
+                                                     <div class="bs col-xs-3 col-sm-3" style="text-align:right;padding-left:0px;">
+
+
+                                                         <h5>{!plan.OutpatientDetail.General_Practitioner__c}<apex:outputText escape="false" value="{!$Label.Unit_Visit}"/></h5>
+                                                     </div> 
+                                                </div>
+                                                
+                                                <div class="bs col-xs-12 col-sm-12" style="padding-right:0px;padding-top:10px;">
+                                                     <div class="bs col-xs-6 col-sm-6" style="paaing-right:0px;">
+                                                          <h5 style="font-weight:normal;font-style:italic;">2.  {!$ObjectType.Custom_Group_Product_Details__c.Fields.Specialist__c.Label}
+                                                              <i class="fa fa-info-circle cigna-text-blue" data-toggle="tooltip" data-placement="right" title="{!$Label.Tooltip_OPB_Specialist}" aria-hidden="true"></i>                                              
+                                                          </h5>
+                                                          <script>
+                                                            $('[data-toggle="tooltip"]').tooltip();
+                                                          </script>
+                                                     </div>
+                                                     <div class="bs col-xs-3 col-sm-3" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/>
+                                                     <div class="bs col-xs-3 col-sm-3" style="text-align:right;padding-left:0px;">
+
+
+                                                         <h5>{!plan.OutpatientDetail.Specialist__c}<apex:outputText escape="false" value="{!$Label.Unit_Visit}"/></h5>
+                                                     </div> 
+                                                </div>  
+                                                
+                                                <div class="bs col-xs-12 col-sm-12" style="padding-right:0px;padding-top:10px;">
+                                                     <div class="bs col-xs-6 col-sm-6" style="paaing-right:0px;">
+                                                          <h5 style="font-weight:normal;font-style:italic;">3.  {!$ObjectType.Custom_Group_Product_Details__c.Fields.Physiotherapist_Chiropractor__c.Label}</h5>
+                                                    </div>
+                                                     <div class="bs col-xs-3 col-sm-3" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/>
+                                                     <div class="bs col-xs-3 col-sm-3" style="text-align:right;padding-left:0px;">
+
+
+                                                         <h5>{!plan.OutpatientDetail.Physiotherapist_Chiropractor__c}<apex:outputText escape="false" value="{!$Label.Unit_Visit}"/></h5>
+                                                     </div> 
+                                                </div> 
+                                                
+                                                <div class="bs col-xs-12 col-sm-12" style="padding-right:0px;padding-top:10px;">
+                                                     <div class="bs col-xs-6 col-sm-6" style="paaing-right:0px;">
+                                                          <h5 style="font-weight:normal;font-style:italic;">4.  {!$lABEL.Chinese_Herbalist}
+                                                              <i class="fa fa-info-circle cigna-text-blue" data-toggle="tooltip" data-placement="right" title="{!$Label.Tooltip_OPB_Chinese_Herbalist}" aria-hidden="true"></i>                                              
+                                                          </h5>
+                                                          <script>
+                                                            $('[data-toggle="tooltip"]').tooltip();
+                                                          </script>
+                                                     </div>
+                                                     <div class="bs col-xs-3 col-sm-3" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/>
+                                                     <div class="bs col-xs-3 col-sm-3" style="text-align:right;padding-left:0px;">
+
+
+                                                         <h5>{!plan.OutpatientDetail.Chinese_Herbalist_Bonesetter_Acupuncture__c}<apex:outputText escape="false" value="{!$Label.Unit_Visit}"/></h5>
+                                                     </div> 
+                                                </div>  
+                                                
+                                                <div class="bs col-xs-12 col-sm-12" style="padding-right:0px;padding-top:10px;">
+                                                     <div class="bs col-xs-6 col-sm-6" style="paaing-right:0px;">
+                                                          <h5 style="font-weight:normal;font-style:italic;">{!$Label.LHB_Diagnostic}</h5>
+                                                     </div>
+                                                     <div class="bs col-xs-3 col-sm-3" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/>
+                                                     <div class="bs col-xs-3 col-sm-3" style="text-align:right;padding-left:0px;">
+
+
+                                                         <h5>{!plan.OutpatientDetail.Diagnostic_X_ray_and_Laboratory_Test__c}<apex:outputText escape="false" value="{!$Label.Unit_Year}"/></h5>
+                                                     </div> 
+                                                </div> 
+                                                <br></br>
+                                                <div class="bs col-xs-12 col-sm-12" style="padding-right:0px;padding-top:10px;">
+                                                     <div class="bs col-xs-12 col-sm-12" style="paaing-right:0px;">
+                                                          <h5 style="font-weight:normal;font-style:italic;">{!$Label.LHB_Remarks}</h5>
+                                                     </div>
+                                                </div> 
+                                                <div class="bs col-xs-12 col-sm-12" style="padding-right:0px;padding-top:10px;">
+                                                     <div class="bs col-xs-12 col-sm-12" style="paaing-right:0px;">
+                                                          <h5 style="font-weight:normal;font-style:italic;">{!$Label.LHB_Remark_1}</h5>
+                                                     </div>
+                                                </div> 
+                                                <div class="bs col-xs-12 col-sm-12" style="padding-right:0px;padding-top:10px;">
+                                                     <div class="bs col-xs-12 col-sm-12" style="paaing-right:0px;">
+                                                          <h5 style="font-weight:normal;font-style:italic;">{!$Label.LHB_Remark_2}</h5>
+                                                     </div>
+                                                </div> 
+                                                
+                                            </div>                                                                                                                               
+                                        </div>
+                                    </div>
+                                    </apex:outputPanel>
+                                 </div>
+                                 
+                                 <div id="plan-list-details-wellness-option" class="bs col-xs-12 col-sm-12 " style="padding-top:15px;border-bottom: 1px solid #D9D9D6;">
+                                     <div class="bs col-xs-12 col-sm-12 form-group" >
+                                         <div class="bs col-xs-10 col-sm-10" style="padding:0 0 10px 0;"> 
+                                              <h4 class="h4fontsize-group">
+                                                        {!$Label.Wellness_Option}
+                                                        <i class="fa fa-info-circle cigna-text-blue" data-toggle="tooltip" data-placement="right" title="{!$Label.Tooltip_Wellness_Option}" aria-hidden="true"></i>
+                                              </h4>                                      
+                                         </div>
+                                         <div class="bs col-xs-2 col-sm-2" style="padding:0px;"> 
+                                              <div style="height:18px;width:38px;border-radius: 9px;border: 1px solid #ccc;background-color:#fff;float:right;" >
+                                                  <div style="height:14px;width:14px;border-radius: 7px;background-color:#ccc;float:right;cursor: pointer;margin:1px 1px 0 1px;" id="wellness-option-button-{!plan.PlanLevel}" onclick="Cigna.GroupQuote.onChangeWellnessOption(this);ServerQuote.onChangeBasicPlan({!plan.PlanLevel});"/>
+                                                  <apex:inputHidden value="{!plan.WellnessOption}" id="Quote-wellness-option-selector" />
+                                              </div>
+                                         </div>
+                                         <div id="wellness-option-button-{!plan.PlanLevel}-yes-div" class="bs col-xs-12 col-sm-12" style="padding:0;display:none;">
+                                             <h5 style="font-weight:normal;color:#aaa;" >{!$Label.Yes}</h5>
+                                         </div>
+                                         <div id="wellness-option-button-{!plan.PlanLevel}-no-div" class="bs col-xs-12 col-sm-12" style="padding:0;">
+                                             <h5 style="font-weight:normal;color:#aaa;" >{!$Label.No}</h5>
+                                         </div>
+                                         <script>
+                                             $('[data-toggle="tooltip"]').tooltip();
+                                             var id = "wellness-option-button-"+"{!plan.PlanLevel}";
+                                             var wellnessOption =  $('#'+id).siblings('input[type="hidden"]').val();
+                                             if(wellnessOption == 'false'){
+                                                 $('#'+id).parent().css('background-color','#FFF');
+                                                 $('#'+id).parent().css('border','1px solid #ccc');
+                                                 $('#'+id).css('float','right'); 
+                                                 $('#'+id+'-no-div').css('display','block');
+                                                 $('#'+id+'-yes-div').css('display','none');                 
+                                             } else {
+                                                 $('#'+id).parent().css('background-color','#39B54A');
+                                                 $('#'+id).parent().css('border','1px solid #39B54A');
+                                                 $('#'+id).css('float','left');
+                                                 $('#'+id+'-yes-div').css('display','block');
+                                                 $('#'+id+'-no-div').css('display','none');
+                                             }
+                                         </script>
+                                     </div>
+                                 </div>   
+                                 
+                                 <div id="person-insured-distribution" class="bs col-xs-12 col-sm-12 cigna-person-insured-distribution">
+                                     <div class="bs col-xs-12 col-sm-12 form-group" style="padding:0;">
+                                         <div class="bs col-xs-12 col-sm-12" style="padding-bottom:15px;">
+                                             <Label class="cigna-text-center"><h4>{!$Label.Person_Insured_Distribution}</h4></Label>
+                                         </div>
+                                         <div class="bs col-xs-12 col-sm-12 form-group" style="margin-bottom:0;padding-bottom:15px;">
+                                             <div class="bs col-xs-12 col-sm-12" style="font-size:14px;color:#aaa;text-align:center">
+                                                {!$Label.Group_Quotation_Note_6}
+                                             </div>
+                                         </div>
+                                         <div class="bs col-xs-12 col-sm-12" style="padding:0 0 5px 0;border-bottom: 3px solid #40ABF7;" >
+                                             <div class="bs col-xs-5 col-sm-6" style="padding:0;">
+                                                 <div class="bs col-xs-8 col-sm-8" style="padding:0;">
+                                                     <Label class="cigna-text-center">
+                                                         <h5 class="bs cigna-text-blue">{!$Label.Age_Band}</h5>
+                                                     </Label>
+                                                 </div>
+                                             </div>
+                                             <div class="bs col-xs-3 col-sm-2" style="padding:0;">
+                                                 <Label class="cigna-text-center">
+                                                     <h5 class="bs cigna-text-blue">{!$Label.Quantity}</h5>
+                                                 </Label>
+                                             </div>
+                                             
+                                             <div class="bs col-xs-4 col-sm-4" style="padding:0;{!IF(isQuotation,'','display:none;')}">
+                                                  <Label class="cigna-text-right">
+                                                      <h5>
+                                                          <i class="glyphicon glyphicon-sort-by-attributes" aria-hidden="true" style="cursor:pointer;" onclick="ServerQuote.reOrderPIList({!plan.PlanLevel});"></i>                                                                                                 
+                                                          {!$Label.Reorder}
+                                                      </h5>
+                                                  </Label> 
+                                             </div>  
+                                             <div class="bs col-xs-4 col-sm-4 cigna-fg-green-medium" style="padding:0;{!IF(isQuotation,'display:none;','')}">
+                                                  <Label class="cigna-text-center">
+                                                      <h5 style="font-family: inherit !important;font-weight: 500 !important;">
+                                                          {!$Label.Quantity_Final}
+                                                      </h5>
+                                                  </Label>
+                                             </div>   
+                                         </div>
+                                         
+                                         <apex:outputPanel id="person-insured-list-panel" layout="block">
+                                             <div id="{!plan.PlanLevel}-person-insured-list-size">
+                                                 <apex:inputHidden value="{!plan.PersonInsuredSize}" id="person-insured-list-size" />
+                                             </div>
+                                             
+                                             <apex:repeat value="{!plan.personInsuredList}" var="pi">
+                                                 <div class="bs col-xs-12 col-sm-12" style="padding:8px 0 8px 0;border-bottom: 1px solid #ccc;" >
+                                                     <div class="bs col-xs-5 col-sm-6" style="padding:6px 0 0 0;">
+                                                         <div class="bs col-xs-8 col-sm-8" style="padding:0;" id="{!plan.PlanLevel}-{!pi.Index}-AgeBand">
+                                                             <apex:outputPanel rendered="{!isQuotation}">
+                                                                 <apex:selectList value="{!pi.AgeBand}" size="1" multiselect="false" style="display: inline; width: 100%;" styleClass="bs cigna-group-plan-detail-selector" onchange="ServerQuote.refreshageBandOption({!plan.PlanLevel});">
+                                                                     <apex:selectOptions value="{!pi.AgeBandOption}"></apex:selectOptions>
+                                                                 </apex:selectList>
+                                                             </apex:outputPanel>
+                                                             <apex:outputPanel rendered="{!!isQuotation}">
+                                                                 <div style="width:100%;" align="center">
+                                                                     {!pi.AgeBand}
+                                                                 </div>
+                                                             </apex:outputPanel>
+                                                          </div>
+                                                     </div>
+                                                     <div class="bs col-xs-3 col-sm-2" style="padding:0;">
+                                                         <div align="center" id="Quote-quantity-{!plan.PlanLevel}-{!pi.Index}">
+                                                             <apex:input styleClass="bs form-control cigna-group-label-header cigna-group-quote-question" style="width:60px;" value="{!pi.Quantity}" onchange="Cigna.GroupQuote.calculateTotalPI({!plan.PlanLevel});" rendered="{!isQuotation}" />
+                                                             <apex:outputText value="{!pi.Quantity}" rendered="{!!isQuotation}" />
+                                                         </div>
+                                                     </div>
+                                                     <div class="bs col-xs-4 col-sm-4" style="padding:0px;{!IF(isQuotation,'','display:none')}">
+                                                         <span class="glyphicon glyphicon-minus-sign fa-lg onclick-pointer pull-right cigna-text-blue" onclick="ServerQuote.removePersonInsured({!pi.Index},{!plan.PlanLevel});"/>
+                                                     </div>
+                                                     <div align="center" class="bs col-xs-4 col-sm-4 cigna-fg-green-medium" style="padding:0px;{!IF(isQuotation,'display:none','')}">
+                                                         <apex:outputText value="{!pi.FinalQuantity}" />
+                                                     </div>
+                                                 </div>
+                                             </apex:repeat>
+                                             <div id="quantity-checker-{plan.PlanLevel}">
+                                                 <apex:inputText id="quantity-checker" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" value="{!plan.PlanLevel}" tabindex="-1"/>  
+                                             </div>
+                                         
+                                         
+                                             <div class="bs col-xs-12 col-sm-12" style="padding:20px 0 0 0;" >
+                                                 <div class="bs col-xs-5 col-sm-6">
+                                                         <Label class="cigna-text-right" style="font-size:14px;">{!$Label.Quote_Total}</Label>
+                                                 </div>
+                                                 <apex:outputPanel rendered="{!isQuotation}">
+                                                     <div class="bs col-xs-3 col-sm-2 cigna-fg-green-medium" style="padding:0;margin-top:-5px;">
+                                                             <div align="center" id="total-quantity-{!plan.PlanLevel}" >
+                                                                  <apex:input value="{!Plan.totalQuantity}" style="width:100%;font-size:25px;font-weight:bold;border:0;background: transparent;" onfocus="Cigna.GroupQuote.hiddenonblur(this)"/>
+                                                             </div>
+                                                     </div>
+                                                 </apex:outputPanel>
+                                                 <apex:outputPanel rendered="{!!isQuotation}">
+                                                     <div align="center" class="bs col-xs-3 col-sm-2" style="padding-left:20px;margin-top:-5px;font-size:25px;font-weight:bold;">
+                                                          {!Plan.totalQuantity}
+                                                     </div>
+                                                 </apex:outputPanel>
+                                                 <apex:outputPanel rendered="{!isQuotation && plan.PersonInsuredSize<9}">
+                                                     <div class="bs col-xs-4 col-sm-4" style="padding:0px;">
+                                                         <span class="glyphicon glyphicon-plus-sign fa-lg onclick-pointer pull-right cigna-text-blue" onclick="ServerQuote.addPersonInsured({!plan.PlanLevel});" />
+                                                     </div>
+                                                 </apex:outputPanel>
+                                                 <apex:outputPanel rendered="{!!isQuotation}">
+                                                     <div align="center" class="bs col-xs-4 col-sm-4 cigna-fg-green-medium" style="padding-left:20px;margin-top:-5px;font-size:25px;font-weight:bold;">
+                                                         {!Plan.finalTotalQuantity}
+                                                     </div>
+                                                 </apex:outputPanel>
+                                             </div>
+                                         </apex:outputPanel>
+                                     </div>
+                                 </div>
+                                 
+                             </div>
+                             <div class="bs col-xs-12 col-sm-12" style="height:30px;"/>
+                             
+                        </apex:repeat>
+                    </apex:outputPanel>
+                </div>
+            </div>            
+        </div>
+        
+        <div class="bs col-sm-5" id="resultTableDiv" style="padding-top:30px;">
+        
+            <div id="cigna-quote-summary-desktop" class="bs hidden-xs cigna-floating-bottom-panel" >
+                <div id="resultDiv" class="bs cigna-quote-summary" >
+                    <apex:outputPanel id="resultPanel">
+                         <div>
+                            <apex:outputPanel rendered="{!isQuotation}" >
+                                <div style="padding-left:15px;float:left;">
+                                    <h4 id='quote' style="text-transform: uppercase;">{!$Label.Quotation}</h4>
+                                </div>
+                                <div align="right" style="padding-right:15px;">
+                                    <h5 style="text-align:right;padding-right:0px;" >
+
+                                        <a class="bs cigna-fg-orange-medium onclick-pointer" id="quote-save-btn" style="text-decoration: none;" onClick="Cigna.GroupQuote.clicksaveQuote();"> 
+                                            <i aria-hidden="true" class="ci-hk-briefcase"></i>{!$Label.Save}
+                                        </a>
+
+                                    </h5>
+
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!!isQuotation}">
+                                <div style="padding-left:15px;">
+                                    <h4 id='quote' style="text-transform: uppercase;">{!$Label.Confirmation}</h4>
+                                </div>
+                            </apex:outputPanel>
+                            
+                            <script>
+                                    function isPhone(){
+                                         var init='';
+                                    }                                    
+
+                                    isPhone();
+                                    
+
+                                    function preventDefault(event){
+                                        if(event.preventDefault){
+                                          event.preventDefault();
+                                        }else{
+                                          window.event.returnValue=false;
+                                          return false;
+                                        }
+
+                                    }
+
+                             </script>
+                            
+                            <br/>
+                            
+                            <div id='pc'>
+                                <apex:outputPanel rendered="{!showSummary}" layout="none">
+                                    <h5 class="bs col-xs-6" style='position:absolute;left:0; height:30px;text-align:center;border-right:1px solid #aaa;border-top:1px solid #aaa;line-height:30px;' ><a class="bs cigna-fg-orange-medium onclick-pointer" onclick="Cigna.GroupQuote.changetoSummary(); preventDefault(event); return false;" style="text-decoration: none;">{!$Label.Summary}  </a></h5>
+                                </apex:outputPanel>
+        
+                                <apex:outputPanel rendered="{!showDetail}" layout="none">
+                                    <h5 class="bs col-xs-6" style='position:absolute;right:0; height:30px; text-align:center;border-top:1px solid #aaa; line-height:30px;' ><a class="bs cigna-fg-orange-medium onclick-pointer " onclick="Cigna.GroupQuote.changetoDetail(); preventDefault(event); return false; " style="text-decoration: none;">{!$Label.Details}  </a></h5>
+                                </apex:outputPanel>
+                                
+        
+                                <apex:outputPanel rendered="{! !showSummary}" layout="none">
+                                    <h5 class="bs col-xs-6" style='position:absolute;left:0; height:30px; text-align:center;border-right:1px solid #aaa;border-bottom:1px solid #aaa;line-height:30px;' ><a class="bs  onclick-pointer" onclick="Cigna.GroupQuote.changetoSummary(); preventDefault(event); return false;" style="text-decoration: none;">{!$Label.Summary}  </a></h5>
+                                </apex:outputPanel>
+        
+                                <apex:outputPanel rendered="{! !showDetail}"  layout="none">
+                                    <h5 class="bs col-xs-6" style='position:absolute;right:0; height:30px; text-align:center;border-bottom:1px solid #aaa;line-height:30px;' ><a class="bs  onclick-pointer " onclick="Cigna.GroupQuote.changetoDetail();preventDefault(event);return false;  " style="text-decoration: none;">{!$Label.Details}  </a></h5>
+                                </apex:outputPanel>
+                            </div>
+
+                        </div>
+                        
+                        <apex:outputPanel rendered="{!showSummary}">
+                        <div class="bs row cigna-quote-amount" style="padding-bottom: 5px; border-bottom: 1px solid #bbb;padding-top: 50px;">
+                            <div class="bs col-xs-12">
+                                <div class="bs row" >
+                                    <div class="col-xs-4">&nbsp;</div>
+                                    <div class="col-xs-8" style="text-align:right;">{!$Label.Yearly_HKD}</div>
+                                </div>
+                                
+                                <div class="bs row" >
+                                    <div class="col-xs-4">
+                                        <apex:outputPanel rendered="{!hasDiscount}">{!$Label.Original}</apex:outputPanel>
+                                        <apex:outputPanel rendered="{!!hasDiscount}">{!$Label.Estimated_Price}</apex:outputPanel>
+                                    </div>
+                                    <div class="col-xs-8" style="text-align:right;">
+                                        <span id="cigna-original-amount-annum">
+                                            <apex:outputText id="Origibal-AnnualQuote" value="{!IF(BLANKVALUE(OriginalAnnualQuote, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(OriginalAnnualQuote, 0) > 0, 'cigna-fg-green-medium cigna-original-amount', '')}"><apex:param value="{!OriginalAnnualQuote}" /></apex:outputText>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <apex:outputPanel rendered="{!hasDiscount}">
+                                <div class="bs row" >
+                                    <div class="col-xs-4">{!$Label.Discounted}</div>
+                                    <div class="col-xs-8" style="text-align:right;">
+                                        <span id="cigna-original-amount-annum">
+                                            <apex:outputText id="AnnualQuote" value="{!IF(BLANKVALUE(AnnualQuote, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" styleClass="{!IF(BLANKVALUE(AnnualQuote, 0) > 0, 'cigna-fg-green-medium cigna-original-amount', '')}"><apex:param value="{!AnnualQuote}" /></apex:outputText>
+                                        </span>
+                                    </div>
+                                </div>
+                                </apex:outputPanel>
+                                
+                            </div>
+                        </div>
+                        </apex:outputPanel>
+                        
+                        <!--start of show summary quote -->
+                        <apex:outputPanel rendered="{!showSummary}" id="showSummaryPanel" >
+    
+                            <div class="bs row cigna-quote-amount" style="padding-top:10px;">
+                                <div class="bs col-xs-4"><span>{!$ObjectType.Product__c.Fields.Name__c.Label}</span></div>
+                                <div class="bs col-xs-8 text-right">
+                                    <span>{!selectedProductInfo.Name__c}</span>
+                                </div>
+                            </div>
+                            <div class="bs row cigna-quote-amount">
+                                <div class="bs col-xs-4"><span>{!$Label.Insured_Person}</span></div>
+                                    <div class="bs col-xs-8 text-right">
+                                        <span>{!$Label.Esales_Employee} x <span id="group-quote-cover-employee-num-summary">{!IF(isQuotation,IF(txn.Group_Existing_Employee__c==null,0,txn.Group_Existing_Employee__c),txn.Group_Upload_Employee_Count__c)}</span></span>, {!$Label.ESales_Dependent} x <span id="group-quote-cover-dependent-num-summary">{!IF(isQuotation,IF(txn.Group_Existing_Dependent__c==null,0,txn.Group_Existing_Dependent__c),txn.Group_Upload_Dependent_Count__c)}</span>
+                                    </div>
+                            </div>
+                        </apex:outputPanel>
+                        <!--end of show summary quote -->
+                        
+                        <!--start of show detail quote -->
+                        <apex:outputPanel rendered="{!showDetail}" id="showDetailPanel">
+                            <div style="height:220px;overflow:auto;margin-top:45px;" id="showDetailDiv">
+                                <apex:repeat value="{!planList}" var="plan">
+                                    <div class="bs row cigna-quote-amount" style="padding:15px 15px 0 15px;">
+                                        <div class="bs col-xs-12 col-sm-12">
+                                            <div class="bs row cigna-fg-orange-medium" style="padding-bottom:15px;">
+                                                <h4>{!plan.PlanName}</h4>
+                                            </div>
+                                            
+                                            <div class="bs row" style="padding-bottom:15px;">
+                                                <div class="bs col-sm-7 col-xs-7" style="padding:0;">
+                                                    <Label style="color: #969696 !important;">{!$Label.Hospitalization_Surgical_Benefits}</Label>
+                                                </div>
+                                                <div class="bs col-xs-3 col-sm-3" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/> 
+                                                <div align="right" class="bs col-sm-2 col-xs-2" style="padding:0;">
+                                                    {!plan.BasicPlanCode}
+                                                </div> 
+                                            </div>
+                                            
+                                            <div class="bs row" style="padding-bottom:15px;">
+                                                <!--<apex:outputPanel rendered="{!plan.SupplementaryMajorMedical=='true' || plan.OutpatientBenefits=='true'}">-->
+                                                <apex:outputPanel >
+                                                    <div class="bs col-sm-4 col-xs-4" style="padding:0;">
+                                                        <Label style="color: #969696 !important;">{!$Label.Outpatient_Benefits}</Label>
+                                                    </div>                                        
+                                                    <div class="bs col-xs-6 col-sm-6" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/> 
+                                                    <div align="right" class="bs col-sm-2 col-xs-2" style="padding:0;">
+                                                        {!plan.OutpatientRiderCode}
+                                                    </div>  
+                                                </apex:outputPanel>
+                                                
+                                                <!--
+                                                <apex:outputPanel rendered="{!plan.SupplementaryMajorMedical=='true'}">
+                                                    <div align="right" class="bs col-sm-6 col-xs-6" style="padding:0;">
+                                                        {!$Label.Supplementary_Major_Medical}
+                                                    </div> 
+                                                </apex:outputPanel>
+                                                <apex:outputPanel rendered="{!plan.SupplementaryMajorMedical=='false' && plan.OutpatientBenefits=='true'}">
+                                                    <div align="right" class="bs col-sm-6 col-xs-6" style="padding:0;">
+                                                        {!$Label.Outpatient_Benefits}
+                                                    </div> 
+                                                </apex:outputPanel>
+                                                <apex:outputPanel rendered="{!plan.SupplementaryMajorMedical=='true' && plan.OutpatientBenefits=='true'}">
+                                                    <div align="right" class="bs col-sm-offset-6 col-xs-offset-6 col-sm-6 col-xs-6" style="padding:10px 0 0 0;">
+                                                        {!$Label.Outpatient_Benefits}
+                                                    </div> 
+                                                </apex:outputPanel>
+                                                -->
+                                            </div>
+                                            
+                                            <div class="bs row" style="padding-bottom:15px;border-bottom:1px solid #aaa;">
+                                                <div class="bs col-sm-4 col-xs-4" style="padding:0;">
+                                                    <Label style="color: #969696 !important;">{!$Label.Wellness_Option}</Label>
+                                                </div>
+                                                <div class="bs col-xs-6 col-sm-6" style="height:10px;border-bottom:1px #aaa dashed;padding:0px;"/> 
+                                                <div align="right" class="bs col-sm-2 col-xs-2" style="padding:0;">
+                                                    <apex:outputPanel rendered="{!plan.WellnessOption=='true'}">
+                                                        {!$Label.Yes}
+                                                    </apex:outputPanel>
+                                                    <apex:outputPanel rendered="{!plan.WellnessOption=='false'}">
+                                                        {!$Label.No}
+                                                    </apex:outputPanel>
+                                                </div> 
+                                            </div>
+                                            
+                                            <div align="right" class="bs row cigna-fg-orange-medium" style="padding-top:10px;padding-bottom:15px;">
+                                                <span>
+                                                    <apex:outputText value="{!IF(BLANKVALUE(plan.PremiumAmount, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" style="{!IF(BLANKVALUE(plan.PremiumAmount, 0) > 0,'','color: #58595B;')}"><apex:param value="{!plan.PremiumAmount}" /></apex:outputText>
+                                                </span>
+                                                <span style="color: #58595B;"> / {!$Label.year}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                 </apex:repeat>   
+                            </div>
+                        </apex:outputPanel>                                   
+                        <!--end of show detail quote -->
+                   </apex:outputPanel>
+            </div>
+                   
+            <div class="bs hidden-xs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">                    
+
+                   <apex:outputText rendered="{!isQuotation}">
+                         <a class="action-btn cigna-fg-white" role="button" onclick="Cigna.GroupQuote.SendEmailQuote();">{!$Label.Email_Quote}</a>
+                   </apex:outputText>
+    
+                   <apex:outputText rendered="{!hasBuy  && isEnableBuyNow}">
+                         <a class="action-btn cigna-fg-white" role="button" onclick="{!IF(isQuotation,'Cigna.GroupQuote.buyNow()','clickCfm();')}; return false;">{!$Label.Buy_Now}</a>
+                   </apex:outputText>                    
+            </div>  
+                   
+            <apex:actionFunction name="confirm" action="{!confirmNext}" namespace="Confirmation"  />
+            <input type="hidden" id="esales-txn-id" value="{!txn.Id}" />
+            <script>
+                function clickCfm(){
+                    if ($('form[id$="frmGetQuote"] input.error').length > 0) {
+                        var elementId = $('form[id$="frmGetQuote"] input.error')[0].getAttribute("id");
+                        $('form[id$="frmGetQuote"] input.error')[0].focus();
+                        $('form[id$="frmGetQuote"] input.error')[0].blur();
+                    }else{
+                        Confirmation.confirm();
+                    }
+                    
+                    //ctnNextStep();
+                }
+                function ctnNextStep(){
+                    var id = $('#esales-txn-id').val();
+                    var params = { 
+                                tid : id
+                            };
+                    Cigna.Util.navigateToVFP("ESalesGroupVFP?" + $.param(params), null, null, true);
+                }
+                /*
+                function validateForm() {
+                    return $("form[id*='frmGroupApplication']").validate().form();
+                }
+                */
+            </script>
+            </div>
+        </div>
+        
+        <div id="web-app-padding" class="bs row" style="padding-bottom: 180px;">
+            <div class="bs col-xs-12"></div>
+        </div>
+        <div id="mobile-app-padding" class="bs row" style="display: none; padding-bottom: 250px;">
+            <div class="bs col-xs-12"></div>
+        </div>
+    </apex:form>
+    <script>
+        function setFocusOnLoad() {};
+        
+        Cigna.GroupQuote = function(){
+            
+            var isQuotation = "{!isQuotation}";
+            
+            function init(){                   
+                <apex:outputPanel layout="none" rendered="{!txn.Group_Existing_Employee__c!=null && txn.Group_Existing_Employee__c!=0}">
+                    $('input[id$="param-group-quote-cover-employee-num"]').val("{!txn.Group_Existing_Employee__c}");
+                    //CR-56_Link_20220214
+                    $('input[id$="group-quote-cover-employee-num"]').trigger("change");
+                </apex:outputPanel>                    
+            }
+            
+            var enableEdit = false;
+            function onEditPlanName(element){ 
+                enableEdit = true;
+                //CR-56_Link_20220214 
+                $(element).siblings().children().children('input').trigger("focus");                                           
+            }
+            
+            function onBlurPlanName(element){
+                enableEdit = false;
+            }
+            
+            function onFocusPlanName(element){
+                if(!enableEdit){
+                    //CR-56_Link_20220214 
+                    $(element).trigger("blur");
+                }
+            }
+            
+            function onChangeWellnessOption(resour){
+                    var id = resour.getAttribute("id");
+                    var wellnessOption =  $('#'+id).siblings('input[type="hidden"]').val();
+                    if(wellnessOption == 'true'){
+                        $('#'+id).parent().css('background-color','#FFF');
+                        $('#'+id).parent().css('border','1px solid #ccc');
+                        $('#'+id).css('float','right'); 
+                        $('#'+id+'-no-div').css('display','block');
+                        $('#'+id+'-yes-div').css('display','none');
+                        $('#'+id).siblings('input[type="hidden"]').val('false');                   
+                    } else {
+                        $('#'+id).parent().css('background-color','#39B54A');
+                        $('#'+id).parent().css('border','1px solid #39B54A');
+                        $('#'+id).css('float','left');
+                        $('#'+id+'-yes-div').css('display','block');
+                        $('#'+id+'-no-div').css('display','none');
+                        $('#'+id).siblings('input[type="hidden"]').val('true'); 
+                    }
+            }
+            
+            function onRadiochange(resour){
+                
+                    var id = resour.getAttribute("id");
+                    var elementVal = $('#'+id).siblings('input[type="hidden"]').val();
+                    var checkId = $('#'+id).children().attr('id');
+                    
+                    if(elementVal == 'true'){
+                        $('#'+checkId ).addClass('hidden');
+                        $('#' + id + '-yes').addClass('hidden');
+                        $('#' + id + '-no').removeClass('hidden');
+                        $('#'+id).siblings('input[type="hidden"]').val('false');
+                    } else {
+                        $('#'+checkId ).removeClass('hidden');
+                        $('#' + id + '-no').addClass('hidden');
+                        $('#' + id + '-yes').removeClass('hidden');
+                        $('#'+id).siblings('input[type="hidden"]').val('true');
+                    }
+                    
+                    Cigna.GroupQuote.getQuoteAmount();      
+                       
+            }
+            
+            function showDetail(id){
+                $('#'+id).slideDown("slow");
+                $('#'+id+'-show-icon').addClass('hidden');
+                $('#'+id+'-hide-icon').removeClass('hidden');
+            }
+            
+            function hideDetail(id){
+                $('#'+id).slideUp("slow");
+                $('#'+id+'-hide-icon').addClass('hidden');
+                $('#'+id+'-show-icon').removeClass('hidden');
+            }
+            
+            function getQuoteAmount(){
+                //if (isQuotation=='true'){
+                    if(validate()){
+                        ServerQuote.getQuoteAmount();
+                    }
+                /*}else{
+                    ServerQuote.getQuoteAmount();
+                }*/
+            }
+                                    
+            function calculateTotalPI(planIndex){
+                var PISize = $('#'+planIndex+'-person-insured-list-size').children('input[type="hidden"]').val();
+                var total = 0;
+                
+                for(var i=1; i<= PISize; i++ ){
+                    var a = $('#Quote-quantity-'+planIndex+'-'+i).children().val();
+                    total = Number(total) + Number(a);
+                }                
+                $('#total-quantity-'+planIndex).children().val(total);
+                getQuoteAmount();
+            }
+            
+            function changetoDetail(){
+                ServerQuote.getQuoteDetails();
+                
+                if(Cigna.Util.isIOS() || Cigna.Util.isSalesforce1()){
+                     var is_mobi =navigator.userAgent.toLowerCase().match(/(ipad)/i) != null;
+                     if(is_mobi){}
+                     else{
+                         
+                          //$('#resultDiv').addClass('cigna-quote-summaryTop').removeClass('cigna-quote-summary');
+                          if(Cigna.Util.isBrokerPortal()){
+                              $('#resultDivApp').addClass('cigna-quote-summaryTop').removeClass('cigna-quote-summary');
+                          }
+                      }
+                 }
+                 
+            }
+            
+            function changetoSummary(){
+
+                ServerQuote.getQuoteSummary();
+                if(Cigna.Util.isIOS() || Cigna.Util.isSalesforce1()){
+
+                     var is_mobi =navigator.userAgent.toLowerCase().match(/(ipad)/i) != null;
+                     if(is_mobi){}
+                        else{
+                    $('#resultDiv').addClass('cigna-quote-summary').removeClass('cigna-quote-summaryTop');
+                    $('#resultDiv').innerHTML='';
+                    if(Cigna.Util.isBrokerPortal()){
+                        $('#resultDivApp').addClass('cigna-quote-summary').removeClass('cigna-quote-summaryTop');
+                        $('#resultDivApp').innerHTML='';}
+                    }
+                    
+                }
+            }   
+            
+            function goBack(evt) {
+                Cigna.Util.navigateToVFP("GetProtectedVFP?pc=LHB", null, null, true);
+            }
+
+            function goPrevStep(evt) {
+                Cigna.Util.navigateToVFP("ESalesGroupVFP?pc=LHB&frm=cfm&tid={!txn.id}", null, null, true);
+            }
+                     
+            function SendEmailQuote(){
+                if(validate()){
+                    ServerQuote.redirectToEmailQuote();
+                }else{
+                    onValidateFalse();
+                }
+            }
+            
+            function redirectToSendEmail(){
+                var id = $('input[type="hidden"][id$="esales-Id"]').val();
+                var selectedProduct = "{!selectedProduct}";
+                Cigna.Util.navigateToVFP("EmailQuoteVFP?tid="+id+"&plan="+selectedProduct, null, null, true);
+                
+            }
+            
+            function redirectToESales() {
+                var id = $('input[type="hidden"][id$="esales-Id"]').val();
+                console.log('esalesid' + id);
+                Cigna.Util.navigateToVFP("ESalesGroupVFP?tid=" + id, null, null, true);
+            }
+            
+            function redirectToSaveQuote() {
+                var id = $('input[type="hidden"][id$="esales-Id"]').val();
+                console.log('esalesid' + id);                
+                Cigna.Util.navigateToVFP("SaveQuoteVFP?tid=" + $('input[type="hidden"][id$="esales-Id"]').val(), null, null, true);               
+            }
+            
+            function clicksaveQuote(){
+                if(validate()){
+                    console.log('clicksaveQuote');
+                    ServerQuote.saveQuote();
+                    //console.log('esalesid' + $('input[type="hidden"][id$="esales-Id"]').val());
+                    //Cigna.Util.navigateToVFP("SaveQuoteVFP?tid=" + $('input[type="hidden"][id$="esales-Id"]').val(), null, null, true);
+                    //console.log('clicksaveQuote2');
+                }else{
+                    onValidateFalse();
+                }
+            }
+            
+            function buyNow() {
+                if(validate()){
+                    ServerQuote.redirectToESales();
+                }else{
+                    onValidateFalse();
+                }
+            }
+            
+            function hiddenonfocus(elementId){
+                var inputValue = $("input[id*='" + elementId + "']").val();                
+                if(inputValue!=null){
+                    $("input[id*='param-" + elementId + "']").val(inputValue);
+                    //CR-56_Link_20220214 
+                    $("input[id*='param-" + elementId + "']").trigger("focus");
+                }
+            }
+            
+            function hiddenonblur(element){
+                //CR-56_Link_20220214 
+                $(element).trigger("blur");
+            }
+            
+            function validate() {   
+                //if(isQuotation=='true'){             
+                    var questionsAnswered = $("form[id$='frmGetQuote']").validate().form();
+                    var isSuccess = questionsAnswered;
+                    return isSuccess;
+                //}else{
+                //    return true;
+                //}
+            }
+            
+            function onChangeExistingNum(id){
+                var inputValue = $("input[id*='"+id+"']").val();
+                if(inputValue == null || inputValue == ''){
+                    inputValue = 0;
+                }
+                $("#"+id+"-summary").text(inputValue); 
+                $("#app-"+id+"-summary").text(inputValue); 
+            }
+            
+            function onValidateFalse(){
+                $('form[id$="frmGetQuote"] input.error')[0].focus();
+            }
+            
+            return {  
+                init : init,
+                onEditPlanName : onEditPlanName,
+                onBlurPlanName : onBlurPlanName,
+                onFocusPlanName : onFocusPlanName,
+                onChangeWellnessOption : onChangeWellnessOption,
+                onRadiochange : onRadiochange,
+                showDetail : showDetail,
+                hideDetail : hideDetail,
+                calculateTotalPI : calculateTotalPI,
+                changetoDetail : changetoDetail,
+                changetoSummary : changetoSummary,
+                goBack : goBack,
+                goPrevStep : goPrevStep,
+                changetoDetail : changetoDetail,
+                changetoSummary : changetoSummary,
+                SendEmailQuote : SendEmailQuote,
+                redirectToSendEmail : redirectToSendEmail,
+                redirectToESales : redirectToESales,
+                buyNow : buyNow,
+                hiddenonfocus : hiddenonfocus,
+                hiddenonblur : hiddenonblur,
+                validate : validate,
+                getQuoteAmount : getQuoteAmount,
+                onChangeExistingNum : onChangeExistingNum,
+                clicksaveQuote : clicksaveQuote,
+                redirectToSaveQuote : redirectToSaveQuote,
+                onValidateFalse : onValidateFalse
+            }
+        }();
+        
+        $(document).ready(function(){
+            
+            //CR-56_Link_20220214
+            $(window).on("scroll",function(){
+
+                if($(window).scrollTop() > 200 && $(window).width() >= 768){
+                    $('#cigna-quote-summary-desktop').css('top', $(window).scrollTop() - 200);
+                } else if ($(window).width() >= 768) {
+                    $('#cigna-quote-summary-desktop').css('top', 0);
+                } else {
+                    $('#cigna-quote-summary-desktop').removeAttr('style');
+                }
+            });
+            
+            
+
+            if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal() && navigator.userAgent.toLowerCase().match(/(ipad)/i) !=null) {
+               // $('body').scroll(function(e){
+                    $('#cigna-quote-summary-desktop').css('position', 'fixed');
+                    if($(window).width()<=768){
+                        $('#cigna-quote-summary-desktop').css('top', $(window).height()/2 - 300);
+                    }else{
+                        $('#cigna-quote-summary-desktop').css('top', $(window).height()/2 - 150);
+                    }
+                    $('#cigna-quote-summary-desktop').css('width', 304);
+                    $('#cigna-quote-summary-desktop').css('left', $(window).width()/2+($(window).width()/2-304)-20);
+
+                //});
+                
+                $('body').on("orientationchange",function(){
+                  if($(window).width()<=768){
+                    $('#cigna-quote-summary-desktop').css('position', 'fixed');
+                    $('#cigna-quote-summary-desktop').css('top', $(window).height()/2 - 300);
+                    $('#cigna-quote-summary-desktop').css('width', 304);
+                    $('#cigna-quote-summary-desktop').css('left', 1024/2+(1024/2-304)-20);
+                  
+                  } else {
+                    $('#cigna-quote-summary-desktop').css('position', 'fixed');
+                    $('#cigna-quote-summary-desktop').css('top', $(window).height()/2 - 150);
+                    $('#cigna-quote-summary-desktop').css('width', 304);
+                    $('#cigna-quote-summary-desktop').css('left', 768/2+(768/2-304)-20);
+                    
+                  }
+                });
+                
+               //CR-56_Link_20220214
+               $('body').on("scroll",function(){
+                    $('#cigna-quote-summary-desktop').css('position', 'fixed');
+                    if($(window).width()<=768){
+                        $('#cigna-quote-summary-desktop').css('top', $(window).height()/2 - 300);
+                    }else{
+                        $('#cigna-quote-summary-desktop').css('top', $(window).height()/2 - 150);
+                    }
+                    $('#cigna-quote-summary-desktop').css('width', 304);
+                    $('#cigna-quote-summary-desktop').css('left', $(window).width()/2+($(window).width()/2-304)-20);
+
+                });
+
+            }
+            
+            if (Cigna.Util.isMobile()){
+                $('#group-plan-list').css('padding-left','0px');
+                $('#group-plan-list').css('padding-right','0px');
+                $('#plan-list-div').css('padding-left','0px');
+                $('#plan-list-div').css('padding-right','0px'); 
+                $('#plan-list-details').css('padding-left','0px');
+                $('#plan-list-details').css('padding-right','0px'); 
+                $('#mobile-app-padding').css('display', 'block');               
+            }
+            
+            Cigna.GroupQuote.init();
+        });        
+    </script>
+    <apex:outputPanel id="validationRulePanel">
+        <script>
+           function checkChinese(value){
+                if(/.*[\u4e00-\u9fa5]+.*$/.test(value)) {
+                        return false;
+                }
+                return true;
+           }
+            
+           function checkTotalQuantity(element){
+                var planIndex = $(element).val();
+                var PISize = $('#'+planIndex+'-person-insured-list-size').children('input[type="hidden"]').val();
+                if(PISize>0){
+                    return true;
+                }
+                return false;
+            }
+            function checkAllQuantity(element){
+                var planIndex = $(element).val();                
+
+                var num = 0;
+                var PISize = $('#'+planIndex+'-person-insured-list-size').children('input[type="hidden"]').val();
+                for(var i=1; i<= PISize; i++ ){
+                    var a = $('#Quote-quantity-'+planIndex+'-'+i).children().val();
+
+                    if(a>0){
+                        num++;
+                    }
+                }
+
+                if(num!=PISize){
+
+
+                    return false;
+                }
+                return true;
+            }
+               
+            function checkQuantityConsistency(){
+                
+                //if(checkAllQuantity()){
+                    var num = 0;
+                    var planSize = $("select[id*='selected-plan-level']").val();
+                    for(var i=1; i<=planSize ; i++){
+                        var total = $('#total-quantity-'+i).children().val();
+                        if(Number(total)>0){
+                            num = num + Number(total);
+                        }
+                        var a = 0;
+                    }
+                    
+                    var existingEmployees = $("input[id*='group-quote-cover-employee-num']").val();
+                    var existingDependent = $("input[id*='group-quote-cover-dependent-num']").val();
+                    var totalExisting = Number(existingEmployees) + Number(existingDependent);
+                    
+                        if(num == null || totalExisting == null || totalExisting == 0 || num != totalExisting){
+                            return false;
+                        }
+                                      
+                //}
+                return true;
+            }
+            
+            var isQuotation = "{!isQuotation}";
+    //        if(isQuotation == 'true'){
+            $("form[id$='frmGetQuote']").validate().form();         
+     //       }        
+            </script>
+            <apex:outputPanel rendered="{!isQuotation}">
+            <script>
+            jQuery.validator.addMethod("checkTotalQuantity", function(value, element) {
+                return checkTotalQuantity(element);
+            }, "{!$Label.Error_Message_Please_Input_Person_Insured_Information_Detail}");
+            
+            jQuery.validator.addMethod("checkAllQuantity", function(value, element) {
+                return checkAllQuantity(element);
+            }, "{!$Label.Please_input_all_these_quantities}");
+            
+            jQuery.validator.addMethod("checkQuantityConsistency", function(value, element) {
+                return checkQuantityConsistency();
+            }, "{!$Label.Error_Message_Quantity_Consistency}");
+            
+            jQuery.validator.addMethod("checkChinese", function(value, element) {
+                   return checkChinese(value);
+            }, "{!$Label.eSales_Cannot_input_Chinese}");
+            
+            $("input[id*='Quote-group-quote-plan-name']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    required : true,
+                    checkChinese : true
+                });
+            });
+            
+            $("input[id*='quantity-checker']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    checkTotalQuantity:true,
+                    checkAllQuantity: true
+                });
+            });
+            
+            $("input[id*='check-quantity-consistency']").rules("add", {
+                checkQuantityConsistency: true
+            });
+                       
+            $("input[id*='Quote-group-quote-plan-name']").rules("add", {
+                required: true
+            });
+                   
+            $("input[id*='param-group-quote-cover-employee-num']").rules("add", {
+                required: true,
+                digits : true,
+                min: 3,
+                max: 50
+            });
+            
+            $("input[id*='Quote-']").each(function(idx, elem){
+
+                $(elem).rules("add", {
+                    required: true
+                });
+                
+            });
+           
+            $("form[id$='frmGetQuote']").validate({
+                ignore: ':hidden:not(.cigna-validation)'
+            });
+            </script>
+            </apex:outputPanel>
+            <script>
+            function cfmSaveValidation(){
+              //  var ret = $("form[id$='frmGetQuote']").validate().form();
+               // return ret;
+                return true;
+            }  
+            function hiddenonblur2(input){  
+                var InputId = input.id;
+               //CR-56_Link_20220214
+               $("input[id*='" + InputId + "']").trigger("blur"); 
+            }  
+            function getCheckDate2(datetype , input){
+                var InputId = input.id;
+                var InputVal = $("input[id*='" + InputId  + "']").val();
+             
+                $("input[id*='Check-POL2']").val('');
+                var ddDate = $("input[id*='Day-POL2']").val();
+                var mmMonth = $("input[id*='Month-POL2']").val();
+                var yyYear = $("input[id*='Year-POL2']").val();
+                if((ddDate!=null && ddDate!='')
+                    && (mmMonth!=null && mmMonth!='')
+                    && (yyYear!=null && yyYear!='')){
+                        $("input[id*='Check-POL2']").val(ddDate+'/'+mmMonth+'/'+yyYear).trigger('change');
+                        //CR-56_Link_20220214 
+                        $("input[id*='Check-POL2']").trigger("focus");
+                }
+            }
+ 
+            function validateDate2(resour){    
+                //console.log('p1');
+            //  alert('p1');
+                
+                var checkId = resour.getAttribute("id");
+                var onCheckRole = 'POL';
+                var day = $("input[id*='Day-POL2']").val();
+                var month = $("input[id*='Month-POL2']").val(); 
+                var year = $("input[id*='Year-POL2']").val();     
+                if(day!='' && month!='' && year!='' ){
+                    if(day==0 || day>31){
+                         return false;
+                    }
+                    
+                    if(month==2){
+                        if(day>29) return false;
+                        if(day == 29){
+                            console.log('Feb'+year%4);
+                            if(year%4!=0) return false;
+                        }
+                    }
+                    
+                    if(month==4 || month==6 || month==9 || month==11){
+                        if(day>30) return false;
+                    }else{
+                        if(day>31) return false;
+                    }
+                    
+                    if(month==0 || month>12){
+                         return false;
+                    }
+                                        
+                    var adate=new Date(year,month-1,day);   
+                    console.log('adate'+adate);
+                    var thedate=new Date();
+                    
+                    var nowYear=thedate.getFullYear();
+                    var nowMonth=thedate.getMonth()+1;
+                    var nowday=thedate.getDate();
+                    
+                    if(year<1900){
+                         return false;
+                    }
+                }
+                
+                return true;
+            }
+            
+            
+            function getPOL(){
+                var day = $("input[id*='Day-POL2']").val(); 
+                var month =$("input[id*='Month-POL2']").val();
+                var year = $("input[id*='Year-POL2']").val();
+                var adate= new Date(year,month-1,day);     
+                return adate;
+            }
+            
+            function checkIsFutureDate(resour){
+                if (!validateDate2(resour)) 
+                {
+                    return true;
+                }
+                var now = new Date();
+                var pol = getPOL();
+                if (pol <= now){
+                    return false;
+                }else{
+                    return true;
+                }
+            }
+             
+            function checkIsNotWithin7Days(resour){ 
+                if (!validateDate2(resour)) 
+                {
+                    return true;
+                }    
+                var now = new Date();
+                var pol = getPOL();
+                if ((pol - now)<= 7*1000*60*60*24  ){
+                    return false;
+                }else{
+                    return true;
+                } 
+             
+            }
+            
+            function checkIsNotWithin14Days(resour){ 
+                if (!validateDate2(resour)) 
+                {
+                    return true;
+                }
+                var now = new Date();
+                var pol = getPOL();
+                if ( (pol - now)>7*1000*60*60*24  && (pol - now)<=14 *1000*60*60*24 ){
+                    return false;
+                }else{
+                    return true;
+                }
+            }
+            
+            function checkIsNotOver180Days(resour){ 
+                if (!validateDate2(resour)) 
+                {
+                    return true;
+                }
+                var now = new Date();
+                var pol = getPOL();
+                if ( (pol - now) > 180*1000*60*60*24   ){
+                    return false;
+                }else{
+                    return true;
+                }
+            }
+             
+            jQuery.validator.addMethod("checkIsFutureDate", function(value, element) {
+                            return checkIsFutureDate(element);
+                        }, "{!$Label.LHB_EffDate_Future_Date}");
+            
+            jQuery.validator.addMethod("checkIsNotWithin7Days", function(value, element) {
+                            return checkIsNotWithin7Days(element);
+                        }, "{!$Label.LHB_EffDate_within_7_days}");
+             /*
+            jQuery.validator.addMethod("checkIsNotWithin14Days", function(value, element) {
+                            return checkIsNotWithin14Days(element);
+                        }, "Processing time is tight but should be fine.");
+             */
+            jQuery.validator.addMethod("validateDate2", function(value, element) {
+                            return validateDate2(element);
+                        }, "{!$Label.ESales_Invalid_Date}");
+            
+            jQuery.validator.addMethod("checkIsNotOver180Days", function(value, element) {
+                            return checkIsNotOver180Days(element);
+                        }, "{!$Label.LHB_EffDate_7_to_180}");
+            
+            $("input[id*='Check-POL2']").rules("add", {
+                            required: true,
+                            validateDate2: true,
+                            checkIsFutureDate: true,
+                            checkIsNotWithin7Days: true,
+                        //    checkIsNotWithin14Days: true,
+                            checkIsNotOver180Days: true
+                            
+                        });
+
+
+          </script>
+    </apex:outputPanel>
+</apex:page>

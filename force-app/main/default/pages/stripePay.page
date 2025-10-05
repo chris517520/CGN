@@ -1,0 +1,95 @@
+<apex:page docType="html-5.0" id="stripe_pay" showHeader="true" title="stripe pay" Controller="stripePayController">
+    <head>
+		<meta charset="utf-8" /> 
+		<title>Stripe alipay</title>
+		<script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+		<!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script> -->
+		<script src="https://js.stripe.com/v3/"></script>
+		<script>
+			$(document).ready(function() {
+		    $('#alipay-submit').on('click', function() {
+		        const amountInput = $('#payment-amount');
+		        var totalAmount = parseFloat(amountInput.val()) * 100;
+		        //var stripe = Stripe($('#stripe').val()); 
+				var stripe = Stripe('sk_test_udDI8Bx0JlmnHDNIIg3M7Y9m');
+				
+		        var alipayRedirect = $('#alipayRedirect').val();
+		        var stripeSource = stripe.createSource({
+		            type: 'alipay',
+		            amount: totalAmount,
+		            currency: 'hkd',
+		            // owner: {
+		            //     name: 'Minghua',
+		            // },
+		            redirect: {
+		                return_url: alipayRedirect
+		            },
+
+		        }).then(function(result) {
+		        	console.log('result.error:'+result.error);
+		        	if (result.error) {
+			            console.log('result.error.message:'+result.error.message);
+			        }
+			        else {
+			            console.log('result.source.redirect.url:'+result.source.redirect.url);
+            			processStripeResponse(result.source);
+			        }
+
+		    //         if (result && result.source && result.source.redirect && result.source.redirect['url']) {
+		    //             //console.log(result.source.id);
+		    //             //console.log(result.source.amount/100);
+
+		    //             $.ajax({
+		    //                 type:"POST",
+		    //                 url:"/user/code/stripe_pay",
+		    //                 dataType:"json",
+		    //                 data:{
+		    //                     userid: result.source.owner.name,
+		    //                     total: result.source.amount/100,
+		    //                     tradeno: result.source.id
+		    //                 },
+		    //                 success:function(data){
+		    //                     if(data.ret == 1){
+		    //                         $("#result").modal();
+		    //                         $("#msg").html(data.msg);
+		    //                         window.setTimeout(location.href = result.source.redirect['url'], 2000);
+		    //                     }else{
+		    //                         $("#result").modal();
+		    //                         $("#msg").html(data.msg);
+		    //                     }
+		    //                 },
+		    //                 error:function(){
+		    //                     //$("#result").modal();
+		    //                     //$("#msg").html(data.msg);
+		    //                     console.log('error message:'+data.msg);
+		    //                 }
+		    //             });
+		    //         } else {
+		    //             console.log('result:'+result.source);
+						// console.log('error:'+result.error.message);
+		    //             //$("#result").modal();
+		    //             //$("#msg").html(result.error.message);
+		    //         }
+		        });
+		    });
+		    function processStripeResponse(source) {
+			    window.location.href = source.redirect.url;
+			}
+		});
+		</script>
+		</head>
+	<body>
+	<div>
+	<p class="card-heading">请选择充值金额：（美元）</p>
+	    <div class="form-group form-group-label">
+			<!-- Rancho_HKITSFDC212_20250401 - remove hard-code url -->
+			<input type="hidden" id="stripe" value="'pk_test_51H4ImGJ3f15cAhyRvI62jTk822zJsCo9gPPFtlM5mIulL8GlsQeUHrjnMXWw1UChObA95pjBxx89UTlo5ITYiriH00aJ77z9tX'" />
+			<input type="hidden" id="alipayRedirect" value="https://{!$Site.Domain}/customer/apex/stripePay" />
+			<input class="form-control" id="payment-amount" type="number" min="0.00" max="10000.00" value="5" step="1" />
+	    </div>
+	    <div class="card-action-btn pull-left">
+			<button class="btn btn-flat waves-attach" id="alipay-submit" ><span class="icon">check</span>&nbsp;支付宝充值</button>
+	    </div>
+	</div>
+	</body>
+</apex:page>

@@ -1,0 +1,1710 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" Controller="MyClaimController" title="{!if(isCustomer, $Label.My_Claim, $Label.Claims)}">
+    <head>
+        <meta name="format-detection" content="telephone=no" />
+        <apex:include pageName="ClaimCommonCSS" />
+        <style>
+            // Avoid the scroll view longer than the screen
+            @media (max-width: 767px) {
+                body {
+                    overflow: scroll;
+                }
+            }
+
+            .content-ellipsis {
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                max-width: 500px !important;
+            }
+
+            .content-policy {
+                //white-space: nowrap;
+                word-break: break-word;
+                max-width: 500px !important;
+            }
+
+            .content-claimType {
+                //white-space: nowrap;
+                word-break: break-word;  
+                //IBM KOU TEST
+                max-width: 500px !important;
+            }
+        </style>
+        <script>
+            var selectItems = document.getElementsByClassName("inactive-bar-tab");
+            var startItems = document.getElementsByClassName("active-bar-tab");
+
+            var selectContents = document.getElementsByClassName("inactive-bar-content");
+            var startContents = document.getElementsByClassName("active-bar-content");
+
+            var noSearchValueErrMsg = '{!$Label.Error_Input_Criteria}';
+
+            $(document).ready(function() {
+                checkIPMIPolicy();
+
+                //loadDataAtAction();       Update by Nicole--Moved into checkIPMIPolicy onComplete function to fix Customer Portal next button error
+                // to disable initial search
+            });
+
+
+            function greySeparatorStyle() {
+                /**grey separator**/
+                var srlist = document.getElementsByClassName("listcontent");
+                var flip = 0;
+                for (var i = 0; i < srlist.length; i++) {
+                    var item = srlist[i];
+                    if (flip == 0) {
+                        item.style.backgroundColor = '#f2f2f2';
+                        flip = 1;
+                    } else if ($(item).is(':first-child')) {
+                        item.style.backgroundColor = '#f2f2f2';
+                    } else {
+                        flip = 0;
+                    }
+                }
+            }
+
+            function selectedTab(item, idx) {
+
+                $('#inputCharErrorMessage').css('display','none');
+                $('#tooManyError').hide();
+                
+
+                if (idx == 1) {
+                    $('#tab_in_progress').removeClass('active-bar-tab').addClass('inactive-bar-tab');
+                    $('#tab_completed').removeClass('active-bar-tab').addClass('inactive-bar-tab');
+
+                    $('#claim_in_progress').hide();
+                    $('#claim_completed').hide();
+
+                    $('#claim_all').show();
+                    $('#tab_all').addClass('active-bar-tab');
+
+                    //Rancho_JR1878_20210104
+                    $('#policy_in_progress').hide();
+                    $('#policy_completed').hide();
+                    $('#policy_all').show();
+                } else if (idx == 2) {
+                    console.log('rancho_idx000-->'+idx);
+                    $('#tab_all').removeClass('active-bar-tab').addClass('inactive-bar-tab');
+                    $('#tab_completed').removeClass('active-bar-tab').addClass('inactive-bar-tab');
+
+                    $('#claim_all').hide();
+                    $('#claim_completed').hide();
+
+                    $('#claim_in_progress').show();
+                    $('#tab_in_progress').addClass('active-bar-tab');
+
+                    //Rancho_JR1878_20210104
+                    $('#policy_all').hide();
+                    $('#policy_completed').hide();
+                    $('#policy_in_progress').show();
+                } else if (idx == 3) {
+                    $('#tab_all').removeClass('active-bar-tab').addClass('inactive-bar-tab');
+                    $('#tab_in_progress').removeClass('active-bar-tab').addClass('inactive-bar-tab');
+
+                    $('#claim_all').hide();
+                    $('#claim_in_progress').hide();
+
+                    $('#claim_completed').show();
+                    $('#tab_completed').addClass('active-bar-tab');
+
+                    //Rancho_JR1878_20210104
+                    $('#policy_all').hide();
+                    $('#policy_in_progress').hide();
+                    $('#policy_completed').show();
+                }
+
+                var selectedType = $("[id$='selectedSearchOptionValue']").val();
+                var selectedValue = $("[id$='selectedSearchValueGroup']").val();
+
+                if(Cigna.Util.isBrokerPortal()){
+                    var opt = $("[id$='selectedSearchOptionValue']").find(":selected").val();
+                    var searchvalue = $("input[id*='selectedSearchValueGroup']").val().split(' ').join('');
+                    //Rancho_JR1878_20210104
+                    if(opt == 'Person_Insured' || opt == 'Policy_Holder_Name' && searchvalue.length!= 0){
+                        //var searchvalue = document.querySelectorAll('input[id^="selectedSearchValue"]').value;
+                        //var searchvalue = $('#claimListSearchValue').text(); replace(/\s+/g, '').
+
+                        if((searchvalue.length) < 2){
+                            $('#inputCharErrorMessage').text('{!$Label.Please_input_at_least_2_characters_to_search}');
+                            $('#inputCharErrorMessage').css('display','block');
+                        }
+                    }
+                    
+                brkInitPagingAtAction(idx,selectedType,selectedValue);
+
+                } else {
+                    console.log('customer portal');
+                    cusInitPagingAtAction(idx);
+                }
+                // to disable initial search
+                //refreshTabWithoutInitialSearch(idx);
+            }
+
+            function clickPrev() {
+                handlePrevPageAtAction();
+            }
+
+            function clickNext() {
+                console.log('next');
+                handleNextPageAtAction();
+            }
+            var delType = '';
+            var idx = '';
+            var idx_progress = '';
+            var idx_completed = '';
+
+            function delChange(list, type, rowNum) {
+                delType = list;
+                if (type != null) {
+                    if (type == 'all' && rowNum != null) idx = rowNum;
+                    if (type == 'progress' && rowNum != null) idx_progress = rowNum;
+                    if (type == 'completed' && rowNum != null) idx_completed = rowNum;
+                }
+
+                var overlay = document.getElementById('overlay');
+                var delConfirmBox = document.getElementById('delConfirmBox');
+                overlay.style.opacity = .95;
+                if (overlay.style.display == "block") {
+                    overlay.style.display = "none";
+                    delConfirmBox.style.display = "none";
+                } else {
+                    overlay.style.display = "block";
+                    delConfirmBox.style.display = "block";
+                }
+            }
+
+            function delChange2(list, type, rowNum) {
+                delType = list;
+                if (type != null) {
+                    if (type == 'all' && rowNum != null) idx = rowNum;
+                    if (type == 'progress' && rowNum != null) idx_progress = rowNum;
+                    if (type == 'completed' && rowNum != null) idx_completed = rowNum;
+                }
+
+                var overlay = document.getElementById('overlay2');
+                var delConfirmBox = document.getElementById('delConfirmBox2');
+                overlay.style.opacity = .95;
+                if (overlay.style.display == "block") {
+                    overlay.style.display = "none";
+                    delConfirmBox.style.display = "none";
+                } else {
+                    overlay.style.display = "block";
+                    delConfirmBox.style.display = "block";
+                }
+            }
+
+            function delChange3(list, type, rowNum) {
+                delType = list;
+                if (type != null) {
+                    if (type == 'all' && rowNum != null) idx = rowNum;
+                    if (type == 'progress' && rowNum != null) idx_progress = rowNum;
+                    if (type == 'completed' && rowNum != null) idx_completed = rowNum;
+                }
+
+                var overlay = document.getElementById('overlay3');
+                var delConfirmBox = document.getElementById('delConfirmBox3');
+                overlay.style.opacity = .95;
+                if (overlay.style.display == "block") {
+                    overlay.style.display = "none";
+                    delConfirmBox.style.display = "none";
+                } else {
+                    overlay.style.display = "block";
+                    delConfirmBox.style.display = "block";
+                }
+            }
+
+            function confirmDel(choice) {
+                if (choice == 'true') {
+                    //pass idx to delete at controller
+                    deleteSingleClaimRecordAllAtAction(idx);
+                }
+                document.getElementById('overlay').style.display = "none";
+                document.getElementById('delConfirmBox').style.display = "none";
+            }
+
+            function confirmDelInProgress(choice) {
+                if (choice == 'true') {
+                    //pass idx to delete at controller
+                    deleteSingleClaimRecordProgressAtAction(idx_progress);
+                }
+                document.getElementById('overlay2').style.display = "none";
+                document.getElementById('delConfirmBox2').style.display = "none";
+            }
+
+            function confirmDelCompleted(choice) {
+                if (choice == 'true') {
+                    //pass idx to delete at controller
+                    deleteSingleClaimRecordCompletedAtAction(idx_completed);
+                }
+                document.getElementById('overlay3').style.display = "none";
+                document.getElementById('delConfirmBox3').style.display = "none";
+            }
+
+
+            //andy work - for old sticky button solution
+            /**
+            // Set the height of the parent scroll view
+            function adjustScrollViewHeight() {
+                var targetHeight = window.screen.height;
+
+                // handle landscape mode
+                if ($(window).width() > $(window).height()) {
+                    targetHeight = window.screen.width;
+                }
+
+                // 58px is for the nav bar of Salesforce1 app.
+                $('body').css('height', (targetHeight - 58) + 'px');
+            }
+            */
+
+            if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                /** for padding **/
+                $('#action-bar').css('position', 'absolute');
+                $('#mobile-app-padding').css('display', 'block');
+
+                $(document).ready(function() {
+
+                    /**
+                    adjustScrollViewHeight();
+
+                    // handle screen rotation
+                    jQuery(window).on("orientationchange", function(event) {
+                      //setTimeout(function () {
+                        adjustScrollViewHeight();
+                      //}, 500);
+                    });
+                    */
+
+                    $('#notShowPreApproval').hide();
+                    $('#showPreApproval').hide();
+                    /*
+                    $('body').bind('touchmove', function() {
+                        $('.cigna-action-btn-group').css('opacity', 0);
+                    });
+
+                    $('body').on("touchend", function() {
+                        setTimeout(function() {
+                            $('.cigna-action-btn-group').css('opacity', 1);
+                        }, 1000);
+                    });*/
+
+
+                });
+
+                $('#action-bar').removeClass('cigna-floating-bottom-panel');
+
+            } else {
+                $('#action-bar').addClass('cigna-floating-bottom-panel');
+            }
+
+            function redirectToEditClaim(recordType, cId) {
+                if (recordType == 'Pre Admission') {
+                    Cigna.Util.navigateToVFP('SubmitHospitalVFP?claimId=' + cId, null, null, true);
+                } else {
+                    Cigna.Util.navigateToVFP('MyClaimSubmitVFP?cId=' + cId, null, null, true);
+                }
+            }
+
+            //JR1840 jack add
+            function redirectToClaimDetail(isPassToHere, claimId, policyType) {
+                console.log('isPassToHere '+ isPassToHere +' claimId '+claimId+' policyType '+policyType);
+                console.log($('[id$="encryptedSearchCriteria"]').val());
+                var encryptedSearchCriteria = $('[id$="encryptedSearchCriteria"]').val();
+                var encryptedSearchCriteria2 = '';
+                if(encryptedSearchCriteria){
+                    encryptedSearchCriteria2 = '&'+'{!URLParamName}'+'='+ encryptedSearchCriteria;
+                    encryptedSearchCriteria = '?'+'{!URLParamName}'+'='+ encryptedSearchCriteria;
+                }else{
+                    encryptedSearchCriteria ='';
+                }
+                console.log(encryptedSearchCriteria);
+                if (isPassToHere) {
+                    if (policyType == 'Group') {
+                        sessionStorage.setItem('policy-detail-back-url', 'MyClaimVFP'+ encryptedSearchCriteria);
+                        Cigna.Util.navigateToVFP('ClaimDetailsVFP?claimNo=' + claimId + '&policyType=' + policyType , null, null, true);
+                    } else {
+                        sessionStorage.setItem('policy-detail-back-url', 'MyClaimVFP'+ encryptedSearchCriteria);
+                        Cigna.Util.navigateToVFP('ClaimDetailsVFP?claimNo=' + claimId , null, null, true);
+                    }
+                }
+            }
+            var isPassToHereGlobal;
+            var claimIdGlobal;
+            var policyTypeGlobal;
+            function getEncryptedCriteria(isPassToHere, claimId, policyType){
+                isPassToHereGlobal = isPassToHere;
+                claimIdGlobal = claimId;
+                policyTypeGlobal = policyType;
+                getEncryptedString();
+
+            }
+
+            function getEncryptedCriteriaMakeClaim(){
+                
+                getEncryptedString2();
+
+            }
+
+            function getEncryptedCriteriaGOP(){
+                
+                getEncryptedString3();
+
+            }
+
+            function redirectToMyClaimSubmit(){
+                console.log($('[id$="encryptedSearchCriteria"]').val());
+                var encryptedSearchCriteria = $('[id$="encryptedSearchCriteria"]').val();
+                if(encryptedSearchCriteria){
+                    encryptedSearchCriteria = '?'+'{!URLParamName}'+'='+ encryptedSearchCriteria;
+                }else{
+                    encryptedSearchCriteria ='';
+                }
+                console.log(encryptedSearchCriteria);
+                sessionStorage.setItem('policy-detail-back-url', 'MyClaimVFP'+ encryptedSearchCriteria);
+                Cigna.Util.navigateToVFP('MyClaimSubmitVFP');
+            }
+            //JR1840 jack add
+        </script>
+    </head>
+    <apex:define name="additionalLibraries">
+        <!--additional css, bootstrap, jquery,js libraries-->
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}" />
+    </apex:define>
+    <div class="bs">
+        <apex:form >
+            <apex:actionFunction name="handlePrevPageAtAction" action="{!handlePrevPage}" reRender="currentPanel, searchPanel" status="loader-icon1" />
+            <apex:actionFunction name="handleNextPageAtAction" action="{!handleNextPage}" reRender="currentPanel, searchPanel" status="loader-icon1" />
+            <apex:actionFunction action="{!reloadAllRecord}" name="brkInitPagingAtAction" reRender="currentPanel,errorPanel, bottomReadyJS" oncomplete="greySeparatorStyle();" status="loader-icon">
+                <apex:param name="currentTabIdx" assignTo="{!currentTabIdx}" value="" />
+                <apex:param name="searchType" assignTo="{!selectedSearchType}" value="" />
+                <apex:param name="searchValue" assignTo="{!selectedSearchValue}" value="" />
+            </apex:actionFunction>
+             <apex:actionFunction action="{!reloadAllRecord}" name="cusInitPagingAtAction" reRender="currentPanel,errorPanel, bottomReadyJS" oncomplete="greySeparatorStyle();" status="loader-icon">
+                <apex:param name="currentTabIdx" assignTo="{!currentTabIdx}" value="" />
+            </apex:actionFunction>
+            <apex:actionFunction action="{!refreshTabWithoutInitialSearch}" name="refreshTabWithoutInitialSearchAtAction" reRender="currentPanel, bottomReadyJS" oncomplete="greySeparatorStyle();" status="loader-icon">
+                <apex:param id="currentTabIdxRefresh" name="currentTabIdx" assignTo="{!currentTabIdx}" value="" />
+            </apex:actionFunction>
+            <apex:actionFunction action="{!reloadAllRecord}" name="reloadAllRecordAtAction" reRender="currentPanel, searchPanel" oncomplete="greySeparatorStyle();" status="loader-icon" />
+            <apex:actionFunction status="loader-icon" action="{!deleteSingleClaimAllRecord}" name="deleteSingleClaimRecordAllAtAction" reRender="currentPanel" oncomplete="reloadAllRecordAtAction()">
+                <apex:param name="idx" value="" assignTo="{!idx}" />
+            </apex:actionFunction>
+            <apex:actionFunction status="loader-icon" action="{!deleteSingleClaimProgressRecord}" name="deleteSingleClaimRecordProgressAtAction" reRender="currentPanel" oncomplete="reloadAllRecordAtAction()">
+                <apex:param name="idx_progress" value="" assignTo="{!idx_progress}" />
+            </apex:actionFunction>
+            <apex:actionFunction status="loader-icon" action="{!deleteSingleClaimCompletedRecord}" name="deleteSingleClaimRecordCompletedAtAction" reRender="currentPanel" oncomplete="reloadAllRecordAtAction()">
+                <apex:param name="idx_completed" value="" assignTo="{!idx_completed}" />
+            </apex:actionFunction>
+            <apex:actionFunction status="loader-icon" action="{!loadData}" name="loadDataAtAction" oncomplete="initPagingOnComplete();console.log('data loaded')" reRender="resultPanel,searchPanel"/>
+            
+            <apex:actionFunction status="loader-icon" action="{!checkIPMIPolicy}" name="checkIPMIPolicy" oncomplete="loadDataAtAction();" reRender="desktopBtn, mobileBtn, brkMobileBtn"/> <!--Updated by Nicole-->
+            <!--<apex:actionFunction status="loader-icon" action="{!checkIPMIPolicy}" name="checkIPMIPolicy" reRender="desktopBtn, mobileBtn, brkMobileBtn"/>-->
+
+            <apex:actionFunction action="{!initPaging}" name="initPagingOnComplete" oncomplete="console.log('2')" reRender="paginationPanel"/>
+            <!-- Rancho_JR1878_20210104 -->
+            <apex:actionFunction action="{!SearchClaimRecords}" name="searchClaimRecordsAtAction" status="loader-icon" oncomplete="initPagingOnComplete();" reRender="searchPanel, currentPanel, bottomReadyJS" >
+                <apex:param id="selectedSearchType" name="selectedSearchType" value="" assignTo="{!selectedSearchType}" />
+                <apex:param id="selectedSearchValue" name="selectedSearchValue" value="" assignTo="{!selectedSearchValue}" />
+            </apex:actionFunction>
+            <!-- JR1840 jack add-->
+            <apex:actionFunction name="getEncryptedString" action="{!getEncryptedString}" reRender="encryptedSearchCriteria" oncomplete="redirectToClaimDetail(isPassToHereGlobal,claimIdGlobal,policyTypeGlobal);"></apex:actionFunction>
+            <apex:actionFunction name="getEncryptedString2" action="{!getEncryptedString}" reRender="encryptedSearchCriteria" oncomplete="redirectToMyClaimSubmit();"></apex:actionFunction>
+            <apex:actionFunction name="getEncryptedString3" action="{!getEncryptedString}" reRender="encryptedSearchCriteria" oncomplete="Cigna.Util.navigateToVFP('SubmitHospitalVFP{!IF(encryptedSearchCriteria!='','?'+URLParamName+'='+encryptedSearchCriteria,'')}');"></apex:actionFunction>
+            <apex:inputHidden id="encryptedSearchCriteria" value="{!encryptedSearchCriteria}" />
+            <!-- JR1840 jack add-->
+            <!-- Rancho_JR1878_20210104 start-->
+            <apex:actionFunction action="{!searchPolicyRecords}" name="searchPolicy" status="loader-icon" oncomplete="initPagingOnComplete();" reRender="searchPanel, currentPanel, bottomReadyJS">
+                <apex:param name="selectedSearchType" value="" assignTo="{!selectedSearchType}" />
+                <apex:param name="selectedSearchValue" value="" assignTo="{!selectedSearchValue}" />
+            </apex:actionFunction>
+            <apex:actionFunction action="{!displayPIRecords}" name="displayPI" status="loader-icon" oncomplete="initPagingOnComplete();displayPHBack();" reRender="searchPanel, currentPanel, bottomReadyJS">
+                <apex:param id="selectedPN" name="selectedPN" value="" assignTo="{!selectedPN}" />
+                <apex:param id="selectedPHName" name="selectedPHName" value="" assignTo="{!selectedPHName}" />
+                <apex:param id="selectedPHSsn" name="selectedPHSsn" value="" assignTo="{!selectedPHSsn}" />
+            </apex:actionFunction>
+            <apex:actionFunction action="{!searchWSRecords}" name="searchWSRecord" status="loader-icon" oncomplete="initPagingOnComplete();" reRender="backButtonPanel, searchPanel, currentPanel, bottomReadyJS">
+                <apex:param id="selectedInsuredSsn" name="selectedInsuredSsn" value="" assignTo="{!selectedInsuredSsn}" />
+            </apex:actionFunction>
+            <apex:actionFunction action="{!backToPolHolder}" name="backToPolHolder" status="loader-icon" reRender="currentPanel, backButtonPanel">
+            </apex:actionFunction>
+            <!-- Rancho_JR1878_20210104 end-->
+        </apex:form>
+
+        <apex:outputPanel id="desktopBtn">
+            <!-- Desktop and iPad -->
+            <!-- 2023.02.28 Add By Owen for JOBR-301, hide buttons when broker user company code is AMG -->
+            <apex:outputPanel layout="block" rendered="{!showApplyForGOPBtn && showMakeClaimButton}">
+                <div class="bs hidden-xs">
+                    <div class="bs col-sm-2 "></div>
+                    <div class="bs col-sm-8" style="padding-top: 20px;padding-bottom: 20px;">
+                        <div class="bs row">
+                            <div id="submit-btn-mb" style="display: table;" onclick="getEncryptedCriteriaMakeClaim();" class="bs col-sm-3 text-center onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn lg-option-btn"><!--JR1840 jack add-->
+                                <div style="display: table-cell; vertical-align: middle;">
+                                    {!$Label.Make_A_Claim}
+                                </div>
+                            </div>
+                            <div class="bs col-sm-2">
+                            </div>
+                            <div id="submit-gop-btn-mb" style="display: table;" onclick="getEncryptedCriteriaGOP();" class="bs col-sm-4 text-center onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn lg-option-btn"><!--JR1840 jack add-->
+                                <div style="display: table-cell; vertical-align: middle;">
+                                    {!$Label.Apply_Admission_Pre_approval}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bs col-sm-2"></div>
+                </div>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!!showApplyForGOPBtn&&showMakeClaimButton}">
+                <div class="bs hidden-xs">
+                    <div class="bs col-sm-2 "></div>
+                    <div class="bs col-sm-8" style="padding-top: 20px;padding-bottom: 20px;">
+                            <div class="bs col-sm-3 "></div>
+                            <div id="submit-btn-mb" style="display: table;" onclick="getEncryptedCriteriaMakeClaim();" class="bs col-sm-6 text-center onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn lg-option-btn"><!-- JR1840 jack add-->
+                                <div style="display: table-cell; vertical-align: middle;">
+                                    {!$Label.Make_A_Claim}
+                                </div>
+                            </div>
+                            <div class="bs col-sm-3 "></div>
+                    </div>
+                    <div class="bs col-sm-2"></div>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <apex:outputPanel id="resultPanel">
+
+            <script>
+            /*
+            var highestBox = 0;
+            $('.lg-option-btn').each(function() {
+                if ($(this).height() > highestBox) {
+                    highestBox = $(this).height();
+                }
+            });
+            $('.lg-option-btn').height(highestBox);
+            */
+            </script>
+
+            <!-- Rancho_JR1878_20210104 back button -->
+            <apex:outputPanel id="backButtonPanel">
+                <div id="backButton" class="bs col-xs-12 col-sm-12" style="display: none;cursor:pointer;">
+                    <a class="bs cigna-fg-orange-medium" onclick="backToPolHolder();">
+                        <i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}
+                    </a>
+                </div>
+            </apex:outputPanel>
+
+            <div class="bs" style="padding-bottom: 50px">
+                <table class="bs bar-tab-container col-lg-12 col-sm-12 col-xs-12">
+                    <tr>
+                        <td id="tab_all" class="bs active-bar-tab onclick-pointer" onclick="selectedTab(this, 1)">
+                            {!$Label.All}
+                        </td>
+                        <td id="tab_in_progress" class="bs inactive-bar-tab onclick-pointer" onclick="selectedTab(this, 2)">
+                            {!$Label.In_Progress}
+                        </td>
+                        <td id="tab_completed" class="bs inactive-bar-tab onclick-pointer" onclick="selectedTab(this, 3)">
+                            {!$Label.Completed}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <!--del msg-->
+            <div id="overlay" class="overlay" style="display:none;">
+                <div id="delConfirmBox" class="ConfirmBox">
+                    <div id="delmsg" class="alertmsg">
+                        {!$Label.Are_you_sure_to_delete_the_claim}
+                    </div>
+                    <div class="bs col-xs-6 col-sm-6">
+                        <i class="glyphicon glyphicon-ok-sign oksign onclick-pointer" onclick="confirmDel('true')"></i>
+                    </div>
+                    <div class="bs col-xs-6 col-sm-6">
+                        <i class="glyphicon glyphicon-remove-sign cancelsign onclick-pointer" onclick="confirmDel('false')"></i>
+                    </div>
+                </div>
+            </div>
+            <div id="overlay2" class="overlay" style="display:none;">
+                <div id="delConfirmBox2" class="ConfirmBox">
+                    <div id="delmsg" class="alertmsg">
+                        {!$Label.Are_you_sure_to_delete_the_claim}
+                    </div>
+                    <div class="bs col-xs-6 col-sm-6">
+                        <i class="glyphicon glyphicon-ok-sign oksign onclick-pointer" onclick="confirmDelInProgress('true')"></i>
+                    </div>
+                    <div class="bs col-xs-6 col-sm-6">
+                        <i class="glyphicon glyphicon-remove-sign cancelsign onclick-pointer" onclick="confirmDelInProgress('false')"></i>
+                    </div>
+                </div>
+            </div>
+            <div id="overlay3" class="overlay" style="display:none;">
+                <div id="delConfirmBox3" class="ConfirmBox">
+                    <div id="delmsg" class="alertmsg">
+                        {!$Label.Are_you_sure_to_delete_the_claim}
+                    </div>
+                    <div class="bs col-xs-6 col-sm-6">
+                        <i class="glyphicon glyphicon-ok-sign oksign onclick-pointer" onclick="confirmDelCompleted('true')"></i>
+                    </div>
+                    <div class="bs col-xs-6 col-sm-6">
+                        <i class="glyphicon glyphicon-remove-sign cancelsign onclick-pointer" onclick="confirmDelCompleted('false')"></i>
+                    </div>
+                </div>
+            </div>
+            <!--End of del msg-->
+            <!-- select filter-->
+            <!--
+            <div style="display: table;" onclick="Cigna.Util.navigateToVFP('MyClaimSubmitVFP?phid=K093454');" class="bs col-sm-12 ">
+                <div style="display: table-cell; vertical-align: middle;">
+                    Zoe Testing Quick Access
+                </div>
+            </div>
+            -->
+            <apex:outputPanel id="searchPanel" layout="inline" rendered="{!!isCustomer}">
+                <apex:form id="frmSearhAllRecords" onsubmit="return false;" >
+                    <div class="bs col-xs-12 form-horizontal">
+                        <div class="bs col-sm-12 col-xs-12" style="padding: 20px 0px 20px 0px;">
+                            <div class="bs col-sm-6 col-xs-12" style="padding-bottom:20px;">
+                                <apex:selectList id="selectedSearchOptionValue" value="{!selectedSearchType}" size="1" styleClass="bs form-field-style-select cigna-fg-gray-dark" >
+                                    <apex:selectoption itemLabel="{!$Label.Select_Search_Type}" itemValue="" itemDisabled="true"></apex:selectoption>
+                                    <apex:selectOptions value="{!SearchType}"></apex:selectOptions>
+                                </apex:selectList>
+                            </div>
+                            <div class="bs col-sm-6 col-xs-12">
+                                <div style="width:100%">
+                                    <div style="float: left; width: 90%;" >
+                                        <apex:inputText id="selectedSearchValueGroup" style="font-size:1em; height:35px; width:95%" styleClass="bs form-field-style cigna-fg-gray-dark" value="{!selectedSearchValue}" />
+                                    </div>
+                                    <div style="float: left; width: 10%" >
+                                        <i class="ci-hk-search cigna-fg-orange-dark text-center onclick-pointer" style="width:5%" aria-hidden="true" onclick="searchValidation();" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="inputCharErrorMessage" class="bs col-sm-12 col-xs-12 text-center" style="color:red;padding-bottom:20px;display:none;">
+                            {!$Label.Please_input_at_least_2_characters_to_search}
+                        </div>
+                        <apex:outputPanel id="errorPanel">
+                            <div id="tooManyError" class="bs col-sm-12 col-xs-12" style="{!IF(showTooManyRecordError,'','display:none;')}color: red;padding-bottom: 30px; text-align: center;" >
+                                {!$Label.Error_Too_Many_Records}
+                            </div>
+                        </apex:outputPanel>
+                    </div>
+                </apex:form>
+
+                <script>
+
+                    //Rancho_JR1878_20210104
+                    $('.listcontent').filter(":odd").css('background-color','#fff');
+                    function displayPersonInsured(policyNumber, fullName, ssnNumber){
+                        displayPI(policyNumber, fullName, ssnNumber);
+                    }
+                    function displayClaim(insuredSsn){
+                        searchWSRecord(insuredSsn);
+                        $('#backButton').hide();
+                    }
+                    // Rancho_JR1878_20210104
+                    function displayPHBack(){
+                        console.log('displayPHBack');
+                        document.getElementById('backButton').style.display = "block";
+                    }
+
+                    function searchValidation(){
+                        var opt = $("[id$='selectedSearchOptionValue']").find(":selected").val();
+                        var searchvalue = $("input[id*='selectedSearchValueGroup']").val().split(' ').join('');
+
+                        if(!searchvalue.trim()){
+                            $('#inputCharErrorMessage').text(noSearchValueErrMsg); 
+                            $('#inputCharErrorMessage').show();
+                             
+                            return null;                  
+                          } else {
+                            $('#inputCharErrorMessage').hide();
+                          }
+                        //Rancho_JR1878_20210104
+                        if(opt == 'Person_Insured' || opt == 'Policy_Holder_Name'){
+                            //var searchvalue = document.querySelectorAll('input[id^="selectedSearchValue"]').value;
+                            //var searchvalue = $('#claimListSearchValue').text(); replace(/\s+/g, '').
+                            
+                            if((searchvalue.length) < 2){
+                                $('#inputCharErrorMessage').text('{!$Label.Please_input_at_least_2_characters_to_search}');
+                                $('#inputCharErrorMessage').css('display','block');
+                            }
+                            else{
+                                $('#inputCharErrorMessage').css('display','none');
+                                searchAllRecords();
+                            }
+                        }
+                        else{
+                            searchAllRecords();
+                        }
+                    }
+                    function searchAllRecords(){
+                        var tmpSearchParam1 = '';
+                        var tmpSearchParam2 = '';
+
+                        $("form[id*='frmSearhAllRecords'] select[id*='selectedSearchOptionValue']").each(function(idx, elem){
+                            var tmpVal = $(elem).val();
+                            if(tmpVal != undefined && tmpVal != '' && tmpVal != null)    tmpSearchParam1 = tmpVal;
+                        });
+
+                        $("form[id*='frmSearhAllRecords'] input[id*='selectedSearchValueGroup']").each(function(idx, elem){
+                            var tmpVal = $(elem).val();
+                            if(tmpVal != undefined && tmpVal != '' && tmpVal != null)    tmpSearchParam2 = tmpVal;
+                        });
+                        //Rancho_JR1878_20210104
+                        if (tmpSearchParam1 == 'Policy_Holder_Name' || tmpSearchParam1 == 'Policy_Holder_ID'){
+                            $('#backButton').hide();
+                            searchPolicy(tmpSearchParam1,tmpSearchParam2);
+                        }else{
+                            searchClaimRecordsAtAction(tmpSearchParam1,tmpSearchParam2);
+                        }
+                    }
+                </script>
+            </apex:outputPanel>
+            <!-- end select filter-->
+            <!-- Separate customer and broker header for clear summary, will merge in the repeated rows below -->
+            <!--Customer View-->
+
+            <apex:outputPanel id="currentPanel">
+
+                <div class="bs row listcontent-header hidden-xs" style="{!IF(isCustomer, '', 'display:none;')}">
+                    <div class="bs col-sm-2">{!$Label.Claim_No}</div>
+                    <div class="bs col-sm-2">{!$Label.Policy_No}</div>
+                    <!-- Add by Manuel that show PersonInsured info-->
+                    <div class="bs col-sm-2">{!$Label.Person_Insured}</div>
+                    <div class="bs col-sm-2">{!$Label.Claim_Claim_Type}</div>
+                    <!-- IBM KOU PPS-17 20180627 Start -->
+<!--                     <div class="bs col-sm-2">{!$Label.Received_Date}</div> -->
+                    <div class="bs col-sm-2">{!$Label.Claim_Incurred_Date}</div>
+                    <!-- IBM KOU PPS-17 20180627 End -->                    
+                    <div class="bs col-sm-2">{!$Label.Status}</div>
+                </div>
+                <!--Broker View--><!-- Rancho_JR1878_20210104 -->
+                <div class="bs row listcontent-header hidden-xs" style="{!IF(searchByPI && !isCustomer && searched, '', 'display:none;')}">
+                    <div class="bs col-sm-2">{!$Label.Claim_No}</div>
+                    <div class="bs col-sm-2">{!$Label.Policy_No}</div>
+                    <div class="bs col-sm-2">{!$Label.Person_Insured}</div>
+                    <div class="bs col-sm-2">{!$Label.Claim_Claim_Type}</div>
+                    <!-- IBM KOU PPS-17 20180627 Start -->
+<!--                     <div class="bs col-sm-2">{!$Label.Received_Date}</div> -->
+                    <div class="bs col-sm-2">{!$Label.Claim_Incurred_Date}</div>
+                    <!-- IBM KOU PPS-17 20180627 End -->                                        <div class="bs col-sm-2">{!$Label.Status}</div>
+                </div>
+
+                <!-- Rancho_JR1878_20210104 -->
+                <div class="bs row listcontent-header hidden-xs" style="{!IF(!searchByPI && !displayPI && searched, '', 'display:none;')}">
+                    <div class="bs col-sm-4">{!$Label.Policy_Number}</div>
+                    <div class="bs col-sm-4">{!$Label.Pol_Policy_holder_name}</div>
+                    <div class="bs col-sm-4">{!$Label.Policy_Holder_ID}</div>
+                </div>
+                <div class="bs row listcontent-header hidden-xs" style="{!IF(displayPI, '', 'display:none;')}">
+                    <div class="bs col-sm-4">{!$Label.Pol_Person_Insured_Name}</div>
+                    <div class="bs col-sm-4">{!$Label.Pol_Person_insured_ID}</div>
+                    <div class="bs col-sm-4">{!$Label.Pol_Policy_holder_name}</div>
+                </div>
+
+                <!-- Rancho_JR1878_20210104 policy_all panel -->
+                <div id="policy_all" class="{!if(currentTabIdx == 1,'active-bar-content','inactive-bar-content')}">
+                    <apex:repeat value="{!currentPersonList}" var="pl">
+                        <div class="hidden-xs" onclick="displayPersonInsured('{!pl.policyNumber}','{!pl.fullName}','{!pl.ssnNumber}')" style="cursor:pointer;">
+                        <apex:outputPanel rendered="{!(searchPolicyAll && haveplRecord && !displayPI)}">
+                            <div class="bs row listcontent">
+                                <div class="bs col-xs-4 visible-xs">{!$Label.Policy_Number}</div>
+                                <div class="bs col-xs-4 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(pl.policyNumber != null, pl.policyNumber, 'N/A')}"/>
+                                </div>
+                                <div class="bs col-xs-4 visible-xs">{!$Label.Pol_Policy_holder_name}</div>
+                                <div class="bs col-xs-4 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(pl.fullName != null, pl.fullName, 'N/A')}"/>
+                                </div>
+                                <div class="bs col-xs-4 visible-xs">{!$Label.Policy_Holder_ID}</div>
+                                <div class="bs col-xs-4 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(pl.ssnNumber != null, pl.ssnNumber, 'N/A')}"/>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        </div>
+                    </apex:repeat>
+                </div>
+                <!-- Rancho_JR1878_20210104 policy_in_progress panel -->
+                <div id="policy_in_progress" class="{!if(currentTabIdx == 2,'active-bar-content','inactive-bar-content')}">
+                    <apex:repeat value="{!currentPersonList}" var="pl">
+                        <div class="hidden-xs" onclick="displayPersonInsured('{!pl.policyNumber}','{!pl.fullName}','{!pl.ssnNumber}')" style="cursor:pointer;">
+                        <apex:outputPanel rendered="{!(searchPolicyInPro && haveplRecord && !displayPI)}">
+                            <div class="bs row listcontent">
+                                <div class="bs col-xs-4 visible-xs">{!$Label.Policy_Number}</div>
+                                <div class="bs col-xs-4 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(pl.policyNumber != null, pl.policyNumber, 'N/A')}"/>
+                                </div>
+                                <div class="bs col-xs-4 visible-xs">{!$Label.Pol_Policy_holder_name}</div>
+                                <div class="bs col-xs-4 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(pl.fullName != null, pl.fullName, 'N/A')}"/>
+                                </div>
+                                <div class="bs col-xs-4 visible-xs">{!$Label.Policy_Holder_ID}</div>
+                                <div class="bs col-xs-4 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(pl.ssnNumber != null, pl.ssnNumber, 'N/A')}"/>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        </div>
+                    </apex:repeat>
+                </div>
+                <!-- Rancho_JR1878_20210104 policy_completed panel -->
+                <div id="policy_completed" class="{!if(currentTabIdx == 3,'active-bar-content','inactive-bar-content')}">
+                    <apex:repeat value="{!currentPersonList}" var="pl">
+                        <div class="hidden-xs" onclick="displayPersonInsured('{!pl.policyNumber}','{!pl.fullName}','{!pl.ssnNumber}')" style="cursor:pointer;">
+                        <apex:outputPanel rendered="{!(searchPolicyComplete && haveplRecord && !displayPI)}">
+                            <div class="bs row listcontent">
+                                <div class="bs col-xs-4 visible-xs">{!$Label.Policy_Number}</div>
+                                <div class="bs col-xs-4 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(pl.policyNumber != null, pl.policyNumber, 'N/A')}"/>
+                                </div>
+                                <div class="bs col-xs-4 visible-xs">{!$Label.Pol_Policy_holder_name}</div>
+                                <div class="bs col-xs-4 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(pl.fullName != null, pl.fullName, 'N/A')}"/>
+                                </div>
+                                <div class="bs col-xs-4 visible-xs">{!$Label.Policy_Holder_ID}</div>
+                                <div class="bs col-xs-4 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(pl.ssnNumber != null, pl.ssnNumber, 'N/A')}"/>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        </div>
+                    </apex:repeat>
+                </div>
+                <!-- Rancho_JR1878_20210104 policy_all person insured panel -->
+                <div id="person_insured_all" class="inactive-bar-content">
+                    <apex:repeat value="{!currentPersonList}" var="per">
+                        <div class="hidden-xs" onclick="displayClaim('{!per.ssnNumber}')" style="cursor:pointer;">
+                        <apex:outputPanel rendered="{!(searchPolicyAll && displayPI)}">
+                            <div class="bs row listcontent">
+                                <div class="bs col-xs-4 visible-xs">{!$Label.Pol_Person_Insured_Name}</div>
+                                <div class="bs col-xs-4 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(per.fullName != null, per.fullName, 'N/A')}"/>
+                                </div>
+                                <div class="bs col-xs-4 visible-xs">{!$Label.Pol_Person_insured_ID}</div>
+                                <div class="bs col-xs-4 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(per.ssnNumber != null, per.ssnNumber, 'N/A')}"/>
+                                </div>
+                                <div class="bs col-xs-4 visible-xs">{!$Label.Pol_Policy_holder_name}</div>
+                                <div class="bs col-xs-4 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(per.policyHolderName != null, per.policyHolderName, 'N/A')}"/>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        </div>
+                    </apex:repeat>
+                </div>
+                <!-- Rancho_JR1878_20210104 policy_in_progress person insured panel -->
+                <div id="person_insured_in_progress" class="inactive-bar-content">
+                    <apex:repeat value="{!currentPersonList}" var="per">
+                        <div class="hidden-xs" onclick="displayClaim('{!per.ssnNumber}')" style="cursor:pointer;">
+                        <apex:outputPanel rendered="{!(searchPolicyInPro && displayPI)}">
+                            <div class="bs row listcontent">
+                                <div class="bs col-xs-4 visible-xs">{!$Label.Pol_Person_Insured_Name}</div>
+                                <div class="bs col-xs-4 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(per.fullName != null, per.fullName, 'N/A')}"/>
+                                </div>
+                                <div class="bs col-xs-4 visible-xs">{!$Label.Pol_Person_insured_ID}</div>
+                                <div class="bs col-xs-4 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(per.ssnNumber != null, per.ssnNumber, 'N/A')}"/>
+                                </div>
+                                <div class="bs col-xs-4 visible-xs">{!$Label.Pol_Policy_holder_name}</div>
+                                <div class="bs col-xs-4 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(per.policyHolderName != null, per.policyHolderName, 'N/A')}"/>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        </div>
+                    </apex:repeat>
+                </div>
+                <!-- Rancho_JR1878_20210104 policy_completed person insured panel -->
+                <div id="person_insured_completed" class="inactive-bar-content">
+                    <apex:repeat value="{!currentPersonList}" var="per">
+                        <div class="hidden-xs" onclick="displayClaim('{!per.ssnNumber}')" style="cursor:pointer;">
+                        <apex:outputPanel rendered="{!(searchPolicyComplete && displayPI)}">
+                            <div class="bs row listcontent">
+                                <div class="bs col-xs-4 visible-xs">{!$Label.Pol_Person_Insured_Name}</div>
+                                <div class="bs col-xs-4 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(per.fullName != null, per.fullName, 'N/A')}"/>
+                                </div>
+                                <div class="bs col-xs-4 visible-xs">{!$Label.Pol_Person_insured_ID}</div>
+                                <div class="bs col-xs-4 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(per.ssnNumber != null, per.ssnNumber, 'N/A')}"/>
+                                </div>
+                                <div class="bs col-xs-4 visible-xs">{!$Label.Pol_Policy_holder_name}</div>
+                                <div class="bs col-xs-4 col-sm-4 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(per.policyHolderName != null, per.policyHolderName, 'N/A')}"/>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        </div>
+                    </apex:repeat>
+                </div>
+                <!-- Rancho_JR1878_20210104 no record -->
+                <apex:outputpanel rendered="{!currentPersonList.size == 0 && searched && !searchByPI}" >
+                    <div class="bs row col-xs-12 col-sm-12 text-center" style="padding:20px;">
+                        <span class="fa fa-smile-o"/> {!$Label.No_Record_Found}
+                    </div>
+                </apex:outputpanel>
+                <div id="claim_all" class="{!if(currentTabIdx == 1,'active-bar-content','inactive-bar-content')}">
+                    <apex:variable value="{!0}" var="rowNum_all" />
+                    <apex:repeat value="{!wClaimList_current}" var="wClaim">
+                        <!-- without onclick action -->
+                        
+                        <!-- Add by Manuel to adjust the layout start -->
+                        <div class="hidden-xs">
+                        <!-- Rancho_JR1878_20210104 -->
+                        <apex:outputPanel rendered="{! If(searchByPI && wClaim.Status = not_submitted_str, true, false)}" layout="none">
+                            <div class="bs row listcontent {! If( wClaim.Status != not_submitted_str,'onclick-pointer','')}" >
+                                <div class="bs col-xs-6 visible-xs">
+                                    {!$Label.Claim_No}
+                                </div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight" style="word-wrap: break-word;">
+                                    <!-- hide it as only claim record from WS has claim number, record at salesforce should have no real claim no -->
+                                    <apex:outputText value="{!if(wClaim.claimNum != null, wClaim.claimNum, 'N/A')}"></apex:outputText>
+                                    <apex:outputPanel rendered="{! If( wClaim.Status != not_submitted_str  ,true,false) }">
+                                        <i class="ci-hk-arrow-31 pull-right visible-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-pencil pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Policy_No}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight content-policy">
+                                    {!if(wClaim.policyNum != null && wClaim.policyNum != '' && wClaim.policyNum != 'N/A', wClaim.policyNum, 'N/A')}
+                                </div>
+                                <!-- Add by Manuel that show PersonInsured info-->
+                                <!--div style="{!IF(!isCustomer, '', 'display:none;')}"-->
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Person_Insured}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType" style="word-wrap: break-word;word-break: break-all;">
+                                        <apex:outputText value="{!if(wClaim.PIName!=null && wClaim.PIName!='', wClaim.PIName, '&nbsp;')}" escape="false" />
+                                    </div>
+                                <!--/div-->
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Claim_Type}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType">
+                                    {!if(wClaim.claimType!=null && wClaim.claimType!='', wClaim.claimType, 'N/A')}
+                                </div>
+
+                                <!-- IBM KOU PPS-17 20180627 Start -->
+<!--                                 <div class="bs col-xs-6 visible-xs">{!$Label.Received_Date}</div> -->
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Incurred_Date}</div>
+                                <!-- IBM KOU PPS-17 20180627 End -->
+                                <div class="bs col-xs-6 col-sm-2 content-highlight">
+
+                                <!-- IBM KOU PPS-17 20180627 Start -->
+<!--                                     <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                        <apex:param value="{!wClaim.submitDate}" /> -->
+
+                                    <apex:outputText value="{!wClaim.consultationDate}">
+                                    </apex:outputText>
+                                <!-- IBM KOU PPS-17 20180627 End -->
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Status}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight">{!if(wClaim.status!=null,wClaim.status,'N/A')}
+                                    <apex:outputPanel rendered="{! If(wClaim.Status== not_submitted_str ,true,false) }">
+                                        <i style='padding-left:10px;' class="ci-hk-delete pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="delChange('saveBrklist', 'all', {!rowNum_all})" aria-hidden="true" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If( wClaim.Status != not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-arrow-31 pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If( wClaim.Status==not_submitted_str ,true,false) }">
+                                        <i style="padding-right: 10px;" class="ci-hk-pencil pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If(  wClaim.Status==not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-delete  pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="delChange('saveBrklist', 'all', {!rowNum_all})" aria-hidden="true" />
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        <!-- Rancho_JR1878_20210104 -->
+                        <apex:outputPanel rendered="{! If(searchByPI && wClaim.Status != not_submitted_str, true, false)}" layout="none">
+                            <!-- have onclick action -->
+                            <div class="bs row listcontent {! If( wClaim.Status != not_submitted_str,'onclick-pointer','')}" onclick="getEncryptedCriteria({! If( wClaim.Status != not_submitted_str, true, false)}, '{!wClaim.claimNum}', '{!wClaim.policyType}');  "><!-- JR1840 jack add-->
+                                <div class="bs col-xs-6 visible-xs">
+                                    {!$Label.Claim_No}
+                                </div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight" style="word-wrap: break-word;">
+                                    <!-- hide it as only claim record from WS has claim number, record at salesforce should have no real claim no -->
+                                    <apex:outputText value="{!if(wClaim.claimNum != null, wClaim.claimNum, 'N/A')}"></apex:outputText>
+                                    <apex:outputPanel rendered="{! If( wClaim.Status != not_submitted_str  ,true,false) }">
+                                        <i class="ci-hk-arrow-31 pull-right visible-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-pencil pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Policy_No}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight content-policy">
+                                    {!if(wClaim.policyNum != null && wClaim.policyNum != '' && wClaim.policyNum != 'N/A', wClaim.policyNum, 'N/A')}
+                                </div>
+                                <!-- Add by Manuel that show PersonInsured info-->
+                                <!--div style="{!IF(!isCustomer, '', 'display:none;')}"-->
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Person_Insured}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType" style="word-wrap: break-word;word-break: break-all;">
+                                        <apex:outputText value="{!if(wClaim.PIName!=null && wClaim.PIName!='', wClaim.PIName, '&nbsp;')}" escape="false" />
+                                    </div>
+                                <!--/div-->
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Claim_Type}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType">
+                                    {!if(wClaim.claimType!=null && wClaim.claimType!='', wClaim.claimType, 'N/A')}
+                                </div>
+                                <!-- IBM KOU PPS-17 20180627 Start -->
+<!--                                 <div class="bs col-xs-6 visible-xs">{!$Label.Received_Date}</div> -->
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Incurred_Date}</div>
+                                <!-- IBM KOU PPS-17 20180627 End -->
+                                <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                <!-- IBM KOU PPS-17 20180627 Start -->
+<!--                                     <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                        <apex:param value="{!wClaim.submitDate}" /> -->
+
+                                    <apex:outputText value="{!wClaim.consultationDate}">
+                                    </apex:outputText>
+                                <!-- IBM KOU PPS-17 20180627 End -->
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Status}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight">{!if(wClaim.status!=null,wClaim.status,'N/A')}
+                                    <apex:outputPanel rendered="{! If(wClaim.Status== not_submitted_str ,true,false) }">
+                                        <i style='padding-left:10px;' class="ci-hk-delete pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="delChange('saveBrklist', 'all', {!rowNum_all})" aria-hidden="true" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If( wClaim.Status != not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-arrow-31 pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If( wClaim.Status==not_submitted_str ,true,false) }">
+                                        <i style="padding-right: 10px;" class="ci-hk-pencil pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If(  wClaim.Status==not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-delete  pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="delChange('saveBrklist', 'all', {!rowNum_all})" aria-hidden="true" />
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        </div>
+                        <!-- Add by Manuel to adjust the layout stop -->
+                        
+                        <!-- Add by Manuel to adjust the mobile layout start -->
+                        <div class="visible-xs">
+                        <!-- Rancho_JR1878_20210104 -->
+                        <apex:outputPanel rendered="{! If(searchByPI && wClaim.Status = not_submitted_str, true, false)}" layout="none">
+                            <div class="bs row listcontent {! If( wClaim.Status != not_submitted_str,'onclick-pointer','')}" >
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Claim_No}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight" style="word-wrap: break-word;">
+                                        <!-- hide it as only claim record from WS has claim number, record at salesforce should have no real claim no -->
+                                        <apex:outputText value="{!if(wClaim.claimNum != null, wClaim.claimNum, 'N/A')}"></apex:outputText>
+                                        <apex:outputPanel rendered="{! If( wClaim.Status != not_submitted_str  ,true,false) }">
+                                            <i class="ci-hk-arrow-31 pull-right visible-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-pencil pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Policy_No}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-policy">
+                                        {!if(wClaim.policyNum != null && wClaim.policyNum != '' && wClaim.policyNum != 'N/A', wClaim.policyNum, 'N/A')}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <!-- Add by Manuel that show PersonInsured info-->
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Person_Insured}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType" style="word-wrap: break-word;word-break: break-all;">
+                                        <apex:outputText value="{!if(wClaim.PIName!=null && wClaim.PIName!='', wClaim.PIName, '&nbsp;')}" escape="false" />
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Claim_Type}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType">
+                                        {!if(wClaim.claimType!=null && wClaim.claimType!='', wClaim.claimType, 'N/A')}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Incurred_Date}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                        <apex:outputText value="{!wClaim.consultationDate}"></apex:outputText>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Status}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight">{!if(wClaim.status!=null,wClaim.status,'N/A')}
+                                        <apex:outputPanel rendered="{! If(wClaim.Status== not_submitted_str ,true,false) }">
+                                            <i style='padding-left:10px;' class="ci-hk-delete pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="delChange('saveBrklist', 'all', {!rowNum_all})" aria-hidden="true" />
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If( wClaim.Status != not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-arrow-31 pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If( wClaim.Status==not_submitted_str ,true,false) }">
+                                            <i style="padding-right: 10px;" class="ci-hk-pencil pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If(  wClaim.Status==not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-delete  pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="delChange('saveBrklist', 'all', {!rowNum_all})" aria-hidden="true" />
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        <!-- Rancho_JR1878_20210104 -->
+                        <apex:outputPanel rendered="{! If(searchByPI && wClaim.Status != not_submitted_str, true, false)}" layout="none">
+                            <!-- have onclick action -->
+                            <div class="bs row listcontent {! If( wClaim.Status != not_submitted_str,'onclick-pointer','')}" onclick="getEncryptedCriteria({! If( wClaim.Status != not_submitted_str, true, false)}, '{!wClaim.claimNum}', '{!wClaim.policyType}');  "><!-- JR1840 jack add-->
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Claim_No}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight" style="word-wrap: break-word;">
+                                        <!-- hide it as only claim record from WS has claim number, record at salesforce should have no real claim no -->
+                                        <apex:outputText value="{!if(wClaim.claimNum != null, wClaim.claimNum, 'N/A')}"></apex:outputText>
+                                        <apex:outputPanel rendered="{! If( wClaim.Status != not_submitted_str  ,true,false) }">
+                                            <i class="ci-hk-arrow-31 pull-right visible-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-pencil pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Policy_No}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-policy">
+                                        {!if(wClaim.policyNum != null && wClaim.policyNum != '' && wClaim.policyNum != 'N/A', wClaim.policyNum, 'N/A')}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                <!-- Add by Manuel that show PersonInsured info-->
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Person_Insured}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType" style="word-wrap: break-word;word-break: break-all;">
+                                        <apex:outputText value="{!if(wClaim.PIName!=null && wClaim.PIName!='', wClaim.PIName, '&nbsp;')}" escape="false" />
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Claim_Type}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType">
+                                        {!if(wClaim.claimType!=null && wClaim.claimType!='', wClaim.claimType, 'N/A')}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Incurred_Date}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                        <apex:outputText value="{!wClaim.consultationDate}"></apex:outputText>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Status}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight">{!if(wClaim.status!=null,wClaim.status,'N/A')}
+                                        <apex:outputPanel rendered="{! If(wClaim.Status== not_submitted_str ,true,false) }">
+                                            <i style='padding-left:10px;' class="ci-hk-delete pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="delChange('saveBrklist', 'all', {!rowNum_all})" aria-hidden="true" />
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If( wClaim.Status != not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-arrow-31 pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If( wClaim.Status==not_submitted_str ,true,false) }">
+                                            <i style="padding-right: 10px;" class="ci-hk-pencil pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If(  wClaim.Status==not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-delete  pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="delChange('saveBrklist', 'all', {!rowNum_all})" aria-hidden="true" />
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        </div>
+                        <!-- Add by Manuel to adjust the mobile layout stop -->
+
+                        <apex:variable var="rowNum_all" value="{!rowNum_all+ 1}" />
+                    </apex:repeat>
+                    <!-- Rancho_JR1878_20210104 -->
+                    <apex:outputPanel rendered="{!wClaimList_current.size == 0 && (searched || iscustomer) && searchByPI}">
+                        <div style="padding:20px;{!if(currentTabIdx ==1 , '','display:none;')}" class="bs col-sm-12 col-xs-12 text-center">
+                            <i class="fa fa-smile-o cigna-fg-black" aria-hidden="true"></i> {!$Label.You_don_t_have_any_claim_record}
+                        </div>
+                    </apex:outputPanel>
+                </div>
+                <div id="claim_in_progress" class="{!if(currentTabIdx == 2,'active-bar-content','inactive-bar-content')}">
+                    <apex:variable value="{!0}" var="rowNum_progress" />
+                    <apex:repeat value="{!wClaimList_In_Progress_current}" var="wClaim">
+                        <!-- Add by Manuel to adjust the layout start -->
+                        <div class="hidden-xs">
+                        <!-- Rancho_JR1878_20210104 -->
+                        <apex:outputPanel rendered="{! If(searchByPI && wClaim.Status = not_submitted_str, true, false)}" layout="none">
+                            <!-- without onlick -->
+                            <div class="bs row listcontent {! If( wClaim.Status != not_submitted_str,'onclick-pointer','')}" >
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Claim_No}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(wClaim.claimNum != null, wClaim.claimNum, 'N/A')}"></apex:outputText>
+                                    <apex:outputPanel rendered="{! If(wClaim.Status != not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-arrow-31 pull-right visible-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If( wClaim.Status==not_submitted_str  ,true,false) }">
+                                        <i class="ci-hk-pencil pull-right visible-xs cigna-fg-blue-medium" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Policy_No}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight content-policy">{!if(wClaim.policyNum != null && wClaim.policyNum != '' && wClaim.policyNum != 'N/A', wClaim.policyNum, 'N/A')}</div>
+
+                                <!-- Add by Manuel that show PersonInsured info-->
+                                <!--div style="{!IF(!isCustomer, '', 'display:none;')}"-->
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Person_Insured}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType" style="word-wrap: break-word;word-break: break-all;">
+                                        <apex:outputText value="{!if(wClaim.PIName!=null && wClaim.PIName!='', wClaim.PIName, '&nbsp;')}" escape="false" />
+                                    </div>
+                                <!--/div-->
+
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Claim_Type}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType">{!if(wClaim.claimType!=null && wClaim.claimType!='', wClaim.claimType, 'N/A')}</div>
+                                <!-- IBM KOU PPS-17 20180627 Start -->
+<!--                                 <div class="bs col-xs-6 visible-xs">{!$Label.Received_Date}</div> -->
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Incurred_Date}</div>
+                                <!-- IBM KOU PPS-17 20180627 End -->
+                                <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                <!-- IBM KOU PPS-17 20180627 Start -->
+<!--                                     <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                        <apex:param value="{!wClaim.submitDate}" /> -->
+
+                                    <apex:outputText value="{!wClaim.consultationDate}">
+                                <!-- IBM KOU PPS-17 20180627 End -->
+                                    </apex:outputText>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Status}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                    {!if(wClaim.status!=null,wClaim.status,'N/A')}
+                                    <apex:outputPanel rendered="{! If( wClaim.Status==not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-delete  onclick-pointer pull-right hidden-xs cigna-fg-blue-medium" onclick="delChange2('saveBrklist', 'progress', {!rowNum_progress})" aria-hidden="true" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If(wClaim.Status != not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-arrow-31 onclick-pointer pull-right hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                        <i style="padding-right:10px;" class="fa onclick-pointer fa-pencil pull-right hidden-xs cigna-fg-blue-medium" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-delete onclick-pointer pull-right visible-xs cigna-fg-blue-medium" onclick="delChange2('saveBrklist', 'progress', {!rowNum_progress})" aria-hidden="true" />
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        <!-- Rancho_JR1878_20210104 -->
+                        <apex:outputPanel rendered="{! If(searchByPI && wClaim.Status != not_submitted_str, true, false)}" layout="none">
+                            <!-- have onclick -->
+                            <div class="bs row listcontent {! If( wClaim.Status != not_submitted_str,'onclick-pointer','')}" onclick="getEncryptedCriteria({! If( wClaim.Status != not_submitted_str, true, false)}, '{!wClaim.claimNum}', '{!wClaim.policyType}');  "><!-- JR1840 jack add-->
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Claim_No}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(wClaim.claimNum != null, wClaim.claimNum, 'N/A')}"></apex:outputText>
+                                    <apex:outputPanel rendered="{! If(wClaim.Status != not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-arrow-31 pull-right visible-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If( wClaim.Status==not_submitted_str  ,true,false) }">
+                                        <i class="ci-hk-pencil pull-right visible-xs cigna-fg-blue-medium" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Policy_No}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight content-policy">{!if(wClaim.policyNum != null && wClaim.policyNum != '' && wClaim.policyNum != 'N/A', wClaim.policyNum, 'N/A')}</div>
+
+                                <!-- Add by Manuel that show PersonInsured info-->
+                                <!--div style="{!IF(!isCustomer, '', 'display:none;')}"-->
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Person_Insured}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType" style="word-wrap: break-word;word-break: break-all;">
+                                        <apex:outputText value="{!if(wClaim.PIName!=null && wClaim.PIName!='', wClaim.PIName, '&nbsp;')}" escape="false" />
+                                    </div>
+                                <!--/div-->
+
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Claim_Type}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType">{!if(wClaim.claimType!=null && wClaim.claimType!='', wClaim.claimType, 'N/A')}</div>
+                                <!-- IBM KOU PPS-17 20180627 Start -->
+<!--                                 <div class="bs col-xs-6 visible-xs">{!$Label.Received_Date}</div> -->
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Incurred_Date}</div>
+                                <!-- IBM KOU PPS-17 20180627 End -->
+                                <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                <!-- IBM KOU PPS-17 20180627 Start -->
+<!--                                     <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                        <apex:param value="{!wClaim.submitDate}" /> -->
+
+                                    <apex:outputText value="{!wClaim.consultationDate}">
+                                <!-- IBM KOU PPS-17 20180627 End -->
+                                    </apex:outputText>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Status}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                    {!if(wClaim.status!=null,wClaim.status,'N/A')}
+                                    <apex:outputPanel rendered="{! If( wClaim.Status==not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-delete  onclick-pointer pull-right hidden-xs cigna-fg-blue-medium" onclick="delChange2('saveBrklist', 'progress', {!rowNum_progress})" aria-hidden="true" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If(wClaim.Status != not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-arrow-31 onclick-pointer pull-right hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                        <i style="padding-right:10px;" class="fa onclick-pointer fa-pencil pull-right hidden-xs cigna-fg-blue-medium" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-delete onclick-pointer pull-right visible-xs cigna-fg-blue-medium" onclick="delChange2('saveBrklist', 'progress', {!rowNum_progress})" aria-hidden="true" />
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        </div>
+                        <!-- Add by Manuel to adjust the layout stop -->
+                        
+                        <!-- Add by Manuel to adjust the mobile layout start -->
+                        <div class="visible-xs">
+                        <!-- Rancho_JR1878_20210104 -->
+                        <apex:outputPanel rendered="{! If(searchByPI && wClaim.Status = not_submitted_str, true, false)}" layout="none">
+                            <div class="bs row listcontent {! If( wClaim.Status != not_submitted_str,'onclick-pointer','')}" >
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Claim_No}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight" style="word-wrap: break-word;">
+                                        <apex:outputText value="{!if(wClaim.claimNum != null, wClaim.claimNum, 'N/A')}"></apex:outputText>
+                                        <apex:outputPanel rendered="{! If(wClaim.Status != not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-arrow-31 pull-right visible-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If( wClaim.Status==not_submitted_str  ,true,false) }">
+                                            <i class="ci-hk-pencil pull-right visible-xs cigna-fg-blue-medium" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Policy_No}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-policy">{!if(wClaim.policyNum != null && wClaim.policyNum != '' && wClaim.policyNum != 'N/A', wClaim.policyNum, 'N/A')}</div>
+                                </div>
+                                <div class="row">
+                                    <!-- Add by Manuel that show PersonInsured info-->
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Person_Insured}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType" style="word-wrap: break-word;word-break: break-all;">
+                                        <apex:outputText value="{!if(wClaim.PIName!=null && wClaim.PIName!='', wClaim.PIName, '&nbsp;')}" escape="false" />
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Claim_Type}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType">{!if(wClaim.claimType!=null && wClaim.claimType!='', wClaim.claimType, 'N/A')}</div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Incurred_Date}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                        <apex:outputText value="{!wClaim.consultationDate}"></apex:outputText>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Status}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                        {!if(wClaim.status!=null,wClaim.status,'N/A')}
+                                        <apex:outputPanel rendered="{! If( wClaim.Status==not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-delete  onclick-pointer pull-right hidden-xs cigna-fg-blue-medium" onclick="delChange2('saveBrklist', 'progress', {!rowNum_progress})" aria-hidden="true" />
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If(wClaim.Status != not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-arrow-31 onclick-pointer pull-right hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                            <i style="padding-right:10px;" class="fa onclick-pointer fa-pencil pull-right hidden-xs cigna-fg-blue-medium" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-delete onclick-pointer pull-right visible-xs cigna-fg-blue-medium" onclick="delChange2('saveBrklist', 'progress', {!rowNum_progress})" aria-hidden="true" />
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        <!-- Rancho_JR1878_20210104 -->
+                        <apex:outputPanel rendered="{! If(searchByPI && wClaim.Status != not_submitted_str, true, false)}" layout="none">
+                            <div class="bs row listcontent {! If( wClaim.Status != not_submitted_str,'onclick-pointer','')}" onclick="getEncryptedCriteria({! If( wClaim.Status != not_submitted_str, true, false)}, '{!wClaim.claimNum}', '{!wClaim.policyType}');  "><!-- JR1840 jack add-->
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Claim_No}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight" style="word-wrap: break-word;">
+                                        <apex:outputText value="{!if(wClaim.claimNum != null, wClaim.claimNum, 'N/A')}"></apex:outputText>
+                                        <apex:outputPanel rendered="{! If(wClaim.Status != not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-arrow-31 pull-right visible-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If( wClaim.Status==not_submitted_str  ,true,false) }">
+                                            <i class="ci-hk-pencil pull-right visible-xs cigna-fg-blue-medium" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Policy_No}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-policy">{!if(wClaim.policyNum != null && wClaim.policyNum != '' && wClaim.policyNum != 'N/A', wClaim.policyNum, 'N/A')}</div>
+                                </div>
+                                <div class="row">
+                                    <!-- Add by Manuel that show PersonInsured info -->
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Person_Insured}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType" style="word-wrap: break-word;word-break: break-all;">
+                                        <apex:outputText value="{!if(wClaim.PIName!=null && wClaim.PIName!='', wClaim.PIName, '&nbsp;')}" escape="false" />
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Claim_Type}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType">{!if(wClaim.claimType!=null && wClaim.claimType!='', wClaim.claimType, 'N/A')}</div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Incurred_Date}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                        <apex:outputText value="{!wClaim.consultationDate}"></apex:outputText>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Status}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                        {!if(wClaim.status!=null,wClaim.status,'N/A')}
+                                        <apex:outputPanel rendered="{! If( wClaim.Status==not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-delete  onclick-pointer pull-right hidden-xs cigna-fg-blue-medium" onclick="delChange2('saveBrklist', 'progress', {!rowNum_progress})" aria-hidden="true" />
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If(wClaim.Status != not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-arrow-31 onclick-pointer pull-right hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                            <i style="padding-right:10px;" class="fa onclick-pointer fa-pencil pull-right hidden-xs cigna-fg-blue-medium" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-delete onclick-pointer pull-right visible-xs cigna-fg-blue-medium" onclick="delChange2('saveBrklist', 'progress', {!rowNum_progress})" aria-hidden="true" />
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        </div>
+                        <!-- Add by Manuel to adjust the mobile layout stop -->
+
+                        <apex:variable var="rowNum_progress" value="{!rowNum_progress+ 1}" />
+                    </apex:repeat>
+                    <!-- Rancho_JR1878_20210104 -->
+                    <apex:outputPanel rendered="{!wClaimList_In_Progress_current.size == 0 && (searched || iscustomer) && searchByPI}">
+                        <div style="padding:20px;{!if(currentTabIdx ==2 , '','display:none;')}" class="bs col-sm-12 col-xs-12 text-center">
+                            <i class="fa fa-smile-o cigna-fg-black" aria-hidden="true"></i> {!$Label.You_don_t_have_any_claim_record}
+                        </div>
+                    </apex:outputPanel>
+                </div>
+                <div id="claim_completed" class="{!if(currentTabIdx == 3,'active-bar-content','inactive-bar-content')}">
+                    <apex:variable value="{!0}" var="rowNum_completed" />
+                    <apex:repeat value="{!wClaimList_Completed_current}" var="wClaim">
+                        <!-- Add by Manuel to adjust the layout start -->
+                        <div class="hidden-xs">
+                        <!-- Rancho_JR1878_20210104 -->
+                        <apex:outputPanel rendered="{! If(searchByPI && wClaim.Status = not_submitted_str, true, false)}" layout="none">
+                            <!-- without onclick -->
+                            <div class="bs row listcontent {! If( wClaim.Status != not_submitted_str,'onclick-pointer','')}" >
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Claim_No}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(wClaim.claimNum != null, wClaim.claimNum, 'N/A')}"></apex:outputText>
+                                    <apex:outputPanel rendered="{! If(wClaim.Status != not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-arrow-31 pull-right onclick-pointer visible-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-pencil pull-right visible-xs onclick-pointer cigna-fg-blue-medium" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Policy_No}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight content-policy">{!if(wClaim.policyNum != null && wClaim.policyNum != '' && wClaim.policyNum != 'N/A', wClaim.policyNum, 'N/A')}</div>
+                                <!-- Add by Manuel that show PersonInsured info-->
+                                <!--div style="{!IF(!isCustomer, '', 'display:none;')}"-->
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Person_Insured}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType" style="word-wrap: break-word;word-break: break-all;">
+                                        <apex:outputText value="{!if(wClaim.PIName!=null && wClaim.PIName!='', wClaim.PIName, '&nbsp;')}" escape="false" />
+                                    </div>
+                                <!--/div-->
+
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Claim_Type}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType">{!if(wClaim.claimType!=null && wClaim.claimType!='', wClaim.claimType, 'N/A')}</div>
+                                <!-- IBM KOU PPS-17 20180627 Start -->
+<!--                                 <div class="bs col-xs-6 visible-xs">{!$Label.Received_Date}</div> -->
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Incurred_Date}</div>
+                                <!-- IBM KOU PPS-17 20180627 End -->
+                                <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                <!-- IBM KOU PPS-17 20180627 Start -->
+<!--                                     <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                        <apex:param value="{!wClaim.submitDate}" /> -->
+                                    <apex:outputText value="{!wClaim.consultationDate}">
+                                <!-- IBM KOU PPS-17 20180627 End -->
+                                    </apex:outputText>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Status}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                    {!if(wClaim.status!=null,wClaim.status,'N/A')}
+                                    <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-delete  pull-right hidden-xs onclick-pointer cigna-fg-blue-medium" onclick="delChange3('saveBrklist', 'completed', {!rowNum_completed})" aria-hidden="true" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If(wClaim.Status!= not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-arrow-31 pull-right onclick-pointer hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If(  wClaim.Status== not_submitted_str ,true,false) }">
+                                        <i style="padding-right:10px;" class="ci-hk-pencil onclick-pointer pull-right hidden-xs cigna-fg-blue-medium" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-delete  pull-right onclick-pointer visible-xs cigna-fg-blue-medium" onclick="delChange3('saveBrklist', 'completed', {!rowNum_completed})" aria-hidden="true" />
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        <!-- Rancho_JR1878_20210104 -->
+                        <apex:outputPanel rendered="{! If(searchByPI && wClaim.Status != not_submitted_str, true, false)}" layout="none">
+                            <!-- have onclick-->
+                            <div class="bs row listcontent {! If( wClaim.Status != not_submitted_str,'onclick-pointer','')}" onclick="getEncryptedCriteria({! If( wClaim.Status != not_submitted_str, true, false)}, '{!wClaim.claimNum}', '{!wClaim.policyType}');  "><!-- JR1840 jack add-->
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Claim_No}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight" style="word-wrap: break-word;">
+                                    <apex:outputText value="{!if(wClaim.claimNum != null, wClaim.claimNum, 'N/A')}"></apex:outputText>
+                                    <apex:outputPanel rendered="{! If(wClaim.Status != not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-arrow-31 pull-right onclick-pointer visible-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-pencil pull-right visible-xs onclick-pointer cigna-fg-blue-medium" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Policy_No}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight content-policy">{!if(wClaim.policyNum != null && wClaim.policyNum != '' && wClaim.policyNum != 'N/A', wClaim.policyNum, 'N/A')}</div>
+                                <!-- Add by Manuel that show PersonInsured info-->
+                                <!--div style="{!IF(!isCustomer, '', 'display:none;')}"-->
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Person_Insured}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType" style="word-wrap: break-word;word-break: break-all;">
+                                        <apex:outputText value="{!if(wClaim.PIName!=null && wClaim.PIName!='', wClaim.PIName, '&nbsp;')}" escape="false" />
+                                    </div>
+                                <!--/div-->
+
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Claim_Type}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType">{!if(wClaim.claimType!=null && wClaim.claimType!='', wClaim.claimType, 'N/A')}</div>
+                                <!-- IBM KOU PPS-17 20180627 Start -->
+<!--                                 <div class="bs col-xs-6 visible-xs">{!$Label.Received_Date}</div> -->
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Incurred_Date}</div>
+                                <!-- IBM KOU PPS-17 20180627 End -->
+                                <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                <!-- IBM KOU PPS-17 20180627 Start -->
+<!--                                     <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                        <apex:param value="{!wClaim.submitDate}" /> -->
+
+                                    <apex:outputText value="{!wClaim.consultationDate}">
+                                <!-- IBM KOU PPS-17 20180627 End -->
+                                    </apex:outputText>
+                                </div>
+                                <div class="bs col-xs-6 visible-xs">{!$Label.Status}</div>
+                                <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                    {!if(wClaim.status!=null,wClaim.status,'N/A')}
+                                    <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-delete  pull-right hidden-xs onclick-pointer cigna-fg-blue-medium" onclick="delChange3('saveBrklist', 'completed', {!rowNum_completed})" aria-hidden="true" />
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If(wClaim.Status!= not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-arrow-31 pull-right onclick-pointer hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If(  wClaim.Status== not_submitted_str ,true,false) }">
+                                        <i style="padding-right:10px;" class="ci-hk-pencil onclick-pointer pull-right hidden-xs cigna-fg-blue-medium" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                        <i class="ci-hk-delete  pull-right onclick-pointer visible-xs cigna-fg-blue-medium" onclick="delChange3('saveBrklist', 'completed', {!rowNum_completed})" aria-hidden="true" />
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        </div>
+                        <!-- Add by Manuel to adjust the layout stop -->
+                        
+                        <!-- Add by Manuel to adjust the mobile layout start -->
+                        <div class="visible-xs">
+                        <!-- Rancho_JR1878_20210104 -->
+                        <apex:outputPanel rendered="{! If(searchByPI && wClaim.Status = not_submitted_str, true, false)}" layout="none">
+                            <div class="bs row listcontent {! If( wClaim.Status != not_submitted_str,'onclick-pointer','')}" >
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Claim_No}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight" style="word-wrap: break-word;">
+                                        <apex:outputText value="{!if(wClaim.claimNum != null, wClaim.claimNum, 'N/A')}"></apex:outputText>
+                                        <apex:outputPanel rendered="{! If(wClaim.Status != not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-arrow-31 pull-right onclick-pointer visible-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-pencil pull-right visible-xs onclick-pointer cigna-fg-blue-medium" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Policy_No}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-policy">{!if(wClaim.policyNum != null && wClaim.policyNum != '' && wClaim.policyNum != 'N/A', wClaim.policyNum, 'N/A')}</div>
+                                </div>
+                                <div class="row">
+                                    <!-- Add by Manuel that show PersonInsured info-->
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Person_Insured}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType" style="word-wrap: break-word;word-break: break-all;">
+                                        <apex:outputText value="{!if(wClaim.PIName!=null && wClaim.PIName!='', wClaim.PIName, '&nbsp;')}" escape="false" />
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Claim_Type}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType">{!if(wClaim.claimType!=null && wClaim.claimType!='', wClaim.claimType, 'N/A')}</div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Incurred_Date}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                        <apex:outputText value="{!wClaim.consultationDate}"></apex:outputText>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Status}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                        {!if(wClaim.status!=null,wClaim.status,'N/A')}
+                                        <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-delete  pull-right hidden-xs onclick-pointer cigna-fg-blue-medium" onclick="delChange3('saveBrklist', 'completed', {!rowNum_completed})" aria-hidden="true" />
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If(wClaim.Status!= not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-arrow-31 pull-right onclick-pointer hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If(  wClaim.Status== not_submitted_str ,true,false) }">
+                                            <i style="padding-right:10px;" class="ci-hk-pencil onclick-pointer pull-right hidden-xs cigna-fg-blue-medium" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-delete  pull-right onclick-pointer visible-xs cigna-fg-blue-medium" onclick="delChange3('saveBrklist', 'completed', {!rowNum_completed})" aria-hidden="true" />
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        <!-- Rancho_JR1878_20210104 -->
+                        <apex:outputPanel rendered="{! If(searchByPI && wClaim.Status != not_submitted_str, true, false)}" layout="none">
+                            <div class="bs row listcontent {! If( wClaim.Status != not_submitted_str,'onclick-pointer','')}" onclick="getEncryptedCriteria({! If( wClaim.Status != not_submitted_str, true, false)}, '{!wClaim.claimNum}', '{!wClaim.policyType}');  "><!-- JR1840 jack add-->
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Claim_No}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight" style="word-wrap: break-word;">
+                                        <apex:outputText value="{!if(wClaim.claimNum != null, wClaim.claimNum, 'N/A')}"></apex:outputText>
+                                        <apex:outputPanel rendered="{! If(wClaim.Status != not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-arrow-31 pull-right onclick-pointer visible-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-pencil pull-right visible-xs onclick-pointer cigna-fg-blue-medium" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Policy_No}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-policy">{!if(wClaim.policyNum != null && wClaim.policyNum != '' && wClaim.policyNum != 'N/A', wClaim.policyNum, 'N/A')}</div>
+                                </div>
+                                <div class="row">
+                                    <!-- Add by Manuel that show PersonInsured info-->
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Person_Insured}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType" style="word-wrap: break-word;word-break: break-all;">
+                                        <apex:outputText value="{!if(wClaim.PIName!=null && wClaim.PIName!='', wClaim.PIName, '&nbsp;')}" escape="false" />
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Claim_Type}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight content-claimType">{!if(wClaim.claimType!=null && wClaim.claimType!='', wClaim.claimType, 'N/A')}</div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Claim_Incurred_Date}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                        <apex:outputText value="{!wClaim.consultationDate}"></apex:outputText>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="bs col-xs-6 visible-xs">{!$Label.Status}</div>
+                                    <div class="bs col-xs-6 col-sm-2 content-highlight">
+                                        {!if(wClaim.status!=null,wClaim.status,'N/A')}
+                                        <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-delete  pull-right hidden-xs onclick-pointer cigna-fg-blue-medium" onclick="delChange3('saveBrklist', 'completed', {!rowNum_completed})" aria-hidden="true" />
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If(wClaim.Status!= not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-arrow-31 pull-right onclick-pointer hidden-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If(  wClaim.Status== not_submitted_str ,true,false) }">
+                                            <i style="padding-right:10px;" class="ci-hk-pencil onclick-pointer pull-right hidden-xs cigna-fg-blue-medium" onclick="redirectToEditClaim('{!wClaim.cItem.RecordType.Name}', '{!wClaim.cItem.id}')" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{! If( wClaim.Status== not_submitted_str ,true,false) }">
+                                            <i class="ci-hk-delete  pull-right onclick-pointer visible-xs cigna-fg-blue-medium" onclick="delChange3('saveBrklist', 'completed', {!rowNum_completed})" aria-hidden="true" />
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        </div>
+                        <!-- Add by Manuel to adjust the mobile layout stop -->
+
+                        <apex:variable var="rowNum_completed" value="{!rowNum_completed+ 1}" />
+                    </apex:repeat>
+                    <!-- Rancho_JR1878_20210104 -->
+                    <apex:outputPanel rendered="{!wClaimList_Completed_current.size == 0 && (searched || iscustomer) && searchByPI}">
+                        <div style="padding:20px;{!if(currentTabIdx ==3 , '','display:none;')}" class="bs col-sm-12 col-xs-12 text-center">
+                            <i class="fa fa-smile-o cigna-fg-black" aria-hidden="true"></i> {!$Label.You_don_t_have_any_claim_record}
+                        </div>
+                    </apex:outputPanel>
+                </div>
+                <script>
+                    greySeparatorStyle();
+                    $(this).scrollTop(0);
+                </script>
+                <!--pagination-->
+                <apex:outputPanel id="paginationPanel">
+                    <div style="padding:20px;{!if( (searched&&haveRecord) || iscustomer , '','display:none;')}" class="bs col-sm-12 col-xs-12 text-center"><!--JR1840 jack add-->
+                        <apex:outputPanel rendered="{!If(hasPrev,true,false)}">
+                            <div class="ci-hk-arrow-29 onclick-pointer cigna-fg-orange-dark" style="display:inline; padding-right:10px;" aria-hidden="true" onclick="clickPrev()" />
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!if(currentPage!=null && totalPages!=null, true,false)}">
+                            <div style="display:inline; ">
+                                <apex:outputText value="{!$Label.Page_0_of_1}">
+                                    <apex:param value="{!currentPage}" />
+                                    <apex:param value="{!totalPages}" />
+                                </apex:outputText>
+                            </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!If(hasNext,true,false)}">
+                            <div class="ci-hk-arrow-31 onclick-pointer cigna-fg-orange-dark" style="display:inline; padding-left:10px;" aria-hidden="true" onclick="clickNext()" />
+                        </apex:outputPanel>
+                        <br/>
+    
+                        <apex:actionStatus id="loader-icon1">
+                            <apex:facet name="start">
+                                <apex:image value="/img/loading.gif" />
+                            </apex:facet>
+                        </apex:actionStatus>
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <!-- mobile version btn -->
+        <apex:outputPanel id="mobileBtn" rendered="{!iscustomer}">
+            <div id="mobile-app-padding" class="bs" style="display:none; padding-bottom: 400px;">
+                <div class="bs col-xs-12"></div>
+            </div>
+            <apex:outputPanel rendered="{!showApplyForGOPBtn}">
+                <div class="bs visible-xs cigna-floating-bottom-panel hidden-lg">
+                    <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                        <a href="javascript:void(0);" onclick="Cigna.Util.navigateToVFP('MyClaimSubmitVFP')" class="onclick-pointer action-btn cigna-fg-white" role="button">
+                            <span class="ci-hk-clip-offcial" aria-hidden="true" style="padding-right:10px;"></span>
+                            <br/> {!$Label.Make_A_Claim}
+                        </a>
+                        <a href="javascript:void(0);" onclick="Cigna.Util.navigateToVFP('SubmitHospitalVFP')" class="onclick-pointer action-btn cigna-fg-white" role="button">
+                            <span class="ci-hk-clip-offcial" aria-hidden="true" style="padding-right:10px;"></span>
+                            <br/> {!$Label.Apply_Admission_Pre_approval}
+                        </a>
+                    </div>
+                </div>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!!showApplyForGOPBtn}">
+                <div class="bs visible-xs cigna-floating-bottom-panel hidden-lg">
+                    <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                        <a href="javascript:void(0);" onclick="Cigna.Util.navigateToVFP('MyClaimSubmitVFP')" class="onclick-pointer action-btn cigna-fg-white" role="button">
+                            <span class="ci-hk-clip-offcial" aria-hidden="true" style="padding-right:10px;"></span>
+                            <br/> {!$Label.Make_A_Claim}
+                        </a>
+                    </div>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <!-- end mobile version btn -->
+
+        <apex:outputPanel id="dummyPanel"></apex:outputPanel>
+    </div>
+    <!-- Desktop and iPad -->
+    <div style="margin-bottom: 200px" />
+    <apex:outputPanel id="bottomReadyJS">
+      <script>
+         if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal() && $(window).width() < 768) {
+
+             $('#mobile-app-padding').css('display', 'block');
+
+             $("a").attr("target","");
+
+            //  $('html').css('position', 'fixed').css('overflow', 'auto').css('width', '100%').css('height', '100%');
+            //  $('body').css('overflow-x', 'hidden');
+
+
+         }
+
+         if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal() && $(window).width() >= 768) {
+
+             $('#mobile-app-padding').css('display', 'block');
+
+         }
+
+      </script>
+   </apex:outputPanel>
+</apex:page>

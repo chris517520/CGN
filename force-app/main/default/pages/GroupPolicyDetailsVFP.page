@@ -1,0 +1,210 @@
+<apex:page sidebar="false" standardController="Campaign" extensions="GroupPolicyDetailsCtrl"  lightningStylesheets="true" >
+    <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.SLDS, 'styles/salesforce-lightning-design-system.min.css')}" />
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <style>
+        .block-header{
+            margin:10px 0 10px 0;
+            background:rgb(243, 242, 242);
+            border:1px solid transparent;
+            
+        }
+        
+        html{
+            margin-left: -20px;
+            margin-right: -50px;
+            margin-top:-10px;
+            line-height: 1;
+            background-color:white ;
+        }
+        
+        .slds-form-element__static{
+            min-height:calc(1.25rem + 2px);
+        }
+        
+        .forcePageBlockItem{
+            margin:0 50px 0 0;
+        }
+    </style>    
+    <apex:form id="GroupPolicyFrm">
+        <apex:actionFunction action="{!getGroupPolicyDetail}" name="getGroupPolicyDetail" status="loader-icon" reRender="group-policy-detail-panel" />
+        
+        <apex:actionStatus id="loader-icon">
+            <apex:facet name="start">
+                <div class="customer-profile-policy-loading" style="padding: 0px;">
+                    <span class="loading-helper"></span>
+                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+                 
+        <apex:outputPanel id="group-policy-detail-panel" >
+            <apex:outputPanel id="error-message-panel">
+                <apex:pageMessages ></apex:pageMessages>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!hasPolicyFlag}">
+                <div class="slds-grid full forcePageBlockSectionRow">
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                      <span class="slds-form-element__label">{!$Label.Pol_Policy_No}</span>
+                      <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.policyNumber}</span>
+                      </div>
+                    </div>
+                    </div>
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                        <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                          <span class="slds-form-element__label">{!$Label.Pol_Plan_Type}</span>
+                          <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                            <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.planTypeDescription}</span>
+                          </div>
+                        </div>
+                    </div>
+                </div> 
+                <div class="slds-grid full forcePageBlockSectionRow">
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                      <span class="slds-form-element__label">{!$Label.Pol_Policy_Holder}</span>
+                      <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.holder.fullName}</span>
+                      </div>
+                    </div>
+                    </div>
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                        <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                          <span class="slds-form-element__label">{!$Label.Pol_Policy_Status}</span>
+                          <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                            <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.policyStatusDisplayName}</span>
+                          </div>
+                        </div>
+                    </div>
+                </div>  
+                <div class="slds-grid full forcePageBlockSectionRow">
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                      <span class="slds-form-element__label">{!$Label.Pol_Policy_Period}</span>
+                      <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">
+                            <apex:outputText >
+                                <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                    <apex:Param value="{!policy.effDateInDate}"/>
+                                </apex:OutputText>
+                                <apex:outputText >&nbsp;&nbsp;{!$Label.Pol_to}&nbsp;&nbsp;</apex:outputText>
+                                <!--
+                                <apex:outputLabel styleClass="labelCol vfLabelColTextWrap" style="padding-left:10px;">{!$Label.Pol_to}</apex:outputLabel>
+                                -->
+                                <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                    <apex:Param value="{!policy.termDateInDate}"/>
+                                </apex:OutputText>
+                            </apex:outputText>
+                        </span>
+                      </div>
+                    </div>
+                    </div>
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                        <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                          <span class="slds-form-element__label">{!$Label.Pol_No_of_Employees}</span>
+                          <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                            <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.numberofEmployees}</span>
+                          </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-grid full forcePageBlockSectionRow">
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                      <span class="slds-form-element__label">{!$Label.Pol_No_of_Spouse}</span>
+                      <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.numberofSpouse}</span>
+                      </div>
+                    </div>
+                    </div>
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                        <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                          <span class="slds-form-element__label">{!$Label.Pol_No_of_Children}</span>
+                          <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                            <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.numberofChildren}</span>
+                          </div>
+                        </div>
+                    </div>
+                </div>  
+                <div class="slds-grid full forcePageBlockSectionRow">
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                      <span class="slds-form-element__label">{!$Label.Pol_Currency}</span>
+                      <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.currencyCodeDesc}</span>
+                      </div>
+                    </div>
+                    </div>
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                        <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                          <span class="slds-form-element__label">{!$Label.Pol_Payment_Mode}</span>
+                          <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                            <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.paymentMode}</span>
+                          </div>
+                        </div>
+                    </div>
+                </div>  
+                
+                <div class="block-header">
+                    <h2 class="header-title-container" style="padding-bottom:5px;padding-top:5px;">
+                        <span class="slds-text-heading--small slds-truncate " style="padding-left:10px;">
+                            Broker Information
+                        </span>
+                    </h2>
+                </div>
+                <div class="slds-grid full forcePageBlockSectionRow">
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                      <span class="slds-form-element__label">{!$Label.Pol_Broker_Name}</span>
+                      <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.broker.organization.fullname}</span>
+                      </div>
+                    </div>
+                    </div>
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                        <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                          <span class="slds-form-element__label">{!$Label.Pol_Broker_Contact_Person}</span>
+                          <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                            <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.broker.fullname}</span>
+                          </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-grid full forcePageBlockSectionRow">
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                    <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                      <span class="slds-form-element__label">{!$Label.Pol_Broker_Contact_No}</span>
+                      <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                        <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.broker.businessPhoneNo}</span>
+                      </div>
+                    </div>
+                    </div>
+                    <div class="slds-has-flexi-truncate slds-p-horizontal_x-small full forcePageBlockItem forcePageBlockItemView">
+                        <div class="slds-form-element slds-m-bottom_xx-small slds-form-element_edit slds-grow slds-hint-parent override--slds-form-element">
+                          <span class="slds-form-element__label">{!$Label.Pol_Broker_Code}</span>
+                          <div class="slds-form-element__control slds-grid itemBody slds-has-divider--bottom">
+                            <span class="test-id__field-value slds-form-element__static slds-grow slds-form-element_separator is-read-only">{!policy.broker.organization.orgCode}</span>
+                          </div>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                <div style="text-align:center"> 
+                <apex:commandButton disabled="{!renderedGenOpprBtnFlag}" rendered="{!NOT(renderedGenOpprBtnFlag)}" value="Generate Opportunities" onclick="generateOpportunities()" />
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+    </apex:form>
+    <script>          
+        function generateOpportunities() {
+            //alert({!theCampaign.Group_Policy_No__c});
+            var url = "/apex/BDOpportunityBatchGenerateVFP?policyNumber={!theCampaign.Group_Policy_No__c}&campaignId={!theCampaign.id}";
+                            //window.open(url);
+                            sforce.one.navigateToURL(url);
+        }       
+        getGroupPolicyDetail();     
+    </script>
+</apex:page>

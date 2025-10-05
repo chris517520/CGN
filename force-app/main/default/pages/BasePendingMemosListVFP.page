@@ -1,0 +1,137 @@
+<apex:page id="pendingMemoPage" docType="html-5.0" sidebar="false" showHeader="false" title="Pending Memo List" controller="PendingMemosListCusController">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+        <style>
+            @media only screen and (max-width: 760px),
+            (min-device-width: 768px) and (max-device-width: 1024px) {
+                .nav-pills:active {
+                    color: #fff !important;
+                    background-color: #2E2E2E !important;
+                }
+                .myTitle {
+                    font-weight: bold;
+                }
+                .myTable {
+                    border-top: 0px !important;
+                }
+                .bs .nav-pills>li.active>a,
+                .bs .nav-pills>li.active>a:focus,
+                .bs .nav-pills>li.active>a:hover {
+                    color: #FFF !important;
+                    background-color: #2E2E2E !important;
+                }
+                .bs .nav-pills>li>a:hover {
+                    color: #FFF !important;
+                    background-color: #BDBDBD !important;
+                }
+                .bs .nav-pills>li>a {
+                    color: #2E2E2E !important;
+                    background-color: #FFF !important;
+                }
+            }
+            .bs .table-content {
+                padding: 20px;
+            }
+            .bs .grey-background {
+                background-color: rgb(242, 242, 242);
+            }
+            .onclick-pointer {
+                cursor: pointer;
+            }
+            
+            .handle_page_active {
+                color: #015ba7;
+                font-size: 1em;
+                font-family: Arial, Helvetica, sans-serif;
+            }
+            
+            .handle_page_inactive {
+                color: #999;
+                font-size: 1em;
+                font-family: Arial, Helvetica, sans-serif;
+            }
+        </style>
+        <script>
+            $(document).ready(function() {
+                initPendingMemoList();
+            });
+        </script>
+    </head>
+    
+    <apex:form id="pendingMemoForm">
+        <apex:actionFunction name="initPendingMemoList" action="{!initPendingMemoList}" status="loader-icon" reRender="PendingMemoListPanel" />
+        <apex:actionFunction name="nextPage" action="{!nextPage}" status="loader-icon" reRender="PendingMemoListPanel" />
+        <apex:actionFunction name="previousPage" action="{!previousPage}" status="loader-icon" reRender="PendingMemoListPanel" />
+        
+        <apex:outputPanel id="PendingMemoListPanel">
+            <div class="bs row" style="padding-left:30px;">
+                <div class="bs row listcontent-header hidden-xs">
+                    <div class="bs col-sm-2">{!$Label.Policy_No}</div>
+                    <div class="bs col-sm-3">{!$Label.Category}</div>
+                    <div class="bs col-sm-3">{!$Label.Type}</div>
+                    <div class="bs col-sm-3">{!$Label.Last_Updated_Date}</div> 
+                </div> 
+                <apex:variable value="{!1}" var="rowNum" />
+                <apex:repeat value="{!memoSummaryList}" var="memoSummary" rows="{!PageSize}" first="{!startIndex}">
+                    <apex:outputPanel id="pcPanel" rendered="{!memoSummary.memo != null}">
+                        <div class="bs row table-content  {!IF(MOD(rowNum,2)==1,'','grey-background')}" onclick="Cigna.Util.navigateToVFP('PendingMemoVFP?requestId={!memoSummary.memo.requestId}&category={!memoSummary.category}&token={!paramToken}&lang={!paramLanguage}')">
+                            <div class="bs col-xs-6 col-sm-2 message-highlight breakAWord ">
+                                <apex:outputText value="{!IF(memoSummary.memo.policyNumber == '', '&nbsp;' ,memoSummary.memo.policyNumber)}" escape="false" />
+                            </div>
+                            <div class="bs col-xs-6 col-sm-3 message-highlight breakAWord ">
+                                <apex:outputText value="{!IF(memoSummary.fullCategory == '', '&nbsp;' ,memoSummary.fullCategory)}" escape="false" />
+                                <i class="ci-hk-arrow-31 pull-right visible-xs" aria-hidden="true" ></i>
+                            </div>
+                            <div class="bs col-xs-6 visible-xs">{!$Label.Type}</div>
+                            <div class="bs col-xs-6 col-sm-3 message-highlight breakAWord ">
+                                <apex:outputText value="{!IF(memoSummary.memo.salesForceWorkType == '', '&nbsp;' ,memoSummary.memo.salesForceWorkType)}" escape="false" />
+                            </div>
+                            <div class="bs col-xs-6 visible-xs">{!$Label.Last_Updated_Date}</div>
+                            <div class="bs col-xs-6 col-sm-3 message-highlight breakAWord ">      
+                                <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                    <apex:param value="{!memoSummary.memo.statusUpdatedDateTime  }"/>
+                                </apex:outputText>
+                                <i class="ci-hk-arrow-31 pull-right hidden-xs" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel id="claimPanel" rendered="{!memoSummary.claimMemo != null}">
+                        <div class="bs row table-content {!IF(MOD(rowNum,2)==1,'','grey-background')}" onclick="Cigna.Util.navigateToVFP('PendingMemoVFP?requestId={!memoSummary.claimMemo.claimNumber}&category={!memoSummary.category}&token={!paramToken}&lang={!paramLanguage}')">
+                            <div class="bs col-xs-6 col-sm-2 ">
+                                <apex:outputText value="{!IF(memoSummary.claimMemo.polNumber == '', '&nbsp;' ,memoSummary.claimMemo.polNumber )}" escape="false" />
+                            </div>
+                            <div class="bs col-xs-6 col-sm-3 ">
+                                <apex:outputText value="{!IF(memoSummary.fullCategory == '', '&nbsp;' ,memoSummary.fullCategory)}" escape="false" />
+                                <i class="ci-hk-arrow-31 pull-right visible-xs" aria-hidden="true" ></i>
+                            </div>
+                            <div class="bs col-xs-6 visible-xs">{!$Label.Type}</div>
+                            <div class="bs col-xs-6 col-sm-3 ">
+                                <apex:outputText value="{!IF(memoSummary.claimMemo.claimTypeDisplay == '', 'N/A' ,memoSummary.claimMemo.claimTypeDisplay )}" escape="false" />
+                            </div>
+                            <div class="bs col-xs-6 visible-xs">{!$Label.Last_Updated_Date}</div>
+                            <div class="bs col-xs-6 col-sm-3 ">      
+                                <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                    <apex:param value="{!memoSummary.claimMemo.lastUpdateDateInDate }"/>
+                                </apex:outputText>
+                                <i class="ci-hk-arrow-31 pull-right hidden-xs" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                </apex:repeat>
+                <div class="bs col-sm-12 col-xs-12 col-lg-12 col-md-12" style="text-align: center;padding-top:30px;">
+                    <apex:outputPanel rendered="{!If(isPreviousPageEnable,true,false)}">
+                        <div class="ci-hk-arrow-29 ci-hk-sm onclick-pointer cigna-fg-orange-dark" style="padding-right:10px;" aria-hidden="true" onclick="previousPage();"/>
+                    </apex:outputPanel>    
+                    <apex:outputText value="{!$Label.Page_0_of_1}" >
+                        <apex:param value="{!currentPage}" />
+                        <apex:param value="{!totalPage}" />
+                    </apex:outputText>    
+                    <apex:outputPanel rendered="{!If(isNextPageEnable,true,false)}">
+                        <div class="ci-hk-arrow-31 ci-hk-sm onclick-pointer cigna-fg-orange-dark" style="padding-left:10px;" aria-hidden="true" onclick="nextPage();"/>
+                    </apex:outputPanel>
+                </div>
+            </div>
+        </apex:outputPanel>
+    </apex:form>
+</apex:page>

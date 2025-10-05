@@ -1,0 +1,76 @@
+<apex:page sidebar="false" controller="BDNewBusinessSearchCtrl" tabStyle="New_Business__tab" lightningStylesheets="true">  
+    <style>
+        body select, body select[size='0'], body select[size='1'], .slds-scope select, .slds-scope select[size='0'], .slds-scope select[size='1']{
+            height:31.2px;
+        }
+    </style>
+    <apex:form id="theForm">        
+        <apex:actionFunction name="previous" namespace="bdNewBusinessSearch" action="{!prevPage}" status="loader-icon" reRender="bdNewBusinessListPageBlock"/>
+        <apex:actionFunction name="next" namespace="bdNewBusinessSearch" action="{!nextPage}" status="loader-icon" reRender="bdNewBusinessListPageBlock"/>
+       
+        <apex:actionStatus id="loader-icon">
+           <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                     &nbsp;
+                 </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Please Wait...</span>
+                    </div>
+                 </div>
+            </apex:facet>
+        </apex:actionStatus>
+        
+        
+        <apex:pageBlock id="bdNewBusinessListPageBlock" title="New Business Search">        
+            <apex:pageBlockSection columns="1" >
+                <apex:pageblockSectionItem > 
+                    <apex:outputpanel >
+                        <apex:selectList value="{!selectedSearchType}" size="1">
+                            <apex:selectoption itemLabel="{!$Label.Select_Search_Type}" itemValue="" itemDisabled="true"></apex:selectoption>
+                            <apex:selectOptions value="{!searchType}"></apex:selectOptions>
+                        </apex:selectList>
+                        <apex:outputLabel >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</apex:outputLabel>
+                        <apex:inputText value="{!searchValue}" />
+                        <apex:outputLabel >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</apex:outputLabel>
+                        <apex:commandButton value="Search" action="{!search}" status="loader-icon" reRender="bdNewBusinessListPageBlock,messages"/>   
+                    </apex:outputpanel>                                        
+                </apex:pageblockSectionItem>
+                <apex:pageblockSectionItem >
+                    <apex:pageMessages id="messages"></apex:pageMessages>
+                </apex:pageblockSectionItem>                               
+            </apex:pageBlockSection>
+            
+            <apex:pageblockSection columns="1">
+                <apex:pageBlockTable value="{!workStatusList}" var="wrapper" first="{!startIndex}" rows="{!pageSize}" rowClasses="onclick-pointer" rendered="{!showWorkStatus}">
+                    <apex:column headerValue="{!$Label.Policy_No}" onclick="goToDetailPage('{!wrapper.policyNumber}','{!wrapper.requestId}')" style="cursor:pointer;">{!wrapper.policyNumber}</apex:column>
+                    <apex:column headerValue="{!$Label.Policy_Holder_Name}" onclick="goToDetailPage('{!wrapper.policyNumber}','{!wrapper.requestId}')">{!wrapper.policyHolder }</apex:column>
+                    <apex:column headerValue="{!$Label.Insured_Person}" onclick="goToDetailPage('{!wrapper.policyNumber}','{!wrapper.requestId}')">{!wrapper.personInsured }</apex:column>
+                    <apex:column headerValue="{!$Label.Pol_Product_Name}" onclick="goToDetailPage('{!wrapper.policyNumber}','{!wrapper.requestId}')">{!wrapper.productType}</apex:column>
+                    <apex:column headerValue="{!$Label.Pol_Status}" onclick="goToDetailPage('{!wrapper.policyNumber}','{!wrapper.requestId}')">{!wrapper.requestStatus}</apex:column>
+                    
+                    <apex:facet name="footer">                       
+                        <div style="text-align:right;{!IF(workStatusList.size=0, 'display:none;', '')}">
+                            <span> Page {!currentPage} of {!totalPage} &nbsp;</span>                            
+                            <span><a href="javascript:void(0);" onclick="bdNewBusinessSearch.previous()">&lt;&lt; Previous Page </a></span>    
+                            <span> &nbsp; | &nbsp;</span>                        
+                            <span><a href="javascript:void(0);" onclick="bdNewBusinessSearch.next()">Next Page &gt;&gt;</a></span>
+                        </div>
+                    </apex:facet>
+                </apex:pageBlockTable>
+            </apex:pageblockSection>
+        </apex:pageBlock>
+        <script>
+            function goToDetailPage(policyNumber,requestId){
+                //var currentUrl = window.location.href.substring(0, window.location.href.lastIndexOf('.com /')); 
+                //var url = currentUrl + "/apex/BDNewBusinessDetailsVFP?policyNumber=" + policyNumber+"&requestId=" + requestId + "&category=Group";
+                var url= "/apex/BDNewBusinessDetailsVFP?policyNumber=" + policyNumber+"&requestId=" + requestId;
+                console.log("url=" + url);
+                //window.open(url);
+                sforce.one.navigateToURL(url,false);
+                
+            }
+        </script>
+    </apex:form>
+</apex:page>

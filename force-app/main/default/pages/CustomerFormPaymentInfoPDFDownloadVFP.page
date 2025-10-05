@@ -1,0 +1,977 @@
+<apex:page controller="CustomerPolicyChangePDFController" id="page" renderAs="PDF"  docType="html-5.0" standardStylesheets="false" applyHtmlTag="false" applyBodyTag="false" showHeader="false" sidebar="false" language="zh_TW" cache="false">
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <style type="text/css" media="print">
+        @page {
+            size: A4;
+            @top-left {
+                content: element(header);
+                verticle-align: top;
+            }
+            @bottom-center {
+                content: element(footer);
+            }
+            margin-left: 1.0cm;
+            margin-top: 4.0cm;
+            margin-bottom: 2.0cm;
+            margin-right: 1.0cm;
+        }       
+            
+        body, div, p {
+            font-family: "Arial Unicode MS";
+            font-size: 8pt;
+        }
+            
+        div.header {
+            display: block;
+            height:4cm;
+            padding-left: 0.25cm;
+            position: running(header);
+        }
+            
+        div.header img {
+            width: 20mm;
+            height: 20mm;
+        }
+        div.footer {
+            display: block;
+            padding: 5px;
+            position: running(footer);
+            text-align: center;
+        }       
+       .page-break {
+            display:block;
+            page-break-after:always;
+        }
+       .clear-margin-padding {
+            margin: 0 auto;
+            padding: 0;
+        }
+       .pagenumber:before {
+            content: counter(page);
+       }
+       .pagecount:before {
+            content: counter(pages);
+       }
+       tr {
+            height:30px;
+       }
+       .customli{type:"I";}
+       div.content{
+            font-family: Arial Unicode MS;
+            font-size: 8pt;
+            fill-opacity:.5; 
+            stroke:black; 
+            stroke-width:2;
+            /** does not work **/
+            word-wrap: break-word;
+            word-break: break-all;
+            /** does not work end **/
+       }
+       .title {
+            font-size: 10pt;
+            text-align: left;
+            float: right;
+            font-weight: bold;
+       }   
+       .title_pc {
+            font-size: 8pt;
+            text-align: left;
+            font-weight: bold;
+       } 
+       .header-bar {
+            font-size: 14pt;
+            font-weight: bold;
+        }      
+       .Tablebackgroundcolor {
+            background-color: rgb(24, 140, 204);
+            background-repeat: no-repeat;
+            border-collapse: collapse; 
+            border: none; 
+            width: 100%; 
+            padding:10px;
+        }
+       .CustomTable {
+            border-collapse: collapse; 
+            border: none; 
+            width: 100%;
+            padding:10px;
+        }        
+       .CustomTd { 
+           border: solid #000 1px;
+           padding:10px;
+           width: 70%;
+           font-weight: bold;
+           vertical-align: middle;
+       }
+       .CustomTd_title { 
+           border: solid #000 1px;
+           padding:10px;
+           width: 30%;
+           font-weight: bold;
+           vertical-align: top;
+       }
+       .CustomColspanTd { 
+           border: solid #000 1px; 
+           padding:10px;
+       } 
+
+    </style>    
+</head>
+    <apex:form >
+    <div class="header">
+        <br/>
+        <div style="width:720px;">
+            <div style="width: 100%; float:left;">
+                <div style="width: 60%; float:left;">
+                    <apex:outputText value="Private & Confidential  私人及機密"></apex:outputText> 
+                </div>
+                <div style="width: 40%; float:left;">
+                    <div style="width: 40%; float:left;">
+                        <apex:image url="{!$Resource.Icon_For_Form}" width="70px" /> 
+                    </div>
+                    <div style="width: 60%; float:left;">
+                        <apex:outputText escape="false" value="{!$Label.Cigna_Address_en_2_line}"/><br/><br/>
+                        Tel: 2560 1990 <apex:outputText value=" Fax: 2560 3605" rendered="{!policyChangeRequestInfo.IsGerneralPolicy__c}"/> <br/>
+                        www.cigna.com.hk
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> 
+    <div class="footer">
+        <div style="font-size: 10pt; float:right;"> <span class="pagenumber"/> / <span class="pagecount"/> </div>
+    </div>
+    
+    <div class="content">
+    
+    <div style="width:100%;">
+    <table align="center" border="0" cellspacing="0" cellpadding="4" class="CustomTable">
+    <tbody>
+        <tr>
+            <td width="100%" colspan="5" style="text-align: right;">
+                Ref. 參考:<apex:outputText value="&nbsp; &nbsp; &nbsp; &nbsp; " style="text-decoration: underline;" escape="false" />(for office use內部專用)
+            </td>
+        </tr>
+        <tr>
+            <td colspan="5" width="100%" style="font-size: 12pt;">
+                 <apex:outputText value="Policy Change Form – Payment Information" escape="false"/>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" width="80%" style="font-size: 12pt;">保單更改–付款方式/保費繳付資料</td>
+            <td width="20%">&nbsp;</td>
+        </tr>
+        <tr>
+            <td width="50%" colspan="3">
+                <apex:outputText value="Source" />
+                <apex:outputText value="來源：" />
+                &nbsp;
+                <apex:image url="{!IF(isCustomerUser&&NOT(isBrokerUser),$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12"/>
+                <apex:outputText style="width: 100px;" value="Customer Portal" />
+                <apex:outputText style="width: 100px;" value="客戶" />
+                &nbsp;
+                <apex:image url="{!IF(isBrokerUser&&NOT(isCustomerUser),$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12"/>
+                <apex:outputText style="width: 100px;" value="Broker Portal" />
+                <apex:outputText style="width: 100px;" value="經紀" />
+            </td>
+            <td width="50%" colspan="2">&nbsp;</td>
+        </tr>
+     </tbody>
+     </table>
+     
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomTd" colspan="2" width="100%">
+              <span style="color:white;">Personal Particulars</span><br/>
+              <span style="color:white;">個人資料</span></td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                 Submission Date<br/>
+                 申請日期<br/>
+                 (YYYY/MM/DD)<br/>
+              </td>
+              <td class="CustomTd" width="50%" align="left" valign="top">
+                  <apex:outputText value="{0,date,yyyy/MM/dd}">
+                      <apex:param value="{! Today() }" />
+                  </apex:outputText>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Policy Holder<br/>
+                  保單持有人
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Policy_Holder_Name__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Policy No. <br/>
+                  保單編號
+              </td>
+             <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Policy_No__c}"/>
+              </td>
+          </tr>
+      </tbody>
+    </table>
+    <apex:outputPanel rendered="{!isBrokerUser}">
+        <table align="center" border="0" cellspacing="0" cellpadding="2" class="CustomTable" width="100%">
+         <tbody>
+              <tr>
+                  <td class="CustomTd_title">
+                      Broker Name<br/>
+                      經紀公司
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Broker_Name__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Financial Consultant Name<br/>
+                      財務顧問姓名
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Financial_Consultant_Name__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Financial Consultant Code<br/>
+                      財務顧問編號
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Financial_Consultant_Code__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Financial Consultant Contact No.<br/>
+                      財務顧問電話號碼
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Financial_Consultant_Contact_No__c}"/>
+                  </td>
+              </tr>
+          </tbody>
+          </table>
+      </apex:outputPanel>
+      <table align="center" border="0" cellspacing="0" cellpadding="2" class="CustomTable" width="100%">
+          <tbody>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomTd" colspan="2" width="100%">
+                  <span style="color:white;">Policy Change Information</span><br/>
+                  <span style="color:white;">保單更改資料</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Change Type<br/>
+                  更改資料類別
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!policyChangeRequestInfo.Recordtype.Name} <br> 保費繳付資料" escape="false" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Change of Premium Paying Frequency<br/>
+                  更改保費支付形式
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!CASE( policyChangeRequestInfo.Change_of_Premium_Paying_Frequency__c, 
+                                                 "Annually","Annually <br/> 每年" , 
+                                                 "Semi-annually","Semi-annually <br/> 每半年" , 
+                                                 "Quarterly","Quarterly <br/> 每季度" , 
+                                                 "Monthly","Monthly <br/> 每月" , ""
+                                                )}" escape="false" />
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Direct Debit Method<br/>
+                  直接付款方式
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!CASE( policyChangeRequestInfo.Direct_Debit_Method__c, 
+                                      'Via Savings/Current Account','Direct Debit via Savings/Current Account <br/> 經儲蓄/來往賬戶直接付款' , 
+                                      'Via Credit Card','Direct Debit via Credit Card <br/> 信用卡直接付款' , ''
+                                           )}" escape="false" />
+              </td>
+          </tr>
+     </tbody>
+     </table>
+     <apex:outputPanel rendered="{!policyChangeRequestInfo.Direct_Debit_Method__c !=null &&
+                                   policyChangeRequestInfo.Direct_Debit_Method__c !='' && 
+                                   policyChangeRequestInfo.Direct_Debit_Method__c =='Via Savings/Current Account'}">
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomTd" colspan="2" width="100%">
+                  <span style="color:white;">Direct Debit Account Information</span><br/>
+                  <span style="color:white;">付款賬戶資料</span>
+              </td>
+          </tr>
+     </tbody>
+     </table>
+
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr>
+              <td class="CustomTd_title">
+                  Name to be credited<br/>
+                  收款之一方(受益人)
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText rendered="{!policyChangeRequestInfo.IsLifePolicy__c && !policyChangeRequestInfo.IsGerneralPolicy__c}">{!$Label.PC_Cigna_Worldwide_Life_Insurance_Company_Limited_The_Beneficiary}</apex:outputText>
+                  <apex:outputText rendered="{!!policyChangeRequestInfo.IsLifePolicy__c && policyChangeRequestInfo.IsGerneralPolicy__c}">{!$Label.Cigna_Worldwide_General_Company_Limited_The_Beneficiary}</apex:outputText>
+                  <apex:outputText rendered="{!policyChangeRequestInfo.IsLifePolicy__c && policyChangeRequestInfo.IsGerneralPolicy__c}">{!$Label.Cigna_Worldwide_Life_General_Insurance_Company_Limited_The_Beneficiary}</apex:outputText>
+              </td>
+          </tr>
+     </tbody>
+     </table>      
+     <!-- <apex:outputPanel rendered="{!!policyChangeRequestInfo.IsLifePolicy__c}">
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr>
+              <td class="CustomTd_title">
+                  Name and Account Number to be credited<br/>
+                  收款之一方(受益人)
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText escape="false" value="{!$Label.Cigna_Worldwide_General_Company_Limited_The_Beneficiary}"/>
+              </td>
+          </tr>
+     </tbody>
+     </table>
+     </apex:outputPanel> -->         
+
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr>
+              <td class="CustomTd_title">
+                  Bank Name<br/>
+                  銀行名稱
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Bank_Name__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Branch Name<br/>
+                  分行名稱
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Branch_Name__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Bank Account No.<br/>
+                  銀行賬戶
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!policyChangeRequestInfo.Bank_No__c} - {!policyChangeRequestInfo.Branch_No__c} - {!policyChangeRequestInfo.Bank_Account_No__c}"/>
+              </td>
+          </tr>
+          <tr>
+             <td class="CustomColspanTd" colspan="2">
+             <div style="width:100% ;word-break:break-all">
+                     Important Notes:<br/>
+                     請注意：
+                     <ol>
+                         <li>It takes 6-8 weeks to process this authorization, as such two (2) months' and all outstanding premium, levy, and other relevant charges under the relevant policy(ies) are requested to be sent along with this Authorization Form.<br/>
+                              <p>由於銀行處理此授權書需時約6至8個星期，故此請連同兩個月保費及所有所欠之保費、徵費及其他相關保單費用一併交回。</p> 
+                          </li>
+                          <li>At least fifteen (15) working days’ written notice in advance is required for termination of this payment instruction.
+                              <p>如需取消此繳費指示，請於最少15個工作天前以書面提出。</p> 
+                          </li>
+                          <li>This facility is applicable to the Policyholder or Person Insured/Proposed Person Insured only.
+                              <p>此項目只適用於保單持有人或受保人/準受保人。</p> 
+                          </li>
+                     </ol>
+              </div>
+              </td>
+          </tr>
+     </tbody>
+     </table>
+     </apex:outputPanel>  
+     <apex:outputPanel rendered="{!policyChangeRequestInfo.Direct_Debit_Method__c !=null &&
+                                   policyChangeRequestInfo.Direct_Debit_Method__c !='' && 
+                                   policyChangeRequestInfo.Direct_Debit_Method__c =='Via Credit Card'}">
+
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomTd" colspan="2" width="100%">
+                  <span style="color:white;">Credit Card Information</span><br/>
+                  <span style="color:white;">信用卡資料</span>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Name of Card Issuing Bank<br/>
+                  發卡銀行名稱
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Name_of_Card_Issuing_Bank__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Country of Card Issuing Bank<br/>
+                  發卡銀行國家
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Country_of_Card_Issuing_Bank__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Visa/Mastercard Credit Card Account<br/>
+                  VISA/Mastercard信用卡賬戶號碼
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText id="Number-Credit-Card-1" value="{!creditCardNo1}" />
+                  <apex:outputText id="Number-Credit-Card-2" value="{!creditCardNo2}" >
+                      &nbsp;-&nbsp;</apex:outputText>
+                  <apex:outputText id="Number-Credit-Card-3" value="{!creditCardNo3}">
+                      &nbsp;-&nbsp;</apex:outputText>
+                  <apex:outputText id="Number-Credit-Card-4" value="{!creditCardNo4}">
+                      &nbsp;-&nbsp;</apex:outputText>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Card Expiry Date (Month/Year)<br/>
+                  信用卡有效日期(月/年)
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField id="DD-Credit-Number-Month-Exp" style="width:30%" value="{!policyChangeRequestInfo.Card_Expiry_Date_Month__c}">
+                      &nbsp;/&nbsp;
+                  </apex:outputField>
+                  <apex:outputText id="DD-Credit-Number-Year-Exp" style="width:60%" value="{!policyChangeRequestInfo.Card_Expiry_Date_Year__c}"/>
+              </td>
+          </tr>
+          <tr>
+             <td class="CustomColspanTd" colspan="2">
+             <div style="width:100% ;word-break:break-all">
+                     Important Notes:<br/>
+                     請注意：
+                     <ol>
+                         <li>The Issuer of the credit card identified above is authorized to pay the amount as requested by {!if(policyChangeRequestInfo.IsLifePolicy__c && !policyChangeRequestInfo.IsGerneralPolicy__c, 'Cigna Worldwide Life Insurance Company Limited', if(!policyChangeRequestInfo.IsLifePolicy__c && policyChangeRequestInfo.IsGerneralPolicy__c, 'Cigna Worldwide General Insurance Company Limited', 'Cigna Worldwide Life Insurance Company Limited / Cigna Worldwide General Insurance Company Limited'))} upon proper presentation. The Cardholder promises to pay such total (including policy premium and levy under the relevant policy(ies), together with any other charges due thereon) subject to and in accordance with the agreement governing the use of such credit card.
+                              <p>本人授權發出上述信用卡之機構，在收到有關指示時，即支付{!if(policyChangeRequestInfo.IsLifePolicy__c && !policyChangeRequestInfo.IsGerneralPolicy__c, '信諾環球人壽保險有限公司', if(!policyChangeRequestInfo.IsLifePolicy__c && policyChangeRequestInfo.IsGerneralPolicy__c, '信諾環球保險有限公司', '信諾環球人壽保險有限公司或信諾環球保險有限公司'))}所要求之銀碼。<br/>本人承諾根據所持信用卡之合約繳付全部款項(包括相關保險的保費、徵費，及其他相關保單有關費用)。</p> 
+                          </li>
+                          <li>All outstanding premium, levy, and other relevant charges under the relevant policy(ies) are requested to be sent along with this Authorization Form.
+                              <p>請將此授權書連同所欠之保費、徵費及其他相關保單費用一併交回。</p> 
+                          </li>
+                          <li>This facility is applicable to the Policyholder or Person Insured/Proposed Person Insured only.
+                              <p>此申請只適用於保單持有人或受保人/準受保人。</p> 
+                          </li>
+                          <li>This payment method is for regular premium and selected products only.
+                              <p>此付款方法只適用於定期繳付之保費及指定之保險計劃。</p> 
+                          </li>
+                          <li>Non-monthly premium will be debited on the same month of the premium due date. In case of unsuccessful transaction, premium will be debited again (if applicable).
+                              <p>非每月供款之保費將於保費到期日之同一月份過數。如未能成功過數，保費將會再扣除（如適用）。</p> 
+                          </li>
+                          <li>At least fifteen (15) working days’ written notice in advance is required for termination of this payment instruction.
+                              <p>如需取消此付款指示，請於最少15個工作天前以書面提出。</p> 
+                          </li>
+                          <li>Prior approval is required for non-Hong Kong issued credit card.
+                              <p>如信用卡非由香港銀行發行，必須預先獲本公司審批。</p> 
+                          </li>
+                     </ol>
+              </div>
+              </td>
+          </tr>
+     </tbody>
+     </table>
+     </apex:outputPanel>  
+
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomTd" colspan="2" width="100%">
+                  <span style="color:white;">General Information</span><br/>
+                  <span style="color:white;">一般資料</span>
+              </td>
+          </tr>
+     </tbody>
+     </table>
+     <apex:outputPanel rendered="{!AND(NOT(isBlank(policyChangeRequestInfo.I_D_Number_of_Account_Holder_1__c)),
+                                            NOT(isNull(policyChangeRequestInfo.I_D_Number_of_Account_Holder_1__c)))}">
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr>
+              <td class="CustomTd_title">
+                  I.D. Type of Account Holder 1<br/>
+                  賬戶持有人 1 身份証明文件號碼
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.I_D_Number_of_Account_Holder_1__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  I.D. Type of Account Holder 1<br/>
+                  賬戶持有人 1 身份証明文件類別
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!policyChangeRequestInfo.I_D_Type_of_Account_Holder_1__c}"/><br/>
+                  <apex:outputField value="{!policyChangeRequestInfo.I_D_Type_of_Account_Holder_1__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Name of Account Holder 1 in English<br/>
+                  賬戶持有人 1 英文姓名
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Name_of_Account_Holder_1_in_English__c}"/>
+              </td>
+          </tr>
+     </tbody>
+     </table>
+     </apex:outputPanel>         
+     <apex:outputPanel rendered="{!AND(NOT(isBlank(policyChangeRequestInfo.I_D_Number_of_Account_Holder_2__c)),
+                                            NOT(isNull(policyChangeRequestInfo.I_D_Number_of_Account_Holder_2__c)))}">
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr>
+              <td class="CustomTd_title">
+                  I.D. Type of Account Holder 2<br/>
+                  賬戶持有人 2 身份証明文件號碼
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.I_D_Number_of_Account_Holder_2__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  I.D. Type of Account Holder 2<br/>
+                  賬戶持有人 2 身份証明文件類別
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!policyChangeRequestInfo.I_D_Type_of_Account_Holder_2__c}"/><br/>
+                  <apex:outputField value="{!policyChangeRequestInfo.I_D_Type_of_Account_Holder_2__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Name of Account Holder 2 in English<br/>
+                  賬戶持有人 2 英文姓名
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Name_of_Account_Holder_2_in_English__c}"/>
+              </td>
+          </tr>
+     </tbody>
+     </table>
+     </apex:outputPanel>         
+     <apex:outputPanel rendered="{!AND(NOT(isBlank(policyChangeRequestInfo.I_D_Number_of_Account_Holder_3__c)),
+                                            NOT(isNull(policyChangeRequestInfo.I_D_Number_of_Account_Holder_3__c)))}">
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr>
+              <td class="CustomTd_title">
+                  I.D. Type of Account Holder 3<br/>
+                  賬戶持有人 3 身份証明文件號碼
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.I_D_Number_of_Account_Holder_3__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  I.D. Type of Account Holder 3<br/>
+                  賬戶持有人 3 身份証明文件類別
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputText value="{!policyChangeRequestInfo.I_D_Type_of_Account_Holder_3__c}"/><br/>
+                  <apex:outputField value="{!policyChangeRequestInfo.I_D_Type_of_Account_Holder_3__c}"/>
+              </td>
+          </tr>
+          <tr>
+              <td class="CustomTd_title">
+                  Name of Account Holder 3 in English<br/>
+                  賬戶持有人 3 英文姓名
+              </td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Name_of_Account_Holder_3_in_English__c}"/>
+              </td>
+          </tr>
+     </tbody>
+     </table>
+     </apex:outputPanel>
+     <apex:outputPanel rendered="{!policyChangeRequestInfo.Choice_of_Payment_Date__c !=''}">
+         <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+         <tbody>
+              <tr>
+                  <td class="CustomTd_title">
+                      Choice of Payment Date<br/>
+                      付款日期
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputText value="{!policyChangeRequestInfo.Choice_of_Payment_Date__c}"/><br/>
+                      <apex:outputField value="{!policyChangeRequestInfo.Choice_of_Payment_Date__c}"/>
+                  </td>
+              </tr>
+          </tbody>
+          </table>
+      </apex:outputPanel>
+      <apex:outputPanel rendered="{!policyChangeRequestInfo.Is_Third_Party_Payer__c}">
+          <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+          <tbody>
+              <tr class="Tablebackgroundcolor">
+                  <td class="CustomTd" colspan="2" width="100%">
+                      <span style="color:white;">Third-Party Payer's Details</span><br/>
+                      <span style="color:white;">第三者付款人資料</span>
+                  </td>
+              </tr>
+              <tr>
+                 <td class="CustomColspanTd" colspan="2">
+                 <div style="width:100% ;word-break:break-all">
+                         Important Notes:<br/>
+                         請註意：
+                         <ol>
+                             <li>Third Party refers to any person other than the policyholder / applicant and the person insured.<br/>
+                                  <p>第三者付款人指非保單持有人/申請人或受保人。</p>
+                              </li>
+                              <li>Please provide identification document (e.g. HKID, passport, etc.) of the third party payer (if not submitted before) if the payment equals to HK$8,000 or above or upon request by Cigna for identity verification purpose. Cigna reserves the right to obtain additional documents if deemed necessary.<br/>
+                                  <p>如付款金額相等於港幣8,000元或以上或應信諾的要求下，請提供第三者付款人的身分證明文件（如身分證，護照等）<br/>作核實身分之用途（如未曾提交）。信諾保留權利在有需要時要求提交額外文件。 </p>
+                              </li>
+                         </ol>
+                  </div>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Source of Funds<br/>
+                      資金來源
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Source_of_Fund__c}"/><br/>
+                      <apex:outputText value="{!policyChangeRequestInfo.Source_of_Fund__c}"/>
+                  </td>
+              </tr>
+          </tbody>
+          </table>
+      <apex:outputPanel rendered="{!policyChangeRequestInfo.Source_of_Fund__c == 'Others'}">
+          <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+              <tbody>        
+                  <tr>
+                      <td class="CustomTd_title">
+                          Others<br/>
+                          其他
+                      </td>
+                      <td class="CustomTd" align="left" valign="top">
+                          <apex:outputField value="{!policyChangeRequestInfo.Funds_by_Others__c}"/>
+                      </td>
+                  </tr>
+              </tbody>
+          </table>
+      </apex:outputPanel>
+          
+          <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+          <tbody>
+              <tr>
+                  <td class="CustomTd_title">
+                      The Third-Party Payer<br/>
+                      第三者付款人
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputText value="{!CASE( policyChangeRequestInfo.X3rd_Party_Payer__c, 
+                                                     "Individual","Individual <br/> 個人" , 
+                                                     "Company / Institution","Company / Institution <br/> 公司 / 機構" , ""
+                                                    )}" escape="false" />
+    
+                  </td>
+              </tr>
+         </tbody>
+         </table>
+     
+         <apex:outputPanel rendered="{!policyChangeRequestInfo.X3rd_Party_Payer__c !=null &&
+                                       policyChangeRequestInfo.X3rd_Party_Payer__c !='' && 
+                                       policyChangeRequestInfo.X3rd_Party_Payer__c =='Individual'}">
+         <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+         <tbody>
+              <tr>
+                  <td class="CustomTd_title">
+                      Full name of the third party payer<br/>
+                      第三者付款人姓名
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Full_Name_of_3rd_party_payer__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      HKID / Passport No. of third party payer<br/>
+                      第三者付款人香港身分證/護照編號</td>
+                  <td class="CustomTd">
+                      <apex:outputField value="{!policyChangeRequestInfo.HKID_Passport_No__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Relationship to Policyholder / Applicant<br/>
+                      與保單持有人/申請人之關係</td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Relationship_with_Policyholder_Applica__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Contact No.<br/>
+                      聯絡號碼</td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <span><apex:outputText value="{!policyChangeRequestInfo.Contact_No_Country_Code__c}"/></span>
+                      <span><apex:outputField value="{!policyChangeRequestInfo.Contact_No__c}"/></span>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Nationality<br/>
+                      國籍</td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Nationality__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Date of Birth<br/>
+                      出生日期 <br/>
+                      (YYYY/MM/DD) 
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Date_of_Birth__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Residential Address (English)<br/>
+                      住宅地址 (英文)
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Residential_Address__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Permanent Address (English)<br/>
+                      永久地址 (英文)</td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputText value="Same as above <br> 與住宅地址相同" escape="false" rendered="{!policyChangeRequestInfo.PAddress_same_as_RAddress__c}"/> 
+                      <apex:outputField value="{!policyChangeRequestInfo.Permanent_Address__c}" rendered="{!NOT(policyChangeRequestInfo.PAddress_same_as_RAddress__c)}"/>
+                  </td>
+              </tr>
+         </tbody>
+         </table>
+         </apex:outputPanel>
+
+         <apex:outputPanel rendered="{!policyChangeRequestInfo.X3rd_Party_Payer__c !=null &&
+                                       policyChangeRequestInfo.X3rd_Party_Payer__c !='' && 
+                                       policyChangeRequestInfo.X3rd_Party_Payer__c =='Company / Institution'}">
+         <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+         <tbody>
+              <tr>
+                  <td class="CustomTd_title">
+                      Name of Company / Institution<br/>公司 / 機構名稱
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Name_of_Company_Institution__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Contact No of Company / Institution<br/>公司 / 機構聯絡號碼
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <span><apex:outputText value="{!policyChangeRequestInfo.Contact_No_of_Company_Country_Code__c}" rendered="{!policyChangeRequestInfo.Contact_No_of_Company_Country_Code__c !=null && policyChangeRequestInfo.Contact_No_of_Company_Country_Code__c !='' }"/></span>
+                      <span><apex:outputField value="{!policyChangeRequestInfo.Contact_No_of_Company_Institution__c}"/></span>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Business Registration / Incorporation Number<br/>商業登記證 / 註冊號碼
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.BR_Number__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Date of Incorporation<br/>註冊日期
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Date_of_Incorporation__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Place of Incorporation<br/>註冊地
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Place_of_Incorporation__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Registered Office Address<br/>註冊辦事處地址
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Registered_Office_Address__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Business Address<br/>業務地址
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputText value="Same as above <br> 與註冊辦事處地址相同" escape="false" rendered="{!policyChangeRequestInfo.Same_as_Registered_Office_Address__c}"/> 
+                      <apex:outputField value="{!policyChangeRequestInfo.Business_Address__c}" rendered="{!NOT(policyChangeRequestInfo.Same_as_Registered_Office_Address__c)}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Name of person acting on behalf of the company / institution<br/>公司 / 機構代表姓名
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Name_of_person_acting_on_behalf_of_the_c__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      HKID / Passport No.<br/>香港身分證/護照編號
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.HKID_Passport_No_Company__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Designation<br/>職銜
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <apex:outputField value="{!policyChangeRequestInfo.Designation__c}"/>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="CustomTd_title">
+                      Contact No.<br/>聯絡號碼
+                  </td>
+                  <td class="CustomTd" align="left" valign="top">
+                      <span><apex:outputText value="{!policyChangeRequestInfo.Contact_No_Acting_Country_Code__c}" rendered="{!policyChangeRequestInfo.Contact_No_Acting_Country_Code__c !=null && policyChangeRequestInfo.Contact_No_Acting_Country_Code__c !='' }"/></span>
+                      <span><apex:outputText value="{!policyChangeRequestInfo.Contact_No_Acting__c}" rendered="{!policyChangeRequestInfo.Contact_No_Acting__c !=null && policyChangeRequestInfo.Contact_No_Acting__c !='' }"/>
+                      </span>
+                  </td>
+              </tr>
+         </tbody>
+         </table>
+         </apex:outputPanel>
+     
+     <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+     <tbody>
+          <tr>
+              <td class="CustomTd_title">
+                  Reason for Third-Party Payment<br/>
+                  由第三者付款之原因</td>
+              <td class="CustomTd" align="left" valign="top">
+                  <apex:outputField value="{!policyChangeRequestInfo.Reason_for_3rd_party_payment__c}"/>
+              </td>
+          </tr>
+      </tbody>
+      </table>
+  </apex:outputPanel>
+      <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+      <tbody>
+          <tr class="Tablebackgroundcolor">
+              <td class="CustomColspanTd" colspan="2">
+                  <span style="color:white;">Declaration &amp; Authorization</span><br/>
+                  <span style="color:white;">聲明及授權</span>
+              </td>
+          </tr>
+          <tr>
+             <td class="CustomColspanTd" colspan="2">
+                 <div style="width:100% ; word-wrap: break-word;word-break: break-all;">
+                     <!--JOBR-184: JOBR-199/226 updated by Kermit at 20221012-->
+                     <!--<apex:include pageName="DeclarationFormVFP"/>-->
+                     <c:DeclarationFormComponent isContainGIPolicy="{!policyChangeRequestInfo.IsGerneralPolicy__c}" isContainLifePolicy="{!policyChangeRequestInfo.IsLifePolicy__c}"/>
+                 </div>
+             </td>
+          </tr>     
+     </tbody>
+    </table>
+  <apex:outputPanel rendered="{!isBrokerUser}">
+      <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+         <tbody>
+              <tr>
+                  <td class="CustomTd_title" align="left" valign="top" heigth="200">
+                      Signature<br/>
+                      簽署
+                  </td>
+                  <td class="CustomTd" align="left" height="200">
+                      <div style="width: 100%;">
+                          <div style="width: 100%;heigth:90%;text-align:left;">
+                              <apex:image id="theImage" value="{!PDFSignatureField}" width="450px"/>
+                              <!--<apex:image url="https://cigna--dev1--c.cs31.content.force.com/servlet/servlet.FileDownload?file=00Pp0000004JNf4" width="100px"/>                 
+                              <apex:image url="https://cigna--dev1--c.cs31.content.force.com/servlet/servlet.FileDownload?file=00Pp0000004m0rE" width="100px"/>-->
+                          </div>
+                          <div style="width: 100%;heigth:10%">
+                              <br/>
+                              <apex:outputText value="Name of Policy Holder 保單持有人姓名: "/>{!policyHolder}<br/>
+                              <apex:outputText value="Date Signed 簽署日期 (YYYY/MM/DD): {0,date,yyyy/MM/dd}">
+                                  <apex:param value="{! Today() }" />
+                              </apex:outputText>
+                          </div>
+                      </div>
+                  </td>
+              </tr>      
+           </tbody>
+        </table>
+    </apex:outputPanel>  
+    <apex:outputPanel rendered="{!policyChangeRequestInfo.Is_Third_Party_Payer__c}">
+        <table align="center" border="0" cellspacing="0"  class="CustomTable" width="100%">
+         <tbody>
+            <tr>
+              <td class="CustomTd_title" align="left" valign="top" heigth="200">
+                  Third-Party Payer Signature<br/>
+                  第三者付款人簽署
+              </td>
+              <td class="CustomTd" align="left" height="200">
+                  <div style="width: 100%;">
+                      <div style="width: 100%;heigth:90%;text-align:left;">
+                          <apex:image url="{!PDFSignatureThirdPartyField}" height="150px"/>
+                      </div>
+                      <div style="width: 100%;heigth:10%;">
+                          <br/>
+                          <apex:outputText value="Name of Third-Party Payer第三者付款人姓名: "/>
+                          <apex:outputPanel rendered="{!policyChangeRequestInfo.X3rd_Party_Payer__c =='Individual'}">
+                              <apex:outputText value="{!policyChangeRequestInfo.Full_Name_of_3rd_party_payer__c}"/> <br/>
+                          </apex:outputPanel>
+                          <apex:outputPanel rendered="{!policyChangeRequestInfo.X3rd_Party_Payer__c =='Company / Institution'}">   
+                              <apex:outputText value="{!policyChangeRequestInfo.Name_of_person_acting_on_behalf_of_the_c__c}"/> <br/>
+                          </apex:outputPanel>    
+                          <apex:outputText value="Date Signed 簽署日期 (YYYY/MM/DD): {0,date,yyyy/MM/dd}">
+                              <apex:param value="{! Today() }" />
+                          </apex:outputText>
+                      </div>
+                  </div>
+               </td>
+            </tr>
+        </tbody>
+        </table> 
+    </apex:outputPanel>      
+    </div>
+    </div>
+</apex:form>
+</html>
+</apex:page>

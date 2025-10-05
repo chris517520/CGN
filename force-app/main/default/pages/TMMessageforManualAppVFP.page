@@ -1,0 +1,80 @@
+<apex:page docType="html-5.0" id="MessagesforManualApplication" title="Messages for Manual Application" Controller="TMMessagesforManualAppCtrl">
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <apex:includeScript value="/support/console/33.0/integration.js"/>
+    <script type="text/javascript">    
+        function openDetailTab(agentID,policyHolderName,policyHolderID,policyNumber,requestStatus) {
+            if (sforce.console.isInConsole()) {                     
+                sforce.console.openPrimaryTab(null,'/apex/TMMessagingWithUWVFP?agentID='+agentID+'&policyHolderName='+policyHolderName+'&policyHolderID='+policyHolderID+'&policyNumber='+policyNumber+'&requestStatus='+requestStatus, 
+                       true,'Messaging with Underwriters', null, null, null);                                
+                sforce.console.setCustomConsoleComponentVisible(false);                                
+            } else {
+                window.open('/apex/TMMessagingWithUWVFP?agentID='+agentID+'&policyHolderName='+policyHolderName+'&policyHolderID='+policyHolderID+'&policyNumber='+policyNumber+'&requestStatus='+requestStatus);
+            }
+        }
+    </script>
+    <apex:form id="MessagesforManualApplicationForm" >
+        <!-- Comment List -->
+        <p>
+            <b><apex:outputLabel value="{!$Label.TM_Messages_for_Manual_Application_Title}" style="font-size:18px;"/></b>
+        </p>
+        <apex:pageBlock >
+            <apex:actionStatus id="loader-icon">
+                <apex:facet name="start">
+                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                     &nbsp;
+                    </div>
+                    <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                        <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                            <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                            <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                        </div>
+                    </div>
+                </apex:facet>
+            </apex:actionStatus>
+            <apex:outputPanel >
+                <div style='height:35px; float:left'>
+                    <b>Sort by: </b>
+                    <apex:selectList value="{!selectedColumn}" multiselect="false" size="1" label="Sort by: ">
+                        <apex:selectOptions value="{!columnList}" />
+                        <apex:actionSupport status="loader-icon" event="onchange" action="{!sortNewPolicyWrapper}" ReRender="MessagesforManualApplicationForm" />
+                    </apex:selectList>
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    <input class="btn" type="button" value="Refresh" name="Refresh" onclick="refresh()" />
+                </div>
+            </apex:outputPanel>
+
+            <apex:actionFunction name="previous" action="{!prevPage}" status="loader-icon" reRender="newPolicyWrappers"/>
+            <apex:actionFunction name="next" action="{!nextPage}" status="loader-icon" reRender="newPolicyWrappers"/>   
+            <apex:actionFunction name="refresh" action="{!refresh}" status="loader-icon" reRender="newPolicyWrappers"/>                     
+
+            <apex:pageblockTable id="newPolicyWrappers" value="{!newPolicyWrappers}" var="npw" first="{!startIndex}" rows="{!pageSize}">
+
+                <apex:column headerValue="{!$Label.TM_TMR_Agent_ID}" value="{!npw.agentID}" onClick="openDetailTab('{!npw.agentID}','{!npw.policyHolderName}','{!npw.policyHolderID}','{!npw.policyNumber}','{!npw.requestStatus}')"/>
+
+                <apex:column headerValue="{!$Label.TM_Policy_Holder_Name}" value="{!npw.policyHolderName}" onClick="openDetailTab('{!npw.agentID}','{!npw.policyHolderName}','{!npw.policyHolderID}','{!npw.policyNumber}','{!npw.requestStatus}')"/>
+
+                <apex:column headerValue="{!$Label.TM_Policy_Holder_SSN}" value="{!npw.policyHolderID}" onClick="openDetailTab('{!npw.agentID}','{!npw.policyHolderName}','{!npw.policyHolderID}','{!npw.policyNumber}','{!npw.requestStatus}')"/>
+
+                <apex:column headerValue="{!$Label.TM_Policy_Number}" value="{!npw.policyNumber}" onClick="openDetailTab('{!npw.agentID}','{!npw.policyHolderName}','{!npw.policyHolderID}','{!npw.policyNumber}','{!npw.requestStatus}')"/>
+
+                <apex:column headerValue="{!$Label.TM_Policy_Status}" value="{!npw.requestStatus}" onClick="openDetailTab('{!npw.agentID}','{!npw.policyHolderName}','{!npw.policyHolderID}','{!npw.policyNumber}','{!npw.requestStatus}')"/>  
+
+                <apex:facet name="footer">
+                    <div style="text-align:right;{!IF(newPolicyWrappers.size=0, 'display:none;', '')}">
+
+                        <span> Page {!currentPage} of {!totalPage} &nbsp;</span>
+                        <span>
+                            <a href="javascript:void(0);" onclick="previous()" >&lt;&lt; Previous Page </a>
+                        </span>
+                        <span> &nbsp; | &nbsp;</span>
+                        <span>
+                            <a href="javascript:void(0);" onclick="next()" >Next Page &gt;&gt;</a>
+                        </span>
+                    </div>
+                </apex:facet>
+
+            </apex:pageblockTable>
+        </apex:pageBlock>
+    </apex:form>                       
+
+</apex:page>

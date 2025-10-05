@@ -1,0 +1,1425 @@
+<apex:page showHeader="false" applyHtmlTag="false" renderAs="PDF" cache="true"  controller="BrkQuotationCtrl"> 
+    <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    <head>
+        <style>
+            
+            @media print
+            {
+            table {page-break-inside:auto }
+             tr    { page-break-inside:avoid; page-break-after:auto }
+             }
+            
+            @page:first {
+                margin: -20px -10px 100px -10px;
+                @bottom-left {
+                    content:element(footer_first);
+                }
+                @bottom-right {
+                    content:element(logo_first);
+                }
+            }
+            
+            @page {
+                margin: 80px 60px 120px 60px;
+                
+                @bottom-left {
+                    content:element(footer);
+                }
+                @bottom-right {
+                    content:element(logo);
+                }
+            }
+            
+            .Content{
+                width:680px;
+            }
+            
+            div.footer{
+                position: running(footer);
+            }
+            
+            div.logo{
+                position: running(logo);
+            }
+            
+            div.footer_first{
+                position: running(footer_first);
+            }
+            
+            div.logo_first{
+                position: running(logo_first);
+            }
+            
+            body {}
+            
+            div, table, tr, td{
+                font-family: "Arial Unicode MS", sans-serif;
+            }
+            
+            .HeadText{
+                font-weight: bold;
+                font-size:22pt;
+            }
+            .SHeadText{
+                font-weight:bold;
+                font-size:20pt;
+            }
+            .BodyText{
+                weight:720px;
+            }
+            .THeadText{
+                font-weight:bold;
+                color:#008B00;
+                font-size:18pt;
+            }
+            .SBodyText{
+                font-weight:bold;
+                font-size:15pt;
+            }
+            
+            .small-text{
+                font-size:10pt;
+            }
+            
+            .back{
+                height:960px;
+                background-attachment: fixed;
+                background-image: url({!URLFOR($Resource.BokerPortal)});
+                <!--background-color: yellow;-->
+            }
+            .table-title{
+                font-size:18pt;
+                background-color: #188CCC !important;
+                color: #fff !important;
+                border: 1px;
+                border-style: solid;
+                border-color: #fff;
+                font-weight: bold;
+            }
+            .table-subtitle{
+                font-size:12pt;
+                font-weight: bold;
+                background-color: #B1DDF5 !important;
+                border: 1px;
+                border-style: solid;
+                border-color: #fff;
+            }
+            .table-content{
+                font-size:12pt;
+                border: 1px;
+                border-style: solid;
+                border-color: #fff;
+            }
+            .table-content > tr {
+                background-color: #DAEFFA;
+            }
+            .table-highlight{
+                background-color: white;
+                border: 3px;
+                border-style: solid;
+                border-color: white;
+            }
+            
+            .table-process{
+                border-color: #188CCC;
+                border: 1px;
+                border-style: solid;
+                vertical-align: text-top;
+            }
+            
+
+            .cigna-fg-orange-medium {
+                color: #F68621 !important;
+            }
+            .cigna-fg-orange-dark {
+                color: #E35205 !important;
+            }
+            .cigna-fg-white {
+                color: #fff !important;
+            }
+            .cigna-fg-blue-medium {
+                color: #188CCC !important;
+            }
+            .cigna-fg-blue-dark {
+                color: #004986 !important;
+            }
+            .cigna-bg-green-dark {
+                background-color: #007A3E !important;
+            }
+            .cigna-bg-blue-medium {
+                background-color: #188CCC !important;
+            }
+            .cigna-bg-blue-dark {
+                background-color: #004986 !important;
+            }
+            .justify{
+                text-align:justify;
+            }
+        </style>
+    </head>
+
+    <div class="footer" ><!-- style="margin:20px 0px 20px -40px;" -->
+         <div style="width:145px;float:left;bottom:20px;left:0px;margin-top:55px;margin-bottom:10px; margin-left: -40px;" class="together">
+             <apex:image url="{!$Resource.Together_CH}" width="145px" /> 
+        </div>    
+    </div>
+    
+    <div class="logo"><!--  style="margin:15px -25px 20px 0px;padding-bottom:30px;" -->
+       <div style="width:145px; float:right;bottom:20px;right:10px;margin-top:20px;margin-bottom:10px;margin-right:-25px;padding-bottom: 10px;">
+           <apex:image url="{!$Resource.TreeCigna_CH}" width="145px" /> 
+       </div>    
+    </div>
+    <div class="footer_first" style ="margin:20px 0px 0px 30px;">
+         <div style="width:80px;float:left;top:70px;left:0px; " class="together">
+             <apex:image url="{!$Resource.Together_CH}" width="80px" /> 
+        </div>    
+    </div>
+    
+    <div class="logo_first" style="margin:0px 45px 60px 0px;padding-bottom:30px">
+       <div style="width:145px; float:right;top:30px;right:10px">
+           <apex:image url="{!$Resource.TreeCigna_CH}" width="145px" /> 
+       </div>    
+    </div>
+   
+    <div class="back">
+        <div style="padding-left:20px">
+             <table style="border-style: none;width:700px;table-layout: fixed; position: absolute;top:700px;right:0px;left:10px;bottom:0px;font-size:26pt;background-color:#FFFAFA" border="1" cellspacing="0" cellpadding="15"  >
+                <tr class="cigna-bg-blue-medium cigna-fg-white">
+                    <th style="border-style: none;font-size:24pt;font-weight:bold;line-height:35px;padding: 20px;padding-left:40px;">
+                        為您而設的全面醫療保險計劃
+                    </th>
+                </tr> 
+                <tr class="cigna-bg-blue-dark cigna-fg-white">
+                    <th style="border-style: none;font-size:24pt;font-weight:bold;padding:20px;padding-left:40px">               
+                        致<apex:outputText value="{!Name}"/>的建議書
+                    </th>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <div class="Content">
+    <div class="cigna-fg-blue-dark HeadText" style="page-break-before: always;"  >
+        <apex:outputText >
+            為何選擇信諾？
+        </apex:outputText>
+    </div><br/>
+    <div class="cigna-fg-blue-medium SHeadText">
+        <apex:outputText >
+            健康及保健服務 引領全球
+        </apex:outputText>
+    </div><br/>
+    <div class="BodyText justify">
+        <apex:outputText >
+            身為環球健康保障專家，信諾集團致力幫助客戶提升健康、安康及提供安心的保障。信諾的前身公
+            司自1792年提供專業保健服務。現時，信諾繼續不斷創新、發展及增長其環球業務。我們的業務遍
+            佈30多個國家及司法管轄區，積極照顧全球超過1.8億客戶的健康。
+        </apex:outputText>
+    </div><br/>
+    <div class="cigna-fg-orange-medium THeadText" >
+        <apex:outputText >
+            關於信諾集團
+        </apex:outputText>
+    </div>
+    
+    <table cellspacing="0" cellpadding="20" style="width:100%;table-layout:fixed" align="justify">
+        <tr class="small-text" style="vertical-align:text-top;text-align:center">
+            <th>
+                <apex:image value="{!$Resource.certificate}" width="80px" style="text-align:center"/><br/>
+                全球超過<br/>
+                70,000名員工          
+            </th>
+            <th>
+                 <apex:image value="{!$Resource.connection}" width="80px" /><br/>
+                與全球約1.8億客戶<br/>
+                建立了業務關係
+            </th>
+            <th>
+                <apex:image value="{!$Resource.badge}" width="80px"/><br/>
+                2020年《財富》<br/>
+                500強排名13位
+            </th>
+        </tr>
+        <tr class="small-text" style="text-align:center;vertical-align:text-top;">
+            <th>
+                <apex:image value="{!$Resource.tellurion}"   width="80px" style="text-align:center"/><br/>
+                業務遍佈超過<br/>
+                30個國家及地區
+            </th>
+            <th>
+                <apex:image value="{!$Resource.increase}"   width="80px" style="text-align:center"/><br/>
+                調整後總收入達<br/>
+                1400億美元
+            </th>
+            <th>
+               <apex:image id="theImage" value="{!$Resource.Doctor}"   width="80px" style="text-align:center"/><br/>
+                環球網絡擁有超過150萬的<br/>
+                專業醫護人員、診所及醫療機構
+            </th>
+        </tr>
+    </table>
+    <div style="width:680px;font-size:8pt">
+        <apex:outputText >
+            以上數據僅供參考用途，並不針對信諾集團旗下個別營運附屬公司。<br/>
+            數據是基於信諾集團截至2019年12月31日的內部資料，並有可能作出更改。
+        </apex:outputText>
+    </div><br/>
+
+    <div class="cigna-fg-orange-medium THeadText">
+        <apex:outputText >
+            關於信諾香港
+        </apex:outputText>
+    </div><br/>
+    <div class="BodyText justify">
+        <apex:outputText >
+            信諾自1933年投入香港保險業務，一直以來策劃無微不至的保障，為客戶的不同人生階段提供適
+            切建議，以幫助客戶提升健康、安康及提供安心的保障。
+        </apex:outputText>
+    </div>
+    <div class="cigna-fg-blue-dark HeadText" style="page-break-before: always;"  >
+        <apex:outputText >
+            為您而設的建議書摘要
+        </apex:outputText>
+    </div><br/>
+    <table class="table-content" border="1" cellspacing="0" cellpadding="10" style="width:100%;table-layout: fixed;border-top:none;border-bottom:none;">
+        <tr class="table-title">
+            <td border="1" style="border-style: solid;border-color: #fff;" colspan="4">
+                <apex:outputText >產品：<apex:outputText value="{!ProductName}"/></apex:outputText>
+            </td>
+        </tr>
+    </table>
+    <table class="table-content" border="1" cellspacing="0" cellpadding="10" style="width:100%;table-layout: fixed;border-top:none;border-bottom:none;{!NumberAdult}">
+        
+        <tr class="table-subtitle">
+            <th border="1" style="border-style: solid;border-color: #fff;" colspan="4">
+                保障摘要（<apex:outputText value="{!perRole1}"/>）
+            </th>
+        </tr>
+        <tr>
+            <td border="1" style="border-style: solid;border-color: #fff;">
+                年齡：
+            </td>
+            <td border="1" style="border-style: solid;border-color: #fff;">
+                <apex:outputText value="{!AgeAdult1}"/>
+            </td>
+            <td border="1" style="border-style: solid;border-color: #fff;">
+               性別：
+            </td>
+            <td border="1" style="border-style: solid;border-color: #fff;">
+                 <apex:outputText value="{!Gender1}"/>
+            </td>
+        </tr>
+        <tr style="{!if(hasSmoHabit,'','display:none;')}">
+            <td border="1" style="border-style: solid;border-color: #fff;">
+                吸煙習慣：
+            </td>
+            <td border="1" style="border-style: solid;border-color: #fff;">
+                <apex:outputText value="{!SmokerStatus}"/>
+            </td>
+            <td border="1" style="border-style: solid;border-color: #fff;">
+                保單持有人
+                （是／否）：
+            </td>
+            <td border="1" style="border-style: solid;border-color: #fff;">
+                <apex:outputText value="{!Holder}"/>
+            </td>
+        </tr>
+        <tr style="{!if(hasSmoHabit,'display:none;','')}">
+            <td border="1" style="border-style: solid;border-color: #fff;">
+                保單持有人
+                （是／否）：
+            </td>
+            <td border="1" style="border-style: solid;border-color: #fff;" colspan="3">
+                <apex:outputText value="{!Holder}"/>
+            </td>
+        </tr>
+        <tr style="{!if(isElite,'','display:none;')}">
+            <td border="1" style="border-style: solid;border-color: #fff;">
+                年度墊底費：
+            </td>
+            <td border="1" style="border-style: solid;border-color: #fff;">
+                <apex:outputText value="{!if(DifferentPlan == false,Deductible,if(es.Is_Adult_1_the_Policy_Holder__c,PH,PI))}"/>
+            </td>
+            <td border="1" style="border-style: solid;border-color: #fff;">
+                受保地區：
+            </td>
+            <td border="1" style="border-style: solid;border-color: #fff;">
+                <apex:outputText value="{!if(DifferentPlan == false,AreaCoverage,if(es.Is_Adult_1_the_Policy_Holder__c,AreaPH,AreaPI))}"/>
+            </td>
+        </tr>
+        <tr style="{!if(isChoice,'','display:none;')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    計劃級別:
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;" colspan="3">
+                    <apex:outputText value="{!planLevel}"/>
+                </td>           
+            </tr>
+            <tr style="{!if(isPlus || isVHIS,'','display:none;')}">
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        計劃級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        <apex:outputText value="{!planLevelPH}"/>
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        墊底費:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                         <apex:outputText value="{!IF(isVHIS,PH,Deductible)}"/>
+                    </td>
+            </tr>
+            <tr style="{!if(isSCI,'','display:none;')}">
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        計劃級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        <apex:outputText value="{!planLevel}"/>
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        保障級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                         <apex:outputText value="{!levelofCov}"/>
+                    </td>
+            </tr>
+            <tr style="{!if(isDMB,'','display:none;')}">
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        計劃級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;" colspan="3">
+                        <apex:outputText value="{!planlevelPH}"/>
+                    </td>
+            </tr>
+            <tr style="{!if(isPBT || isPBC,'','display:none;')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    計劃級別:
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!planLevelPH}"/>
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    賠償比率:
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                     <apex:outputText value="{!reimbursement1}"/>
+                </td>
+            </tr>
+        <tr>
+            <td border="1" style="border-style: solid;border-color: #fff;">
+                保單貨幣：
+            </td>
+            <td border="1" style="border-style: solid;border-color: #fff;">
+                港幣
+            </td>
+            <td border="1" style="border-style: solid;border-color: #fff;">
+                每年最高賠償額：
+            </td>
+            <td border="1" style="border-style: solid;border-color: #fff;">
+                <apex:outputText value="{!IF(BLANKVALUE(annualLimitPH, 0) > 0, '{0, number, ###,###,###,##0}', '-')}" >
+                       <apex:param value="{!annualLimitPH}"/>
+                </apex:outputText>
+            </td>
+        </tr>
+        <tr>
+            <td  rowspan="{!ProductAdult}" border="1" style="border-style: solid;border-color: #fff;">
+               自選保障：
+            </td>
+            <td colspan="3" border="1" style="border-style: solid;border-color: #fff;{!if(ProductAdult>1,'display:none;','')}">
+                {!NA}  
+            </td>
+        </tr>
+        <apex:repeat value="{!RiderListPH}" var="rider">
+           <tr>
+              <td colspan="3" border="1" style="border-style: solid;border-color: #fff;">              
+                  <apex:outputText value="{!rider.name}"/>
+                  &nbsp;-&nbsp;
+                  <apex:outputText value="{!rider.cur}"/>
+                  &nbsp;（每年）&nbsp;
+                  <apex:outputText value="{!IF(BLANKVALUE(rider.amountA, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                     <apex:param value="{!rider.amountA}"/>
+                  </apex:outputText>
+                  ,&nbsp;（每月）&nbsp;
+                  <apex:outputText value="{!IF(BLANKVALUE(rider.amountM, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                     <apex:param value="{!rider.amountM}"/>
+                  </apex:outputText>                                   
+              </td>
+            </tr>
+        </apex:repeat>
+    </table>
+    <table class="table-content" border="1" cellspacing="0" cellpadding="10" style="width:100%;table-layout: fixed;border-top:none;border-bottom:none;{!NumberAdult}">
+            <tr style="font-weight:bold;">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    保費：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    &nbsp;（每年）港幣&nbsp;
+                    <apex:outputText value="{!IF(BLANKVALUE(QuoteAmountAnnuallyPH, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                    <apex:param value="{!QuoteAmountAnnuallyPH}" />
+                    </apex:outputText>
+                </td>
+                <td colspan="2" border="1" style="border-style: solid;border-color: #fff;">
+                    &nbsp;（每月）港幣&nbsp;
+                    <apex:outputText value="{!IF(BLANKVALUE(QuoteAmountMonthlyPH, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                    <apex:param value="{!QuoteAmountMonthlyPH}"/>
+                    </apex:outputText>
+                </td>
+            </tr>
+        </table>
+        <table class="table-content" border="1" cellspacing="0" cellpadding="10" style="width:100%;table-layout: fixed;border-top:none;border-bottom:none;{!NumberAdult2}">
+            <tr class="table-subtitle">
+                <th colspan="4" style="border-style: solid;border-color: #fff;">
+                    保障摘要（<apex:outputText value="{!perRole2}"/>）
+                </th>
+            </tr>
+            <tr>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    年齡：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!AgeAdult2}"/>
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    性別：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!Gender2}"/>
+                </td>
+            </tr>
+            <tr style="{!if(hasSmoHabit,'','display:none;')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    吸煙習慣：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!SmokerStatus2}"/>
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    保單持有人
+                    （是／否）：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!if(Holder=='是','否','是')}"/>
+                </td>
+            </tr>
+            <tr style="{!if(hasSmoHabit,'display:none;','')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    保單持有人
+                    （是／否）：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;" colspan="3">
+                    <apex:outputText value="{!if(Holder=='是','否','是')}"/>
+                </td>
+            </tr>
+            <tr style="{!if(isElite,'','display:none;')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    年度墊底費：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!if(DifferentPlan == false,Deductible,if(es.Is_Adult_1_the_Policy_Holder__c,PI,PH))}"/>
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    受保地區：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!if(DifferentPlan == false,AreaCoverage,if(es.Is_Adult_1_the_Policy_Holder__c,AreaPI,AreaPH))}"/>
+                </td>
+            </tr>
+            <tr style="{!if(isChoice,'','display:none;')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    計劃級別:
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;" colspan="3">
+                    <apex:outputText value="{!planLevel}"/>
+                </td>           
+            </tr>
+            <tr style="{!if(isPlus || isVHIS,'','display:none;')}">
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        計劃級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        <apex:outputText value="{!planLevelPI}"/>
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        墊底費:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                         <apex:outputText value="{!IF(isVHIS,PI,Deductible)}"/>
+                    </td>
+            </tr>
+            <tr style="{!if(isSCI,'','display:none;')}">
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        計劃級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        <apex:outputText value="{!planLevel}"/>
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        保障級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                         <apex:outputText value="{!levelofCov}"/>
+                    </td>
+            </tr>
+            <tr style="{!if(isDMB,'','display:none;')}">
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        計劃級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;" colspan="3">
+                        <apex:outputText value="{!planlevelPI}"/>
+                    </td>
+            </tr>
+            <tr style="{!if(isPBT || isPBC,'','display:none;')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    計劃級別:
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!planLevelPI}"/>
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    賠償比率:
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                     <apex:outputText value="{!reimbursement2}"/>
+                </td>
+            </tr>
+            <tr>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    保單貨幣：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    港幣
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    每年最高賠償額：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!IF(BLANKVALUE(annualLimitPI, 0) > 0, '{0, number, ###,###,###,##0}', '-')}" >
+                       <apex:param value="{!annualLimitPI}"/>
+                    </apex:outputText>
+                </td>
+            </tr>
+            
+            
+                 <tr>
+                    <td rowspan="{!ProductAdult2}" border="1" style="border-style: solid;border-color: #fff;">
+                        自選保障：
+                    </td>
+                    <td colspan="3" border="1" style="border-style: solid;border-color: #fff;{!if(ProductAdult2>1,'display:none;','')}">
+                        {!NA}                                   
+                    </td>   
+                </tr>
+                <apex:repeat value="{!RiderListPI}" var="rider">
+                   <tr>
+                      <td colspan="3" border="1" style="border-style: solid;border-color: #fff;">              
+                          <apex:outputText value="{!rider.name}"/>
+                          &nbsp;-&nbsp;
+                          <apex:outputText value="{!rider.cur}"/>
+                          &nbsp;（每年）&nbsp;
+                          <apex:outputText value="{!IF(BLANKVALUE(rider.amountA, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                              <apex:param value="{!rider.amountA}"/>
+                          </apex:outputText>
+                          ,&nbsp;（每月）&nbsp;
+                          <apex:outputText value="{!IF(BLANKVALUE(rider.amountM, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                              <apex:param value="{!rider.amountM}"/>
+                          </apex:outputText>                                   
+                       </td>
+                   </tr>
+                </apex:repeat>
+        </table>
+        <table class="table-content" border="1" cellspacing="0" cellpadding="10" style="width:100%;table-layout: fixed;border-top:none;border-bottom:none;{!NumberAdult2}" >
+            <tr style="font-weight:bold;">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    保費：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    &nbsp;（每年）港幣&nbsp;
+                    <apex:outputText value="{!IF(BLANKVALUE(QuoteAmountAnnuallyPI, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                        <apex:param value="{!QuoteAmountAnnuallyPI}" />
+                    </apex:outputText>
+                </td>
+                <td colspan="2" border="1" style="border-style: solid;border-color: #fff;">
+                    &nbsp;（每月）港幣&nbsp;
+                    <apex:outputText value="{!IF(BLANKVALUE(QuoteAmountMonthlyPI, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                        <apex:param value="{!QuoteAmountMonthlyPI}" />
+                    </apex:outputText>
+                </td>
+            </tr>
+        </table>
+        <table class="table-content" border="1" cellspacing="0" cellpadding="10" style="width:100%;table-layout: fixed;border-top:none;border-bottom:none;{!NumberChild1}">
+            <tr>
+                <th class="table-subtitle" style="background-color:#BEBEBE" colspan="4">
+                    保障摘要（<apex:outputText value="{!perRole3}"/>）
+                </th>
+            </tr>
+            <tr style="{!if(hasChildGender,'','display:none;')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    年齡：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!AgeChild1}"/>
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    性別：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!CGender1}"/>
+                </td>
+            </tr>
+            <tr style="{!if(hasChildGender,'display:none;','')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    年齡：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;" colspan="3">
+                    <apex:outputText value="{!AgeChild1}"/>
+                </td>
+            </tr>
+            <tr style="{!if(isElite,'','display:none;')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    年度墊底費：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!if(DifferentPlan == false,Deductible,C1)}"/>
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    受保地區：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!if(DifferentPlan == false,AreaCoverage,AreaC1)}"/>
+                </td>
+            </tr>
+            <tr style="{!if(isChoice,'','display:none;')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    計劃級別:
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;" colspan="3">
+                    <apex:outputText value="{!planLevel}"/>
+                </td>           
+            </tr>
+            <tr style="{!if(isPlus || isVHIS,'','display:none;')}">
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        計劃級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        <apex:outputText value="{!planLevelC1}"/>
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        墊底費:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                         <apex:outputText value="{!IF(isVHIS,C1,Deductible)}"/>
+                    </td>
+            </tr>
+            <tr style="{!if(isSCI,'','display:none;')}">
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        計劃級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        <apex:outputText value="{!planLevel}"/>
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        保障級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                         <apex:outputText value="{!levelofCov}"/>
+                    </td>
+            </tr>
+            <tr style="{!if(isDMB,'','display:none;')}">
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        計劃級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;" colspan="3">
+                        <apex:outputText value="{!planlevelC1}"/>
+                    </td>
+            </tr>
+            <tr style="{!if(isPBT || isPBC,'','display:none;')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    計劃級別:
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!planLevelC1}"/>
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    賠償比率:
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                     <apex:outputText value="{!reimbursement3}"/>
+                </td>
+            </tr>
+            <tr>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    保單貨幣：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    港幣        
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    每年最高賠償額：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!IF(BLANKVALUE(annualLimitC1, 0) > 0, '{0, number, ###,###,###,##0}', '-')}" >
+                       <apex:param value="{!annualLimitC1}"/>
+                    </apex:outputText>
+                </td>
+            </tr>
+            
+            
+            <tr>
+                 <td rowspan="{!ProductChild1}" border="1" style="border-style: solid;border-color: #fff;">
+                    自選保障：
+                </td>
+                <td colspan="3" border="1" style="border-style: solid;border-color: #fff;{!if(ProductChild1>1,'display:none;','')}">              
+                    {!NA}                                   
+                </td> 
+            </tr>
+           <apex:repeat value="{!RiderListC1}" var="rider">
+               <tr>
+                  <td colspan="3" border="1" style="border-style: solid;border-color: #fff;">              
+                      <apex:outputText value="{!rider.name}"/>
+                      &nbsp;-&nbsp;
+                      <apex:outputText value="{!rider.cur}"/>
+                      &nbsp;（每年）&nbsp;
+                      <apex:outputText value="{!IF(BLANKVALUE(rider.amountA, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                          <apex:param value="{!rider.amountA}"/>
+                      </apex:outputText>
+                      ,&nbsp;（每月）&nbsp;
+                      <apex:outputText value="{!IF(BLANKVALUE(rider.amountM, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                          <apex:param value="{!rider.amountM}"/>
+                      </apex:outputText>                                   
+                   </td>
+               </tr>
+            </apex:repeat>
+        </table>
+        <table class="table-content" border="1" cellspacing="0" cellpadding="10" style="width:100%;table-layout: fixed;border-top:none;border-bottom:none;{!NumberChild1}">
+            <tr style="font-weight:bold;">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    保費：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    &nbsp;（每年）港幣&nbsp;
+                    <apex:outputText value="{!IF(BLANKVALUE(QuoteAmountAnnuallyC1, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                    <apex:param value="{!QuoteAmountAnnuallyC1}" />
+                    </apex:outputText>
+                </td>
+                <td colspan="2" border="1" style="border-style: solid;border-color: #fff;">
+                    &nbsp;（每月）港幣&nbsp;
+                    <apex:outputText value="{!IF(BLANKVALUE(QuoteAmountMonthlyC1, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                    <apex:param value="{!QuoteAmountMonthlyC1}" />
+                    </apex:outputText>
+                </td>
+            </tr>
+        </table>
+        
+        <table class="table-content" border="1" cellspacing="0" cellpadding="10" style="width:100%;table-layout: fixed;border-top:none;border-bottom:none;{!NumberChild2}">
+            <tr>
+                <th class="table-subtitle" border="1" style="border-style: solid;border-color: #fff;" colspan="4">
+                    保障摘要（<apex:outputText value="{!perRole4}"/>）
+                </th>
+            </tr>
+            <tr style="{!if(hasChildGender,'','display:none;')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    年齡：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!AgeChild2}"/>
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    性別：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!CGender2}"/>
+                </td>
+            </tr>
+            <tr style="{!if(hasChildGender,'display:none;','')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    年齡：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;" colspan="3">
+                    <apex:outputText value="{!AgeChild2}"/>
+                </td>
+            </tr>
+            <tr style="{!if(isElite,'','display:none;')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    年度墊底費：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!if(DifferentPlan == false,Deductible,C2)}"/>
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    受保地區：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!if(DifferentPlan == false,AreaCoverage,AreaC2)}"/>
+                </td>
+            </tr>
+            <tr style="{!if(isChoice,'','display:none;')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    計劃級別:
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;" colspan="3">
+                    <apex:outputText value="{!planLevel}"/>
+                </td>           
+            </tr>
+            <tr style="{!if(isPlus || isVHIS,'','display:none;')}">
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        計劃級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        <apex:outputText value="{!planLevelC2}"/>
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        墊底費:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                         <apex:outputText value="{!IF(isVHIS,C2,Deductible)}"/>
+                    </td>
+            </tr>
+            <tr style="{!if(isSCI,'','display:none;')}">
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        計劃級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        <apex:outputText value="{!planLevel}"/>
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        保障級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                         <apex:outputText value="{!levelofCov}"/>
+                    </td>
+            </tr>
+            <tr style="{!if(isDMB,'','display:none;')}">
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        計劃級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;" colspan="3">
+                        <apex:outputText value="{!planlevelC2}"/>
+                    </td>
+            </tr>
+            <tr style="{!if(isPBT || isPBC,'','display:none;')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    計劃級別:
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!planLevelC2}"/>
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    賠償比率:
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                     <apex:outputText value="{!reimbursement4}"/>
+                </td>
+            </tr>
+            <tr>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    保單貨幣：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    港幣
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    每年最高賠償額：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!IF(BLANKVALUE(annualLimitC2, 0) > 0, '{0, number, ###,###,###,##0}', '-')}" >
+                       <apex:param value="{!annualLimitC2}"/>
+                    </apex:outputText>
+                </td>
+            </tr>
+            <tr>
+                <td rowspan="{!ProductChild2}" border="1" style="border-style: solid;border-color: #fff;">
+                    自選保障：
+                </td>
+                <td colspan="3" border="1" style="border-style: solid;border-color: #fff;{!if(ProductChild2>1,'display:none;','')}">              
+                    {!NA}                                   
+                </td> 
+            </tr>
+            <apex:repeat value="{!RiderListC2}" var="rider">
+               <tr>
+                  <td colspan="3" border="1" style="border-style: solid;border-color: #fff;">              
+                      <apex:outputText value="{!rider.name}"/>
+                      &nbsp;-&nbsp;
+                      <apex:outputText value="{!rider.cur}"/>
+                      &nbsp;（每年）&nbsp;
+                      <apex:outputText value="{!IF(BLANKVALUE(rider.amountA, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                          <apex:param value="{!rider.amountA}"/>
+                      </apex:outputText>
+                      ,&nbsp;（每月）&nbsp;
+                      <apex:outputText value="{!IF(BLANKVALUE(rider.amountM, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                          <apex:param value="{!rider.amountM}"/>
+                      </apex:outputText>                                   
+                   </td>
+               </tr>
+            </apex:repeat>  
+        </table>
+        <table class="table-content" border="1" cellspacing="0" cellpadding="10" style="width:100%;table-layout: fixed;border-top:none;border-bottom:none;{!NumberChild2}">    
+            <tr style="font-weight:bold;">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    保費：
+                </td>
+                  <td border="1" style="border-style: solid;border-color: #fff;">
+                    &nbsp;（每年）港幣&nbsp;
+                    <apex:outputText value="{!IF(BLANKVALUE(QuoteAmountAnnuallyC2, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                        <apex:param value="{!QuoteAmountAnnuallyC2}" />
+                    </apex:outputText>
+                </td>
+                <td colspan="2" border="1" style="border-style: solid;border-color: #fff;">
+                    &nbsp;（每月）港幣&nbsp;
+                    <apex:outputText value="{!IF(BLANKVALUE(QuoteAmountMonthlyC2, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                        <apex:param value="{!QuoteAmountMonthlyC2}" />
+                    </apex:outputText>
+                </td>
+            </tr>
+        </table> 
+<table class="table-content" border="1" cellspacing="0" cellpadding="10" style="width:100%;table-layout: fixed;border-top:none;border-bottom:none;{!NumberChild3}">
+        <tr>
+            <th class="table-subtitle" border="1" style="border-style: solid;border-color: #fff;" colspan="4">
+             保障摘要（<apex:outputText value="{!perRole5}"/>）
+                </th>
+            </tr>
+            <tr style="{!if(hasChildGender,'','display:none;')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    年齡：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!AgeChild3}"/>
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    性別：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!CGender3}"/>
+                </td>
+            </tr>
+            <tr style="{!if(hasChildGender,'display:none;','')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    年齡：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;" colspan="3">
+                    <apex:outputText value="{!AgeChild3}"/>
+                </td>
+            </tr>
+            <tr style="{!if(isElite,'','display:none;')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    年度墊底費：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!if(DifferentPlan == false,Deductible,C3)}"/>
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    受保地區：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!if(DifferentPlan == false,AreaCoverage,AreaC3)}"/>
+                </td>
+            </tr>
+            <tr style="{!if(isChoice,'','display:none;')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    計劃級別:
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;" colspan="3">
+                    <apex:outputText value="{!planLevel}"/>
+                </td>           
+            </tr>
+            <tr style="{!if(isPlus || isVHIS,'','display:none;')}">
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        計劃級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        <apex:outputText value="{!planLevelC3}"/>
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        墊底費:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                         <apex:outputText value="{!IF(isVHIS,C3,Deductible)}"/>
+                    </td>
+            </tr>
+            <tr style="{!if(isSCI,'','display:none;')}">
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        計劃級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        <apex:outputText value="{!planLevel}"/>
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        保障級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                         <apex:outputText value="{!levelofCov}"/>
+                    </td>
+            </tr>
+            <tr style="{!if(isDMB,'','display:none;')}">
+                    <td border="1" style="border-style: solid;border-color: #fff;">
+                        計劃級別:
+                    </td>
+                    <td border="1" style="border-style: solid;border-color: #fff;" colspan="3">
+                        <apex:outputText value="{!planlevelC3}"/>
+                    </td>
+            </tr>
+            <tr style="{!if(isPBT || isPBC,'','display:none;')}">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    計劃級別:
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!planLevelC3}"/>
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    賠償比率:
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                     <apex:outputText value="{!reimbursement5}"/>
+                </td>
+            </tr>
+            <tr>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    保單貨幣：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    港幣
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    每年最高賠償額：
+                </td>
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    <apex:outputText value="{!IF(BLANKVALUE(annualLimitC3, 0) > 0, '{0, number, ###,###,###,##0}', '-')}" >
+                       <apex:param value="{!annualLimitC3}"/>
+                    </apex:outputText>
+                </td>
+            </tr>
+            <tr>
+               <td rowspan="{!ProductChild3}" border="1" style="border-style: solid;border-color: #fff;">
+                    自選保障：
+                </td>
+                <td colspan="3" border="1" style="border-style: solid;border-color: #fff;{!if(ProductChild3>1,'display:none;','')}">              
+                    {!NA}                                   
+                </td>
+            </tr>
+            <apex:repeat value="{!RiderListC3}" var="rider">
+               <tr>
+                  <td colspan="3" border="1" style="border-style: solid;border-color: #fff;">              
+                      <apex:outputText value="{!rider.name}"/>
+                      &nbsp;-&nbsp;
+                      <apex:outputText value="{!rider.cur}"/>
+                      &nbsp;（每年）&nbsp;
+                      <apex:outputText value="{!IF(BLANKVALUE(rider.amountA, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                          <apex:param value="{!rider.amountA}"/>
+                      </apex:outputText>
+                      ,&nbsp;（每月）&nbsp;
+                      <apex:outputText value="{!IF(BLANKVALUE(rider.amountM, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                          <apex:param value="{!rider.amountM}"/>
+                      </apex:outputText>                                   
+                   </td>
+               </tr>
+            </apex:repeat> 
+        </table>
+        <table class="table-content" border="1" cellspacing="0" cellpadding="10" style="width:100%;table-layout: fixed;border-top:none;border-bottom:none;{!NumberChild3}">   
+            <tr style="font-weight:bold;">
+                <td border="1" style="border-style: solid;border-color: #fff;">
+                    保費：
+                </td>
+                 <td border="1" style="border-style: solid;border-color: #fff;">
+                    &nbsp;（每年）港幣&nbsp;
+                    <apex:outputText value="{!IF(BLANKVALUE(QuoteAmountAnnuallyC3, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                        <apex:param value="{!QuoteAmountAnnuallyC3}" />
+                    </apex:outputText>
+                </td>
+                <td colspan="2" border="1" style="border-style: solid;border-color: #fff;">
+                    &nbsp;（每月）港幣&nbsp;
+                    <apex:outputText value="{!IF(BLANKVALUE(QuoteAmountMonthlyC3, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                        <apex:param value="{!QuoteAmountMonthlyC3}" />
+                    </apex:outputText>
+                </td>
+            </tr>
+        </table> 
+        
+        <!-- Rancho_JOBR365_20240405 - elite 360 broker get quote -->
+        <apex:outputPanel rendered="{!es.Basic_Plan_Code__c != 'NEL2'}">
+            <table class="table-content" border="1" cellspacing="0" cellpadding="10" style="width:100%;table-layout: fixed;border-top:none;border-bottom:none">          
+                <tr>
+                    <th class="table-title" style="background-color:#000080;color:#FFFFFF" colspan="4">
+                        報價摘要
+                    </th>
+                </tr>    
+                <tr>
+                    <th border="1" style="border-style: solid;border-color: #fff;">
+                        總保費：
+                    </th>
+                    <th border="1" style="border-style: solid;border-color: #fff;">
+                        &nbsp;（每年）港幣&nbsp;
+                        <apex:outputText value="{!IF(BLANKVALUE(OriginalAnnually, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                        <apex:param value="{!OriginalAnnually}" />
+                        </apex:outputText>
+                    </th>
+                    <th colspan="2" border="1" style="border-style: solid;border-color: #fff;">
+                        &nbsp;（每月）港幣&nbsp;
+                        <apex:outputText value="{!IF(BLANKVALUE(OriginalMonthly, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                        <apex:param value="{!OriginalMonthly}" />
+                        </apex:outputText>
+                    </th>
+                </tr>
+                <tr>
+                    <th border="1" style="border-style: solid;border-color: #fff;">
+                        折扣後的總保費：
+                    </th>
+                    <th border="1" style="border-style: solid;border-color: #fff;">
+                        &nbsp;（每年）港幣&nbsp;
+                        <apex:outputText value="{!IF(BLANKVALUE(QuoteAmountAnnually, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                        <apex:param value="{!QuoteAmountAnnually}" />
+                        </apex:outputText>
+                    </th>
+                    <th colspan="2" border="1" style="border-style: solid;border-color: #fff;">
+                        &nbsp;（每月）港幣&nbsp;
+                        <apex:outputText value="{!IF(BLANKVALUE(QuoteAmountMonthly, 0) > 0, '{0, number, ###,###,###,##0.00}', '-')}" >
+                        <apex:param value="{!QuoteAmountMonthly}" />
+                        </apex:outputText>
+                    </th>
+                </tr>
+            </table>
+        </apex:outputPanel>
+    <br/>
+    <div class="justify small-text" style="padding-top: 20px">
+        <apex:outputText >
+        以上保費價格為保單合約的報價，僅供參考，最終金額可能與以上報價存在差異。 
+        </apex:outputText>
+    </div><br/>
+    <div class="justify small-text" style="padding-bottom: 20px">
+        <apex:outputText >
+        以上保費金額並不包括由保險業監管局徵收的保費徵費。
+        </apex:outputText>
+    </div><br/><br/>
+    
+    <table class="table-content" border="1" cellspacing="0" cellpadding="10" style="border-style: solid;border-color: #fff;width:100%;table-layout: fixed">
+        <tr>
+            <th class="table-title" border="1" colspan="2" style="border-style: solid;border-color: #fff;">誠意為您預備</th>
+        </tr>
+        <tr>
+            <td border="1" style="border-style: solid;border-color: #fff;">公司名稱：
+                <apex:outputText value="{!CompanyName}"/>
+            </td>
+            <td border="1" style="border-style: solid;border-color: #fff;">保險代理姓名：
+                <apex:outputText value="{!UserName}"/>
+            </td>
+        </tr>
+        <tr>
+            <td border="1" style="border-style: solid;border-color: #fff;">保險代理聯絡電話：
+                <apex:outputText value="{!CountryName}"/>
+            </td>
+            <td border="1" style="border-style: solid;border-color: #fff;">
+                <apex:outputText value="保險代理電郵地址："/>
+                <apex:outputText style="word-wrap:break-word;" value="{!Email}"/>
+            </td>
+        </tr>
+        <tr>
+            <td border="1" style="border-style: solid;border-color: #fff;">報價日期：
+                <apex:outputText value="{0,date,yyyy/MM/dd}">
+                    <apex:param value="{!LastModifiedDate}" />
+                </apex:outputText>
+            </td>
+            <td border="1" style="border-style: solid;border-color: #fff;">報價參考編號：
+                 <apex:outputText value="{!Reference}"/>
+            </td>
+        </tr>
+    </table>
+    
+    <!-- <div  class="cigna-fg-orange-medium HeadText" style="page-break-before: always;">
+        <apex:outputText >
+             HOW WOULD ELITE MEDICAL PLAN BENEFIT YOU?
+        </apex:outputText>
+    </div><br/>
+   <div class="SBodyText" style="line-height:21px;margin:4px;font-family:Arial Unicode MS">
+       <apex:outputText >
+           &#10003; 所有基本福利和可选门诊福利的年度上限<br/> 
+           &#10003; 所有基本福利和大部分可选福利的终身不受限制<br/>
+           &#10003; 保证可延寿至100岁，无论最终你的健康状况如何变化<br/>
+           &#10003; 灵活的选择，以满足您的需求
+               
+       </apex:outputText>
+    </div>
+    <div style="text-indent:2em;margin:4px;font-family:Arial Unicode MS">
+       <apex:outputText >
+            • 3 覆盖范围选择        
+       </apex:outputText>       
+    </div>
+    <div style="text-indent:2em;margin:4px;font-family:Arial Unicode MS">
+       <apex:outputText >
+            • 2 住宿的房间类型
+       </apex:outputText>       
+    </div>
+    <div style="text-indent:2em;margin:4px;font-family:Arial Unicode MS">
+       <apex:outputText >
+            • 4 年度扣除选项
+       </apex:outputText>       
+    </div>
+    <div class="SBodyText" style="font-family:Arial Unicode MS">
+        <apex:outputText >
+        &#10003; 各种可选的好处
+        </apex:outputText>
+    </div>
+    <div style="text-indent:2em;margin:4px;font-family:Arial Unicode MS">
+       <apex:outputText >
+           • 门诊的好处    
+       </apex:outputText>       
+    </div>
+    <div style="text-indent:2em;margin:4px;font-family:Arial Unicode MS">
+       <apex:outputText >     
+           • 药店的好处
+       </apex:outputText>       
+    </div>
+    <div style="text-indent:2em;margin:4px;font-family:Arial Unicode MS">
+       <apex:outputText >
+           • 牙科福利       
+       </apex:outputText>       
+    </div>
+    <div style="text-indent:2em;margin:4px;font-family:Arial Unicode MS">
+       <apex:outputText >
+           • 扣除折扣的好处       
+       </apex:outputText>       
+    </div>
+    <div style="text-indent:2em;margin:4px;font-family:Arial Unicode MS">
+       <apex:outputText >
+           • 癌症免保费      
+       </apex:outputText>       
+    </div><br/>
+    <div style="font-family:Arial Unicode MS">
+        <apex:outputText >
+         备注:
+        </apex:outputText>
+    </div><br/>
+     <div style="font-family:Arial Unicode MS">
+         <apex:outputText >
+             1. 寿命限制只适应于可选的药品。<br/>
+             2. 一旦达到免赔额，我们将开始支付所覆盖的医疗费用。免赔额将由您或您的其他保险计划承担。
+         </apex:outputText>      
+    </div><br/> -->
+   <div  class="cigna-fg-blue-dark HeadText" style="page-break-before: always;" >
+        <apex:outputText >
+            信諾為您而設的額外服務
+        </apex:outputText>
+    </div><br/><br/>
+    <div class="BodyText justify">
+        <apex:outputText >
+            信諾為您提供一系列增值服務，使您的投保體驗倍感貼心。
+        </apex:outputText>      
+    </div><br/><br/>
+    
+    <div>
+        <table class="table-highlight" border="5" cellspacing="0" cellpadding="10" style="width:100%;table-layout: fixed" align="center">
+            <tr  class="table-highlight">
+                <td class="table-highlight" style="text-align:center;vertical-align:text-top;">
+                    <apex:image value="{!$Resource.teleservice}" width="100px"/>
+                    <p style="font-weight:bold">
+                        信諾視像診療服務  
+                    </p>
+                    <p class= "small-text">
+                        隨時隨地遙距接受香港的普通科或
+                        專科醫生診症，安排藥物即日送遞到家中。
+                    </p>
+                </td>
+               
+                <td class="table-highlight" style="text-align:center;vertical-align:text-top;">
+                    <apex:image value="{!$Resource.company}"   width="100px"/>
+                    <p style="font-weight:bold">
+                        MyCigna  
+                    </p>
+                    <p class= "small-text">
+                        輕鬆管理您的保單，隨時隨地
+                        查閱保單內容及申請索償。
+                    </p>
+                </td>              
+            </tr>
+            <tr  class="table-highlight">
+                <td class="table-highlight" style="text-align:center;vertical-align:text-top;">
+                    <apex:image value="{!$Resource.hospital}"   width="100px"/>
+                    <p style="font-weight:bold">
+                        「入院免按金、出院免找數」服務  
+                    </p>
+                    <p class= "small-text">
+                        您將不需向醫院支付任何按金，
+                        或擔心出院後如何申請索償。
+                    </p>
+                </td>
+               
+                <td  class="table-highlight" style="text-align:center;vertical-align:text-top;">
+                    <apex:image value="{!$Resource.phone}"  width="100px"/>
+                    <p style="font-weight:bold">
+                        健康及保單支援專線  
+                    </p>
+                    <p class= "small-text">
+                        您可透過我們的熱線，了解相關手術的醫療
+                        分類，以及您的醫療保險計劃的相關保障。
+                    </p> 
+                </td>              
+            </tr>
+        </table> 
+    </div>   
+    <div class="small-text">
+        <br/><br/>
+        <apex:outputText >備註：</apex:outputText>    
+        <br/>
+        <apex:outputText >
+            以上服務只適用於指定信諾醫療保障計劃。詳情請參閱相關產品小冊子及保單條款。
+        </apex:outputText>
+    </div><br/>
+    <div  class="cigna-fg-blue-dark HeadText" style="page-break-before: always;">
+        <apex:outputText >
+            醫療服務經理：照顧您的健康
+        </apex:outputText>
+        </div><br/><br/>
+    <div style="text-align:justify;">
+        <apex:outputText >
+            我們的醫療服務經理由具有豐富臨床經驗的註冊護士擔任，從治療前的準備以至治療期間或治療後
+            的護理，為您及家人提供可信賴及專業的支援，讓您可安心休養，盡快康復。
+        </apex:outputText>
+    </div><br/><br/>
+    
+    <div>
+        <table cellspacing="0" cellpadding="10" style="width:100%;table-layout: fixed">
+            <tr class ="table-process">
+               <td class="cigna-bg-blue-medium table-process" style="font-weight:bold;color:white;border-color: #188CCC;width:30%">
+                    治療前
+               </td>
+                <td style ="width:5%;font-size:15pt;text-align:center;vertical-align:text-top;" rowspan="2">
+                    &#9654;
+                </td>
+                <td class="cigna-bg-blue-medium table-process" style="font-weight:bold;color:white;border-color: #188CCC;width:30%">
+                    治療期間       
+                 </td>
+                 <td style ="width:5%;font-size:15pt;text-align:center;vertical-align:text-top;" rowspan="2">
+                    &#9654;
+                </td>
+                 <td class="cigna-bg-blue-medium table-process" style="font-weight:bold;color:white;border-color: #188CCC;width:30%">
+                    治療後
+                </td>
+            </tr> 
+            
+            <tr class ="table-process">
+                <td class ="table-process" style="border-color: #188CCC;">
+                    醫療服務經理會提供專業
+                    的建議。<br/><br/>
+                    醫療服務經理會為您安排
+                    第二醫療意見服務，並為
+                    您提供專科轉介服務。
+                </td>
+                <td class ="table-process" style="border-color: #188CCC;">
+                    提供一對一醫療服務經理
+                    支援服務。<br/><br/>
+                    醫療服務經理將解釋醫療
+                    專業字詞，讓您客觀地理
+                    解治療方案的效益、風險
+                    及副作用。
+                </td>
+                <td class ="table-process" style="border-color: #188CCC;">
+                    如有需要，醫療服務經理
+                    可代為安排家中看護服務，
+                    並在整個護理以至康復的
+                    過程中，為您及家人提供
+                    情緒支援。<br/><br/>
+                    按情況需要，醫療服務經
+                    理將提供陪伴出院服務，
+                    與您的醫生跟進安排。
+                </td>
+            </tr>
+        </table>
+    </div>
+    </div>
+</apex:page>

@@ -1,0 +1,924 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" controller="GenericEsalesCtrl">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+    </head>
+    <apex:form id="confirmationfrm" >
+        <apex:actionFunction action="{!nextStep}" name="nextStep" reRender="wrapper,wrapperApp,errmessage" />        
+        <apex:outputPanel id="confirmation-section" rendered="{!currentStep == STEP_CONFIRMATION}" styleClass="bs row" layout="block">
+        
+        <!--Overall AUW Result Panel--> 
+        <apex:outputPanel id="overall-result-panel">
+            <div class="bs col-xs-12 form-horizontal">
+               <div class="bs" style="padding-bottom: 20px;">
+                   <p><h4 class="bs cigna-fg-blue-medium">{!$Label.Application_Result}</h4></p>                   
+                   <!--Customer Portal Overall Result-->
+                   <apex:outputPanel rendered="{!isCustomerPortal}">
+                        <!--<apex:outputPanel rendered="{!personPH.AUW_Result__c == 'Accept' && txn.AUW_Overall_Result__c == 'Accept'}" layout="none">-->
+                        <apex:outputPanel rendered="{!txn.AUW_Overall_Result__c == 'Accept'}" layout="none">
+                            <apex:outputPanel rendered="{!hasExclusion}" layout="none">
+                                <p>{!$Label.eSales_AUW_result_with_Exclusion}</p>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!hasDecline}" layout="none">
+                                <p>{!$Label.eSales_AUW_result_with_Decline}</p>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!hasExclusion || hasDecline}" layout="none">
+                                <p>{!$Label.eSales_AUW_result_Note1}</p>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!hasExclusionC1 || hasExclusionC2 || hasExclusionC3}" layout="none">
+                                <p>{!$Label.eSales_AUW_result_Note2}</p>
+                            </apex:outputPanel>
+                            <!--apex:outputPanel rendered="{!!hasDecline && !hasExclusion}" layout="none"--> <!--commented SUQ Connor-->
+                            <apex:outputPanel rendered="{!!hasDecline && !hasExclusion && !hasLoading}" layout="none"> <!--SUQ Connor-->
+                                <p>{!$Label.eSales_AUW_result_Accept}</p>
+                            </apex:outputPanel>
+                            <!--SUQ Connor-->
+                            <apex:outputPanel rendered="{!!hasDecline && !hasExclusion && hasLoading}" layout="none">
+                                <p>{!$Label.eSales_AUW_result_PH_refer}</p>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!(personPH.AUW_Result__c == 'Accept' || (!personPH.Is_Person_Insured__c && personSP.AUW_Result__c == 'Accept'))  && txn.AUW_Overall_Result__c == 'Referred'}" layout="none">
+                            <apex:outputPanel rendered="{!hasExclusion}" layout="none">
+                                <p>{!$Label.eSales_AUW_result_refer_with_Exclusion}</p>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!!hasExclusion}" layout="none">
+                                <p>{!$Label.eSales_AUW_result_with_refer}</p>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!hasExclusion || hasDecline || hasAccept}" layout="none">
+                                <p>{!$Label.eSales_AUW_result_Note1}</p>
+                            </apex:outputPanel>
+                            <apex:outputPanel layout="none">
+                                <p>{!$Label.eSales_AUW_result_Note2}</p>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+
+                        <apex:outputPanel rendered="{! !(personPH.AUW_Result__c == 'Accept' || (!personPH.Is_Person_Insured__c && personSP.AUW_Result__c == 'Accept')) && txn.AUW_Overall_Result__c == 'Referred'}" layout="none">
+                            <p>{!$Label.eSales_AUW_result_PH_refer}</p>
+                        </apex:outputPanel>
+                        <!--<apex:outputPanel rendered="{!personPH.AUW_Result__c == 'Decline'}" layout="none">-->
+                        <apex:outputPanel rendered="{!txn.AUW_Overall_Result__c == 'Decline'}" layout="none">
+                            <p>{!$Label.eSales_AUW_result_PH_Decline}</p>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    
+                    <!--Broker Portal Overall Result-->
+                    <apex:outputPanel rendered="{!!isCustomerPortal}">
+                        <!--<apex:outputPanel rendered="{!(personPH.AUW_Result__c == 'Accept' || (!personPH.Is_Person_Insured__c && personSP.AUW_Result__c == 'Accept')) && txn.AUW_Overall_Result__c == 'Accept'}" layout="none">-->
+                        <apex:outputPanel rendered="{!txn.AUW_Overall_Result__c == 'Accept'}" layout="none">
+                            <!--apex:outputPanel rendered="{!hasExclusion}" layout="none"--><!--commentted by application result change SUQ Connor 11/08/2021-->
+                            <apex:outputPanel rendered="{! hasExclusion && !hasLoading}" layout="none">
+                                <p>{!$Label.eSales_Brk_AUW_Result_with_Exclusion}</p>
+                            </apex:outputPanel>
+                            <!--application result change SUQ Connor 11/08/2021 start-->
+                            <apex:outputPanel rendered="{! hasExclusion && hasLoading}" layout="none">
+                                <p>{!$Label.eSales_AUW_Result_with_Exclusion_Loading}</p>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{! !hasExclusion && hasLoading}" layout="none">
+                                <p>{!$Label.eSales_AUW_Result_Accept_Loading}</p>
+                            </apex:outputPanel>
+                            <!--application result change SUQ Connor 11/08/2021 end-->
+                            <apex:outputPanel rendered="{!hasDecline}" layout="none">
+                                <p>{!$Label.eSales_Brk_AUW_Result_with_Decline}</p>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!hasExclusion || hasDecline}" layout="none">
+                                <p>{!$Label.eSales_Brk_AUW_Result_Note1}</p>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!hasExclusionC1 || hasExclusionC2 || hasExclusionC3}" layout="none">
+                                <p>{!$Label.eSales_Brk_AUW_Result_Note2}</p>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!!hasDecline && !hasExclusion}" layout="none">
+                                <p>{!$Label.eSales_Brk_AUW_Result_Accept}</p>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <!--<apex:outputPanel rendered="{!(personPH.AUW_Result__c == 'Accept' || (!personPH.Is_Person_Insured__c && personSP.AUW_Result__c == 'Accept')) && txn.AUW_Overall_Result__c == 'Referred'}" layout="none">-->
+                        <apex:outputPanel rendered="{!(personPH.AUW_Result__c == 'Accept' || (!personPH.Is_Person_Insured__c && personSP.AUW_Result__c == 'Accept')) && txn.AUW_Overall_Result__c == 'Referred'}" layout="none">
+                            <p>{!$Label.eSales_Brk_AUW_Result_Refer1}</p>
+                            <p>{!$Label.eSales_Brk_AUW_Result_Refer2}</p>
+                            <p>{!$Label.eSales_Brk_AUW_Result_Note2}</p>
+                            <!--application result change SUQ Connor 11/08/2021 start-->
+                            <apex:outputPanel rendered="{! hasLoading}" layout="none">
+                                <p>{!$Label.eSales_AUW_Result_Accept_Loading}</p>
+                            </apex:outputPanel>
+                            <!--application result change SUQ Connor 11/08/2021 end-->
+                            <br/>
+                            <p>{!$Label.eSales_Brk_AUW_Result_Refer3}</p>
+                        </apex:outputPanel>
+                        <!--<apex:outputPanel rendered="{!(personPH.AUW_Result__c  == 'Referred' || (!personPH.Is_Person_Insured__c && personSP.AUW_Result__c == 'Referred'))}" layout="none">-->
+                        <apex:outputPanel rendered="{! !(personPH.AUW_Result__c == 'Accept' || (!personPH.Is_Person_Insured__c && personSP.AUW_Result__c == 'Accept')) && txn.AUW_Overall_Result__c == 'Referred'}" layout="none">
+                            <p>{!$Label.eSales_Brk_AUW_Result_Refer1}</p>
+                            <p>{!$Label.eSales_Brk_AUW_Result_Refer2}</p>
+                            <br/>
+                            <p>{!$Label.eSales_Brk_AUW_Result_Refer3}</p>
+                        </apex:outputPanel>
+
+                        <!--<apex:outputPanel rendered="{!(personPH.AUW_Result__c  == 'Decline' || (!personPH.Is_Person_Insured__c && personSP.AUW_Result__c == 'Decline'))}" layout="none">-->
+                        <apex:outputPanel rendered="{!txn.AUW_Overall_Result__c == 'Decline'}" layout="none">
+                            <p>{!$Label.eSales_Brk_AUW_Result_Decline}</p>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+               </div>
+            </div>
+        </apex:outputPanel>
+        
+        <!--Personal Information Panel--> 
+        <!-- Add by Manuel to use list for sequence show -->
+        <apex:outputPanel id="personnal-information-panel" > 
+            <apex:repeat value="{!lsKeyPI}" var="key">
+                <div class="bs col-xs-12 form-horizontal">
+                    <div class="bs" style="padding-bottom: 20px;">
+                        <h4 class="bs cigna-fg-blue-medium">{!IF(key==ESALES_PI_KEY_PH,IF(personInsuredMap[key].Is_Person_Insured__c, $Label.Policy_Holder_s_Application, $Label.Policy_Holder_s_Information),
+                                                                IF(key==ESALES_PI_KEY_SP,$Label.Esales_Adult_2_s_Application,
+                                                                    IF(key==ESALES_PI_KEY_CH1,$Label.Child_1_s_Application,
+                                                                        IF(key==ESALES_PI_KEY_CH2,$Label.Child_2_s_Application,$Label.Child_3_s_Application))))}
+                        </h4>
+                      
+                        <apex:outputPanel id="personal-auw-result" styleClass="bs form-group" layout="block" rendered="{!personInsuredMap[key].Is_Person_Insured__C}">
+                            <div class="bs col-sm-3">
+                                <apex:outputLabel value="{!$Label.Application_Result}" for="Confirm-Application-Result"/>
+                            </div>
+                            <div class="bs col-sm-9">
+                                <!--apex:outputPanel rendered="{!personInsuredMap[key].AUW_Result__c == 'Accept' && personInsuredMap[key].Exclusion__c==null}" layout="none">
+                                    <p><i class="bs cigna-fg-green-medium fa fa-check-circle fg-lg"></i> {!$Label.AUW_Overall_Accept}</p>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!personInsuredMap[key].AUW_Result__c == 'Accept' && personInsuredMap[key].Exclusion__c!=null}" layout="none">
+                                    <p><i class="bs cigna-fg-green-medium fa fa-check-circle fg-lg"></i> {!$Label.AUW_Overall_Accept_With_Condition}</p>
+                                </apex:outputPanel--><!--commentted by Connor SUQ  09/08/2021-->
+                                <!--ph application result change 09/08/2021 Connor SUQ start-->
+                                <apex:outputPanel rendered="{!personInsuredMap[key].AUW_Result__c == 'Accept' && personInsuredMap[key].Exclusion__c==null && (personInsuredMap[key].Loading_Rate__c==null || personInsuredMap[key].Loading_Rate__c==0)}" layout="none">  
+                                    <p><i class="bs cigna-fg-green-medium fa fa-check-circle fg-lg"></i> {!$Label.AUW_Overall_Accept}</p>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!personInsuredMap[key].AUW_Result__c == 'Accept' && personInsuredMap[key].Exclusion__c!=null && (personInsuredMap[key].Loading_Rate__c==null || personInsuredMap[key].Loading_Rate__c==0)}" layout="none">
+                                    <p><i class="bs cigna-fg-green-medium fa fa-check-circle fg-lg"></i> {!$Label.AUW_Overall_Accept_With_Condition}</p>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{! isCustomerPortal && personInsuredMap[key].AUW_Result__c == 'Accept' && personInsuredMap[key].Exclusion__c==null && personInsuredMap[key].Loading_Rate__c!=null && personInsuredMap[key].Loading_Rate__c>0}" layout="none"> 
+                                    <p><i class="ci-hk-clipboard" style="color: #E35205 !important;"></i>{!$Label.AUW_Overall_Refer}</p>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{! !isCustomerPortal && personInsuredMap[key].AUW_Result__c == 'Accept' && personInsuredMap[key].Exclusion__c==null && personInsuredMap[key].Loading_Rate__c!=null && personInsuredMap[key].Loading_Rate__c>0}" layout="none"> 
+                                    <p><i class="bs cigna-fg-green-medium fa fa-check-circle fg-lg"></i>{!$Label.AUW_Overall_Accept_With_Loading}</p>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{! isCustomerPortal && personInsuredMap[key].AUW_Result__c == 'Accept' && personInsuredMap[key].Exclusion__c!=null && personInsuredMap[key].Loading_Rate__c!=null && personInsuredMap[key].Loading_Rate__c>0}" layout="none"> 
+                                    <p><i class="ci-hk-clipboard" style="color: #E35205 !important;"></i> {!$Label.AUW_Overall_Refer}</p>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{! !isCustomerPortal && personInsuredMap[key].AUW_Result__c == 'Accept' && personInsuredMap[key].Exclusion__c!=null && personInsuredMap[key].Loading_Rate__c!=null && personInsuredMap[key].Loading_Rate__c>0}" layout="none"> 
+                                    <p><i class="bs cigna-fg-green-medium fa fa-check-circle fg-lg"></i> {!$Label.AUW_Overall_Accept_With_2_Conditions}</p>
+                                </apex:outputPanel>
+                                <!--ph application result change 09/08/2021 Connor SUQ end-->
+                                <apex:outputPanel rendered="{!personInsuredMap[key].AUW_Result__c == 'Referred'}" layout="none">
+                                    <p><i class="ci-hk-clipboard" style="color: #E35205 !important;"></i> {!$Label.AUW_Overall_Refer}</p>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!personInsuredMap[key].AUW_Result__c == 'Decline'}" layout="none">
+                                    <p><i class="bs cigna-fg-red-alert fa fa-times-circle fg-lg"></i> {!$Label.AUW_Overall_Decline}</p>
+                                </apex:outputPanel>
+                            </div>
+                            
+                            <apex:outputPanel rendered="{!personInsuredMap[key].AUW_Result__c == 'Accept' && personInsuredMap[key].Exclusion__c!=null}" layout="none">
+                                <div class="bs col-sm-3">
+                                    <apex:outputLabel value="{!PersonInfoKeyWordTranslationMap[ESALES_LABEL_EXCLUSION]}" for="Confirm-Application-Exclusion-Reason"/>
+                                </div>
+                                <div class="bs col-sm-9">
+                                    <apex:outputPanel rendered="{!personInsuredMap[key].Exclusion__c!=null || personInsuredMap[key].Chinese_Exclusion__c!=null}" layout="none">
+                                        <p>{!PersonInfoKeyWordTranslationMap[ESALES_LABEL_EXCLUSION_NOTE1]}</p>
+                                        <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'en_US'}">
+                                            <!--p>{!personInsuredMap[key].Chinese_Exclusion__c}</p--><!--commented by Connor for issue VU2-109-->
+                                            <apex:repeat value="{!exclusionsCH[key]}" var="reasons">
+                                            <p>{!reasons}</p>
+                                            </apex:repeat>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'zh_TW'}">
+                                            <!--p>{!personInsuredMap[key].Exclusion__c}</p--><!--commented by Connor for issue VU2-109-->
+                                            <apex:repeat value="{!exclusionsEN[key]}" var="reasons"> 
+                                            <p>{!reasons}</p>
+                                            </apex:repeat>
+                                        </apex:outputPanel>
+                                        <p>{!PersonInfoKeyWordTranslationMap[ESALES_LABEL_EXCLUSION_NOTE2]}</p>
+                                    </apex:outputPanel>
+                                </div>
+                            </apex:outputPanel>
+                            
+                            <apex:outputPanel rendered="{!personInsuredMap[key].AUW_Result__c == 'Decline' && personInsuredMap[key].Decline_Reason__c!=null}" layout="none">
+                                <div class="bs col-sm-3">
+                                    <apex:outputLabel value="{!PersonInfoKeyWordTranslationMap[ESALES_LABEL_DECLINE]}" for="Confirm-Application-Exclusion-Reason"/>
+                                </div>
+                                <div class="bs col-sm-9">
+                                    <apex:outputPanel rendered="{!personInsuredMap[key].Decline_Reason__c!=null}" layout="none">
+                                        <p>{!PersonInfoKeyWordTranslationMap[ESALES_LABEL_DECLINE_NOTE]}</p>
+                                        <!--p>{!personInsuredMap[key].Decline_Reason__c}</p--> <!--commented by Connor for issue VU2-109-->
+                                        <apex:repeat value="{!declineReasons[key]}" var="reasons">
+                                        <p>{!reasons}</p>
+                                        </apex:repeat> 
+                                    </apex:outputPanel>
+                                </div>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        
+                        <apex:outputPanel id="personal-basic-information-panel" >
+                             <div class="bs form-group">
+                                <div class="bs col-sm-3">
+                                    <apex:outputLabel value="{!PersonInfoKeyWordTranslationMap[ESALES_LABEL_GIVEN_NAME]}" />
+                                </div>
+                                <div class="bs col-sm-9">
+                                    <apex:outputText value="{!personInsuredMap[key].Given_Name__c}"/>
+                                </div>
+                            </div>
+                            <div class="bs form-group">
+                                <div class="bs col-sm-3">
+                                    <apex:outputLabel value="{!PersonInfoKeyWordTranslationMap[ESALES_LABEL_FAMILY_NAME]}" />
+                                </div>
+                                <div class="bs col-sm-9">
+                                    <apex:outputText value="{!personInsuredMap[key].Family_Name__c}"/>
+                                </div>
+                            </div>
+                            <div class="bs form-group">
+                                <div class="bs col-sm-3">
+                                    <apex:outputLabel value="{!PersonInfoKeyWordTranslationMap[ESALES_LABEL_PERSONAL_ID]}" />
+                                </div>
+                                <div class="bs col-sm-9">
+                                    <apex:outputText value="{!personInsuredMap[key].Personal_ID__c}"/>
+                                </div>
+                            </div>
+                            <div class="bs form-group">
+                                <div class="bs col-sm-3">
+                                    <apex:outputLabel value="{!PersonInfoKeyWordTranslationMap[ESALES_LABEL_DATE_OF_BIRTH]}" />
+                                </div>
+                                <div class="bs col-sm-9">
+                                    <apex:outputText id="Confirm-PH-DOB" value="{0, date, yyyy/MM/dd}">
+                                        <apex:param value="{!personInsuredMap[key].Date_of_Birth__c}" />
+                                    </apex:outputText>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        
+                        <apex:outputPanel id="diffrent-plan-level-pannel" rendered="{!txn.Different_Plan_Level__c}">
+                            <apex:outputPanel rendered="{!personInsuredMap[key].Question_1__c!=null}">
+                                <div class="bs form-group">
+                                    <div class="bs col-sm-3">
+                                        <label>{!planLevelKeyWordTranslationMap[personInsuredMap[key].Question_1__c]}</label>
+                                    </div>
+                                    <div class="bs col-sm-9">
+                                        {!planLevelInfoTranslationMap[personInsuredMap[key].Answer_1__c]}
+                                    </div>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!personInsuredMap[key].Question_2__c!=null}">
+                                <div class="bs form-group">
+                                    <div class="bs col-sm-3">
+                                        <label>{!planLevelKeyWordTranslationMap[personInsuredMap[key].Question_2__c]}</label>
+                                    </div>
+                                    <div class="bs col-sm-9">
+                                         {!planLevelInfoTranslationMap[personInsuredMap[key].Answer_2__c]}
+                                    </div>
+                                </div>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <!--added quoted price section 09/08/2021 Connor SUQ-->
+                        <c:QuotedPriceSection monthlyQuote="{!personInsuredMap[key].Original_Amount_Monthly__c}" annualQuote="{!personInsuredMap[key].Original_Amount_Annually__c}" medicalLoadingStr="{! IF(personInsuredMap[key].Loading_Rate__c==null||personInsuredMap[key].Loading_Rate__c==0,'0',TEXT(personInsuredMap[key].Loading_Rate__c*100))}" loadingReason="{!personInsuredMap[key].Decline_Reason__c}" totalPremiumMonthly="{!personInsuredMap[key].Quote_Amount_Monthly__c} " totalPremiumYearly="{!personInsuredMap[key].Quote_Amount_Annually__c}" auwResult="{!personInsuredMap[key].AUW_Result__c}" isCustomerPortal="{!isCustomerPortal}" hasLoading="{! IF(personInsuredMap[key].Loading_Rate__c!=null&&personInsuredMap[key].Loading_Rate__c>0,true,false)}"/>
+                    </div>
+                </div>   
+            </apex:repeat>
+        </apex:outputPanel>
+        
+        <!--Same plan level Information Panel--> 
+        <apex:outputPanel id="same-plan-level-panel" rendered="{!!txn.Different_Plan_Level__c}">
+            <div class="bs col-xs-12 form-horizontal">
+                <div class="bs col-xs-12"><hr /></div>
+                <div class="bs form-group">
+                    <div class="bs col-sm-3">
+                        <label>{!$Label.Selected_Benefit}</label>
+                    </div>
+                    <div class="bs col-sm-9">
+                        {!product.Name__c}
+                    </div>
+                </div>
+                
+                <!-- Add by Manuel -->
+                <apex:outputPanel rendered="{!personPH.Question_1__c!=null}">
+                    <div class="bs form-group">
+                        <div class="bs col-sm-3">
+                            <label>{!planLevelKeyWordTranslationMap[personPH.Question_1__c]}</label>
+                        </div>
+                        <div class="bs col-sm-9">
+                            {!planLevelInfoTranslationMap[personPH.Answer_1__c]}
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!personPH.Question_2__c!=null}">
+                    <div class="bs form-group">
+                        <div class="bs col-sm-3">
+                            <label>{!planLevelKeyWordTranslationMap[personPH.Question_2__c]}</label>
+                        </div>
+                        <div class="bs col-sm-9">
+                            {!planLevelInfoTranslationMap[personPH.Answer_2__c]}
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                <div class="bs form-group">
+                    <div class="bs col-sm-3">
+                        <label>{!PersonInfoKeyWordTranslationMap[ESALES_LABEL_CONTACT_NO]}</label>
+                    </div>
+                    <div class="bs col-sm-9">
+                        {!personPH.Contact_No__c}
+                    </div>
+                </div>
+                <div class="bs form-group">
+                    <div class="bs col-sm-3">
+                        <label>{!PersonInfoKeyWordTranslationMap[ESALES_LABEL_ADDRESS_LINE1]}</label>
+                    </div>
+                    <div class="bs col-sm-9">
+                        {!personPH.Address_Line_1__c}
+                    </div>
+                </div>
+                <div class="bs form-group">
+                    <div class="bs col-sm-3">
+                        <label>{!PersonInfoKeyWordTranslationMap[ESALES_LABEL_ADDRESS_LINE2]}</label>
+                    </div>
+                    <div class="bs col-sm-9">
+                        {!personPH.Address_Line_2__c}
+                    </div>
+                </div>
+                <div class="bs form-group">
+                    <div class="bs col-sm-3">
+                        <label>{!PersonInfoKeyWordTranslationMap[ESALES_LABEL_ADDRESS_LINE3]}</label>
+                    </div>
+                    <div class="bs col-sm-9">
+                        {!personPH.Address_Line_3__c}
+                    </div>
+                </div>
+                <div class="bs form-group">
+                    <div class="bs col-sm-3">
+                        <label>{!PersonInfoKeyWordTranslationMap[ESALES_LABEL_ADDRESS_LINE4]}</label>
+                    </div>
+                    <div class="bs col-sm-9">
+                        {!personPH.Address_Line_4__c}
+                    </div>
+                </div>
+                <div class="bs form-group">
+                    <div class="bs col-sm-3">
+                        <label>{!PersonInfoKeyWordTranslationMap[ESALES_LABEL_EMAIL_ADDRESS]}</label>
+                    </div>
+                    <div class="bs col-sm-9">
+                        {!personPH.Email_Address__c}
+                    </div>
+                </div>
+            </div>
+        </apex:outputPanel>
+        
+        <!-- GL31 jack add -->
+        <apex:outputPanel rendered="{!isBrokerPortal}">
+            <div class="bs col-xs-12 form-horizontal">
+                <div class="bs col-xs-12">
+                    <hr />
+                </div>
+                <!-- Q1 part -->
+                <div class="bs form-group">
+                    <div class="bs col-sm-9">
+                        <apex:outputLabel style="color: #188CCC" value="Q1. {!transField['Assessment_Q_1'][$Label.Header_Language_Code_Current]}"
+                        />
+                    </div>
+                </div>
+                <div class="bs form-group">
+                    <div class="bs col-sm-3">
+                        <apex:outputLabel value="{!transField['Q1A1'][$Label.Header_Language_Code_Current]} / {!transField['Hospitalization'][$Label.Header_Language_Code_Current]}"
+                            for="Q1A1" />
+                    </div>
+                    <div class="bs col-sm-9">
+                        <apex:outputText id="Q1A1" value="{!assessmentResult.Q1A1}" />
+                    </div>
+                </div>
+                <div class="bs form-group">
+                    <div class="bs col-sm-3">
+                        <apex:outputLabel value="{!transField['Q1A2'][$Label.Header_Language_Code_Current]} / {!transField['Critical_Illness'][$Label.Header_Language_Code_Current]}"
+                            for="Q1A2" />
+                    </div>
+                    <div class="bs col-sm-9">
+                        <apex:outputText id="Q1A2" value="{!assessmentResult.Q1A2}" />
+                    </div>
+                </div>
+                <div class="bs form-group">
+                    <div class="bs col-sm-3">
+                        <apex:outputLabel value="{!transField['Q1A3'][$Label.Header_Language_Code_Current]} / {!transField['Permanent_Total_Disability'][$Label.Header_Language_Code_Current]}"
+                            for="Q1A3" />
+                    </div>
+                    <div class="bs col-sm-9">
+                        <apex:outputText id="Q1A3" value="{!assessmentResult.Q1A3}" />
+                    </div>
+                </div>
+                <div class="bs form-group">
+                    <div class="bs col-sm-3">
+                        <apex:outputLabel value="{!transField['Q1A4'][$Label.Header_Language_Code_Current]} / {!transField['Outpatient_and_others'][$Label.Header_Language_Code_Current]}"
+                            for="Q1A4" />
+                    </div>
+                    <div class="bs col-sm-9">
+                        <apex:outputText id="Q1A4" value="{!assessmentResult.Q1A4}" />
+                    </div>
+                </div>
+                <!-- Q2 part -->
+                <div class="bs form-group">
+                    <div class="bs col-sm-9">
+                        <apex:outputLabel style="color: #188CCC" value="Q2. {!transField['Assessment_Q_2'][$Label.Header_Language_Code_Current]}"
+                        />
+                    </div>
+                </div>
+                <div class="bs form-group">
+                    <div class="bs col-sm-3">
+                        <apex:outputLabel value="{!transField['Q2A1'][$Label.Header_Language_Code_Current]} / {!transField['Indemnity'][$Label.Header_Language_Code_Current]}"
+                            for="Q2A1" />
+                    </div>
+                    <div class="bs col-sm-9">
+                        <apex:outputText id="Q2A1" value="{!assessmentResult.Q2A1}" />
+                    </div>
+                </div>
+                <div class="bs form-group">
+                    <div class="bs col-sm-3">
+                        <apex:outputLabel value="{!transField['Q2A2'][$Label.Header_Language_Code_Current]} / {!transField['Non_indemnity'][$Label.Header_Language_Code_Current]}"
+                            for="Q2A2" />
+                    </div>
+                    <div class="bs col-sm-9">
+                        <apex:outputText id="Q2A2" value="{!assessmentResult.Q2A2}" />
+                    </div>
+                </div>
+            </div>
+        </apex:outputPanel>
+        
+        <!-- appeal function start -->
+        <apex:outputPanel id="showappealQuestion">
+            <apex:outputPanel rendered="{!isBrokerPortal && txn.AUW_Overall_Result__c != 'Referred' && !(txn.AUW_Overall_Result__c == 'Accept' && !hasExclusion && !hasDecline) && !isAppealYes && !isAppealNo}">
+                <div class="bs col-xs-12 form-horizontal">
+                    <div class="bs col-xs-12"><hr /></div>
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <p>{!$Label.eSales_Appeal_Question}</p>
+                        </div>
+                    </div>
+
+                    <div id="action-bar-desktop" class="bs hidden-xs text-center" style="padding-top:10px;padding-bottom:20px;">
+                        <a id="eSales-home-btn" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" role="button" onclick="Cigna.ESales.appealQuestionYes(); return false;">
+                            {!$Label.eSales_Yes}
+                        </a>
+                        <a class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" role="button" onclick="Cigna.ESales.appealQuestionNo();return false;">
+                            {!$Label.eSales_No}
+                        </a>
+
+                    </div>
+
+                    <div id="mobile-app-padding" class="bs row" style="display: none; padding-bottom: 250px;">
+                        <div class="bs col-xs-12"></div>
+                    </div>
+                    <script>
+                        if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                            $('#mobile-app-padding').css('display', 'block');                            
+                        }
+                    </script>
+                </div>
+            </apex:outputPanel>
+            </apex:outputPanel>
+
+            <apex:outputPanel id="showAppealRemarkUpload">
+            <apex:outputPanel rendered="{!(isBrokerPortal && txn.AUW_Overall_Result__c == 'Referred') || isAppealYes}">
+                <div class="bs col-xs-12 form-horizontal">
+                    <div class="bs">
+                        <p><h4 class="bs cigna-fg-blue-medium">{!$Label.eSales_Remarks_to_Cigna_Underwriter}</h4></p>
+                        <div style="padding-bottom: 40px;">
+                            <apex:inputTextarea value="{!txn.Remark_to_Cigna_UW__c}" rows="5" styleClass="bs col-xs-12" html-placeholder="{!$Label.eSales_appeal_remarks}"/>
+                            <br/>
+                            <br/>
+                            <br/>
+                        </div>
+
+                        <div class="snd-loading-div">
+                            <span id="snd-loading-phurl" style="display: none;">
+                                <div class="bs col-xs-12 col-lg-12 loading-div">
+                                    <span class="loading-helper"></span>
+                                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                            </span>
+                        </div>
+
+                        <div id="errFileSize" class="alert alert-danger" role="alert" style="display:none;">
+                            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                            {!$Label.File_size_exceeds_10M}
+                        </div>
+                        <div id="errFileType" class="alert alert-danger" role="alert" style="display:none;">
+                            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                            {!$Label.Please_upload_a_valid_file} (i.e. .docx/.doc/.pdf/.jpeg/.png/.tiff)
+                        </div>
+                        <div id="errNoFile" class="alert alert-danger" role="alert" style="display:none;">
+                            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                            {!$Label.ErrMasg_Upload_Att}
+                        </div>
+                        <div id="errUpdateFileMax" class="alert alert-danger" role="alert" style="display:none;">
+                            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                            {!$Label.eSales_Upload_File_Max}
+                        </div>
+
+                        <apex:outputPanel id="uploadUWatt">
+                            <script>
+                                //CR-56_Link_20220214
+                                $('[data-toggle="tooltip"]').tooltip();
+                            </script>
+
+                            <div class="bs row content-choice-remark">
+                                <div class="col-xs-10 col-sm-11">
+                                    <input id="auwAtt" type="file" class="fileInput cigna-validation" onchange="uploadFile('{!eSalesId}','auwAtt');" style="display:none;"/>
+                                    <label for="auwAtt"><i class="ci-hk-outbox content-icon onclick-pointer" aria-hidden="true"/></label>
+                                    <label>{!$Label.eSales_AUW_attachment}</label>
+                                </div>
+                                <!--<div class="col-xs-8 col-sm-10">{!$Label.eSales_AUW_attachment}</div>-->
+                                <div class="col-xs-2 col-sm-1"><i class="ci-hk-help helptext-icon pull-right" data-toggle="tooltip" title="{!$Label.Upload_Tooltip}" aria-hidden="true"></i></div>
+                                <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                                <div style="padding:20px;">
+                                    <apex:outputPanel id="auwAttlist">
+                                        <apex:repeat value="{!AUWAttList}" var="uwAtt">
+                                            <div att-type="auwAtt" class="col-xs-12 col-sm-12 uploaded-filelist">
+                                            {!uwAtt.Name}
+                                            <i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!uwAtt}');" aria-hidden="true"></i></div>
+                                            <div class="col-xs-12 col-sm-12" style="padding-bottom:5px;"></div>
+                                        </apex:repeat>
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+
+                    </div>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <!--Payment amount section-->
+        <!--<apex:outputPanel rendered="{!(isBrokerPortal && (showPremium || txn.AUW_Overall_Result__c == 'Referred')) || (!isBrokerPortal && txn.AUW_Overall_Result__c != 'Decline') }">-->
+        <!--apex:outputPanel rendered="{!(isBrokerPortal && (showPremium || txn.AUW_Overall_Result__c == 'Referred')) || (!isBrokerPortal && txn.AUW_Overall_Result__c != 'Decline' && txn.AUW_Overall_Result__c != 'Referred') }"--> <!--Added by Nicole for VU2-121--><!--commented SUQ Connor-->
+        <apex:outputPanel rendered="{!(isBrokerPortal && (showPremium || txn.AUW_Overall_Result__c == 'Referred')) || (!isBrokerPortal && txn.AUW_Overall_Result__c != 'Decline' && txn.AUW_Overall_Result__c != 'Referred' && !hasLoading) }"> <!--Added !hasLoading SUQ Connor-->
+            <div class="bs col-xs-12 form-horizontal">
+                <div class="bs col-xs-12"><hr /></div>
+                <div class="bs form-group">
+                    <div class="bs col-xs-12">
+                        <p>{!$Label.Please_select_the_payment_mode}:</p>
+                    </div>
+                </div>
+            </div>  
+            <div class="bs form-group col-xs-12">            
+               <div class="bs cigna-answer-wrapper">                   
+                   <p>
+                       <input type="radio" id="payment-mode-first-01" value="Monthly" name="payment-mode-first" class="bs cigna-question-radio" />
+                       <apex:outputText rendered="{!isCustomerPortal}">
+                               <!--Nicole_Levy II_20200626-->
+                               <!--<label for="payment-mode-first-01">{!$Label.Monthly} - {!$Label.HKD} &nbsp;
+                                   <apex:outputText value="{0, Number,#####0}">
+                                       <apex:param value="{!monthAmount}"/>
+                                   </apex:outputText> (x2) </label>-->
+                               <!-- Rancho_Levy_20201124 -->
+                               <label for="payment-mode-first-01" style="font-weight: bold;">{!transFieldLevy['Monthly_Total_Premium_Including_Levy'][$Label.Header_Language_Code_Current]} : </label>
+                               <div class="bs col-xs-12" >
+                                   <ul class="cigna-plan-bullet">
+                                                <li class="bs col-sm-12 col-xs-12 no-border-input">
+                                                    <apex:outputText styleClass="bs col-sm-1 col-xs-4 no-border-input" value="{!transFieldLevy['Premium'][$Label.Header_Language_Code_Current]}" />
+                                                    <div class="bs col-sm-11 col-xs-8 no-border-input">
+                                                            <apex:outputText escape="false" value=":&nbsp;&nbsp;{!$Label.HKD}&nbsp;" />
+                                                            <apex:outputText value="{!IF(BLANKVALUE(monthAmount, 0) > 0, '{0,number,##0.00}', '0.00')}" >
+                                                                <apex:param value="{!monthAmount}" />
+                                                            </apex:outputText>
+                                                            <apex:outputText >
+                                                                (x2)
+                                                            </apex:outputText>
+                                                    </div>
+                                                </li>
+                                                <li class="bs col-sm-12 col-xs-12 no-border-input">
+                                                    <apex:outputText styleClass="bs col-sm-1 col-xs-4 no-border-input" value="{!transFieldLevy['Levy'][$Label.Header_Language_Code_Current]}" />
+                                                    <div class="bs col-sm-11 col-xs-8 no-border-input">
+                                                            <apex:outputText escape="false" value=":&nbsp;&nbsp;{!$Label.HKD}&nbsp;" />
+                                                            <apex:outputText value="{!IF(BLANKVALUE(monthLevy, 0) > 0, '{0,number,##0.00}', '0.00')}" >
+                                                                <apex:param value="{!monthLevy}" />
+                                                            </apex:outputText>
+                                                    </div>
+                                                </li>
+                                  </ul> 
+                              </div>
+                          </apex:outputText>
+                          <!-- Rancho_Levy_20201125 -->
+                          <apex:outputText rendered="{!isCustomerPortal}">                               
+                                <div class="bs col-xs-12" style="padding-left:35px;padding-top:15px;">
+                                    <p>                                    
+                                        <label>{!$Label.Monthly_Payment_Note}</label>                                    
+                                    </p>
+                                </div>
+                          </apex:outputText>
+                          <apex:outputText rendered="{!!isCustomerPortal}">
+                              <!--Nicole_Levy II_20200626-->
+                              <!--<label for="payment-mode-first-01">{!$Label.Monthly} - {!$Label.HKD} &nbsp;
+                                   <apex:outputText value="{0, Number,#####0}">
+                                       <apex:param value="{!monthAmount}"/>
+                                   </apex:outputText>* (x2) </label>-->
+                              <!-- Rancho_Levy_20201124 -->
+                              <label for="payment-mode-first-01" style="font-weight: bold;">{!transFieldLevy['Monthly_Total_Premium_Including_Levy'][$Label.Header_Language_Code_Current]} : </label>
+                              <div class="bs col-xs-12" >
+                                  <ul class="cigna-plan-bullet">
+                                                <li class="bs col-sm-12 col-xs-12 no-border-input">
+                                                    <apex:outputText styleClass="bs col-sm-1 col-xs-4 no-border-input" value="{!transFieldLevy['Premium'][$Label.Header_Language_Code_Current]}" />
+                                                    <div class="bs col-sm-11 col-xs-8 no-border-input">
+                                                            <apex:outputText escape="false" value=":&nbsp;&nbsp;{!$Label.HKD}&nbsp;" />
+                                                            <apex:outputText value="{!IF(BLANKVALUE(monthAmount, 0) > 0, '{0,number,##0.00}', '0.00')}" >
+                                                                <apex:param value="{!monthAmount}" />
+                                                            </apex:outputText>
+                                                            <apex:outputText >
+                                                                (x2)
+                                                            </apex:outputText>
+                                                    </div>                                                
+                                                </li>
+                                                <li class="bs col-sm-12 col-xs-12 no-border-input">
+                                                    <apex:outputText styleClass="bs col-sm-1 col-xs-4 no-border-input" value="{!transFieldLevy['Levy'][$Label.Header_Language_Code_Current]}" />
+                                                    <div class="bs col-sm-11 col-xs-8 no-border-input">
+                                                            <apex:outputText escape="false" value=":&nbsp;&nbsp;{!$Label.HKD}&nbsp;" />
+                                                            <apex:outputText value="{!IF(BLANKVALUE(monthLevy, 0) > 0, '{0,number,##0.00}', '0.00')}" >
+                                                                <apex:param value="{!monthLevy}" />
+                                                            </apex:outputText>
+                                                    </div> 
+                                                </li>
+                                  </ul>
+                              </div>
+                          </apex:outputText>
+                   </p>
+                   
+                   
+                   <!--Nicole_Levy II_20200626-->
+                   <apex:outputText rendered="{!!isCustomerPortal}">                               
+                                <div class="bs col-xs-12" style="padding-left:35px;padding-top:15px;">
+                                    <p>                                    
+                                        <label>{!$Label.Monthly_Payment_Note}</label>                                    
+                                    </p>
+                                </div>
+                   </apex:outputText>
+                   
+                   <p>
+                       <input type="radio" id="payment-mode-first-02" value="Annually" name="payment-mode-first" class="bs cigna-question-radio" />
+                       <apex:outputText rendered="{!isCustomerPortal}">
+                              <!--Nicole_Levy II_20200626-->
+                              <!--<label for="payment-mode-first-02">{!$Label.Annually} - {!$Label.HKD} &nbsp;
+                                  <apex:outputText value="{0, Number,#####0}">
+                                       <apex:param value="{!annualAmount}"/>
+                                  </apex:outputText>
+                              </label>-->
+                              <!-- Rancho_Levy_20201124 -->
+                              <label for="payment-mode-first-02" style="font-weight: bold;">{!transFieldLevy['Annually_Total_Premium_Including_Levy'][$Label.Header_Language_Code_Current]} : </label>
+                              <div class="bs col-xs-12" >
+                                  <ul class="cigna-plan-bullet">
+                                            <li class="bs col-sm-12 col-xs-12 no-border-input">
+                                                <apex:outputText styleClass="bs col-sm-1 col-xs-4 no-border-input" value="{!transFieldLevy['Premium'][$Label.Header_Language_Code_Current]}" />
+                                                <div class="bs col-sm-11 col-xs-8 no-border-input">
+                                                            <apex:outputText escape="false" value=":&nbsp;&nbsp;{!$Label.HKD}&nbsp;" />
+                                                            <apex:outputText value="{!IF(BLANKVALUE(annualAmount, 0) > 0, '{0,number,##0.00}', '0.00')}" >
+                                                                <apex:param value="{!annualAmount}" />
+                                                            </apex:outputText>
+                                                </div>
+                                            </li>
+                                            <li class="bs col-sm-12 col-xs-12 no-border-input">
+                                                <apex:outputText styleClass="bs col-sm-1 col-xs-4 no-border-input" value="{!transFieldLevy['Levy'][$Label.Header_Language_Code_Current]}" />
+                                                <div class="bs col-sm-11 col-xs-8 no-border-input">
+                                                            <apex:outputText escape="false" value=":&nbsp;&nbsp;{!$Label.HKD}&nbsp;" />
+                                                            <apex:outputText value="{!IF(BLANKVALUE(annualLevy, 0) > 0, '{0,number,##0.00}', '0.00')}" >
+                                                                <apex:param value="{!annualLevy}" />
+                                                            </apex:outputText>
+                                                </div>
+                                            </li>
+                                  </ul>
+                              </div>
+                          </apex:outputText>
+    
+                          <apex:outputText rendered="{!!isCustomerPortal}">
+                              <!--Nicole_Levy II_20200626-->
+                              <!--<label for="payment-mode-first-02">{!$Label.Annually} - {!$Label.HKD} &nbsp;
+                                  <apex:outputText value="{0, Number,#####0}">
+                                       <apex:param value="{!annualAmount}"/>
+                                  </apex:outputText> 
+                                  ({!$Label.eSales_Discount_Rate_Annual_1} {!discountRateAnnual} {!$Label.eSales_Discount_Rate_Annual_2})
+                              </label>-->
+                              <!-- Rancho_Levy_20201124 -->
+                              <label for="payment-mode-first-02" style="font-weight: bold;">{!transFieldLevy['Annually_Total_Premium_Including_Levy'][$Label.Header_Language_Code_Current]} : </label>
+                              <div class="bs col-xs-12" >
+                                  <ul class="cigna-plan-bullet">
+                                            <li class="bs col-sm-12 col-xs-12 no-border-input">
+                                                <apex:outputText styleClass="bs col-sm-1 col-xs-4 no-border-input" value="{!transFieldLevy['Premium'][$Label.Header_Language_Code_Current]}" />
+                                                <div class="bs col-sm-11 col-xs-8 no-border-input">
+                                                        <apex:outputText escape="false" value=":&nbsp;&nbsp;{!$Label.HKD}&nbsp;" />
+                                                        <apex:outputText value="{!IF(BLANKVALUE(annualAmount, 0) > 0, '{0,number,##0.00}', '0.00')}" >
+                                                            <apex:param value="{!annualAmount}" />
+                                                        </apex:outputText>
+                                                        <apex:outputText escape="false" value=" <label>({!$Label.eSales_Discount_Rate_Annual_1} {!discountRateAnnual} {!$Label.eSales_Discount_Rate_Annual_2})</label>" />
+                                                </div>
+                                            </li>
+                                            <li class="bs col-sm-12 col-xs-12 no-border-input">
+                                                <apex:outputText styleClass="bs col-sm-1 col-xs-4 no-border-input" value="{!transFieldLevy['Levy'][$Label.Header_Language_Code_Current]}" />
+                                                <div class="bs col-sm-11 col-xs-8 no-border-input">
+                                                            <apex:outputText escape="false" value=":&nbsp;&nbsp;{!$Label.HKD}&nbsp;" />
+                                                            <apex:outputText value="{!IF(BLANKVALUE(annualLevy, 0) > 0, '{0,number,##0.00}', '0.00')}" >
+                                                                <apex:param value="{!annualLevy}" />
+                                                            </apex:outputText>
+                                                </div>
+                                            </li>
+                                  </ul>
+                              </div>
+                        </apex:outputText>
+                   </p> 
+                   
+                   <apex:inputHidden id="payment-mode" value="{!txn.Payment_Mode__c}"
+                                                  html-class="cigna-validation answer-validation"
+                                                  html-data-msg-required="{!$Label.Error_Please_choose_a_payment_method}" />
+                   
+                   <div class="bs col-xs-12" >
+                       <!--Nicole_Levy II_20200626                           
+                       <p>
+                          <apex:outputText rendered="{!!isCustomerPortal}">
+                              <label>{!$Label.Monthly_Payment_Note}</label>
+                          </apex:outputText>
+                       </p>-->
+                       <p style="padding-top:35px;">
+                           <apex:outputText value="{!transFieldLevy['Payment_Levy_Note'][$Label.Header_Language_Code_Current]}" escape="false" />
+                       </p>                                                           
+                   </div>
+               </div>
+            </div>          
+            <script>
+                var paymentmode = $('input[type="hidden"][id$="payment-mode"]').val();
+                if(paymentmode == 'Monthly'){
+                            $("#payment-mode-first-01").prop("checked", true);
+                            $("#payment-mode-first-02").prop("checked", false);
+                }else if(paymentmode == 'Annually'){
+                            $("#payment-mode-first-01").prop("checked", false);
+                            $("#payment-mode-first-02").prop("checked", true);
+                }else{
+                            $("#payment-mode-first-01").prop("checked", false);
+                            $("#payment-mode-first-02").prop("checked", false);
+                            $('input[type="hidden"][id$="payment-mode"]').val('');
+                }
+             </script>      
+        </apex:outputPanel>
+        
+        <apex:outputPanel id="showTCSelection">
+            <apex:outputPanel rendered="{!(txn.AUW_Overall_Result__c == 'Referred' || isAppealYes) || (txn.AUW_Overall_Result__c == 'Accept' && !hasExclusion && !hasDecline) || (isAppealNo && txn.AUW_Overall_Result__c != 'Decline')|| (!isBrokerPortal && txn.AUW_Overall_Result__c == 'Accept')}" styleClass="bs col-xs-12 form-horizontal">    
+                <div class="bs form-group col-xs-12 form-horizontal">
+                    <div class="bs col-xs-12"><hr /></div>
+                    <div class="bs cigna-answer-wrapper">
+                        <p>
+                            <input type="checkbox" id="accept-tc" name="payment-mode-Accept" class="bs cigna-question-checkbox" />
+                            <label style="width:auto;" for="accept-tc">{!$Label.I_Accept_The} <a onclick="reallocationToggleOverlayESales();">{!$Label.ESales_Declaration_and_Authorization}</a>.</label>
+
+                        </p>
+                        <apex:inputHidden value="{!tandcChecker}" id="select-accept-tc" html-class="cigna-validation answer-validation"
+                                              html-data-msg-required="{!$Label.ESales_Terms_and_Conditions_Warning}" />
+                        <div id="errCheckacceptTC" role="alert" style="display:none;">
+                              <span style="color:red;font-weight: bold;">{!$label.ESales_Terms_and_Conditions_Warning}</span>
+                        </div>
+                    </div>
+                    <script>
+                        //CR-56_Link_20220214
+                        $('input#accept-tc').on("change",onCheckboxChangeTC);
+
+                        var acceptTC = $('input[type="hidden"][id$="select-accept-tc"]').val();
+
+                        if(acceptTC == 'true'){
+                            $("#accept-tc").prop("checked", true);
+                        }else{
+                            $("#accept-tc").prop("checked", false);
+                        }
+                    </script>
+                    <div class="bs cigna-answer-wrapper">
+                        <p>
+                            <input type="checkbox" id="accept-tc-1" name="payment-mode-Accept-1"  class="bs cigna-question-checkbox"/>
+                            <label for="accept-tc-1">{!$Label.ESales_Term_and_Conditions}</label>
+                            <apex:inputHidden value="{!personalDataAgreement}" id="personalDataAgreement" />
+                        </p>
+
+                    </div>
+                </div>                                
+
+                 <!-- Start Special Centered Box -->
+                    <div id="reallocationOverlayESales" style="display:none;">
+                        <div id="reallocationSpecialBoxESales" >
+                            <a><div id="reallocationCloseOverlayESales" class="glyphicon glyphicon-remove" onclick="reallocationToggleOverlayESales();" ></div></a>
+                            <h4>{!$Label.Terms_and_Conditions}</h4>
+                            <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                                <apex:outputPanel rendered="{!isCustomerPortal}">
+                                    <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'en_US'}">
+                                         <div id="reallocationtccontentESales" style="text-align:left">
+                                         <b>聲明及授權</b><br/><br/>
+                                            1.  本人聲明，據本人所知為本申請提供的陳述及答案, 均完全屬實無訛<br/><br/>
+                                            2.  本人確認本人及所有受保人士均為持有有效香港身份證及於香港居住。<br/><br/>
+                                            <!--Comment by Shengt for JOBR-235-->
+                                            <!-- 3.  本人確認已閱讀及明白<a href="{!PersonalInformationCollectionStatement_chi}" target="_blank" style="text-decoration: underline;">信諾環球之個人資料收集聲明</a>及<a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!Privacy_statement_chi}" target="_blank" style="text-decoration: underline;">私隱聲明</a>。本人同意信諾環球可根據信諾環球之個人資料收集聲明，使用及/或披露本人(申請人)的個人資料。本人明白本人有權在空格上加上「✓」號或根據信諾環球之個人資料收集聲明，表示拒絕使用本人的個人資料作直接促銷用途。然而，本人也明白選擇拒絕使用本人的個人資料作直接促銷，即導致將來本人不能從信諾環球處收到任何針對性或特別優惠的直接促銷。<br/><br/> -->
+
+                                            3.  本人確認已閱讀及明白<a href="{!PersonalInformationCollectionStatement_chi}" target="_blank" style="text-decoration: underline;">信諾環球之個人資料收集聲明</a>及<a href="{!Privacy_statement_chi}" target="_blank" style="text-decoration: underline;">私隱聲明</a>。本人同意信諾環球可根據信諾環球之個人資料收集聲明，使用及/或披露本人(申請人)的個人資料。本人明白本人有權在空格上加上「✓」號或根據信諾環球之個人資料收集聲明，表示拒絕使用本人的個人資料作直接促銷用途。然而，本人也明白選擇拒絕使用本人的個人資料作直接促銷，即導致將來本人不能從信諾環球處收到任何針對性或特別優惠的直接促銷。<br/><br/>
+                                            4.  本人同意本保單之保障範圍，由保單承保表內所列之生效日起生效。<br/><br/>
+                                            5.  本人同意接受本申請而發出的任何保單即等於接納保單内的條款，同時追認信諾環球在保單上所作的任何更改。<br/><br/>
+                                            6.  本人授權，而且確認準受保人已授權，凡存有關本人或準受保人健康狀況任何紀錄或得悉此方面資料的任何持牌醫師、醫生、醫院、診所或者其他醫療或與相關的設施、保險公司或其他組織、機構或個人，可向信諾環球及其再保險公司提供有關資料，以評估本保險申請或日後根據本申請書簽發的本保單下提出任何的保險索償。此授權書的複印本與正本同樣有效。<br/><br/>
+                                            7.  <b>取消保單權利及發還保費：本人明白本人有權以書面通知取消保單並取回已繳保費。但是本人必須簽署該通知，並確保信諾環球保險有限公司(位於{!$Label.Cigna_Address_zh} )於以下時段內直接收到該通知：保單交付本人或本人的代表後或《通知書》發予本人或本人的代表後起計的30日，以較先者為準。</b><br/><br/>
+                                            </div>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'zh_TW'}">
+                                         <div id="reallocationtccontentESales" style="text-align:left">
+                                         <b>Declaration and Authorization</b><br/><br/>
+                                            1.  I declare that the above statements and answers provided for this application are true and complete to the best of my knowledge.<br/><br/>
+                                            2.  I confirm that I and all the persons insured are Hong Kong residents with a valid Hong Kong Identity Card and residency in Hong Kong.<br/><br/>
+                                            <!--Comment by Shengt for JOBR-235-->
+                                            <!-- 3.  I confirm that I have read and understood the <a href="{!PersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;">Personal Information Collection Statement</a> ("PICS") and <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!Privacy_statement_eng}" target="_blank" style="text-decoration: underline;">Privacy Statement</a> of Cigna Healthcare. I agree that Cigna Healthcare may use and/or disclose my (the Applicant's) personal information in accordance with the PICS. I understand that I have the right to opt out of the use of my personal information for direct marketing purposes by ticking the box below or in accordance with the PICS. I understand that opting out will mean that Cigna will not be able to send me any direct marketing, targeted or special offers in the future.<br/><br/> -->
+
+                                            3.  I confirm that I have read and understood the <a href="{!PersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;">Personal Information Collection Statement</a> ("PICS") and <a href="{!Privacy_statement_eng}" target="_blank" style="text-decoration: underline;">Privacy Statement</a> of Cigna Healthcare. I agree that Cigna Healthcare may use and/or disclose my (the Applicant's) personal information in accordance with the PICS. I understand that I have the right to opt out of the use of my personal information for direct marketing purposes by ticking the box below or in accordance with the PICS. I understand that opting out will mean that Cigna Healthcare will not be able to send me any direct marketing, targeted or special offers in the future.<br/><br/>
+                                            4.  I agree that the insurance coverage applied for shall only take effect from the Commencement Date as specified in the Policy Schedule.<br/><br/>
+                                            5.  I agree that acceptance of any policy issued on this application will constitute an agreement to its terms and condition as well as notifications of any changes specified by Cigna Healthcare in this policy.<br/><br/>
+                                            6.  I hereby authorize, and confirm that Proposed Person(s) Insured has / have authorized, any licensed physician, medical practitioner, hospital, clinic or other medical or medically related facility, insurance company or other organization, institution or person, that has any records or knowledge of my or the Proposed Person(s) Insured's health to give to Cigna Healthcare and its reinsurers any such information for the purpose of assessment of this insurance proposal or subsequent assessment of any insurance claim under the policy that may be issued pursuant to this application. A photographic copy of this authorization shall be as valid as the original.<br/><br/>
+                                            7.  <b>Cancellation Rights and Refund of Premium(s): I understand that I have the right to cancel and obtain a refund of any premium(s) paid by giving written notice. Such notice must be signed by me and received directly by Cigna Worldwide General Insurance Company Limited which is located at {!$Label.Cigna_Address_en} within 30 days after the delivery of the policy or issue of a Notice to the policyholder or the policyholder's representative, whichever is the earlier.</b><br/><br/>
+                                         </div>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!isBrokerPortal}">
+                                    <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'en_US'}">
+                                        <div id="reallocationtccontentESales" style="text-align:left">
+                                        <b>聲明及授權</b><br/><br/>
+                                        1.  本人聲明，據本人所知為本申請提供的陳述及答案, 均完全屬實無訛。<br/><br/>
+                                        2.  本人確認本人及所有受保人士均為持有有效香港身份證及於香港居住。<br/><br/>
+                                        <!--Comment by Shengt for JOBR-235--> 
+                                        <!-- <b>[請按連結以瀏覽有關信諾環球之<a href="{!PersonalInformationCollectionStatement_chi}" target="_blank" style="text-decoration: underline;">個人資料收集聲明</a>及<a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!BrkPrivacyStatement_chi}" target="_blank" style="text-decoration: underline;">私隱聲明</a>。]</b><br/><br/>
+                                        3. 本人確認已閱讀及明白信諾環球之<a href="{!PersonalInformationCollectionStatement_chi}" target="_blank" style="text-decoration: underline;">個人資料收集聲明</a>及<a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!BrkPrivacyStatement_chi}" target="_blank" style="text-decoration: underline;">私隱聲明</a>。本人同意信諾環球可根據信諾環球之個人資料收集聲明，使用及/或披露本人(申請人)的個人資料。本人明白本人有權在空格上加上「✓」號或根據信諾環球之個人資料收集聲明，表示拒絕使用本人的個人資料作直接促銷用途。然而，本人也明白選擇拒絕使用本人的個人資料作直接促銷，即導致將來本人不能從信諾環球處收到任何針對性或特別優惠的直接促銷。<br/><br/> -->
+                                        
+                                        <b>[請按連結以瀏覽有關信諾環球之<a href="{!BrkPersonalInformationCollectionStatement_chi}" target="_blank" style="text-decoration: underline;">個人資料收集聲明</a>及<a href="{!BrkPrivacyStatement_chi}" target="_blank" style="text-decoration: underline;">私隱聲明</a>。]</b><br/><br/>
+                                        3. 本人確認已閱讀及明白信諾環球之<a href="{!BrkPersonalInformationCollectionStatement_chi}" target="_blank" style="text-decoration: underline;">個人資料收集聲明</a>及<a href="{!BrkPrivacyStatement_chi}" target="_blank" style="text-decoration: underline;">私隱聲明</a>。本人同意信諾環球可根據信諾環球之個人資料收集聲明，使用及/或披露本人(申請人)的個人資料。本人明白本人有權在空格上加上「✓」號或根據信諾環球之個人資料收集聲明，表示拒絕使用本人的個人資料作直接促銷用途。然而，本人也明白選擇拒絕使用本人的個人資料作直接促銷，即導致將來本人不能從信諾環球處收到任何針對性或特別優惠的直接促銷。<br/><br/>
+                                        4.  本人同意本保單之保障範圍，由保單承保表內所列之生效日起生效。<br/><br/>
+                                        5.  本人同意接受本申請而發出的任何保單即等於接納保單内的條款，同時追認信諾環球在保單上所作的任何更改。<br/><br/>
+                                        6.  本人授權，而且確認準受保人已授權，凡存有關本人或準受保人健康狀況任何紀錄或得悉此方面資料的任何持牌醫師、醫生、醫院、診所或者其他醫療或與相關的設施、保險公司或其他組織、機構或個人，可向信諾環球及其再保險公司提供有關資料，以評估本保險申請或日後根據本申請書簽發的本保單下提出任何的保險索償。此授權書的複印本與正本同樣有效。<br/><br/>
+                                        7.  <b>取消保單權利及發還保費：本人明白本人有權以書面通知取消保單並取回已繳保費。但是本人必須簽署該通知，並確保信諾環球保險有限公司(位於{!$Label.Cigna_Address_zh} )於以下時段內直接收到該通知：保單交付本人或本人的代表後或《通知書》發予本人或本人的代表後起計的30日，以較先者為準。</b><br/><br/>
+                                        </div>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'zh_TW'}">
+                                         <div id="reallocationtccontentESales" style="text-align:left">
+                                         <b>Declaration and Authorization</b><br/><br/>
+                                            1.  I declare that the above statements and answers provided for this application are true and complete to the best of my knowledge.<br/><br/>
+                                            2.  I confirm that I and all the persons insured are Hong Kong residents with a valid Hong Kong Identity Card and residency in Hong Kong.<br/><br/>
+                                            <!--Comment by Nicole for DPSP-874,875-->
+                                            <!--[Please click the hyperlinks for <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!BrkPersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;">Personal Information Collection Statement</a> and <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!BrkPrivacyStatement_eng}" target="_blank" style="text-decoration: underline;">Privacy Statement</a> of Cigna Healthcare]<br/><br/>
+                                                3.  I confirm that I have read and understood the <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!BrkPersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;">Personal Information Collection Statement</a> ("PICS") and <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!BrkPrivacyStatement_eng}" target="_blank" style="text-decoration: underline;">Privacy Statement</a> of Cigna Healthcare. I agree that Cigna Healthcare may use and/or disclose my (the Applicant's) personal information in accordance with the PICS. I understand that I have the right to opt out of the use of my personal information for direct marketing purposes by ticking the box below or in accordance with the PICS. I understand that opting out will mean that Cigna Healthcare will not be able to send me any direct marketing, targeted or special offers in the future.<br/><br/>
+                                            -->
+                                            <!--Comment by Shengt for JOBR-235-->                                               
+                                            <!-- [Please click the hyperlinks for <a href="{!PersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;">Personal Information Collection Statement</a> and <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!BrkPrivacyStatement_eng}" target="_blank" style="text-decoration: underline;">Privacy Statement</a> of Cigna Healthcare]<br/><br/>
+                                            3.  I confirm that I have read and understood the <a href="{!PersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;">Personal Information Collection Statement</a> ("PICS") and <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!BrkPrivacyStatement_eng}" target="_blank" style="text-decoration: underline;">Privacy Statement</a> of Cigna Healthcare. I agree that Cigna Healthcare may use and/or disclose my (the Applicant's) personal information in accordance with the PICS. I understand that I have the right to opt out of the use of my personal information for direct marketing purposes by ticking the box below or in accordance with the PICS. I understand that opting out will mean that Cigna Healthcare will not be able to send me any direct marketing, targeted or special offers in the future.<br/><br/>  -->
+
+                                            [Please click the hyperlinks for <a href="{!BrkPersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;">Personal Information Collection Statement</a> and <a href="{!BrkPrivacyStatement_eng}" target="_blank" style="text-decoration: underline;">Privacy Statement</a> of Cigna Healthcare.]<br/><br/>
+                                            3.  I confirm that I have read and understood the <a href="{!BrkPersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;">Personal Information Collection Statement</a> ("PICS") and <a href="{!BrkPrivacyStatement_eng}" target="_blank" style="text-decoration: underline;">Privacy Statement</a> of Cigna Healthcare. I agree that Cigna Healthcare may use and/or disclose my (the Applicant's) personal information in accordance with the PICS. I understand that I have the right to opt out of the use of my personal information for direct marketing purposes by ticking the box below or in accordance with the PICS. I understand that opting out will mean that Cigna Healthcare will not be able to send me any direct marketing, targeted or special offers in the future.<br/><br/>                                            
+                                            4.  I agree that the insurance coverage applied for shall only take effect from the Commencement Date as specified in the Policy Schedule.<br/><br/>
+                                            5.  I agree that acceptance of any policy issued on this application will constitute an agreement to its terms and condition as well as notifications of any changes specified by Cigna Healthcare in this policy.<br/><br/>
+                                            6.  I hereby authorize, and confirm that Proposed Person(s) Insured has / have authorized, any licensed physician, medical practitioner, hospital, clinic or other medical or medically related facility, insurance company or other organization, institution or person, that has any records or knowledge of my or the Proposed Person(s) Insured's health to give to Cigna Healthcare and its reinsurers any such information for the purpose of assessment of this insurance proposal or subsequent assessment of any insurance claim under the policy that may be issued pursuant to this application. A photographic copy of this authorization shall be as valid as the original.<br/><br/>
+                                            7.  <b>Cancellation Rights and Refund of Premium(s): I understand that I have the right to cancel and obtain a refund of any premium(s) paid by giving written notice. Such notice must be signed by me and received directly by Cigna Worldwide General Insurance Company Limited which is located at {!$Label.Cigna_Address_en} within 30 days after the delivery of the policy or issue of a Notice to the policyholder or the policyholder's representative, whichever is the earlier.</b><br/><br/>
+                                         </div>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                            </div>
+                        </div>
+                        <!-- End Special Centered Box -->
+                   
+                       <apex:outputPanel id="cooling-messgae-panel">
+                            <div class="bs col-xs-12 form-horizontal">
+                                <div class="bs col-xs-12"><hr /></div>
+                                <div class="bs form-group">
+                                    <div class="bs col-xs-12">
+                                        <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'en_US'}">
+                                            <b>冷靜期承諾</b><br/><br/>
+                                            如果投保後您希望改變主意，您有權於30天內取消保單並取回所有已繳保費。<br/>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'zh_TW'}">
+                                            <b>Cooling-off guarantee</b><br/><br/>
+                                            If you re-think your purchase and decide it's not right for you, you have the right to cancel your policy with a full refund of all premiums paid within 30 days.<br/>                               
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                            </div>  
+                        </apex:outputPanel> 
+                </apex:outputPanel>
+            </apex:outputPanel>  
+                                   
+            <apex:outputPanel id="showReturnHome">
+                
+                
+                <apex:outputPanel rendered="{!txn.AUW_Overall_Result__c == 'Decline' && (isAppealNo || !isBrokerPortal)}" styleClass="bs row" layout="block">
+
+                    <div id="action-bar-desktop" class="bs hidden-xs text-center" style="padding-top:50px;padding-bottom:20px;">
+                        <a id="eSales-home-btn" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop"
+                            role="button" onclick="goHome();">
+                            {!$Label.ESales_Return_to_Home}
+                        </a>
+                    </div>
+
+                    <apex:outputPanel rendered="{!isCustomerPortal}">
+                        <div id="action-bar" class="bs cigna-floating-bottom-panel visible-xs">
+                            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                                <a id="eSales-home-btn" href="javascript:void(0);" class="action-btn cigna-fg-white" role="button"
+                                   onclick="Cigna.ESales.goHome();">
+                                   <i class="ci-hk-home" aria-hidden="true"></i><br/>
+                                    {!$Label.ESales_Return_to_Home}
+                                </a>
+                            </div>
+                        </div>
+                        <div id="mobile-app-padding" class="bs row" style="display: none; padding-bottom: 120px;">
+                            <div class="bs col-xs-12"></div>
+                        </div>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+            </apex:outputPanel>         
+        </apex:outputPanel>
+    </apex:form>  
+</apex:page>

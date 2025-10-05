@@ -1,0 +1,744 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" controller="BrkProductDeckCtrl">
+    <head> 
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <apex:include pageName="CignaCommonCSS" />
+        <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <style>
+            .middle-container {
+                display: table;
+            }
+            
+            .middle-content {
+                display: table-cell;
+                height: 100%;
+                min-height: 100%;
+                float: none !important;
+                vertical-align: middle;
+            }
+            
+             @media (min-width: 992px) {
+                #product {
+                    padding-top: 80px !important;
+                }
+                .tab-pane {
+                    padding-top : 50px;
+                }
+            }
+            
+            @media (max-width: 991px) {
+                ::-webkit-input-placeholder {
+                     font-size : 0.9em;
+                }
+            }
+            
+            #product {
+                padding-top: 30px;
+            }
+            
+            .seacrh-bar-style {
+                border: 0px;
+                background: transparent;
+                width: 100%;
+                box-shadow: none !important;
+                border-radius: 0px;
+                color: #58595B;
+                outline: none;
+                -webkit-box-shadow: none;
+                -moz-box-shadow: none;
+                box-shadow: none;
+            }
+            .search-wrapper {
+                border-bottom: 1px solid #58595B;
+                padding: 10px;
+            }
+            
+            .content-label{
+               
+            }
+            
+            .content-highlight{
+            }
+            
+            .overlay {
+                overflow: hidden;
+            }
+            
+            html, body{
+                height: 100%;
+            }
+            
+            body.overlay-open {
+                overflow: hidden !important;
+            }
+            
+        </style>
+    </head>
+
+    <apex:define name="additionalLibraries">
+         <!--additional css, bootstrap, jquery,js libraries-->
+         <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    </apex:define>
+    
+    <script>
+        
+        var Cigna = Cigna || {};
+        
+        
+        Cigna.ProductDeck = function(){
+            var switchTab = function(event){
+                $(".tab-pane").hide();
+                $("#"+(this.id).substring(0,this.id.length-3)).show();
+                $(".active-bar-tab").addClass("inactive-bar-tab").removeClass("active-bar-tab");
+                $(this).addClass("active-bar-tab").removeClass("inactive-bar-tab");
+                console.log(this.id);
+            }
+            
+            var clearSearch = function(event){
+               $("#searchfield").val("");
+               $("#searchfieldsm").val("");
+               $("#clearbtn").hide();
+               //CR-56_Link_20220214
+               $(this).prev().trigger("focus");
+            }
+            
+            var triggerClearBtn = function(event){
+                if($(this).val().length > 0){
+                    $("#clearbtn").show();
+                } else {
+                    $("#clearbtn").hide();
+                }
+                
+            }
+            
+            var init = function (){
+                //('#saved-application-table .listcontent').filter(":even").css('background-color','rgb(242, 242, 242)');
+                $("#clearbtn").hide();
+                
+            }
+            
+          
+            
+            return {switchTab : switchTab, clearSearch: clearSearch, triggerClearBtn:triggerClearBtn, init: init }
+        }();
+        
+        $(document).ready(function() {
+            Cigna.ProductDeck.init();
+            //CR-56_Link_20220214
+            $(".tab-header").on("click",Cigna.ProductDeck.switchTab);
+            $(".clear-btn").on("click",Cigna.ProductDeck.clearSearch);
+            $(".seacrh-bar-style").on("keyup",Cigna.ProductDeck.triggerClearBtn);
+            <apex:outputPanel layout="none" rendered="{!JSINHTMLENCODE($CurrentPage.Parameters.Tab) == 'app'}">
+             // CR-56_Link_20220214
+            $("#savedApplicationTab").trigger("click");
+            </apex:outputPanel>
+            
+            greySeparatorStyle();
+            
+        });
+        
+        function greySeparatorStyle() {
+            /**grey separator**/
+             var srlist = document.getElementsByClassName("listcontent");
+             for(var i = 0; i < srlist.length; i++){
+                 var item = srlist[i];
+                 if ($(item).is(':nth-child(even)')) {
+                     item.style.backgroundColor = '#f2f2f2';
+                 }
+             }
+        }
+        
+        var idx_e_app = '';
+        var idx_quote = '';
+        var fromPolicyTransaction = false;
+
+        /**add the policyT parameter, judgement whether this record is from ESales_Policy_Transaction__c. ***/ 
+        function delChange(type, record_id, policyT) {
+            fromPolicyTransaction = policyT;
+            if(type != null){
+                if(type == 'e_app' && record_id != null){
+                    idx_e_app = record_id;
+                } 
+                if(type == 'quote' && record_id != null){
+                    idx_quote = record_id;
+                }
+            }
+            var overlay = document.getElementById('overlay');
+            var delConfirmBox = document.getElementById('delConfirmBox');
+            overlay.style.opacity = .95;
+            if (overlay.style.display == "block") {
+                overlay.style.display = "none";
+                delConfirmBox.style.display = "none";
+            } else {
+                overlay.style.display = "block";
+                delConfirmBox.style.display = "block";
+            }
+            $("body").addClass("overlay-open");
+        }
+
+        function confirmDel(choice) {
+            if (choice == 'true') {
+                document.getElementById('overlay').style.display = "none";
+                document.getElementById('delConfirmBox').style.display = "none";
+                //document.getElementById(delType).style.display = "none";
+                
+                //pass idx to delete at controller
+                if (idx_e_app != ''){
+                    deleteSingleEApplicationRecordAtAction(idx_e_app, fromPolicyTransaction);                    
+                }
+                else if (idx_quote != '') {
+                    deleteSingleQuoteRecordAtAction(idx_quote, fromPolicyTransaction);                    
+                }
+                
+                idx_e_app = '';
+                idx_quote = '';
+
+            } else {
+                document.getElementById('overlay').style.display = "none";
+                document.getElementById('delConfirmBox').style.display = "none";
+            }
+            $("body").removeClass("overlay-open");
+        }
+        
+        function closeBuyNowDisabledMessageBox() {
+            document.getElementById('overlay').style.display = "none";
+            document.getElementById('buyNowDisabledMessageBox').style.display = "none";
+            $("body").removeClass("overlay-open");
+        }
+    
+        function editSavedApplication(recordId, recordType, recordStatus,basicPlan) {
+            if ({!buyNowEnabledForBroker && isEnableBuyNow} || true) { // Always allow edit saved application even it buy now disabled for broker
+                redirectToEsales(recordId, recordType,recordStatus,basicPlan);
+            } else {
+                buyNowDisabledMessage();
+            }
+        }
+    
+        function buyNowDisabledMessage() {
+            var overlay = document.getElementById('overlay');
+            var buyNowDisabledBox = document.getElementById('buyNowDisabledMessageBox');
+            overlay.style.opacity = .95;
+            if (overlay.style.display == "block") {
+                overlay.style.display = "none";
+                buyNowDisabledBox.style.display = "none";
+            } else {
+                overlay.style.display = "block";
+                buyNowDisabledBox.style.display = "block";
+            }
+            $("body").addClass("overlay-open");
+        }
+        
+        function onChangeTab(selectedTab){
+            if(selectedTab=='Application'){
+                initApplicationPagination();
+            }
+            
+            if(selectedTab=='Quote'){
+                initQuotePagination();
+            }
+        }
+        
+        function editSaveQuote(recordId,basicPlan,recordType) {
+            console.log('recordType'+recordType);
+            console.log('recordId'+recordId);
+            if(recordType.indexOf("Group") >= 0){
+                Cigna.Util.navigateToVFP('GroupProductQuotationVFP?tid=' + recordId + '&fromPage=SaveQuote', null, null, true);
+            //}else if(basicPlan=='DMB'){
+            //    Cigna.Util.navigateToVFP('EsalesVFP?tid=' + recordId, null, null, true);
+            }else{
+                //Cigna.Util.navigateToVFP('GetQuoteVFP?tid=' + recordId, null, null, true);
+                if (basicPlan == 'PBT') {
+                    Cigna.Util.navigateToVFP('PortableGetQuoteVFP?tid=' + recordId, null, null, true);
+                } else if (basicPlan == 'PBC') {
+                    Cigna.Util.navigateToVFP('PortableConversionGetQuoteVFP?tid=' + recordId, null, null, true);
+                } else if (basicPlan == 'VHIS'){
+                    Cigna.Util.navigateToVFP('GenericGetQuoteVFP?tid=' + recordId, null, null, true);
+                }else{
+                    Cigna.Util.navigateToVFP('GetQuoteVFP?tid=' + recordId, null, null, true);
+                }
+            }
+            
+        } 
+        
+        function redirectToEsales(recordId,recordType,recordStatus,basicPlan) {
+            console.log('recordId'+recordId);
+            console.log('recordType'+recordType);
+            console.log('index'+recordType.indexOf("Group"));
+            console.log('isContacts'+ recordType.indexOf("Group") >= 0);
+            if(recordType.indexOf("Group") >= 0){
+                Cigna.Util.navigateToVFP('ESalesGroupVFP?tid=' + recordId, null, null, true);
+            }else{
+                //Cigna.Util.navigateToVFP('ESalesVFP?tid=' + recordId, null, null, true);
+                if(recordStatus== 'Waiting for Third Party Payor Signature'){
+                    
+                    Cigna.Util.navigateToVFP('ThirdPartySignatureVFP?tid=' + recordId, null, null, true);
+                
+                }else if(basicPlan == 'VHIS'){
+                    Cigna.Util.navigateToVFP('GenericEsalesVFP?tid=' + recordId, null, null, true);
+                }else{
+                    Cigna.Util.navigateToVFP('ESalesVFP?tid=' + recordId, null, null, true);
+                }
+            }
+        }
+        
+        function displayList(status) {
+
+            if (status == 'newBusiness') {
+            
+                initApplicationPagination();
+
+                document.getElementById('brk-nb-header').style.display = "block";
+                
+                document.getElementById('savedApplication').style.display = "block";
+                
+                document.getElementById('savedQuote').style.display = "none"; //Ray Updates
+                document.getElementById('brk-quote-header').style.display = "none"; //Ray Updates
+            }
+
+            if (status == 'quote') {
+
+                initQuotePagination();
+
+                document.getElementById('brk-nb-header').style.display = "none";
+                document.getElementById('brk-quote-header').style.display = "block"; //Ray Updates
+                
+                document.getElementById('savedApplication').style.display = "none";
+                
+                document.getElementById('brk-quote-header').style.display = "block"; //Ray Updates
+                document.getElementById('savedQuote').style.display = "block"; //Ray Updates
+
+            }
+
+        }
+
+        function redirectVulSystem() {
+           window.open("https://hk.member.cigna.com/hkwp/CP/");    
+         } 
+    
+        function getProductQuote(productCode,category) {    
+            console.log("isBDUser = "+Cigna.Util.isBDUser());
+            if (Cigna.Util.isBDUser()) { 
+                console.log("------- BD USER------");
+                //Cigna.Util.navigateToVFP("GetQuoteVFP?plan=" + productCode + "&Category=" + category, null, null, true);
+                sforce.one.navigateToURL("/apex/brkGetQuoteVFP?plan=" + productCode + "&Category=" + category, null, null, true);
+            } else { 
+                console.log("------- NON BD USER------");
+                Cigna.Util.navigateToVFP('GetProtectedVFP?pc='+productCode);
+            }
+        }
+    
+        
+    </script>
+    
+ <apex:form >
+    <apex:actionFunction action="{!initApplicationPagination}" name="initApplicationPagination" reRender="savedApplicationPanel" oncomplete="greySeparatorStyle();" status="loader-icon" />
+    <apex:actionFunction action="{!handleNextPageApplication}" name="handleNextPageApplication" reRender="savedApplicationPanel" oncomplete="greySeparatorStyle();" status="loader-icon" />
+    <apex:actionFunction action="{!handlePrevPageApplication}" name="handlePrevPageApplication" reRender="savedApplicationPanel" oncomplete="greySeparatorStyle();" status="loader-icon" />
+    <apex:actionFunction action="{!initQuotePagination}" name="initQuotePagination" reRender="savedQuotePanel" oncomplete="greySeparatorStyle();" status="loader-icon" />
+    <apex:actionFunction action="{!handleNextPageQuote}" name="handleNextPageQuote" reRender="savedQuotePanel" oncomplete="greySeparatorStyle();" status="loader-icon" />
+    <apex:actionFunction action="{!handlePrevPageQuote}" name="handlePrevPageQuote" reRender="savedQuotePanel" oncomplete="greySeparatorStyle();" status="loader-icon" />
+    <div class="bs" style="margin-right: -15px;margin-left: -15px;">
+        <!--
+           <div class="bs form-group col-xs-12 col-lg-12">
+                 <apex:selectList value="{!selectedCategory}" multiselect="false" size="1" styleClass="bs form-control">
+                    <apex:selectOptions value="{!categoryList}"/>
+                    <apex:actionSupport event="onchange" 
+                                        action="{!changeCategory}" 
+                                        />
+                 </apex:selectList>
+           </div>
+         -->
+       
+       
+       <div>
+         <table class="bs bar-tab-container col-lg-12">
+            <tr>
+                <td id="productTab" style="{!IF($Permission.BD_Users, 'display:none;', '')}" class="bs active-bar-tab tab-header onclick-pointer">
+                    {!$Label.Product_Deck}
+                </td>
+                <td id="savedApplicationTab" style="{!IF($Permission.BD_Users, 'display:none;', '')}" class="bs inactive-bar-tab tab-header onclick-pointer" onclick="onChangeTab('Application');">
+                    {!$Label.saved_Eapplication}
+                </td>
+                <td id="savedQuoteTab" style="{!IF($Permission.BD_Users, 'display:none;', '')}" class="bs inactive-bar-tab tab-header onclick-pointer" onclick="onChangeTab('Quote');">
+                    {!$Label.saved_quote}
+                </td>
+            </tr>                
+         </table>
+       </div>
+       
+        <!--Start of del msg-->
+        <div id="overlay" class="overlay" style="display:none;">
+            <div id="delConfirmBox" class="ConfirmBox">
+                <div id="delmsg" class="alertmsg">
+                    {!$Label.Are_you_sure_to_delete_the_saved_application}
+                </div>
+                <div class="bs col-xs-6 col-sm-6">
+                    <i class="glyphicon glyphicon-ok-sign oksign" onclick="confirmDel('true')"></i>
+                </div>
+                <div class="bs col-xs-6 col-sm-6">
+                    <i class="glyphicon glyphicon-remove-sign cancelsign" onclick="confirmDel('false')"></i>
+                </div>
+            </div>
+            <div id="buyNowDisabledMessageBox" class="ConfirmBox">
+                <div id="buyNowDisabledMessage" class="alertmsg">
+                    {!$Label.Buy_Now_Disabled_Message}
+                </div>
+                <div class="bs col-xs-12 col-sm-12">
+                    <i class="glyphicon glyphicon-ok-sign oksign" onclick="closeBuyNowDisabledMessageBox()"></i>
+                </div>
+            </div>
+        </div>  
+        <!--End of del msg-->
+       
+       <div class="bs tab-content" id="pageDetail">
+            <div id="product" class="tab-pane in active">
+               
+                 <apex:repeat value="{!productList}" var="p">
+                        <!-- Rancho_HKITSFDC264_20250903 - update font -->
+                        <div onclick="getProductQuote('{!p.Product_Code__c}','{!p.Product_Category__c}');" class="bs form-group col-xs-12 col-md-12 col-sm-12 col-lg-12 middle-container cigna-fg-navy-blue onclick-pointer" style="padding:10px 20px">
+                        
+                           <div class="bs col-xs-3 col-md-3 col-sm-2 col-lg-3 middle-content">
+                                <!--Andy Peng- VHIS-10 START-->
+                                <apex:outputPanel rendered="{!p.Product_Code__c == 'VHIS'}">
+                                    <i aria-hidden="true" class="ci-hk-ekg ci-hk-2x pull-right"></i>
+                                </apex:outputPanel>
+                                <!--Andy Peng- VHIS-10 END-->
+                                <!--IBM JING PORTABLE CR 0419 START-->
+                                <apex:outputPanel rendered="{!p.Product_Code__c == 'PBC'}">
+                                    <i aria-hidden="true" class="ci-hk-hospital-bed ci-hk-2x pull-right"></i>
+                                 </apex:outputPanel>
+                                 <apex:outputPanel rendered="{!p.Product_Code__c == 'PBT'}">
+                                    <i aria-hidden="true" class="ci-hk-hospital-bed ci-hk-2x pull-right"></i>
+                                 </apex:outputPanel>
+                               <!--IBM JING PORTABLE CR 0419 END-->
+                               <apex:outputPanel rendered="{!p.Product_Code__c == 'TU'}">
+                                    <i aria-hidden="true" class="ci-hk-plus ci-hk-2x pull-right" ></i>
+                               </apex:outputPanel>
+                               <apex:outputPanel rendered="{!p.Product_Code__c == 'PM'}">
+                                    <i aria-hidden="true" class="ci-hk-van ci-hk-2x pull-right" ></i>
+                               </apex:outputPanel>
+                               <apex:outputPanel rendered="{!p.Product_Code__c == 'NEL'}">
+                                    <i aria-hidden="true" class="ci-hk-stethoscope ci-hk-2x pull-right" ></i>
+                               </apex:outputPanel>
+                               <apex:outputPanel rendered="{!p.Product_Code__c == 'SCI'}">
+                                    <i aria-hidden="true" class="ci-hk-needle ci-hk-2x pull-right" ></i>
+                               </apex:outputPanel>
+                               <apex:outputPanel rendered="{!p.Product_Code__c == 'DMB'}">
+                                    <i aria-hidden="true" class="ci-hk-med-bag ci-hk-2x pull-right" ></i>
+                               </apex:outputPanel>
+                               <apex:outputPanel rendered="{!p.Product_Code__c == 'TUL'}">
+                                    <i aria-hidden="true" class="ci-hk-doctor ci-hk-2x pull-right" ></i>
+                               </apex:outputPanel>
+                               <apex:outputPanel rendered="{!p.Product_Code__c == 'LHB'}" >
+                                    <i aria-hidden="true" class="ci-hk-user-group ci-hk-2x pull-right" ></i>
+                               </apex:outputPanel>
+                               <apex:outputPanel rendered="{!p.Product_Code__c == 'KIDSG'}">
+                                    <i aria-hidden="true" class="ci-hk-family ci-hk-2x pull-right" ></i>
+                               </apex:outputPanel>
+                               <apex:outputPanel rendered="{!p.Product_Code__c == 'ROP108'}" >
+                                    <i aria-hidden="true" class="ci-hk-piggy-bank ci-hk-2x pull-right" ></i>  
+                               </apex:outputPanel>
+                               <apex:outputPanel rendered="{!p.Product_Code__c == 'SME'}" >
+                                    <i aria-hidden="true" class="ci-hk-user-group ci-hk-2x pull-right" ></i>  
+                               </apex:outputPanel>
+                               <apex:outputPanel rendered="{!p.Product_Code__c == 'WEG'}" >
+                                    <i aria-hidden="true" class="ci-hk-calendar-check ci-hk-2x pull-right" ></i>
+                               </apex:outputPanel>
+                               <apex:outputPanel rendered="{!p.Product_Code__c == 'WEW'}" >
+                                    <i aria-hidden="true" class="ci-hk-doctor ci-hk-2x pull-right" ></i>
+                               </apex:outputPanel>
+                               <!-- Combo prodcut  -->
+                               <apex:outputPanel rendered="{!p.Product_Code__c == 'CBO'}" >
+                                    <i aria-hidden="true" class="ci-hk-doctor ci-hk-2x pull-right" ></i>
+                               </apex:outputPanel>
+                               <!-- Rancho_JOBR324_20230905 - elite 360 -->
+                               <apex:outputPanel rendered="{!p.Product_Code__c == 'NEL2'}">
+                                    <i aria-hidden="true" class="ci-hk-stethoscope ci-hk-2x pull-right" ></i>
+                               </apex:outputPanel>
+                           </div>
+    
+                           <div class="col-xs-8 col-md-6 col-sm-8 col-lg-6 middle-content" style="padding:0px">
+                               <h4>{!p.Name__c}</h4>
+                           </div>
+                           
+                           
+                           <div class="bs col-xs-1 col-md-3 col-sm-2 col-lg-3 middle-content">
+                               <i aria-hidden="true" class="fa fa-chevron-right pull-left"/>
+                           </div>
+                      </div>
+                 </apex:repeat>
+               
+               <!-- start- Added VUL System link by Zai Hong 20171110 -->
+              <apex:outputPanel rendered="{!$Permission.BD_Users}">
+                <!-- Rancho_HKITSFDC264_20250903 - update font -->
+               <div onclick="redirectVulSystem()" class="bs form-group col-xs-12 col-md-12 col-sm-12 col-lg-12 middle-container cigna-fg-navy-blue onclick-pointer" style="padding:10px 20px">
+                <div class="bs col-xs-3 col-md-3 col-sm-2 col-lg-3 middle-content">                              
+                   <i aria-hidden="true" class="ci-hk-pointer-daigonal-right ci-hk-2x pull-right" ></i>
+                </div>
+                <div class="col-xs-8 col-md-6 col-sm-8 col-lg-6 middle-content" style="padding:0px">   
+                    <h4>VUL System </h4>
+                </div>
+                <div class="bs col-xs-1 col-md-3 col-sm-2 col-lg-3 middle-content">
+                  <i aria-hidden="true" class="fa fa-chevron-right pull-left"/>
+               </div>
+             </div>
+            </apex:outputPanel>
+              <!-- end- Added by Zai Hong 20171110 -->
+               
+            </div>
+            <div id="savedApplication" class="tab-pane">
+                <!-- 
+                <div id="search" class="bs row" style="padding:20px;">
+                    /!--
+                    <div class="bs col-xs-12 visible-xs search-wrapper">
+                        <input id="searchfield" placeholder="Search Policy Holder..." class="seacrh-bar-style" style="width:85%" />
+                        <i id="clearbtnxs" class="fa fa-times" aria-hidden="true"></i>
+                        <i class="fa fa-search cigna-fg-orange-medium pull-right" aria-hidden="true"></i>
+                    </div>
+                    --/
+                    <div class="bs col-sm-6 col-sm-offset-3 col-xs-12 search-wrapper">
+                        <input id="searchfield" placeholder="Search Policy Holder by name or ID" class="seacrh-bar-style" style="width:85%" />
+                        <i id="clearbtn" class="fa fa-times clear-btn" aria-hidden="true"></i>
+                        <i class="fa fa-search cigna-fg-orange-medium pull-right" aria-hidden="true"></i>
+                    </div>
+                </div>
+                -->
+                <apex:outputPanel id="savedApplicationPanel">
+                    <div id="saved-application-table">
+                        <div id="brk-nb-header" class="bs row listcontent-header hidden-xs" >
+                            <div class="bs col-sm-3">{!$Label.Last_Saved_Date}</div>
+                            <div class="bs col-sm-3">{!$Label.Policy_Holder}</div>
+                            <div class="bs col-sm-4">{!$Label.Product}</div>
+                            <div class="bs col-sm-2" />
+                        </div>
+                        <apex:outputPanel rendered="{!if(NewBusinessList.size>0, false, true)}">
+                              <div style="padding:20px;" class="bs col-sm-12 col-xs-12 text-center">
+                                  <i class="fa fa-smile-o cigna-fg-black" aria-hidden="true"></i>
+                                  {!$Label.You_don_t_have_any_E_application_record}
+                              </div>
+                        </apex:outputPanel>
+                         <apex:repeat value="{!NewBusinessList}" var="pc">
+                            <div class="bs row listcontent">
+                                <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">
+                                    <div class="bs col-xs-12 col-sm-12 table-cell" style="font-weight: bold">
+                                       <!--   
+                                      <apex:outputPanel rendered="{! If(pc.Stage__c=='Not Submitted' ,true,false) }">
+                                          <i class="fa fa-trash  pull-left hidden-xs cigna-fg-blue-medium" aria-hidden="true"/>
+                                      </apex:outputPanel>
+                                          -->
+                                        <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                           <apex:param value="{!pc.LastModifiedDate}"/>
+                                        </apex:outputText> 
+                                        <apex:outputPanel >
+                                            <i class="fa fa-pencil pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="editSavedApplication('{!pc.id}','{!pc.recordType}','{!pc.Status}','{!pc.BasicPlanCode}')" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <!--  
+                                        <apex:outputPanel rendered="{! If(pc.Stage__c!='Not Submitted' ,true,false) }">
+                                            <i class="fa fa-chevron-right pull-right visible-xs cigna-fg-blue-medium" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                         <apex:outputPanel rendered="{! If(pc.Stage__c=='Not Submitted' ,true,false) }">
+                                            <i class="fa fa-pencil pull-right visible-xs cigna-fg-blue-medium" onclick="Cigna.Util.navigateToVFP('ESalesVFP?tid={!pc.id}', null, null, true)" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        -->
+                                    </div>
+                                </div>
+    
+                                <div class="bs table-row col-xs-12 col-sm-3" style="padding:0px !important;">    
+                                    <div class="bs col-xs-6 visible-xs table-cell content-label">{!$Label.Policy_Holder}</div>
+                                    <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                        <apex:outputText value="{!pc.PolicyHolderName}"/>
+                                    </div>
+                                </div>
+    
+                                <div class="bs table-row col-xs-12 col-sm-4" style="padding:0px !important;">
+                                    <div class="bs col-xs-6 visible-xs table-cell content-label" >{!$Label.Product}</div>
+                                    <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                        <apex:outputText value="{!pc.ProductName}" />
+                                        <apex:outputPanel >
+                                            <i class="fa fa-trash  pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="delChange('e_app', '{!pc.Id}','{!pc.FromPolicyTransaction}')" aria-hidden="true"/>
+                                        </apex:outputPanel>
+                                        <!--<apex:outputPanel >
+                                            <i style="padding-left: 10px;" class="fa fa-trash pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="delChange('e_app', '{!pc.Id}')" aria-hidden="true"/>
+                                        </apex:outputPanel>
+                                         <apex:outputPanel >
+                                            <i class="fa fa-pencil pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="Cigna.Util.navigateToVFP('ESalesVFP?tid={!pc.id}', null, null, true)" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel >
+                                            <i class="fa fa-trash  pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="delChange('e_app', '{!pc.Id}')" aria-hidden="true"/>
+                                        </apex:outputPanel>-->
+                                    </div>
+                                </div>
+                                
+                                <div class="bs table-row col-sm-2 hidden-xs " style="padding:0px !important;">
+                                   
+                                    <div class="bs col-sm-12 content-highlight table-cell">
+                                        <apex:outputPanel >
+                                            <i style="padding-left: 10px;" class="fa fa-trash pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="delChange('e_app', '{!pc.Id}','{!pc.FromPolicyTransaction}')" aria-hidden="true"/>
+                                        </apex:outputPanel>
+                                         <apex:outputPanel >
+                                            <i class="fa fa-pencil pull-right cigna-fg-blue-medium onclick-pointer" onclick="editSavedApplication('{!pc.id}','{!pc.recordType}','{!pc.Status}','{!pc.BasicPlanCode}')" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                     </div>  
+                                    
+                                </div>
+    
+                            </div>
+    
+                        </apex:repeat>
+                        
+                        <script>
+                            greySeparatorStyle();
+                        </script>
+                    </div>
+                    <!--pagination-->
+                    <div style="padding:20px;" class="bs col-sm-12 col-xs-12 text-center">
+                        <apex:outputPanel rendered="{!If(hasPreviousApplication,true,false)}"><span class="fa fa-chevron-left onclick-pointer cigna-fg-orange-dark" style="padding-right:10px;" aria-hidden="true" onclick="handlePrevPageApplication();" /></apex:outputPanel>
+                            <apex:outputText value="{!$Label.Page_0_of_1}" >
+                                <apex:param value="{!currentPageApplication}" />
+                                <apex:param value="{!totalPageApplication}" />
+                            </apex:outputText>
+                        <apex:outputPanel rendered="{!If(hasNextApplication,true,false)}"><span class="fa fa-chevron-right onclick-pointer cigna-fg-orange-dark" style="padding-left:10px;" aria-hidden="true" onclick="handleNextPageApplication();" /></apex:outputPanel>
+                    </div>
+                </apex:outputPanel>
+            </div>
+            <div id="savedQuote" class="tab-pane">
+                <apex:outputPanel id="savedQuotePanel">
+                    <script>
+                        //('#saved-quote-table .listcontent').filter(":even").css('background-color','rgb(242, 242, 242)');
+                    </script>
+                    <div id="saved-quote-table">
+                        <div id="brk-quote-header" class="bs row listcontent-header hidden-xs" >
+                            <apex:outputPanel layout="none" rendered="{!IsAppLinkEnabled }" >
+                            <div class="bs col-sm-2">{!$Label.Last_Saved_Date}</div>
+                            <div class="bs col-sm-2">{!$Label.Reference_No}</div><!-- Rancho_ReferenceNo_20201124 -->
+                            <div class="bs col-sm-2">{!$Label.Policy_Holder}</div><!-- Rancho_ReferenceNo_20201124 -->
+                            <div class="bs col-sm-3">{!$Label.Product}</div>
+                            <div class="bs col-sm-2">{!$Label.AppLink_Source}</div><!-- Rancho_ReferenceNo_20201124 -->
+                            </apex:outputPanel>
+                            <apex:outputPanel layout="none" rendered="{!!IsAppLinkEnabled }" >
+                            <div class="bs col-sm-2">{!$Label.Last_Saved_Date}</div><!-- Rancho_ReferenceNo_20201124 -->
+                            <div class="bs col-sm-2">{!$Label.Reference_No}</div><!-- Rancho_ReferenceNo_20201124 -->
+                            <div class="bs col-sm-2">{!$Label.Policy_Holder}</div><!-- Rancho_ReferenceNo_20201124 -->
+                            <div class="bs col-sm-3">{!$Label.Product}</div><!-- Rancho_ReferenceNo_20201124 -->
+                            <div class="bs col-sm-2" />
+                            </apex:outputPanel>
+                        </div>
+                        <apex:outputPanel rendered="{!if(savedQuotes.size>0, false, true)}">
+                              <div style="padding:20px;" class="bs col-sm-12 col-xs-12 text-center">
+                                  <i class="fa fa-smile-o cigna-fg-black" aria-hidden="true"></i>
+                                  {!$Label.You_don_t_have_any_quote_record}
+                              </div>
+                        </apex:outputPanel>
+                        <apex:repeat value="{!savedQuotes}" var="pc">
+                            <div class="bs row listcontent">
+                                <!-- LastModifiedDate --><!-- Rancho_ReferenceNo_20201124 -->
+                                <div class="bs table-row col-xs-12 {!if(IsAppLinkEnabled,'col-sm-2','col-sm-2')}" style="padding:0px !important;">
+                                    <div class="bs col-xs-12 col-sm-12 table-cell" style="font-weight: bold">
+                                        <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                           <apex:param value="{!pc.LastModifiedDate}"/>
+                                        </apex:outputText> 
+                                        
+                                        <apex:outputPanel >
+                                            <i class="fa fa-pencil pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="editSaveQuote('{!pc.id}','{!pc.BasicPlanCode}','{!pc.recordType}')" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                                <!-- Rancho_ReferenceNo_20201124 -->
+                                <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">    
+                                    <div class="bs col-xs-6 visible-xs table-cell">{!$Label.Reference_No}</div>
+                                    <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                        <apex:outputText value="{!pc.ReferenceNo}"/>
+                                    </div>
+                                </div>
+                                <!-- Policy Holder --><!-- Rancho_ReferenceNo_20201124 -->
+                                <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;">    
+                                    <div class="bs col-xs-6 visible-xs table-cell content-label">{!$Label.Policy_Holder}</div>
+                                    <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                        <apex:outputText value="{!pc.PolicyHolderName}"/>
+                                    </div>
+                                </div>
+                                <!-- Product -->
+                                <!-- Rancho_ReferenceNo_20201124 -->
+                                <div class="bs table-row col-xs-12 {!if(IsAppLinkEnabled,'col-sm-3','col-sm-3')}" style="padding:0px !important;">
+                                    <div class="bs col-xs-6 visible-xs table-cell content-label" >{!$Label.Product}</div>
+                                    <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                        <apex:outputText value="{!pc.ProductName}" />
+                                        <apex:outputPanel >
+                                            <i class="fa fa-trash  pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="delChange('quote', '{!pc.Id}','{!pc.FromPolicyTransaction}')" aria-hidden="true"/>
+                                        </apex:outputPanel>
+                                    </div>
+                                        <!--<apex:outputPanel >
+                                            <i style="padding-left: 10px;" class="fa fa-trash pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="delChange('quote', '{!pc.Id}')" aria-hidden="true"/>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel >
+                                            <i class="fa fa-pencil pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="Cigna.Util.navigateToVFP('GetQuoteVFP?tid={!pc.id}', null, null, true)" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel >
+                                            <i class="fa fa-trash  pull-right visible-xs cigna-fg-blue-medium onclick-pointer" onclick="delChange('quote', '{!pc.Id}')" aria-hidden="true"/>
+                                        </apex:outputPanel>-->
+                                </div>
+                                <!-- Daft Add -->
+                                <!-- Source -->
+                                <apex:outputPanel layout="none" rendered="{!IsAppLinkEnabled}" >
+                                <div class="bs table-row col-xs-12 col-sm-2" style="padding:0px !important;" id="from-broker-portal-div">    
+                                    <div class="bs col-xs-6 visible-xs table-cell content-label">{!$Label.AppLink_Source}</div>
+                                    <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+
+                                        <apex:outputText value="{!IF(pc.FromBrokerPortal==true,$Label.AppLink_Broker_Portal,$Label.AppLink_Quote_from_Customer )}" /> 
+
+
+                                        <!-- <apex:outputText id="save-quote-from-size" value="{!savedQuotes_size}" style="display: none;"/> -->
+                                        <!-- <apex:outputText value="{!IF(true ==true),'Yes','No')}" >
+                                        </apex:outputText> -->
+                                         
+
+
+                                    </div>
+                                </div>
+                                
+                                 </apex:outputPanel>
+                                <!-- Daft Add end -->
+                                <!-- Rancho_ReferenceNo_20201124 -->
+                                <div class="bs table-row col-sm-1 hidden-xs" style="padding:0px !important;">
+                                    <div class="bs col-xs-6 col-sm-12 content-highlight table-cell">
+                                        <apex:outputPanel >
+                                            <i style="padding-left: 10px;" class="fa fa-trash pull-right hidden-xs cigna-fg-blue-medium onclick-pointer" onclick="delChange('quote', '{!pc.Id}','{!pc.FromPolicyTransaction}')" aria-hidden="true"/>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel >
+                                            <i class="fa fa-pencil pull-right cigna-fg-blue-medium onclick-pointer" onclick="editSaveQuote('{!pc.id}','{!pc.BasicPlanCode}','{!pc.recordType}');" aria-hidden="true"></i>
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            
+                        </apex:repeat>
+                        <script>
+                            greySeparatorStyle();
+                        </script>
+                    </div>
+                    <!--pagination-->
+                    <div style="padding:20px;" class="bs col-sm-12 col-xs-12 text-center">
+                        <apex:outputPanel rendered="{!If(hasPreviousQuote,true,false)}"><span class="fa fa-chevron-left onclick-pointer cigna-fg-orange-dark" style="padding-right:10px;" aria-hidden="true" onclick="handlePrevPageQuote();"/></apex:outputPanel>
+                            <apex:outputText value="{!$Label.Page_0_of_1}" >
+                                <apex:param value="{!currentPageQuote}" />
+                                <apex:param value="{!totalPageQuote}" />
+                            </apex:outputText>
+                        <apex:outputPanel rendered="{!If(hasNextQuote,true,false)}"><span class="fa fa-chevron-right onclick-pointer cigna-fg-orange-dark" style="padding-left:10px;" aria-hidden="true" onclick="handleNextPageQuote();"/></apex:outputPanel>
+                    </div>
+                </apex:outputPanel>
+            </div>
+            
+            <!-- delete functions -->
+            <apex:actionFunction action="{!deleteSingleEApplicationRecord}" name="deleteSingleEApplicationRecordAtAction"  oncomplete="displayList('newBusiness');" status="loader-icon"> <!--   -->
+                <apex:param id="idx_e_app" name="idx_e_app" value="" />
+                <apex:param id="nbFromPolicyTransaction" name="fromPolicyTransaction" value="" />
+            </apex:actionFunction>
+            <apex:actionFunction action="{!deleteSingleQuoteRecord}" name="deleteSingleQuoteRecordAtAction"  oncomplete="displayList('quote');" status="loader-icon">
+                <apex:param id="idx_quote" name="idx_quote" value="" />
+                <apex:param id="fromPolicyTransaction" name="fromPolicyTransaction" value="" />
+            </apex:actionFunction>
+      </div>
+       
+    </div>
+  </apex:form>
+</apex:page>

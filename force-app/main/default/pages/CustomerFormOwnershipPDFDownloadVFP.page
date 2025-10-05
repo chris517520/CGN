@@ -1,0 +1,639 @@
+<apex:page showHeader="false" applyHtmlTag="false" renderAs="PDF" cache="true" controller="CustomerFormOwnershipPDFDownloadCTRL">
+    <head>
+        <style >
+            @page {
+                padding-top: 90px;
+                margin-bottom: 90px;
+                
+                @top-center {
+                    content: element(header);
+                }
+                
+                @bottom-left {
+                    content: element(footer);
+                }
+            }
+            div.header {
+                font-size: 8pt;
+                display: block;
+                padding-top: 30px;
+                text-align: left;
+                position: running(header);
+                font-family: Arial Unicode MS;
+                //color:  #d3d3d3;
+                
+            }
+            div.footer {
+                
+                text-align: center;
+                padding: 0px;
+                font-size: 8pt;
+                font-family: Arial Unicode MS;
+                position: running(footer);
+            }
+            div.content{
+                font-family: Arial Unicode MS;
+                font-size: 8pt;
+                fill-opacity:.5; 
+                stroke:black; 
+                stroke-width:2;
+                /** does not work **/
+                word-wrap: break-word;
+                word-break: break-all;
+                /** does not work end **/
+            }
+            .pagenumber:before {
+                content: counter(page);
+            }
+            .pagecount:before {
+                content: counter(pages);
+            }
+            tr {
+                height:30px;
+            }
+            
+            .rTable { 
+                display: table; 
+                width: 100%;
+                float: left;
+                margin-bottom: -1px;
+            }
+            .rTableRow { 
+                display: table-row;
+                border: 1px solid black;
+                border-top: 0px;
+            }
+            .rTableRow_title { 
+                display: table-row; 
+                background-color: rgb(24, 140, 204);
+                color:white;
+            }
+            
+            .rTableCell_header { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border: 1px solid black;
+                padding:10px;
+            }
+            
+            .rTableCell_title { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border-right: 1px solid black;
+                padding:10px;
+                width: 35%;
+                font-weight: bold;
+                vertical-align: top;
+                border-width: 0px 1px 1px 1px;
+                border-style: solid;
+                border-color: black;
+            }
+            
+            .rTableCell { 
+                display: table-cell; 
+                border-collapse: collapse;
+                padding:10px;
+                border-style: solid;
+                border-width: 0px 1px 1px 0px;
+                width: 65%;
+                vertical-align: middle;
+            }
+            .sourceOptionsDiv *{
+                vertical-align: middle;
+            }
+            
+            .beneficiary_table{
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .beneficiary_table th{
+                width: 25%;
+            }
+            .beneficiary_table th, .beneficiary_table td{
+                border: 1px solid black;
+                border-collapse: collapse;
+                padding: 10px;
+                display: table-cell;
+            }
+            
+        </style>
+    </head>
+    <div class="header">
+        <div style="width:720px;">
+            <div style="width: 100%; float:left;">
+                <div style="width: 60%; float:left;">
+                    <apex:outputText value="Private & Confidential 私人及機密"></apex:outputText> 
+                </div>
+                <div style="width: 40%; float:left;">
+                    <div style="width: 40%; float:left;">
+                        <apex:image url="{!$Resource.Icon_For_Form}" width="60px" /> 
+                    </div>
+                    <div style="width: 60%; float:left;">
+                        <apex:outputText escape="false" value="{!$Label.Cigna_Address_en_2_line}"/><br/><br/>
+                        Tel: 2560 1990 <apex:outputText value=" Fax: 2560 3605" rendered="{!policyRequest.IsGerneralPolicy__c}"/> <br/>
+                        www.cigna.com.hk
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <div style="width:720px;">
+            <div style="float:right;"  >
+                <apex:outputText ><span class="pagenumber"/> / <span class="pagecount"/></apex:outputText>
+            </div>
+        </div>
+    </div>
+    <div class="content">
+        <div style="width:720px;">
+            
+            <!-- page content -->
+            <div style="width:98%">
+                <div style="width:100%; float: left;">
+                    <div style="float:right; ">
+                        Ref. 參考:<apex:outputText value="&nbsp; &nbsp; &nbsp; &nbsp; " style="text-decoration: underline;" escape="false" />(for office use內部專用)  
+                    </div>
+                </div>
+                <div style="width:100%; float: left; font-size: 16px;">
+                    Policy Change Form – Change of Ownership  
+                </div>
+                <div style="width:100%; float: left; font-size: 16px;">
+                    保單更改–更改保單持有人
+                </div>
+                <div style="width:100%; float: left; padding-top: 10px; padding-bottom: 10px;">
+                    <div style="width:10%; float: left; ">
+                        <apex:outputText value="Source  " />
+                        <apex:outputText value="來源：  " />
+                    </div>
+                    <div style="width:20%; float: left; ">
+                        <apex:image url="{!IF(sitePrefix == '/customer',$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12" style="margin:0px 5px;"/>
+                        <apex:outputText style="width: 100px;" value="Customer Portal      " />
+                        <apex:outputText style="width: 100px;" value="客戶      " />
+                    </div>
+                    <div style="width:20%; float: left; ">
+                        <apex:image url="{!IF(sitePrefix == '/broker',$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12" style="margin:0px 5px;"/>
+                        <apex:outputText style="width: 100px;" value="Broker Portal      " />
+                        <apex:outputText style="width: 100px;" value="經紀      " />
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            Personal Particulars<br/>
+                            個人資料
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Submission Date<br/>
+                            申請日期<br/>
+                            (YYYY/MM/DD)
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{0,date, yyyy/MM/dd}">
+                                <apex:param value="{!submissionDate}" />
+                            </apex:outputText>
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Name of Policy Holder<br/>
+                            保單持有人姓名
+                        </div>
+                        <div class="rTableCell">
+                            {!policyRequest.Policy_Holder_Name__c}
+                        </div>
+                    </div>
+                    
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Policy No.<br/>
+                            保單編號
+                        </div>
+                        <div class="rTableCell">
+                            {!policyRequest.Policy_No__c}
+                        </div>
+                    </div>
+                    
+                    <apex:outputPanel rendered="{!sitePrefix == '/broker' }">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Broker Name<br/>
+                                經紀公司
+                            </div>
+                            <div class="rTableCell">
+                                {!policyRequest.Broker_Name__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Financial Consultant Name<br/>
+                                財務顧問姓名
+                            </div>
+                            <div class="rTableCell">
+                                {!policyRequest.Financial_Consultant_Name__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Financial Consultant Code<br/>
+                                財務顧問編號
+                            </div>
+                            <div class="rTableCell">
+                                {!policyRequest.Financial_Consultant_Code__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Financial Consultant Contact No.<br/>
+                                財務顧問聯絡電話                        
+                            </div>
+                            <div class="rTableCell">
+                                {!policyRequest.Financial_Consultant_Contact_No__c}
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                </div>
+                
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            Policy Change Information<br/>
+                            保單更改資料
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Name of New Policy Holder in English<br/>
+                            新保單持有人英文姓名
+                        </div>
+                        <div class="rTableCell">
+                            {!policyRequest.New_Policyholder_Name_in_English__c}
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Name of New Policy Holder in Chinese<br/>
+                            新保單持有人中文姓名
+                        </div>
+                        <div class="rTableCell">
+                            {!policyRequest.New_Policyholder_Name_in_Chinese__c}
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Relationship with Person Insured<br/>
+                            與受保人關係
+                        </div>
+                        <div class="rTableCell">
+                            {!policyRequest.Relationship_with_Person_Insured__c}
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Gender<br/>
+                            性別
+                        </div>
+                        <div class="rTableCell">
+                            {!policyRequest.Gender__c}<br/>
+                            {! IF(NOT(ISBLANK(policyRequest.Gender__c)),picklistValueTranslationMap[policyRequest.Gender__c],'') }
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Date of Birth<br/>
+                            出生日期<br/>
+                            (YYYY/MM/DD)
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{0,date, yyyy/MM/dd}">
+                                <apex:param value="{!policyRequest.Date_of_Birth__c}" />
+                            </apex:outputText>
+                        </div>
+                    </div>
+                    <!-- Rancho_IA_AML_Inspection_20211005: update nationality, residence and place of birth -->
+                    <apex:outputPanel rendered="{!NOT(ISBLANK(policyRequest.Nationality__c))}">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Nationality<br/>
+                                國籍
+                            </div>
+                            <div class="rTableCell">
+                                {!policyRequest.Nationality_En__c}<br/>
+                                {!policyRequest.Nationality_Zh__c}
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!NOT(ISBLANK(policyRequest.Place_of_Residence__c))}">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Residency <br/>
+                                居住地
+                            </div>
+                            <div class="rTableCell">
+                                {!policyRequest.Place_of_Residence_En__c}<br/>
+                                {!policyRequest.Place_of_Residence_Zh__c}
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!NOT(ISBLANK(policyRequest.Place_of_Birth__c))}">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Place of Birth <br/>
+                                出生地
+                            </div>
+                            <div class="rTableCell">
+                                {!policyRequest.Place_of_Birth_En__c}<br/>
+                                {!policyRequest.Place_of_Birth_Zh__c}
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            HKID/ Passport No. of New Policy Holder<br/>
+                            香港身份證號碼
+                        </div>
+                        <div class="rTableCell">
+                            {!policyRequest.HKID_Passport_No__c}
+                        </div>
+                    </div>
+                    <apex:outputPanel rendered="{!NOT(ISBLANK(policyRequest.Occupation__c))}">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Occupation<br/>
+                                職業
+                            </div>
+                            <div class="rTableCell">
+                                {!policyRequest.Occupation__c}
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!NOT(ISBLANK(policyRequest.Monthly_Income__c))}">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Monthly Income (HKD)<br/>
+                                每月收入 (港幣)
+                            </div>
+                            <div class="rTableCell">
+                                {!policyRequest.Monthly_Income__c}
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!NOT(ISBLANK(policyRequest.Name_of_Employer__c))}">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Name of Employer<br/>
+                                僱主名稱
+                            </div>
+                            <div class="rTableCell">
+                                {!policyRequest.Name_of_Employer__c}
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!NOT(ISBLANK(policyRequest.Nature_of_Business__c))}">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Nature of Business<br/>
+                                業務性質
+                            </div>
+                            <div class="rTableCell">
+                                {!policyRequest.Nature_of_Business__c}
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!NOT(ISBLANK(policyRequest.Business_Address__c))}">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Business Address<br/>
+                                辦公室地址
+                            </div>
+                            <div class="rTableCell">
+                                {!policyRequest.Business_Address__c}
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!NOT(ISBLANK(policyRequest.Source_of_Fund_Ownership__c))}">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Source of Fund (only application to policies with regular premium payments)<br/>
+                                資金來源 (只適用於定期支付保費之保單)
+                            </div>
+                            <div class="rTableCell">
+                                {!policyRequest.Source_of_Fund_Ownership__c}<br/>
+                                {! IF(NOT(ISBLANK(policyRequest.Source_of_Fund_Ownership__c))
+                                      ,picklistValueTranslationMap[policyRequest.Source_of_Fund_Ownership__c],'') }
+                            </div>
+                        </div>
+                        <apex:outputPanel rendered="{!policyRequest.Source_of_Fund_Ownership__c == 'Others'}">
+                            <div class="rTableRow" >
+                                <div class="rTableCell_title">
+                                    Others<br/>
+                                    其他 (只適用於定期支付保費之保單)
+                                </div>
+                                <div class="rTableCell">
+                                    {!policyRequest.Funds_by_Others__c}
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!NOT(ISBLANK(policyRequest.Reason_for_change_of_ownership__c))}">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Reason for change of ownership <br/>
+                                更改保單持有人原因
+                            </div>
+                            <div class="rTableCell">
+                                {!policyRequest.Reason_for_change_of_ownership__c}
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Residential Address<br/>
+                            住宅地址
+                        </div>
+                        <div class="rTableCell">
+                            {!policyRequest.Residential_Address__c}
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Permanent Address<br/>
+                            永久地址
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText escape="false" 
+                             value="{!IF(policyRequest.PAddress_same_as_RAddress__c,
+                                         'Same as above<br/>與住宅地址相同',
+                                         policyRequest.Permanent_Address__c)}"/>
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Correspondence Address<br/>
+                            通訊地址
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText escape="false" 
+                             value="{!IF(policyRequest.CAddress_same_as_RAddress__c,
+                                         'Same as above<br/>與住宅地址相同',
+                                         policyRequest.Correspondence_Address__c)}"/>
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Mobile Number<br/>
+                            流動電話號碼
+                        </div>
+                        <div class="rTableCell">
+                            {!policyRequest.Mobile_Number_Country_Code__c+' '+policyRequest.Mobile_Number__c} 
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Residential Number<br/>
+                            住宅電話號碼
+                        </div>
+                        <div class="rTableCell">
+                            {!policyRequest.Residential_Number_Country_Code__c+' '+policyRequest.Residential_Number__c} 
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Office Number<br/>
+                            辦公室電話號碼
+                        </div>
+                        <div class="rTableCell">
+                            {!policyRequest.Office_Number_Country_Code__c+' '+policyRequest.Office_Number__c} 
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Email address<br/>
+                            電郵地址
+                        </div>
+                        <div class="rTableCell">
+                            {!policyRequest.Email_Address__c}
+                        </div>
+                    </div>
+                    
+                    
+                </div>
+                
+                <apex:outputPanel rendered="{!policyRequest.Policy_Change_Request_Details__r.size>0}">
+                    <div class="rTable" >
+                        <div class="rTableRow_title" >
+                            <div class="rTableCell_header">
+                                <apex:outputText value="Beneficiary Details" ></apex:outputText><br/>
+                                受益人資料
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rTable" >
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title" style="width:100%;padding:0px;" >
+                                <table class="beneficiary_table">
+                                    <tr>
+                                        <th>
+                                            English Name<br/>
+                                            英文姓名
+                                        </th>
+                                        <th>
+                                            HKID<br/>
+                                            香港身分證
+                                        </th>
+                                        <th>
+                                            Relationship with Person Insured<br/>
+                                            與受保人關係
+                                        </th>
+                                        <th>
+                                            Share (%)<br/>
+                                            分配(％)
+                                        </th>
+                                    </tr>
+                                    <apex:repeat value="{!policyRequest.Policy_Change_Request_Details__r}" var="beneficiary">
+                                        <tr>
+                                            <td>{!beneficiary.English_Name__c}</td>
+                                            <td>{!beneficiary.HKID_Birth_Cert_Passport_No__c}</td>
+                                            <td>{!beneficiary.Relationship_with_Person_Insured__c}</td>
+                                            <td>{!beneficiary.Share__c}</td>
+                                        </tr>
+                                    </apex:repeat>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            <apex:outputText value="Declaration & Authorization" ></apex:outputText><br/>
+                            聲明及授權
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <!-- tnc -->
+                        <div class="rTableCell_title" style="width:100%;" >
+                            <!--JOBR-184: JOBR-199/226 updated by Kermit at 20221012-->
+                     		<!--<apex:include pageName="DeclarationFormVFP"/>-->
+                     		<c:DeclarationFormComponent isContainGIPolicy="{!policyRequest.IsGerneralPolicy__c}" isContainLifePolicy="{!policyRequest.IsLifePolicy__c}"/>
+                        </div>
+                    </div>
+                </div>
+                <apex:outputPanel rendered="{!sitePrefix == '/broker' }">
+                    <div class="rTable">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title" >
+                                <div>
+                                Signature<br/>
+                                簽署
+                                </div>
+                            </div>
+                            <div class="rTableCell">
+
+                            
+                            
+                                <apex:image url="/servlet/servlet.FileDownload?file={!ph_esignature.id}" width="450px"/>
+                                <br/>
+                                Name of Existing Policy Holder 現時保單持有人姓名: {!policyRequest.Policy_Holder_Name__c} <br/>
+                                Date Signed 簽署日期(YYYY/MM/DD)：
+                                <apex:outputText value="{0,date, yyyy/MM/dd}">
+                                    <apex:param value="{!submissionDate}" />
+                                </apex:outputText>
+            
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                <div class="rTable">
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title" >
+                            <div>
+                            Signature<br/>
+                            簽署
+                            </div>
+                        </div>
+                        <div class="rTableCell">
+                            <apex:image url="/servlet/servlet.FileDownload?file={!newph_esignature.id}" width="450px"/>
+                            <br/>
+                            Name of New Policy Holder 新保單持有人姓名: {!policyRequest.New_Policyholder_Name_in_English__c} {!policyRequest.New_Policyholder_Name_in_Chinese__c} <br/>
+                            Date Signed 簽署日期(YYYY/MM/DD)：
+                            <apex:outputText value="{0,date, yyyy/MM/dd}">
+                                <apex:param value="{!submissionDate}" />
+                            </apex:outputText>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+
+</apex:page>

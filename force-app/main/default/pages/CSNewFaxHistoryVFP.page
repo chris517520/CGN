@@ -1,0 +1,140 @@
+<apex:page id="newFaxPage" standardController="Fax_History__c" extensions="CSNewFaxHistoryCtrl" standardStylesheets="true" sidebar="false" tabStyle="Case" title="New Fax">
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <script src="/soap/ajax/30.0/connection.js" type="text/javascript"></script>
+    <apex:includeScript value="/support/console/33.0/integration.js"/>
+    <script>
+    	sforce.console.setTabTitle('New Fax');
+        var faxNumber = '{!newFax.Fax_Number_to__c}'; 
+        var faxId = '{!newFax.Id}';
+        
+        function fileSelected(){
+            var file = document.getElementById('fileToUpload').files[0];
+            if (file){
+                if (file.size > (7 * 1024 * 1024)) {
+                    alert('File too large, greater than 7MB'); 
+                    document.getElementById("fileToUpload").value = "";
+                    return;
+                }
+                var fileType = file.type;
+                console.log('fileType='+fileType);
+                if(fileType !='application/pdf' && fileType!='text/csv' && fileType!='application/vnd.ms-excel' && fileType!='application/vnd.openxmlformats-officedocument.wordprocessingml.document'&& fileType!='image/gif' && fileType!='image/png' && fileType!='image/jpeg' && fileType!='image/tiff'){
+                    alert('Please upload a valid file (i.e. .csv/.pdf/.gif/.jpeg/.png/.tiff).');
+                    document.getElementById("fileToUpload").value = "";
+                    return;
+                }                            
+            }
+       	}
+        
+        function uploadFile(faxIdParam,faxNumberParam) {
+            sforce.connection.sessionId = "{!$Api.Session_ID}";            
+            faxNumber = faxNumberParam; 
+            faxId = faxIdParam;
+            console.log('faxNumber='+faxNumber+',faxId='+faxId);
+            var file = document.getElementById('fileToUpload').files[0];
+            if(file){                
+                var reader = new FileReader();
+                reader.onload = loaded;
+                reader.onerror = errorHandler;
+                //reader.readAsDataURL(file); 
+                reader.readAsArrayBuffer(file);
+            }
+        }
+    
+        function loaded(evt){            
+            var file = document.getElementById('fileToUpload').files[0];
+            var filename = file.name;
+            var fileType = file.type;
+            //var fileContent = String(evt.target.result);                     
+            var att = new sforce.SObject("Attachment");
+            att.Name = faxNumber +'_'+filename;
+            att.ContentType = fileType;
+            att.ParentId = faxId;
+            var binary = "";
+            var bytes = new Uint8Array(evt.target.result);
+            var length = bytes.byteLength;            
+            for (var i = 0; i < length; i++){
+                binary += String.fromCharCode(bytes[i]);
+            }            
+            att.Body = (new sforce.Base64Binary(binary)).toString();
+            //att.Body = (new sforce.Base64Binary(evt.target.result)).toString();
+            console.log('loaded(evt) att='+att);
+            var results = sforce.connection.create([att]);
+            for (var i = 0; i < results.length; i++) {
+                if (results[i].getBoolean("success")) {
+                    getAttList();
+                    //alert('new attachment record created:' + results[i].id);
+                }else {
+                    alert('Upload Failed:' + results[i]);
+                }
+            }
+        }
+    
+        function errorHandler(evt){
+            if (evt.target.error.name == 'NotReadableError') {
+                alert('File could not be read');
+            }else {
+                alert(evt.target.error);
+            }
+        } 
+        
+    </script>
+    <apex:form id="newFaxForm">
+        <apex:actionFunction action="{!getAttList}" name="getAttList"  status="loader-icon" reRender="newFaxForm" />
+        <apex:actionStatus id="loader-icon">
+           <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                     &nbsp;
+                 </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Please Wait...</span>
+                    </div>
+                 </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:pageBlock id="newFaxPageBlock" title="New Fax" >
+            <apex:pageMessages id="messages" />
+            <apex:pageBlockSection columns="1">
+                <apex:pageBlockSectionItem rendered="false">
+                    <apex:outputlabel value="Case"  />
+                    <apex:outputlabel value="{!newFax.Case__c}"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection columns="1">
+                <apex:pageBlockSectionItem >
+                    <apex:outputlabel value="{!$ObjectType.Fax_History__c.fields.Fax_Type__c.label}"  />
+                    <apex:outputlabel value="{!newFax.Fax_Type__c}"  />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>        
+            <apex:pageBlockSection id="faxNoSection" columns="1">
+                <apex:pageBlockSectionItem id="faxNoItem">
+                    <apex:outputlabel value="Fax Number" for="faxNumber" />
+                    <apex:outputPanel >
+                    	<apex:inputfield rendered="{!!submittedFlag}" id="faxNumber" value="{!newFax.Fax_Number_To__c}" required="true" />
+                        <apex:outputlabel rendered="{!submittedFlag}" value="{!newFax.Fax_Number_To__c}" />
+                    </apex:outputPanel>					                    
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>            
+            <apex:pageBlockButtons location="top">                
+                <apex:commandButton value="Save" action="{!save}" status="loader-icon" reRender="newFaxForm" rendered="{!!submittedFlag}"/> 
+                <apex:commandButton value="Submit" action="{!submit}" status="loader-icon" rendered="{! showAttList && attList.size > 0 && !submittedFlag}" reRender="newFaxForm" />               
+                <apex:commandButton value="Cancel" action="{!cancel}" />        
+            </apex:pageBlockButtons>            
+        </apex:pageBlock>
+        <apex:outputPanel id="attachmentList">
+        <apex:pageBlock id="attachmentList1" title="Attachment" rendered="{!showAttList}" >
+            <apex:pageBlockButtons rendered="{!!submittedFlag}" location="top">
+                <input type="file" name="fileToUpload" id="fileToUpload" onchange="fileSelected();" />
+                <input type="button" onclick="uploadFile('{!newFax.Id}','{!newFax.Fax_Number_to__c}');" value="Attach File" />
+            </apex:pageBlockButtons>   
+            <apex:pageBlockSection columns="1" id="attTable"> 
+                <apex:pageBlockTable value="{!attList}" var="att"> 
+                    <apex:column headerValue="Name">{!att.name}</apex:column>                    
+                    <apex:column headerValue="Type">{!att.contentType}</apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        </apex:outputPanel>
+    </apex:form>
+</apex:page>

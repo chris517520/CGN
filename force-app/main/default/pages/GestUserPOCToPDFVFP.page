@@ -1,0 +1,244 @@
+<apex:page showHeader="false" applyHtmlTag="false" cache="true" renderAs="pdf" controller="GestUserPOCtoPDFCtrl">
+    <head>
+        <style >
+            @page {
+                padding-top: 90px;
+                margin-bottom: 90px;
+                
+                @top-center {
+                    content: element(header);
+                }
+                
+                @bottom-left {
+                    content: element(footer);
+                }
+            }
+            div.header {
+                font-size: 8pt;
+                display: block;
+                padding-top: 30px;
+                text-align: left;
+                position: running(header);
+                font-family: Arial Unicode MS;
+                //color:  #d3d3d3;
+                
+            }
+            div.footer {
+                
+                text-align: center;
+                padding: 0px;
+                font-size: 8pt;
+                font-family: Arial Unicode MS;
+                position: running(footer);
+            }
+            div.content{
+                font-family: Arial Unicode MS;
+                font-size: 8pt;
+                fill-opacity:.5; 
+                stroke:black; 
+                stroke-width:2;
+                /** does not work **/
+                word-wrap: break-word;
+                word-break: break-all;
+                /** does not work end **/
+            }
+            .pagenumber:before {
+                content: counter(page);
+            }
+            .pagecount:before {
+                content: counter(pages);
+            }
+            tr {
+                height:30px;
+            }
+            
+            .rTable { 
+                display: table; 
+                width: 99%;
+                float: left;
+                
+            }
+            .rTableRow { 
+                display: table-row; 
+            }
+            .rTableRow_title { 
+                display: table-row; 
+                background-color: rgb(24, 140, 204);
+                color:white;
+            }
+            
+            .rTableCell_header { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border: 1px solid black; 
+                padding:10px;
+            }
+            
+            .rTableCell_title { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border: 1px solid black;
+                padding:10px;
+                width: 30%;
+                font-weight: bold;
+                vertical-align: top;
+            }
+            
+            .rTableCell { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border: 1px solid black;
+                padding:10px;
+                width: 70%;
+            }
+            
+        </style>
+    </head>
+    <!--  <apex:define name="additionalLibraries">
+             <apex:stylesheet value="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap_ns.css')}" />
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap.min.js')}"></script>
+        
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate.min.js')}"></script>
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+        <apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+             <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+        </apex:outputPanel>
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/> 
+    </apex:define> -->
+    <div class="header">
+        <div style="width:720px;">
+            <div style="width: 100%; float:left;">
+                <div style="width: 60%; float:left;">
+                    <apex:outputText value="Private & Confidential"></apex:outputText> 
+                </div>
+                <div style="width: 40%; float:left;">
+                    <div style="width: 40%; float:left;">
+                        <apex:image url="{!$Resource.Icon_For_Form}" width="60px" /> 
+                    </div>
+                    <div style="width: 60%; float:left;">
+                        <apex:outputText escape="false" value="{!$Label.Cigna_Address_en_2_line}"/><br/><br/>
+                        Tel: 2560 1990 Fax: 2560 3605 <br/>
+                        www.cigna.com.hk
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <div style="width:720px;">
+            <div style="float:right;"  >
+                <apex:outputText >Page <span class="pagenumber"/> of <span class="pagecount"/></apex:outputText>
+            </div>
+        </div>
+    </div>
+    <div class="content">
+        <div style="width:720px;">
+
+            <apex:form id="from">
+                <div class="rTable" >
+                <div class="rTableRow_title" >
+                        <div class="rTableCell_header"><h4>{!$Label.Policy_Holder}</h4></div></div>
+                </div>
+                    <div class="rTable" >
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                {!$Label.LastName}:
+                            </div>
+                            <div class="rTableCell">
+                              <apex:outputText value="{!LastName}"/> 
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                {!$Label.FirstName}:
+                            </div>
+                            <div class="rTableCell">
+                              <apex:outputText value="{!FirstName}"/> 
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                SSN:
+                            </div>
+                            <div class="rTableCell">
+                              <apex:outputText value="{!ssn}"/> 
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                {!$Label.Gender}:
+                            </div>
+                            <div class="rTableCell">
+                              <apex:outputText value="{!gender}"/> 
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Description:
+                            </div>
+                            <div class="rTableCell">
+                              <apex:outputText value="{!description}"/> 
+                            </div>
+                        </div>
+                    </div>
+            <!-- <apex:outputPanel styleClass="bs col-xs-12 cigna-quote-question">
+                <apex:outputPanel >
+                    <div class="bs col-xs-3" style="font-weight: 700;">
+                        
+                    </div>
+                </apex:outputPanel>
+                    
+                <apex:outputPanel >
+                    <div class="bs col-xs-9">
+                        
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel>
+            <apex:outputPanel styleClass="bs col-xs-12 cigna-quote-question">
+                <apex:outputPanel >
+                    <div class="bs col-xs-3" style="font-weight: 700;">
+                        {!$Label.FirstName}:
+                    </div>
+                </apex:outputPanel>
+                    
+                <apex:outputPanel >
+                    <div class="bs col-xs-9">
+                        <apex:outputText styleClass=".bs input.cigna-question-text" style="width:100%;" value="{!FirstName}"/>
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel>
+            <apex:outputPanel styleClass="bs col-xs-12 cigna-quote-question" >
+                <apex:outputPanel >
+                    <div class="bs col-xs-3" style="font-weight: 700;">
+                        {!$Label.Gender}:
+                    </div>
+                </apex:outputPanel>  
+                <apex:outputPanel >
+                    <div class="bs col-xs-9">
+                    <apex:outputText styleClass=".bs input.cigna-question-text" style="width:100%;" value="{!gender}"/>
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel>
+            <apex:outputPanel styleClass="bs col-xs-12 cigna-quote-question">
+                <apex:outputPanel >
+                    <div class="bs col-xs-3" style="font-weight: 700;">
+                        Description:
+                    </div>
+                </apex:outputPanel>
+                    
+                <apex:outputPanel >
+                    <div class="bs col-xs-9">
+                        <apex:outputText styleClass=".bs input.cigna-question-text" style="width:100%;" value="{!description}"/>
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel> -->
+                
+            </apex:form>
+        </div>
+    </div>
+    
+</apex:page>

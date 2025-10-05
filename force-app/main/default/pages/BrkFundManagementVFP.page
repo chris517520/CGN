@@ -1,0 +1,165 @@
+<!--Please change apex page title-->
+<apex:page docType="html-5.0" sidebar="false" showHeader="true" title="{!$Label.Fund_Management}" tabStyle="My_Portfolio__tab" Controller="FundManagementController">
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <apex:include pageName="CignaBrokerCommonCSS" />
+        <apex:include pageName="CignaCommonCSS" />
+        <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <style type="text/css">
+            body, td {
+                color: #58595B !important;
+            } 
+            .header-bar {
+                color: #FFF;
+                /* background-color: #D9D9D6; */
+                font-size: 1.25em;
+                text-align: center;
+                height: 150px;
+                position: relative;
+                text-transform: uppercase;
+            }
+            @media (min-width: 768px) {
+                .header-bar {
+                    background-image: url({!URLFOR($Resource.ManIpad)});
+                    background-size: cover;
+                    background-position-y: 37%;
+                }
+            }
+            @media (max-width: 767px) {
+                .header-bar {
+                    background-image: url({!URLFOR($Resource.ManIpad)});
+                    background-size: cover;
+                    background-position-y: 48%;
+                }
+            }
+            
+            .mainwrapper {
+                 width: 100vw;
+                 height: 100vh;
+                 overflow-y: scroll;
+                 -webkit-overflow-scrolling: touch;
+                 padding-bottom: 50px;
+            }
+
+        </style>
+    </head>
+
+        <!--common css, bootstrap, jquery libraries-->
+        <apex:define name="additionalLibraries">
+            <!-- CR-56_Link_20220214 -->
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap3.4.1.css')}" />
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+          
+            
+            <!-- Bootstrap Core CSS -->
+            <!-- CR-56_Link_20220214 -->
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-3.6.0.min.js')}"/>
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-migrate-3.3.2.js')}"/>
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap3.4.1.min.js')}"/>
+            
+            <apex:include pageName="CignaUtilJS"/> 
+
+        </apex:define>
+
+        <!-- Start of the main body -->
+        <apex:define name="body">
+        <div class="bs">
+            <apex:actionStatus id="loader-icon">
+                <apex:facet name="start">
+                    <div class="bs col-xs-12 col-lg-12 loading-div" style="padding: 0px;position:absolute">
+                        <span class="loading-helper"></span>
+                        <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </apex:facet>
+            </apex:actionStatus>
+            
+             <div id="maincontent" class="bs">
+                 <div class="header-bar">
+                    <p style="position: relative; top: 45%; text-align:center;text-transform: uppercase;">
+                        {!$Label.Fund_Management}
+                    </p>
+                 </div>   
+                     
+                 <div class="bs container-fluid" style="padding:0;">
+                     
+                    <!-----Please include your page here--------->
+                    <apex:include pageName="BaseFundManagementVFP"/> 
+                 </div>
+             </div>
+             
+             <div class="bs col-sm-12 col-xs-12" id="brkfirstStepSubmitDiv" style="display:none;">
+                 <div id="action-bar" class="bs visible-xs cigna-floating-bottom-panel" style="left:0px;">
+                    <div id="brkfirstbtnxs" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark onclick-pointer" onclick="SubmitFiledValidation();rerenderConfirmationAfterValidation()"> 
+                        <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/><span id="brkfirstbtnxstext">{!$Label.Submit}</span></a>
+                    </div>
+                 </div>
+             </div>
+             
+             <div class="bs col-sm-12 col-xs-12" id="brksecondStepDiv" style="display:none;">
+                 <div id="action-bar" class="bs visible-xs cigna-floating-bottom-panel" style="left:0px;">
+                    <div id="brkdetailsconfirmbtnxs" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark onclick-pointer" onclick="nextStep();"> 
+                        <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-thumbs-up" aria-hidden="true"></span><br/>
+                            {!$Label.Confirm}
+                        </a>
+                    </div>
+                 </div>
+             </div>
+             
+             <div class="bs col-sm-12 col-xs-12" id="brkfinalStepDiv" style="display:none;">
+                 <div id="action-bar" class="bs visible-xs cigna-floating-bottom-panel" style="left:0px;">
+                      <div id="confirmbtnxs" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark onclick-pointer" onclick="returnRequest();"> 
+                          <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-notes" aria-hidden="true"></span><br/><span id="brkconfirmbtnxstext">{!$Label.Return_to_My_Policy}</span></a>
+                      </div>
+                  </div>
+             </div>
+             
+             <div id="mobile-submit" style="display:none;">
+                  <div class="bs cigna-floating-bottom-panel visible-xs">
+                    <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                        <div onclick="Cigna.ESignatureComp.saveSignature()" class="action-btn cigna-fg-white text-center onclick-pointer" role="button">
+                            <span class="ci-hk-document-send" aria-hidden="true" style="padding-right:10px;"/>
+                            <br/>
+                            {!$Label.Submit}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="mobile-sendEmail" style="display:none;">
+                <div class="bs cigna-floating-bottom-panel visible-xs">
+                    <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" >
+                        <div href="#" onclick="Cigna.ESignatureComp.sendEmail()" class="action-btn cigna-fg-white text-center onclick-pointer" role="button">
+                            <span class="ci-hk-envelope" aria-hidden="true" style="padding-right:10px;"/>
+                            <br/>
+                            {!$Label.Send_to_Email_For_Button}
+                        </div>
+                    </div>
+                </div>
+             </div>
+             
+        </div>
+        <script>
+         if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+         
+                 
+             /*$('html').css('position', 'fixed').css('overflow', 'hidden').css('width', '100%').css('height', '100%');
+               $('body').css('position', 'fixed').css('overflow-y', 'scroll').css('overflow-x', 'hidden').css('width', '100%').css('height', '100%');*/
+             
+             //$('html').css('position', 'fixed').css('overflow', 'auto').css('width', '100%').css('height', '100%');
+             //$('body').css('position', 'fixed').css('overflow-y', 'scroll').css('width', '100%').css('height', '100%');
+             $('html').css('position', 'fixed').css('overflow', 'hidden').css('width', '100%').css('height', '100%');
+             $('body').css('position', 'fixed').css('overflow', 'hidden').css('width', '100%').css('height', '100%');
+
+             $('#maincontent').addClass('mainwrapper');
+
+         
+         }
+         
+         
+      </script>
+        </apex:define>
+        <!-- End of the main body -->
+
+</apex:page>

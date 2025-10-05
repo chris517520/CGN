@@ -1,0 +1,480 @@
+<apex:page Controller="MyClaimSubmitController" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+    
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+    </head>
+    
+    <script>
+        
+        function selectDownloadDoc(){
+            
+            $('#downloadDoc').toggle();
+            if($('#download_angle').hasClass('ci-hk-arrow-28 ci-hk-lg font-size-10')){
+                $('#download_angle').removeClass('ci-hk-arrow-28 ci-hk-lg font-size-10').addClass('ci-hk-arrow-27 ci-hk-lg font-size-10');
+                $('#download_div').text('{!$Label.Hide_Document}');
+            }
+            else{
+                $('#download_angle').removeClass('ci-hk-arrow-27 ci-hk-lg font-size-10').addClass('ci-hk-arrow-28 ci-hk-lg font-size-10');
+                $('#download_div').text('{!$Label.View_Document}');
+            }
+        
+        }
+    
+    </script>
+    
+    <style>
+        .question-row {
+            display: flex; /* equal height of the children */
+        }
+        /*CR-56_Link_20220214*/
+        .ui-tooltip {
+                background: black !important;
+                max-width: 250px !important;
+                width: 250px; 
+                min-width: 100px;
+                color: white !important;
+                z-index: 1070;
+                display: block;
+                text-align: center !important;
+                font-size: 12px !important;
+                border-radius: 5px !important;
+            }
+    </style>
+    
+    <div class="bs">
+        <!-- for download as pdf part -->
+        <apex:outputPanel id="askIfClaimFromOtherCompanyPanel" layout="inline">
+            <apex:outputPanel rendered="{!if(cList.size > 0, true, false)}">
+                <apex:form id="frmAnswerExtraClaimQuestionBrk">
+                    <div class="bs form-field row content-choice-block" id="cx1"  style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'\"cx1\"') ,'','display: none;')}">
+                        <div class="bs col-sm-12 question-row">
+                            <div>
+                                <i class="ci-hk-document content-icon" aria-hidden="true"></i>
+                            </div>
+                            <div>
+                                {!$Label.Does_your_customer_have_another_insurance_policy_which_they_may_claim_under_for }
+                            </div>
+                        </div>
+                        <div class="bs col-sm-12">
+                           <!-- 20200113-minghua-JR1811 -->
+                           <div class="bs col-sm-3 col-md-2 question-choice {!if(isLoadOldClaim && cList[0].Receive_reimbursement_from_other_comp__c && !cList[0].Making_other_insurance_claim__c, 'fg-orange', 'fg-grey')}" style="padding-left:40px;border-bottom: 0px;" onclick="saveRecordBrkReceiveReimbursement(this); displayQuestion('cx2'); hideQuestion('cx3');">
+                               <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>{!$Label.YES_Primary_broker}
+                               <input type="hidden" name="param-str" value="true" />
+                           </div>
+                           <div class="bs col-sm-3 col-md-2 question-choice {!if(isLoadOldClaim && cList[0].Making_other_insurance_claim__c, 'fg-orange', 'fg-grey')}" style="padding-left:40px;border-bottom: 0px;" onclick="saveRecordBrkReceiveReimbursement(this); displayQuestion('cx2'); hideQuestion('cx3');">
+                               <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>{!$Label.YES_second_broker}
+                               <input id="otherInsurance" type="hidden" name="param-str" value="true" />
+                               <apex:inputHidden value="{!cList[0].Making_other_insurance_claim__c}" id="hiddenValue_cus_q13_y_2"/>
+                           </div>
+                           <div class="bs col-sm-3 col-sm-offset-3 col-md-2 col-md-offset-4 question-choice {!if(isLoadOldClaim && !(cList[0].Receive_reimbursement_from_other_comp__c || cList[0].Making_other_insurance_claim__c), 'fg-orange', 'fg-grey')}" style="padding-left:40px;border-bottom: 0px;" onclick="saveRecordBrkReceiveReimbursement(this); hideQuestion('cx2'); displayQuestion('cx3');">
+                               <i class="fa fa-times-circle-o content-icon " aria-hidden="true"></i>{!$Label.No}
+                               <input type="hidden" name="param-str" value="false" />
+                           </div>
+                           <!-- save record data -->
+                           <apex:inputHidden value="{!cList[0].Receive_reimbursement_from_other_comp__c}" id="hiddenValue_receive_reimbursement"/>
+                           <apex:actionFunction status="loader-icon" name="SaveRecordBrkReceiveReimbursementAtAction" action="{!SaveRecord}" reRender="hiddenValue_receive_reimbursement" oncomplete="clearwInfoFromOtherCompanyList();rerenderBrkDocumentPanel();"/>
+                           <script>
+                                /** working **/
+                                function saveRecordBrkReceiveReimbursement(item){
+                                    var params = $(item).children('input[type="hidden"][name="param-str"]').val();
+                                    
+                                    // 20200113-minghua-JR1811
+                                    console.log('to see question-choice params:'+params);
+                                    var id = $(item).children('input[type="hidden"][name="param-str"]').attr('id');
+                                    console.log('to see question-choice id:'+id);
+                                    if (id != undefined && id != null && id != '' && id == 'otherInsurance') {
+                                      console.log('to set value for question-choice');
+                                      $(item).siblings('input[type="hidden"]').val(params);
+                                      $('input[type="hidden"][id*="hiddenValue_cus_q13_y_2"]').val(params);
+                                      console.log('to see value saved for question-choice:' + $('input[type="hidden"][id*="hiddenValue_cus_q13_y_2"]').val());
+                                    }else{
+                                      $(item).siblings('input[type="hidden"]').val(params);
+                                      var q13hidden = $('input[type="hidden"][id*="hiddenValue_cus_q13_y_2"]');
+                                      if (q13hidden != undefined && q13hidden != null && q13hidden != '') {
+                                          q13hidden.val('false');
+                                      }
+                                      console.log('reset value 1:' + $('input[type="hidden"][id*="hiddenValue_cus_q13_y_2"]').val());
+                                    }
+                                    
+                                    SaveRecordBrkReceiveReimbursementAtAction();
+                                }
+                           </script>
+                           <!-- end save record data -->
+                        </div>
+                                               
+                        
+                    </div>
+                      
+                    <div class="bs form-field row content-choice-block" id="cx2"  style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'\"cx2\"') ,'','display: none;')}">
+                       <div class="bs col-sm-12 question-row" style="padding-bottom: 10px;">
+                           <div>
+                               <i class="ci-hk-document content-icon" aria-hidden="true"></i>
+                           </div>
+                           <div>
+                               {!$Label.Please_provide_the_following_information}
+                           </div>
+                       </div>
+                       <apex:outputPanel id="infoFromOtherCompPanel">
+                           <script>
+                               otherCompanyInfoItemFilled = 0;
+                               otherCompanyInfoItem = {!wInfoFromOtherCompanyList.size*2};
+                               
+                               function loadQuestionlogicWhenFillOtherCompanyInfoBrk(){
+                                    console.log(' in loadQuestionlogicWhenFillOtherCompanyInfoBrk');
+                                    if($("#cx2").is(":visible")){
+                                        console.log(' enter checking');
+                                        console.log(' otherCompanyInfoItem : ' + otherCompanyInfoItem );
+                                        console.log(' otherCompanyInfoItemFilled : ' + otherCompanyInfoItemFilled );
+                                        var itemFilled = 0;
+                                        $("form[id*='frmAnswerExtraClaimQuestionBrk'] input[id*='answer-question-brk-cx2']").each(function(idx, elem){
+                                            var str = $(elem).val();
+                                            if(!isBlank(str))    itemFilled += 1;
+                                        });
+                                        otherCompanyInfoItemFilled = itemFilled;
+                                        
+                                        
+                                        console.log(' after checking -> otherCompanyInfoItemFilled : ' + otherCompanyInfoItemFilled );
+                                        
+                                        if(otherCompanyInfoItem == otherCompanyInfoItemFilled && otherCompanyInfoItemFilled>0){
+                                            displayQuestion('cx3');
+                                            questionDisplayLogic('cx2');
+                                        }else{
+                                            hideQuestion('cx3');
+                                            hideNextBtnIn(5);
+                                        }
+                                    }
+                                }
+                           </script>
+                           
+                           <apex:variable value="{!0}" var="idx_infoFromOtherCompany"/>
+                           <!-- item --> 
+                           <apex:repeat value="{!wInfoFromOtherCompanyList}" var="wItem">
+                               <div id="otherInsuranceCompInfoBrk{!idx_infoFromOtherCompany}" class="bs col-sm-12">
+                                   <div class="bs col-sm-12 col-xs-12">
+                                       <div style="border-radius: 10px; margin-top: 10px;" class="bs col-sm-10 col-xs-10 form-note">
+                                           <div class="bs row form-field" >
+                                               <div class="bs col-xs-12 col-sm-6" >{!$Label.Name_of_Insurer}</div>
+                                               <div class="bs col-xs-12 col-sm-6" >
+                                                   <!-- <apex:inputText value="{!wItem.nameOfInsurer}" styleclass="form-field-style "/> -->
+                                                   <apex:inputText id="answer-question-brk-cx2a"  value="{!wItem.nameOfInsurer}" styleclass="form-field-style " onchange="loadQuestionlogicWhenFillOtherCompanyInfoBrk();" />
+                                               </div>
+                                               <div class="bs col-xs-12 col-sm-12" style="padding-bottom:10px; "></div>
+                                               <div class="bs col-xs-12 col-sm-6" >{!$Label.Policy_No}</div>
+                                               <div class="bs col-xs-12 col-sm-6" >
+                                                   <!-- <apex:inputText value="{!wItem.policyNum}" styleclass="form-field-style " onchange="displayNextBtnIn(5);"/> -->
+                                                   <apex:inputText id="answer-question-brk-cx2b" value="{!wItem.policyNum}" styleclass="form-field-style " onchange="loadQuestionlogicWhenFillOtherCompanyInfoBrk();"/>
+                                               </div>
+                                            </div>
+                                       </div>
+                                       <div id="otherInsuranceCompInfoBrkMinusIcon{!idx_infoFromOtherCompany}" class="bs col-xs-2 col-sm-2" style="padding-top: 60px; {!IF(wInfoFromOtherCompanyList.size == 1, 'display:none;', 'display:block;')}" >
+                                           <i class="glyphicon glyphicon-minus-sign content-icon " aria-hidden="true" onclick="removeInfoFromOtherComp({!idx_infoFromOtherCompany})" ></i>
+                                       </div>
+                                   </div>
+                               </div>
+                               <apex:variable var="idx_infoFromOtherCompany" value="{!idx_infoFromOtherCompany + 1}"/> 
+                           </apex:repeat> 
+                           
+                           <div class="bs col-sm-offset-10 col-sm-2 col-xs-offset-10 col-xs-2">
+                                <span class="glyphicon glyphicon-plus-sign fa-lg onclick-pointer" style="left:-10px;" onclick="addInfoFromOtherComp()"/>
+                           </div>
+                           
+                           <apex:actionFunction name="addInfoFromOtherComp" status="loader-icon" action="{!AddInfoFromOtherComp}" rerender="infoFromOtherCompPanel" oncomplete="loadQuestionlogicWhenFillOtherCompanyInfoBrk();" />
+                           <apex:actionFunction name="removeInfoFromOtherComp" status="loader-icon" action="{!RemoveInfoFromOtherComp}" rerender="infoFromOtherCompPanel" oncomplete="loadQuestionlogicWhenFillOtherCompanyInfoBrk();" >
+                               <apex:param name="idx_infoFromOtherCompany" value="{!idx_infoFromOtherCompany}" assignTo="{!idx_infoFromOtherCompanyany}"/>
+                           </apex:actionFunction>
+                           <apex:actionFunction name="clearwInfoFromOtherCompanyList" status="loader-icon" action="{!clearwInfoFromOtherCompanyList}" rerender="infoFromOtherCompPanel" oncomplete="loadQuestionlogicWhenFillOtherCompanyInfoBrk();questionDisplayLogic('cx1');"/>
+                            
+                       </apex:outputPanel>
+                       
+                       <script>
+                            
+                            
+                       </script>
+                       
+                                                   
+                    </div>
+                    
+                    
+                    <!-- display upload doc list -->   
+                    <div id="display_upload_brk" class="uploadForm content-choice-block" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'\"cx3\"') ,'','display: none;')}">
+                        <apex:outputPanel id="displayUploadDocBrkPanel">
+                            <div class="content-question">
+                                {!$Label.To_fully_process_the_claim_you_will_need_to_upload}
+                            </div>
+                            <div class="col-xs-12 col-sm-12 cigna-fg-blue-medium " style="text-align:right; border-bottom:1px solid #f2f2f2;" onclick="selectUploadDoc()" >
+                                <div id="upload_div" style="display:inline" >{!$Label.Hide_Document}</div>
+                                <i id="upload_angle" class="ci-hk-arrow-27 ci-hk-lg font-size-10 content-icon" aria-hidden="true"></i>
+                            </div>
+                            <div id="uploadDoc" style="width: 100%; float: left;">
+                                <!-- display doc need to upload only, cannot upload at this part -->
+                                <div style="width:100%; padding-top:20px; padding-bottom:40px; ">
+                                   <apex:repeat value="{!wClaimTypeRelatedDocList}" var="wItem">
+                                       <!-- compare with rules from claim type doc - SF-->
+                                       <div class="{!wItem.rules}" style="{!if(wItem.rules !=null && wItem.rules!= '','display:none;','')}" >
+                                           <div class="col-xs-2 col-sm-1">
+                                               <i class="fa fa-circle" aria-hidden="true"/>
+                                           </div>
+                                           <div class="col-xs-10 col-sm-11">{!if( uList.size>0 && uList[0].LanguageLocaleKey == 'en_US', wItem.docTypeName_eng, wItem.docTypeName_chi)}</div>
+                                           <div class="col-xs-12 col-sm-12" style="padding-bottom:10px;"></div>
+                                       </div>
+                                       
+                                   </apex:repeat>
+                                                                      
+                                </div>
+                            </div>
+                            
+                            <script>
+                               /** customer logic here **/
+                               if({!cList[0].Is_Contain_Individual_Life_Policy__c})    $('.individualLifePolicy').show();
+                               else    $('.individualLifePolicy').hide();
+                               
+                               if(((showHPA >= 1 && IfHPAPolicyLessThan2Yrs  ) || ( showHS >= 1 && IFHSPolicyLessThan3YrsOrBrokerPACPlanCode )) || (({!cList[0].HS__c} && {!cList[0].HS_Less_Than_3_Yrs_or_Broker_PAC__c}) || ({!cList[0].HPA__c} && {!cList[0].HPA_Less_Than_2_Yrs__c})) )    $('.brokerPAC').show();
+                               else{
+                                   $('.brokerPAC').hide();
+                                   //for case only one doc can download and it is HPA/HS doc - hide download part also
+                                   if(( showHPA >= 1 ||  showHS >= 1 || {!cList[0].HS__c} || {!cList[0].HPA__c}) && {!if( noOfFormNeedToDownload <=1, true, false)})    hideQuestion('allow_download');         
+                               
+                               }
+                               
+                               // 20200109-minghua-JR1811
+                               if(claimFromOtherCompany == 1 && {!cList[0].Making_other_insurance_claim__c}){
+                                  console.log('show');
+                                  $('.claimFromOtherCompany').show();
+                               }  
+                               else    $('.claimFromOtherCompany').hide();
+                               
+                               /**
+                               //sj_OP_d__c true: is in fast track
+                               if({!if(cList.size>0 && (cList[0].OP__c || cList[0].OPF__c) && !cList[0].Is_Fast_Track__c && CONTAINS(cList[0].Selected_Question_s__c,'q13'), true, false)}){
+                                   $('.OPFHide').show();
+                               }
+                               else    $('.OPFHide').hide();
+                               
+                               var currentStepNum = $('.content-step:visible').data('step');
+                               if(currentStepNum == 6){
+                                   console.log('force resize canvas when edit exist record');
+                                   Cigna.ESignatureComp.forceResizeCanvas();
+                               }
+                               */
+                               
+                            </script>
+                        </apex:outputPanel>
+                        
+                        <!-- allow upload -->
+                        <!-- download part -->
+                        <apex:outputPanel rendered="{!needDownloadPDF}">
+                            
+                            <div id="allow_download" class="downloadForm content-choice-block"> <!-- style="{!if( !isCustomer,'display: none;','')}"  -->
+                                <div class="content-question" style="padding-top:20px;">
+                                   <apex:outputLabel value="{!$Label.Please_download_the_form_s_below_and_filled_by_your_doctor}" escape="false" rendered="{!isCustomer}" ></apex:outputLabel>
+                                   <apex:outputLabel value="{!$Label.The_customer_s_doctor_will_need_to_complete_the_following_form}" escape="false" rendered="{!!isCustomer}" ></apex:outputLabel>
+                                </div>
+                                <div class="col-xs-12 col-sm-12 cigna-fg-blue-medium onclick-pointer" style="text-align:right; border-bottom:1px solid #f2f2f2;" onclick="selectDownloadDoc2()" >
+                                    <div id="download_div2" style="display:inline" >{!$Label.Hide_Document}</div>
+                                    <i id="download_angle2" class="ci-hk-arrow-27 ci-hk-lg font-size-10 content-icon" aria-hidden="true"></i>
+                                </div>
+                                <div id="downloadDoc2" style="width: 100%; float: left;">
+                                    <div style="width:100%; padding-top:20px; padding-bottom:40px; ">
+                                       <apex:variable value="{!0}" var="idx_wItem2"/>
+                                       <apex:repeat value="{!wClaimTypeRelatedDocList}" var="wItem">
+                                           <!-- testing to add rules -->
+                                           <div class="{!wItem.rules}" >
+                                               <apex:outputPanel rendered="{!wItem.isPdf}" layout="inline" >
+                                                   <apex:variable value="{!0}" var="idx_doc2"/>
+                                                   <apex:repeat value="{!wItem.attList}" var="att_tmp">
+                                                       
+                                                       <div class="col-xs-2 col-sm-1"><a id="btn-click-allow-doc-{!idx_wItem2}-{!idx_doc2}" href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!att_tmp.id}" target="_blank" ><span class="ci-hk-inbox content-icon" aria-hidden="true"></span></a></div>
+                                                       <div class="col-xs-10 col-sm-11" >{!if( uList.size>0 && uList[0].LanguageLocaleKey == 'en_US', wItem.docTypeName_eng, wItem.docTypeName_chi)}</div>
+                                                       <div class="col-xs-12 col-sm-12" style="padding:10px;"></div>
+                                                       <apex:variable var="idx_doc2" value="{!idx_doc2+1}"/>
+                                                       
+                                                   </apex:repeat>
+                                               </apex:outputPanel>
+                                               <apex:variable var="idx_wItem2" value="{!idx_wItem2+1}"/>
+                                           </div>
+                                       </apex:repeat>
+                                       
+                                    </div>
+                                    <div class="bs row content-choice-block">
+                                        <div class="bs col-sm-12">
+                                            <div class="bs col-sm-3 col-xs-12" style="padding-left:0px; border-bottom: 0px; font-weight: bold;" >
+                                                <apex:outputLabel value="{!$Label.Send_to_email_address_broker}" escape="false" rendered="{!!isCustomer}"></apex:outputLabel>
+                                            </div>
+                                            <div class="bs form-field col-sm-7 col-xs-12 fg-grey" style="padding-left:0px; border-bottom: 0px;" >
+                                                <apex:inputText id="PH-Email-2" value="{!cList[0].Email_Address_to_send__c}" styleclass="form-field-style" rendered="{!if(cList.size>0, true, false)}"/>
+                                            </div>
+                                            <div class="bs col-sm-2 col-xs-12" style="padding-left:0px;border-bottom: 0px;">
+                                                <apex:actionFunction status="loader-icon" reRender="dummyPanel" name="brkSendAttachmentEmailAtAction2" action="{!sendAttachmentEmail}"  />
+                                                <apex:commandButton styleClass="bs btn cigna-fg-white cigna-bg-orange-dark" onclick="brkFrmSendClaimFormValidation2()" value="{!$Label.Send}" reRender="dummyPanel" rendered="{!if(cList.size>0, true, false)}" />
+                                            </div>
+                                            <div class="bs col-sm-12 col-xs-12" style="padding-left:0px; padding-top:4px; padding-bottom:2px; border-bottom: 0px; font-weight:lighter;" >
+                                                <apex:outputLabel value="{!$Label.Please_edit_the_address_if_you_would_like}" escape="false" style="font-weight:normal" rendered="{!!isCustomer}"></apex:outputLabel>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <script>
+                                console.log('********* before allow_download removing target');
+                                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                                    $("a").attr("target","");
+                                }
+                            </script>
+                            
+                        </apex:outputPanel>
+                        <script>
+                            
+                            function addRules2(){
+                                
+                                if($("form[id*='frmAnswerExtraClaimQuestionBrk']").length !=0){
+                                    
+                                    $("form[id*='frmAnswerExtraClaimQuestionBrk']").validate();
+                                    
+                                    jQuery.validator.addMethod("emailStrict", function(value, element) {
+                                        return this.optional(element) || Cigna.ValidationUtil.isValidEmail(value);
+                                    }, "{!$Label.Please_enter_valid_email_address}");
+                                    
+                                    $("form[id*='frmAnswerExtraClaimQuestionBrk'] input[id*='PH-Email']").each(function(idx, elem){
+                                        $(elem).rules("add", {
+                                            emailStrict: true
+                                        });
+                                    });
+                                    
+                                }
+                            
+                            }
+                            
+                            function brkFrmSendClaimFormValidation2(){
+                                
+                                if($("form[id*='frmAnswerExtraClaimQuestionBrk']").length !=0){
+                                
+                                    $("form[id*='frmAnswerExtraClaimQuestionBrk']").validate();
+                                    
+                                    jQuery.validator.addMethod("emailStrict", function(value, element) {
+                                        return this.optional(element) || Cigna.ValidationUtil.isValidEmail(value);
+                                    }, "{!$Label.Please_enter_valid_email_address}");
+                                    
+                                    $("form[id*='frmAnswerExtraClaimQuestionBrk'] input[id*='PH-Email']").each(function(idx, elem){
+                                        $(elem).rules("add", {
+                                            emailStrict: true
+                                        });
+                                    });
+                                    
+                                    var validation2 = $("form[id*='frmAnswerExtraClaimQuestionBrk']").validate().form();
+                                    if(!validation2){
+                                        return false;
+                                    }else{
+                                        brkSendAttachmentEmailAtAction2();
+                                        return true;
+                                    }
+                                }else{
+                                    return true;
+                                }
+                            }
+                            addRules2();
+                        </script>
+                        
+                        <!-- end allow upload --> 
+                        
+                         <script>
+                            //CR-56_Link_20220214
+                            $('[data-toggle="tooltip"]').tooltip();
+                            
+                            
+                         </script>
+                        
+                    </div>
+                    
+                    <!-- ask question -->
+                    <div id="cx3" class="bs form-field row content-choice-block" style="width:100%; float: left; {!if(CONTAINS(cList[0].Selected_Question_s__c,'\"cx3\"') ,'','display: none;')}">
+                       <div class="bs col-sm-12">
+                           {!$Label.Do_you_have_all_the_documents_to_upload_now}
+                       </div>
+                       <div class="bs col-sm-12">
+                           <div id="cx3_yes" class="bs col-sm-3 col-md-2 question-choice {!if(isLoadOldClaim && CONTAINS(cList[0].Selected_Question_s__c,'\"cx3\"') && cList[0].Have_All_Documents_To_Upload__c, 'fg-orange', 'fg-grey')}" style="padding-left:40px;border-bottom: 0px;" onclick="hideQuestion('cx3_alert');brkQuestioncx3Proceed(true);" >
+                               <a href="javascript:void(0);" class="noStyle"><i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>{!$Label.Yes}</a>
+                               <input type="hidden" name="param-str" value="true" />
+                           </div>
+                           <div id="cx3_no" class="bs col-sm-3 col-sm-offset-3 col-md-2 col-md-offset-4 question-choice {!if(isLoadOldClaim && CONTAINS(cList[0].Selected_Question_s__c,'\"cx3\"') && !cList[0].Have_All_Documents_To_Upload__c, 'fg-orange', 'fg-grey')}" style="padding-left:40px;border-bottom: 0px;" onclick="hideNextBtnIn(5);displayQuestion('cx3_alert');brkQuestioncx3Proceed(false);" >
+                               <a href="javascript:void(0);" class="noStyle"><i class="fa fa-times-circle-o content-icon " aria-hidden="true"></i>{!$Label.No}</a>
+                               <input type="hidden" name="param-str" value="false" />
+                           </div>
+                           <apex:inputHidden value="{!cList[0].Have_All_Documents_To_Upload__c}" id="hiddenValue_brk_cx3"/>
+                       </div>
+                       <apex:actionFunction name="haveAllDocAnswer" status="loader-icon" action="{!SaveRecord}" rerender="dummyPanel" oncomplete="proceedOnComplete(); "> <!-- DummyAction -->
+                            <apex:param name="brkcx3HaveAllDocAns" value="" assignTo="{!cList[0].Have_All_Documents_To_Upload__c}"/>
+                       </apex:actionFunction>
+                       
+                       <script>
+                           function brkQuestioncx3Proceed(hasAllDoc){
+                               if (hasAllDoc){
+                                   proceedType = 1;
+                               }
+                               else{
+                                   proceedType = 0;
+                               }
+                               
+                               haveAllDocAnswer(hasAllDoc);
+                           }
+                           
+                       </script>
+                       
+                    </div>
+                    
+                    <div id="cx3_alert" class="bs form-field row content-choice-block" style="float: left; {!if(isLoadOldClaim && !cList[0].Have_All_Documents_To_Upload__c && CONTAINS(cList[0].Selected_Question_s__c,'\"cx3\"'), '', 'display:none;')}">
+                       <a name="a_cx3_alert" class="noStyle">
+                           <div class="bs col-sm-12 form-note">
+                               {!$Label.We_will_save_the_claim_application_for_you_now_You_can_come_back_and_go_to_the}
+                           </div>
+                       </a>
+                    </div>
+                    
+                    
+                    <!-- next button -->
+                    <!-- mobile -->
+                    <div id="mobile-app-padding" class="bs row nextStepBtnPaddingIn5" style="display: none; padding-bottom: 100px;">
+                        <div class="bs col-xs-12"></div>
+                    </div>
+                    
+                    <div id="action-bar" class="bs hidden-sm hidden-md hidden-lg cigna-floating-bottom-panel nextStepBtnIn5" style="left:0px; display:none; " onclick="nextStep();"> <!-- {!if(isLoadOldClaim && cList[0].Have_All_Documents_To_Upload__c && CONTAINS(cList[0].Selected_Question_s__c,'\"cx3\"'), '', 'display:none;')}-->
+                        <div id="callAction1" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                            <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</a>
+                        </div>
+                    </div>
+                    <!-- web -->
+                    <div class="bs row hidden-xs nextStepBtnIn5" style="padding-top: 20px; padding-bottom: 20px; display:none;">
+                        <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3 "></div>
+                        <div id="callAction2" class="bs col-sm-6 col-md-6 col-xs-6 col-lg-6 onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn" onclick="nextStep();">
+                            {!$Label.Next}
+                        </div>
+                        <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3"></div>
+                    </div>
+                    
+                    <apex:actionFunction name="saveSelectedExtraQuestionBrkAtAction" status="loader-icon" action="{!saveSelectedExtraQuestionBrk}" reRender="jsPanel" >
+                        <apex:param name="id" value="" assignTo="{!currentSelectedQuestionId}" />
+                    </apex:actionFunction>
+                    
+                </apex:form>
+                
+                <script>
+                       if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                           if ($('.nextStepBtnIn5').is(':visible')){
+                               $('.nextStepBtnPaddingIn5').show();
+                           }
+                       }
+                       
+                       var selectedQuestion = '{!cList[0].Selected_Question_s__c}';
+                       if ({!isLoadOldClaim} && {!cList[0].Have_All_Documents_To_Upload__c} && selectedQuestion.includes("cx3")){
+                           displayNextBtnIn(5);
+                       }
+                </script>
+            
+            </apex:outputPanel>
+            
+            <!-- end still working -->
+        </apex:outputPanel>
+        
+        
+    </div>
+</apex:page>

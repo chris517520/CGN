@@ -1,0 +1,597 @@
+<!--Please change apex page id and Portal Template Page-->
+<apex:page docType="html-5.0"  showHeader="false" title="{!$Label.site.user_registration}" controller="CustomerRegistrationController" language="{!JSINHTMLENCODE($CurrentPage.Parameters.lang)}" cache="false">
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap.min.js')}"/>
+        <apex:include pageName="CignaUtilJS"/>
+        <style>
+             div#overlay, div#PICSoverlay {
+                display: none;
+                z-index: 10;
+                background: #D9D9D6;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                text-align: center;
+            }
+            div#specialBox, div#PICSBox {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 150px auto 0px auto;
+                width: 80%;
+                height: 70%;
+                background: #FFF;
+                color: #000;
+                left: 10%;
+                padding:20px;
+                border-radius:5px;
+                
+                
+            }
+            #closeOverlay, #closePICSOverlay {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
+
+            div#PICSoverlay ol {
+                padding-left: 0px;
+            }
+            
+            #tccontent {
+                padding:10px;
+                color:#000;
+                font-size:12px;
+                width: 100%;
+                height: 95%;
+                overflow-y:auto;
+            }
+        
+            .tooltip {
+                position: relative;
+                display: inline-block;
+            }
+            
+            .tooltip .tooltiptext {
+                visibility: hidden;
+                width: 120px;
+                background-color: black;
+                color: #fff;
+                text-align: center;
+                border-radius: 6px;
+                padding: 5px 0;
+            
+                position: relative;
+                z-index: 99;
+            }
+            
+            .tooltip:hover .tooltiptext {
+                visibility: visible;
+            }
+            
+            .tooltip-inner {
+                /* Change the tooltip width here */
+                max-width: 250px !important;
+                /* If max-width does not work, try using width instead */
+                width: 250px; 
+                min-width: 100px;
+            }
+            
+            .helptext-icon {
+                background:none !important;
+                border-top:none !important;
+                border-right:none !important;
+                border-left:none !important;
+                border-radius:0px !important;
+                border-color:#fff !important;
+                color:#fff !important;
+                font-size:18px !important;
+            }
+            
+            span[id$="cigna-error"] span div.message{
+                border: none;
+                //background-color: #cc0000;
+                background-color: #fff;
+                //background-color: transparent;
+                opacity: .9;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td img{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell div span{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell{
+                //color: #fff;
+                //color: #F68621;
+                color:red;
+                font-family: "Gotham SSm A", "Gotham SSm B";
+            }
+            
+            span[id$="cigna-error"] .messageText::before{
+                content: "\f071\20";
+                font: normal normal normal 14px/1 FontAwesome;
+                font-size: inherit;
+                text-rendering: auto;
+                -webkit-font-smoothing: antialiased;
+                padding-right: 7px;
+            }
+            
+            .inputfieldstyle{
+                box-shadow: none !important;
+                border-radius: 0px !important;
+                -webkit-box-shadow: none !important;
+                -moz-box-shadow: none !important;
+                border:0px !important;
+                border-bottom:1px solid #FFF !important;
+                background: transparent !important;
+                color: #FFF !important;
+            }
+        
+            .LogoDiv_Shorten {
+                text-align:center;
+                padding-bottom: 2cm;
+                margin: 15px;
+                margin-bottom: 90px;
+            }
+            
+        </style>
+        
+        <script>
+            $(document).ready(function(){  
+                $("[title]").tooltip({
+                    //container: 'body', 
+                    // This is meant to remove the glitch when hovering over the icon, but didnt work....
+                    placement: "top"
+                });              
+                $(".inputs").keyup(function () {
+                    if (this.value.length == this.maxLength) {
+                      var $next = $(this).next('.inputs');
+                      if ($next.length){
+                          $(this).next('.inputs').focus();
+                      }else{
+                          $(this).blur();
+                     }
+                    }
+                });
+                
+            });
+
+            function disableRegistration(){             
+                $("[id$='register']").prop('disabled', true);
+            }
+            function enableRegistration(){             
+                $("[id$='register']").prop('disabled', false);
+            }
+            function registerUserWSJS(){      
+               var userId =  $('#user-id').val();
+               console.log('userId '+userId );
+               if(userId!= "" && userId!= null && typeof userId != undefined){
+                   registerUserWS();
+               }else{
+                   enableRegistration();   
+               }                        
+           }
+
+            function validation(){    
+                 $("[id$='Validate']").prop('disabled', true);
+            }
+            function toggleOverlay(){
+                var overlay = document.getElementById('overlay');
+                var specialBox = document.getElementById('specialBox');
+                overlay.style.opacity = .95;
+                if(overlay.style.display == "block"){
+                    overlay.style.display = "none";
+                    specialBox.style.display = "none";
+                } else {
+                    overlay.style.display = "block";
+                    specialBox.style.display = "block";
+                }
+            }
+
+            function registerUserJS(){
+                event.preventDefault();
+                // 20211207 - minghua - AMP-30, Marketing Opt-out checkbox should be optional in PI registration flow
+                // if ($("[id='accept']").is(':checked')&&$("[id='dontmkt']").is(':checked')&&$("[id='acceptTelaRegister']").is(':checked')) {
+                if ($("[id='accept']").is(':checked')&&$("[id='acceptTelaRegister']").is(':checked')) {
+                    console.log('register user');
+                    $("div[id='showErrorMsg']").html("");
+                    document.getElementById('showErrorMsg').style.display="none";
+                    disableRegistration();
+                    registerAMPUser();
+                }else{
+                    $("div[id='showErrorMsg']").html("{!transFieldPI['AMPTermsCondition'][$Label.Header_Language_Code_Current]}");
+                    document.getElementById('showErrorMsg').style.display="block";
+                }
+            }
+            function checkAndGoToStep4(){
+                if ($("[id='acceptTela']").is(':checked')) {
+                    console.log('go to step 4');
+                    updateToTeladocUser();
+                }else{
+                    document.getElementById('showErrorMsg').style.display="block";
+                    $("div[id='showErrorMsg']").html("{!transFieldPI['AMPTermsCondition'][$Label.Header_Language_Code_Current]}");
+                }
+            }
+        </script>
+    </head>
+
+    <apex:composition template="CustomerUnauthorizedPageTemplateNoCache">
+        <apex:define name="body">
+            <apex:outputPanel id="registerDiv">
+                <apex:outputPanel id="userIdHidden">
+                    <input type="hidden" id="user-id" value="{!userId}" />
+                </apex:outputPanel>
+                <!-- 20231018 - minghua - JOBR-342 Sync partner user profile to Okta -->
+                <!-- <apex:actionFunction name="registerUserWS" action="{!registerUserWS}" reRender="registerDiv" /> -->
+                <apex:actionFunction name="registerUserWS" action="{!registerUserWS}" reRender="registerDiv" oncomplete="regOktaUser();" />
+                <apex:actionFunction name="regOktaUser" action="{!regOktaUser}" />
+                <apex:actionFunction name="registerAMPUser" action="{!registerAMPUser}" reRender="userIdHidden,errorPanel" oncomplete="registerUserWSJS()" />
+                <apex:actionFunction name="registerUser" action="{!registerUser}" reRender="errorPanel" oncomplete="registerUserWSJS();"/>
+                <apex:actionFunction name="updateToTeladocUser" action="{!updateToTeladocUser}" reRender="registerDiv" />
+                <apex:outputPanel >
+                    <div id="showErrorMsg" style="display: none;border: none;background-color: #fff;opacity: .9;padding: 6px 8px 6px 6px;margin: 4px 20px;color: #c00;border-radius: 4px;"></div>
+                </apex:outputPanel>
+                <apex:outputPanel id="errorPanel">
+                    <div class="col-xs-12 col-md-12">
+                        <apex:pageMessages id="cigna-error"/>
+                    </div>
+                </apex:outputPanel>
+                <apex:outputPanel id="RegStep1" rendered="{!piRegisterStep1}">  
+                     <div class="col-xs-12 col-md-12">
+                        <h4>{!$Label.Registration}</h4>
+                        <br/>
+                        <apex:outputPanel >
+                            <p>
+                                <h5>
+                                    <apex:outputPanel >
+                                        <apex:outputText value="{!transFieldPI['Register_Reminder'][$Label.Header_Language_Code_Current]}" ></apex:outputText>
+                                        <apex:outputText value="{!transFieldPI['FullStop'][$Label.Header_Language_Code_Current]}" ></apex:outputText>
+                                    </apex:outputPanel>
+                                    <br/>
+                                    <br/>
+                                    <apex:outputPanel >
+                                        <apex:outputText value="{!transFieldPI['More_Detail'][$Label.Header_Language_Code_Current]}" ></apex:outputText>
+                                        <apex:outputText value=" " rendered="{!JSINHTMLENCODE($CurrentPage.Parameters.lang) == 'en_US'||JSINHTMLENCODE($CurrentPage.Parameters.lang) ==''}"></apex:outputText>
+                                        <apex:outputText value="{!transFieldPI['UserGuide'][$Label.Header_Language_Code_Current]}" ></apex:outputText>
+                                        <apex:outputText value="{!transFieldPI['FullStop'][$Label.Header_Language_Code_Current]}" ></apex:outputText>
+                                    </apex:outputPanel>
+                                </h5><!--</i>-->
+                            </p>
+                        </apex:outputPanel>
+                    </div>
+                    <!-- Rancho_JOBR300_20230214 - add identity type dropdown list for user select -->
+                    <div class="bs form-group col-xs-12 col-md-12">
+                        <p>{!transField['Identity_Type'][$Label.Header_Language_Code_Current]}</p>
+                        <apex:selectList value="{!identityType}" size="1" styleClass="form-control">
+                            <apex:selectOption itemValue="{!transFieldPI['HKID']['en_US']}" itemLabel="{!transFieldPI['HKID'][$Label.Header_Language_Code_Current]}"></apex:selectOption>
+                            <apex:selectOption itemValue="{!transField['Passport_number']['en_US']}" itemLabel="{!transField['Passport_number'][$Label.Header_Language_Code_Current]}"></apex:selectOption>
+                            <apex:selectOption itemValue="{!transField['Member_ID']['en_US']}" itemLabel="{!transField['Member_ID'][$Label.Header_Language_Code_Current]}"></apex:selectOption>
+                        </apex:selectList>
+                    </div>
+                    <div class="form-group col-xs-12 col-md-12">
+                        <div  id="input-id-div">
+                            <apex:inputText value="{!theID}" id="idNo" html-placeholder="{!transFieldPI['HKID'][$Label.Header_Language_Code_Current]}" styleClass="form-control"/> <!-- required="true" -->
+                            <!-- <span class="helptext-icon input-group-addon" id="help" data-toggle="tooltip" title="{!$Label.Registration_ID_Help_Text}" style="display:none;"> 
+                                <i class="fa fa-question-circle-o" aria-hidden="true"></i>
+                            </span> -->                           
+                        </div>
+                    </div>
+
+                    <div class="form-group col-xs-12 col-md-12">
+                        {!$Label.Date_of_Birth}
+                    </div>
+                
+                    <div class="form-inline col-xs-12 col-md-12" style="padding-bottom:30px;">
+                        <apex:input type="tel" style="width:33%;" value="{!ddDOB}" id="ddDOB" html-placeholder="{!$Label.DD}" html-maxlength="2" styleClass="form-control inputs col-xs-4 col-md-4 inputfieldstyle"/><apex:input type="tel" style="width:33%;" value="{!mmDOB}" id="mmDOB" html-placeholder="{!$Label.MM}" html-maxlength="2" styleClass="form-control inputs col-xs-4 col-md-4 inputfieldstyle" /><apex:input type="tel" style="width:33%;" value="{!yyyyDOB}" id="yyyyDOB" html-placeholder="{!$Label.YYYY}" html-maxlength="4" styleClass="form-control inputs col-xs-4 col-md-4 inputfieldstyle" />
+                    </div>
+                  
+                    <div class="col-xs-12 col-md-12">
+                        <apex:commandButton value="{!$Label.Confirm}" action="{!validateTeladocUser}" reRender="registerDiv" id="Validate" onclick="validation();"
+                            styleClass="bs btn btn-primary btn-block" disabled="{!!showValidate}"/>    
+                    </div>
+                </apex:outputPanel>  
+                <apex:outputPanel id="RegStep2" rendered="{!piRegisterStep2}">
+                    <div class="col-xs-12 col-md-12">
+                        <h4>{!$Label.Registration}</h4>
+                        <br/>
+                        <apex:outputPanel >
+                            <p>
+                                <h5>
+                                    <apex:outputPanel >
+                                        <apex:outputText value="{!transFieldPI['Hello'][$Label.Header_Language_Code_Current]}" ></apex:outputText>
+                                        <apex:outputText value="{!transFieldPI['Comma'][$Label.Header_Language_Code_Current]}" ></apex:outputText>&nbsp;
+                                        <apex:outputText value="{!transFieldPI['Register_Greet'][$Label.Header_Language_Code_Current]}" ></apex:outputText>
+                                    </apex:outputPanel>
+                                    <br/>
+                                    <br/>
+                                </h5>
+                            </p>
+                        </apex:outputPanel>
+                    </div> 
+                    <div id="registerPanel">
+                        <div class="form-group col-xs-12 col-md-12">
+                            <div class="input-group pull-left">
+                                <apex:outputText value="{!transFieldPI['Fields_Reminder'][$Label.Header_Language_Code_Current]}" ></apex:outputText>
+                            </div>
+                        </div>
+                        <!-- Rancho_JOBR300_20230214 - remove hkid from step 2 to avoid user editing -->
+                        <!-- <div class="form-group col-xs-12 col-md-12">
+                            <apex:outputText value="{!theID}" html-placeholder="{!transFieldPI['HKID'][$Label.Header_Language_Code_Current]}" styleClass="form-control" />
+                        </div> -->
+                        <div class="form-group col-xs-12 col-md-12">
+                            <div class="input-group pull-left" style="width:100%;" id="number">
+                                <apex:inputText style="width:22% " value="{!countryCode}" id="countryCode" html-placeholder="{!$Label.Default_Country_Code}" styleClass="form-control" html-autocomplete="tel-country-code" />
+                                <apex:inputText style="width:78% " value="{!mobile}" id="number2" html-placeholder="{!$Label.Mobile_Number}" styleClass="form-control" html-autocomplete="tel-national" />
+                            </div>
+                        </div>
+                        <div class="form-group col-xs-12 col-md-12">
+                            <apex:inputText value="{!email}" id="email" html-placeholder="{!$Label.site.email}" styleClass="form-control" html-autocomplete="email" />
+                        </div>
+
+                        <div class="form-group col-xs-12 col-md-12">
+                            <div class="input-group">
+                                <apex:inputSecret value="{!password}" id="password" html-placeholder="{!$Label.site.password}" styleClass="form-control"/>
+                                <span class="helptext-icon input-group-addon" id="help" data-toggle="tooltip" title="{!$Label.Password_Policy_Help_Text}">
+                                    <i class="fa fa-question-circle-o" aria-hidden="true"></i>
+                                </span>
+                            </div>
+                        </div>
+        
+                        <div class="form-group col-xs-12 col-md-12">
+                            <apex:inputSecret value="{!confirmPassword}" id="confirmPassword" html-placeholder="{!$Label.site.confirm_password} " styleClass="form-control"/>
+                        </div>
+                        <!-- Rancho_AMP32_20220307: hide residency if has value returned from ws -->
+                        <div class="form-group col-xs-12 col-md-12" style="{!if(placeOfRecidency != null, 'display: none', '')}">
+                            <p><h5>{!transFieldSMT['SMT_PlaceOfRecidency_Label'][$Label.Header_Language_Code_Current]}</h5></p>
+                            <apex:selectList value="{!placeOfRecidency}" size="1" styleClass="form-control">
+                                <apex:selectOption itemValue="{!transFieldSMT['SMT_HongKong'][$Label.Header_Language_Code_Current]}" itemLabel="{!transFieldSMT['SMT_HongKong'][$Label.Header_Language_Code_Current]}"/>
+                                <apex:selectOptions value="{!countryTransField[$Label.Header_Language_Code_Current]}"></apex:selectOptions>
+                            </apex:selectList>
+                        </div>
+
+                        <!-- PS-22 Owen 20230518 Move the 3rd check box message to the 1st,and pre-filled the check box -->
+                        <!-- Rancho_PS28_20230802 - update marketing wording -->
+                        <div class="col-xs-12 col-md-12">
+                            <br />
+                            <input id="dontmkt" type="checkbox" class="validate-checkbox" checked="checked"/>
+                            <label for="dontmkt" class="control-label"><apex:outputText escape="false" value="{!$Label.Teladoc_DM}" /></label>
+                            <apex:inputHidden id="marketingOptOut" value="{!marketingOptIn}" />
+                        </div>
+                        <div class="col-xs-12 col-md-12">
+                            <br />
+                            <input id="accept" type="checkbox" />
+                            <label for="accept" class="control-label">{!transFieldPI['ReadAndAccpect'][$Label.Header_Language_Code_Current]}</label>
+                            <a onclick="toggleOverlay();"><label class="control-label" style="cursor:pointer;text-decoration: underline;font-weight: normal;">&nbsp;{!transFieldPI['TermsAndConditionsBespoke'][$Label.Header_Language_Code_Current]}</label></a>
+                            <label  class="control-label">&nbsp;{!transFieldPI['AndInBespoke'][$Label.Header_Language_Code_Current]}&nbsp;</label>
+                            <a href="{!PersonalInformationCollectionStatement_eng}" target="_blank">
+                                <apex:outputText value="{!transFieldPI['PersonInfor'][$Label.Header_Language_Code_Current]}" style="cursor:pointer;text-decoration: underline;font-weight: normal;">
+                                </apex:outputText>
+                            </a>&nbsp;
+                            <apex:outputText value="{!transFieldPI['MyCignaInBespoke'][$Label.Header_Language_Code_Current]}" ></apex:outputText>
+                        </div>
+        
+                        <!-- Start Special Centered Box -->
+                        <div id="overlay" style="display:none;">
+                            <div id="specialBox">
+                                <a href="#" style="color:#337ab7 !important;"><div id="closeOverlay" class="glyphicon glyphicon-remove" onclick="toggleOverlay();"></div></a>
+                                <h4>{!$Label.Terms_and_Conditions}</h4>
+                                <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                                <div id="tccontent">
+                                    <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'zh_TW'}">
+                                         <div id="reallocationtccontent" style="text-align:left">
+                                         <b>Terms and Conditions for Internet Services</b><br/><br/>
+                                         <b>1.  Application and Service</b><br/><br/>1.1 These Terms and Conditions shall, unless otherwise determined by Cigna, apply to all services provided by Cigna to you via Internet from time to time ("Services").<br/><br/>1.2 Cigna shall be entitled from time to time to impose any limit whether in transaction amount, operating procedures or otherwise on the use of any Services and such limit shall be determined by Cigna at its discretion.<br/><br/>
+                                         <b>2.  Registration</b><br/><br/>2.1 You warrant that all information provided by you to Cigna is provided voluntarily and that such information is true, correct and complete in all respects. You have to inform us forthwith if there is any change of your information.<br/><br/>
+                                         <b>3.  Instruction</b><br/><br/>3.1  Cigna will rely upon and act in accordance with instructions given to us through Internet in connection with any Services offered to you if the person giving the instruction can quote your Username and Password.<br/><br/>3.2 Cigna shall not be under any duty to verify the identity of the person sending instructions on your behalf. Any translation or Services effected pursuant to such instructions referred to in paragraph 3.1 above shall be binding upon you whether the instructions were made with or without your authority, knowledge or consent.<br/><br/>3.3 Cigna may refuse to accept any instruction upon such grounds as we deem fit.<br/><br/>3.4 Any transaction effected pursuant to an instruction given to Cigna may be considered concluded only if Cigna has confirmed the same to you.<br/><br/>3.5 You undertake to: (a) keep your PIN, Username and Password secret and safe; and (b) inform Cigna as soon as reasonably practicable if you know or suspect that, any unauthorized person knows your PIN, Username or Password.<br/><br/>3.6 You shall hold Cigna harmless and indemnify Cigna against all actions, proceedings, demands, claims, liabilities, damages, losses, costs and expenses howsoever arising, directly or indirectly, out of the Services or transactions effected in accordance with any instruction referred to in paragraph 3.1 above. This indemnity shall continue notwithstanding any maturity or expiry or termination of your policy(ies).<br/><br/>
+                                         <b>4.  Warranties</b><br/><br/>4.1 You warrant to Cigna that:<br/><br/>  (a) You shall not gain access to any Services in any country or jurisdiction where the offering of the same by Cigna is not lawful or where these Terms and Conditions may not be enforceable by us against you. If you access this site from outside Hong Kong, you do so on your own responsibility and are responsible for ensuring compliance with all laws in the place where you are located.<br/><br/>  (b) You shall not, and shall not attempt to, reverse engineer, decompose, disassemble or otherwise tamper with any software relating to any Services.<br/><br/>  (c) You shall ensure that the browser cache memory shall be cleared as soon as you logout each time after having gained access to any Services through use of computer and you shall exit the browser immediately after each use of any Services through use of computer.<br/><br/>
+                                         <b>5.  Disclaimers</b><br/><br/>5.1 Owing to unpredictable traffic congestion, openness and public nature of the Internet and other reasons, the Internet may not be a reliable medium of communication and that such unreliability is beyond the control of Cigna. This may subject transactions to delays in transmission, incorrect data transmission, delays in execution, misunderstanding and errors in any communication between Cigna and you, transmission blackouts, interruptions and so on.<br/><br/>5.2 Cigna cannot and does not guarantee or warrant that files available for downloading from this site are free of viruses, worms, Trojan horses or other code that has contaminating or destructive properties. Cigna shall assume no responsibility, and shall not be liable for, any damages to, or viruses that may infect, your computer equipment or other property as a result of your access to, use of, or browsing in this website or your downloading of any materials, data, text, images, video or audio from this website.<br/><br/>5.3 This website may be linked to other websites which are not maintained by Cigna. Cigna shall not be responsible for the contents of those websites. The inclusion of any link to such websites does not imply approval of or endorsement by Cigna of the website or the contents thereof.<br/><br/>5.4 You agree by accessing this website that to the fullest extent permitted by law, under no circumstances or any theories of liability under international or civil, common or statutory law including but not limited to strict liability, negligence or other tort theories or contract, patent or copyright laws, will Cigna be liable for damages of any kind occurring from the use of this website or any information or services obtained on this website including direct, indirect, consequential, incidental, or punitive damages (even if Cigna has been advised of the possibility of such damages), to the fullest extent permitted by law.<br/><br/>
+                                         <!-- Comment by Shengt for JOBR-235 -->
+                                         <!-- <b>6.  Your Personal Information</b><br/><br/>6.1 You agree that Cigna may use and/or disclose your personal information in accordance with :<br/><br/>  (a) <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!Privacy_statement_eng}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">Privacy Statement of Cigna</a> (as may be amended from time to time) which is posted on MyCigna.com.hk; and<br/><br/>  (b) <a href="{!PersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">Cigna's Personal Information Collection Statement</a> issued from time to time.<br/><br/> -->
+                                         
+                                         <b>6.  Your Personal Information</b><br/><br/>6.1 You agree that Cigna may use and/or disclose your personal information in accordance with :<br/><br/>  (a) <a href="{!Privacy_statement_eng}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">Privacy Statement of Cigna</a> (as may be amended from time to time) which is posted on MyCigna.com.hk; and<br/><br/>  (b) <a href="{!PersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">Cigna's Personal Information Collection Statement</a> issued from time to time.<br/><br/>
+                                         <b>7.  Information on this Website</b><br/><br/>7.1 Any transaction effected by you through use of any Services shall be made solely upon exercise of your own judgment and at your own discretion notwithstanding any information, suggestion or documents Cigna may have provided to you.<br/><br/>7.2 Any information, suggestion or recommendation communicated to you by Cigna is based on information obtained from sources believed by Cigna to be reliable, are for your own use and consideration only and will not constitute an offer to sell any investment to you.<br/><br/>7.3 Cigna shall not be liable for any inaccuracy or incompleteness of any information provided by Cigna or the performance or outcome of any transactions effected by you after receipt of such information.<br/><br/>7.4 Any price of funds or other similar information quoted to you is for your reference only and shall not be binding on Cigna unless confirmed by Cigna for a transaction.<br/><br/>
+                                         <b>8.  Trademarks and Copyright</b><br/><br/>8.1 There are references throughout this website to various trademarks or service marks and these, whether registered or not, are the property of their respective owners. Images displayed on this website are the property of their respective owners.<br/><br/>8.2 Nothing contained on this website should be construed as granting, by implication, estoppel, or otherwise, any license or right to use any trademark or images displayed on this website without the written permission of the owners.<br/><br/>8.3 No materials or contents (including the text, images, audio and video) from this website may be copied, reproduced, republished, uploaded, posted, transmitted or distributed in any way without our permission.<br/><br/>
+                                         <b>9.  Amendments</b><br/><br/>9.1 Cigna may at any time delete, replace, add or change any term of these Terms and Conditions. You are advised to read these Terms and Conditions from time to time before utilizing any Services through Internet. You are deemed to have accepted and agreed to be bound by these Terms and Conditions and its revisions (if any) upon your utilizing any Services on this website.<br/><br/>9.2 Cigna may at any time introduce any new Services or delete any existing Services without prior notice.<br/><br/>
+                                         <b>10.  Governing Law and Prevailing Language</b><br/><br/>10.1 These Terms and Conditions shall be governed by and construed in accordance with the laws of the Hong Kong Special Administrative Region.<br/><br/>10.2 The English version of these Terms and Conditions shall prevail, if there is any inconsistency between the English and the Chinese versions.<br/><br/>
+                                         <b>Privacy Statement</b><br/><br/>PLEASE READ CAREFULLY.<br/><br/>We know that when you visit us at MyCigna.com.hk, you depend on us to be as diligent about protecting your privacy on-line as we've always been in our more traditional interactions with you. We also know that you rely on us to provide products and services that meet each of your unique needs. To do both, we need to gather and protect certain information about you.<br/><br/>
+                                         <b>What kind of information does MyCigna.com.hk collect?</b><br/><br/>We've designed our Web site to capture two types of information: automatic tracking and individualized. The first allows us to see which topics interest you most; the second helps us service your accounts.<br/><br/>Automatic tracking information is gathered by following your "footsteps" through MyCigna.com.hk. The route you and other visitors choose tells us a little something about the people who visit our site. We use aggregate numbers to compile statistics, monitor trends and track site usage. We also use the information to make sure our technology is compatible with yours. We're then better able to offer products and services that match your needs.<br/><br/>Individualized information can be anything you've provided to MyCigna.com.hk that identifies you or your accounts. For example: Your name, identity card number, birth date, address and names of your dependents are types of individualized information. We use this information to service your accounts. It's our policy to send and receive individualized information through encrypted channels only.<br/><br/>To use our secure services, "cookies" must be enabled. Cookies are small pieces of software that remain activated during your session in a secure area, then are deactivated when you log off.<br/><br/>
+                                         <b>What do you do with the information you collect about me?</b><br/><br/>We will not sell, rent or license your individualized information furnished by you to MyCigna.com.hk unless you authorize it. But we may need to use and/or transfer it within the Cigna family or to affiliate companies or with a third party vendor, within or outside Hong Kong, to perform administrative, technical, hosting, marketing or other functions that help us manage the site while providing service to you. Our third party vendors subscribe to the same privacy practices as MyCigna.com.hk.<br/><br/>Except as noted above, we will not release individualized information to any other party unless required to do so by government authorities or legal process or as otherwise permitted by law.<br/><br/>We will retain individualized information for a period necessary to attain the specified purposes.<br/><br/>
+                                         <b>What if I need to correct or remove information about me?</b><br/><br/>You can contact our Privacy Data Protection Officer (Address: {!$Label.Cigna_Address_en}) by mail. Please do not e-mail individualized information unless you do so through a secure channel. We have a policy that prohibits us from communicating individualized information through non-secure e-mail.<br/><br/>
+                                         <b>What if I don't want you to collect, use and distribute my information?</b><br/><br/>If you don't want MyCigna.com.hk to collect, use and distribute information about you, there are always traditional means of communication available to you. Simply pick up the phone or send your questions, comments and specific information by regular mail.<br/><br/>
+                                         <b>About e-mail</b><br/><br/>From time to time we may send informational, educational or promotional materials to you at the e-mail address you've provided.<br/><br/>Please remember that e-mail messages can be viewed by other Internet users while in transit. If you have individualized information to communicate, please contact your local customer service representative or e-mail us a request for your customer service representative to contact you.<br/><br/>
+                                         <b>How secure is MyCigna.com.hk?</b><br/><br/>Your individualized information at MyCigna.com.hk is protected from unauthorized access by a secure firewall and security infrastructure. When information is received, we employ extensive physical, electronic and procedural safeguards to maintain the security of your information. MyCigna.com.hk also conducts periodic reviews of its Web security to ensure that our electronic security safeguards remain up-to-date and effective.<br/><br/>
+                                         <b>What about the links on your site? Are they secure?</b><br/><br/>Because we don't own or control all the sites linked from MyCigna.com.hk, we can't guarantee they're secure; therefore, we can not assume responsibility for all their privacy practices. If you enroll with a company that is not affiliated with MyCigna.com.hk or any Cigna company, we urge you to review the privacy policies of any of the Web sites you visit once you leave MyCigna.com.hk.<br/><br/>
+                                         <b>I'm not a Hong Kong customer. How do I fit into your privacy policies?</b><br/><br/>Your continued use of MyCigna.com.hk from places or countries other than Hong Kong means that you are giving your consent to have your individualized information processed outside those places or countries in accordance with the protection described in this Privacy Statement.<br/><br/>
+                                         <b>I've switched my coverage to another company. What will you do with my information?</b><br/><br/>We will continue to treat your individualized information with the same confidentiality and respect we extend to all our valuable customers.<br/><br/>
+                                         <b>Why is this Privacy Statement important to me?</b><br/><br/>Your visit to MyCigna.com.hk and any dispute over privacy is subject to this Statement, <a href="{!PersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">Personal Information Collection Statement of Cigna Hong Kong</a> and our Legal Disclaimers/Conditions of Use including limitations of damages and the application of the laws of Hong Kong and exclusive jurisdiction of the courts of Hong Kong.<br/><br/>This statement is applicable only to information collected from you during your visit to MyCigna.com.hk. We will display a prominent notice on the MyCigna.com.hk home page whenever this Privacy Statement is updated or changed and you should check our Privacy Statement periodically. By choosing to continue usage of MyCigna.com.hk, you agree to the terms of the Privacy Statement.<br/><br/>If you have any questions of comments concerning this Statement, please contact us by postal mail at:<br/><br/><apex:outputText escape="false" value="{!$Label.Cigna_Address_en_2_line}"/><br/><br/><br/><br/>Last Updated: 31 Oct 2008
+                                         </div>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'en_US'}">
+                                         <div id="reallocationtccontent" style="text-align:left">
+                                         <b>網上服務的條款及細則</b><br/><br/>
+                                         <b>1.  使用與服務</b><br/><br/>1.1 除信諾另行決定外，此條款及細則適用於信諾不時於互聯網上提供予閣下之所有服務 (“服務”)。<br/><br/>1.2 信諾有權不時就交易金額、操作程式或在使用任何服務之細節加上任何限額或限制。信諾有酌情決定權對此等限額或限制作出更改。<br/><br/>
+                                         <b>2.  註冊</b><br/><br/>2.1 閣下保證向信諾提供的所有資料均為自願，而有關資料在任何方面均為真實、正確及完整。閣下的資料如有任何改變，必須立即通知信諾。<br/><br/>
+                                         <b>3.  指示</b><br/><br/>3.1 若任何人士通過互聯網給與信諾指示，並可提供閣下的用户名稱和密碼，信諾將根據並遵照該指示進行交易或提供服務給與閣下。<br/><br/>3.2 信諾將不會有任何責任核實於互聯網上以閣下名義給與信諾指示的人士的身分。根據上述第3.1條所給與信諾的指示所進行之交易或提供之服務，閣下無論是否知情、同意或已授權，將須要負上責任。<br/><br/>3.3 信諾可在其認為適當之情況下拒絕接納任何指示。<br/><br/>3.4 所有根據向信諾發出的指示所進行之交易，需由信諾向閣下確認後方視為完成交易。<br/><br/>3.5 閣下承諾：(a)確保閣下之個人識別碼、用户名稱和密碼保持機密及妥善保存；(b)若閣下得悉或懷疑有任何未獲授權之人士知悉閣下之個人識別碼、用户名稱或密碼，會於情況許可下盡快通知信諾。<br/><br/>3.6 對於信諾因應根據上述第3.1條所給與的指示所進行之交易或提供之服務，直接或間接地招致之一切申索、訴訟、要求、賠償、責任、損害、損失、費用和支出（不論其招致原因），閣下無條件及不可撤回地同意賠償信諾及使信諾免受損害。不論閣下的保單是否已屆成熟或期滿或終止，此彌償保證將繼續生效。<br/><br/>
+                                         <b>4.  保證</b><br/><br/>4.1 閣下向信諾保證如下：<br/><br/>  (a) 閣下不會在任何禁止信諾提供有關服務或交易或對此條款及細則沒有法律效用的國家或司法管轄區使用任何服務。若閣下在香港以外的地方進入此網站，閣下須自行負上責任，確保遵從有關地方之法律；<br/><br/>  (b) 閣下不會及不會試圖就與任何服務相關的電腦軟件進行還原工程、分拆或其他類型的干擾；<br/><br/>  (c) 閣下承諾確保每次透過電腦使用完任何服務後盡快登出、關閉瀏覽器並把瀏覽器的記憶體內之資料清除。<br/><br/>
+                                         <b>5.  免責聲明</b><br/><br/>5.1 閣下明白到互聯網可能因為未能預測的擠塞、其開放和公開性質、和其他原因，導致互聯網未必是可靠的通訊媒介，而這種不可靠是在信諾可控制範圍之外。這些因素可導致交易傳送延誤、錯誤資料傳送、延誤執行指示、或閣下與信諾溝通上的誤解和錯誤等等。<br/><br/>5.2 信諾不能並不會擔保或保證在本網站以供下載的檔案，沒有受到病毒感染或存有受感染或破壞性物質。信諾不會就閣下連接、使用或瀏覽本網站、或由本網站下載任何資料、數據、文字、影像、視像或音效而對閣下的電腦設備或其他財產造成的損害或受病毒的影響而負上任何責任。<br/><br/>5.3 本網站可能會被接駁至不屬於信諾所運作的其他網站。信諾不會就此等網站的內容負上責任。接駁至此等網站並不代表信諾已批核或贊同此等網站或其內容。<br/><br/>5.4 閣下進入本網站，即表示閣下同意：在法律許可的最大範圍內，在任何情況下或根據國際法、民事法、普通法或法定規定下的任何法律責任理論（包括但不限於嚴格法律責任、疏忽或其他侵權法理論或合約法、專利法或版權法）信諾均不就以下損害賠償負責：因使用本網站或在本網站上取得的任何資訊或服務發生的任何類別損害賠償，包括直接的、間接的、相應的、附帶的或懲罰性的損害賠償（即使信諾已獲悉可能有該等損害賠償）。<br/><br/>
+                                         <!-- Comment by Shengt for JOBR-235 -->
+                                         <!-- <b>6.  個人資料</b><br/><br/>6.1 閣下同意信諾可按照下列文件中的規定，使用及/或透露閣下的個人資料：<br/><br/>  (a) 張貼在MyCigna.com.hk的<a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!Privacy_statement_chi}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">信諾的隱私聲明</a>（可作不定時之修正）;和<br/><br/>  (b) 信諾不時發出的<a href="{!PersonalInformationCollectionStatement_chi}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">個人資料收集聲明</a>。<br/><br/> -->
+                                         
+                                         <b>6.  個人資料</b><br/><br/>6.1 閣下同意信諾可按照下列文件中的規定，使用及/或透露閣下的個人資料：<br/><br/>  (a) 張貼在MyCigna.com.hk的<a href="{!Privacy_statement_chi}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">信諾的隱私聲明</a>（可作不定時之修正）;和<br/><br/>  (b) 信諾不時發出的<a href="{!PersonalInformationCollectionStatement_chi}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">個人資料收集聲明</a>。<br/><br/>
+                                         <b>7.  本網站中的資料</b><br/><br/>7.1 儘管信諾向閣下提供任何資料、建議或文件，然而閣下完全明白閣下通過使用任何服務所進行的任何交易純粹按照閣下個人之判斷及酌情決定權所進行。<br/><br/>7.2 信諾傳達给閣下之任何資料或建議均源於信諾認為可靠的資料來源，並只供閣下使用及考慮，而不構成向閣下邀約出售任何投資。<br/><br/>7.3 閣下同意信諾毋須就信諾提供任何不準確或不全面的資料，或在收到該等資料後閣下進行任何交易的表現或結果而負上責任。<br/><br/>7.4 信諾提供給與閣下有關的基金價格或其他類似的資料只供閣下參考，除非信諾確認交易，信諾不會受此約束。<br/><br/>
+                                         <b>8.  商標和版權 </b><br/><br/>8.1 本網站中所提述的各個商標或服務商標（不論是否已註冊），均屬於其各有關擁有人的財產。本網站中所顯示的圖像均屬其各有關擁有人的財產。<br/><br/>8.2 本網站所載任何內容均不應詮釋為批予閣下，無論是暗示、不容反悔或其他形式之任何特許或權利，在未得有關擁有人的書面批准的情况下，以使用本網站上顯示的任何商標或圖像。<br/><br/>8.3 在未得到信諾准許的情況下，閣下不得將此網站所載的資料及內容(包括文字、影像、音效及視像)以任何方式複印、複製、出版、上載、刊登、傳送或發放。<br/><br/>
+                                         <b>9.  修訂 </b><br/><br/>9.1 信諾可在任何時間刪除、替換、添加或更改此條款及細則。在利用及使用任何服務之前，信諾建議閣下先閱讀此條款及細則。當在此網站上使用任何服務，閣下將會被視作已接受並同意接受此條款及細則及其修訂（如有的話）。<br/><br/>9.2 信諾可在任何時候提出任何新的服務或刪除任何現有的服務，毋須事先通知。<br/><br/>
+                                         <b>10.  管轄法律和語言</b><br/><br/>10.1 此條款及細則均受香港特別行政區之法律所管治及據其解釋。<br/><br/>10.2 此條款及細則以英文版為準。<br/><br/>
+                                         <b>私隱聲明</b><br/><br/>請詳細閱讀<br/><br/>
+                                         <b>MyCigna.com.hk 收集哪一類資料?</b><br/><br/>本網站的設計是供本公司收集兩類資料：網站自行追測及紀錄和客戶自行提供的資料。第一類資料讓本公司瞭解閣下最感興趣的項目，第二類資料則讓本公司為閣下提供服務。<br/><br/>網站自行追測及紀錄的資料是根據閣下在 MyCigna.com.hk 瀏覽的「路徑」所收集的。根據閣下及其他人士的瀏覽路線，讓本公司了解多一些關於網站瀏覽人士的資料：本公司將以結合的數據進行統計、監察網站的趨勢及使用量。同時亦會使用這些資料以確保本公司的技術水平、產品及服務能配合閣下的需要。<br/><br/>客戶自行提供的資料指閣下提供予 MyCigna.com.hk 的所有資料，以證明閣下或閣下的賬戶，例如閣下的名字、身份証號碼、出生日期、地址、閣下家屬的姓名及其他的個人資料。本公司將利用這些資料為閣下提供服務。本公司的策略是透過加密保安系統傳送及收集個人資料。<br/><br/>在使用本公司的保安服務時，必須啟動「曲奇檔案」( Cookies )。曲奇檔案是微型的軟件，當閣下進入本公司保安地帶時，它便會啟動，而當閣下離開時，它便會停止運作。<br/><br/>
+                                         <b>貴公司會如何處理向本人收集的資料?</b><br/><br/>本公司不會將閣下的資料以售賣、租借或授權方式發放給其他人。本公司可能進行行政、技術、主機租賃、市場推廣或其他工作時使用及/或傳送資料予信諾的聯營或分公司或第三者(在香港境內或境外)以助管理網站及為閣下提供服務。第三者亦需同時遵守 MyCigna.com.hk 的私隱聲明。<br/><br/>除上述外，本公司不會向其他人透露閣下的個人資料，唯在政府機構或法律程序或法律容許的情況下則例外。<br/><br/>本公司將保留有關的個人資料一段時間以作特定用途。<br/><br/>
+                                         <b>若想更改或刪除本人的資料，應怎樣做?</b><br/><br/>閣下可以郵寄方式聯絡本公司的個人資料保護主任（地址：{!$Label.Cigna_Address_zh})。請勿以電郵方式傳送個人資料，唯透過保安渠道則例外。本公司的政策是禁止所有透過非安全的渠道傳送個人資料。<br/><br/>
+                                         <b>若本人不欲貴公司收集、使用及派發本人的資料，應怎樣做？</b><br/><br/>若閣下不欲 MyCigna.com.hk 收集、使用及派發閣下的資料，閣下仍可選擇傳統的通訊途徑。閣下可致電或以郵寄方式傳送您的問題、意見或特別資料予本公司。<br/><br/>
+                                         <b>關於電子郵件。</b><br/><br/>本公司將不定期傳送一些資料性、教育性或推廣性的資料至閣下的電郵地址。<br/><br/>注意，電郵所載的訊息在傳送過程中可能被其他網站用戶看到。閣下需要傳送個人資料，請聯絡閣下所在地的客戶服務代表，或以電郵方式通知本公司，以便安排客戶服務代表與閣下聯絡。<br/><br/>
+                                         <b>MyCigna.com.hk 的保安程度如何？</b><br/><br/>由於本公司不能擁有或控制所有連結到 MyCigna.com.hk 的網站，我們不能保證那些網站是否安全，亦不能為它們私隱操守負上責任。若閣下所參與的公司並非 MyCigna.com.hk 的聯營公司，本公司謹此忠告閣下在離開 MyCigna.com.hk 後，必先細閱該網站的的私隱聲明。<br/><br/>
+                                         <b>關於貴公司網站的連結，是否安全？</b><br/><br/>由於本公司不能擁有或控制所有連結到 MyCigna.com.hk 的網站，我們不能保證那些網站是否安全，亦不能為它們私隱操守負上責任。若閣下所參與的公司並非 MyCigna.com.hk 的聯營公司，本公司謹此忠告閣下在離開 MyCigna.com.hk 後，必先細閱該網站的的私隱聲明。<br/><br/>
+                                         <b>本人並非香港人／客戶，如何配合貴公司的私隱政策？</b><br/><br/>若閣下於香港以外地方／國家繼續使用 MyCigna.com.hk ，表示閣下已根據私隱聲明條款同意閣下的個人資料在其他地方和國家被處理。<br/><br/>
+                                         <b>本人的保險保障已經轉往另一間公司，貴公司將如何處理本人的個人資料？</b><br/><br/>我們將繼續以保密方式處理及尊重閣下的個人資料。<br/><br/>
+                                         <b>為什麼私隱聲明對本人如此重要？</b><br/><br/>閣下瀏覽 MyCigna.com.hk時，任何有關私隱的爭拗均受私隱聲明、<a href="{!PersonalInformationCollectionStatement_chi}" target="_blank" style="text-decoration: underline;color:#337ab7 !important;">信諾香港的個人資料收集聲明</a>及本公司法律卸責聲明／使用條件限制，包括有限制的破壞及香港法律使用及專有司法權。<br/><br/>此私隱聲明只適用於當閣下瀏覽 MyCigna.com.hk 時收集的個人資料。當私隱聲明被更新或更改時，本公司將於 MyCigna.com.hk 當眼之處展示有關通知。閣下亦須定期查閱私隱聲明，當閣下選擇繼續使用 MyCigna.com.hk ，即代表同意此私隱聲明的條款。<br/><br/>如閣下有任何關於私隱聲明的問題或意見，請以郵寄方式聯絡我們：<br/><br/>{!$Label.Cigna_Address_zh}<br/><br/>多謝閣下閱讀此私隱聲明。<br/><br/><br/><br/>更新日期：2008年10月31日
+                                         </div>
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <apex:outputPanel rendered="{!$Label.Header_Language_Code_Current == 'en_US'}">
+                            <div class="col-xs-12 col-md-12">
+                                <br />
+                                <input id="acceptTelaRegister" type="checkbox" class="validate-checkbox" />
+                                <label for="acceptTelaRegister" class="control-label">{!$Label.I_Agree_with}</label>
+                                <!-- Linus 5 Jan 2022 -->
+                                <!--<label class="control-label" style="font-weight: normal;">{!$Label.TelaDoc_S}</label>  -->
+                                <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!SMT_Teladoc_Privacy_Notice}" target="_blank"><label class="control-label" style="cursor:pointer;text-decoration: underline;font-weight: normal;">{!$Label.Data_Privacy_Notice_telaDoc}</label></a>
+                                <label class="control-label" style="font-weight: normal;">{!$Label.Comma_label}</label>
+                                <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!Cathay_Terms_Conditions}" target="_blank"><label class="control-label" style="cursor:pointer;text-decoration: underline;font-weight: normal;">{!$Label.Terms_Conditions_telaDoc}</label></a>
+                                <!--&nbsp;-->
+                                <apex:outputText value="{!transFieldPI['Share_Info_to_TelaDoc_Consent'][$Label.Header_Language_Code_Current]}" ></apex:outputText>
+                            </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!$Label.Header_Language_Code_Current == 'zh_TW'}">
+                            <div class="col-xs-12 col-md-12">
+                                <br />
+                                <input id="acceptTelaRegister" type="checkbox" class="validate-checkbox" />
+                                <label for="acceptTelaRegister" class="control-label">{!$Label.I_Agree_with}</label>
+                                <!-- Linus 5 Jan 2022 -->
+                                <!--<label class="control-label" style="font-weight: normal;">{!$Label.TelaDoc_S}</label>  -->
+                                <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!SMT_Teladoc_Privacy_Notice_TC}" target="_blank"><label class="control-label" style="cursor:pointer;text-decoration: underline;font-weight: normal;">{!$Label.Data_Privacy_Notice_telaDoc}</label></a>
+                                <label class="control-label" style="font-weight: normal;">{!$Label.Comma_label}</label>
+                                <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!Cathay_Terms_Conditions_TC}" target="_blank"><label class="control-label" style="cursor:pointer;text-decoration: underline;font-weight: normal;">{!$Label.Terms_Conditions_telaDoc}</label></a>
+                                <!--&nbsp;-->
+                                <apex:outputText value="{!transFieldPI['Share_Info_to_TelaDoc_Consent'][$Label.Header_Language_Code_Current]}" ></apex:outputText>
+                            </div>
+                        </apex:outputPanel>
+                        <div class="col-xs-12 col-md-12">
+                            <br/>
+                            <apex:commandButton styleClass="bs btn btn-primary btn-block" value="{!$Label.site.register}" id="register" onclick="registerUserJS();" disabled="false" /> 
+                            <!-- <div id="register" class="bs btn btn-primary btn-block" onclick="registerUserJS();">
+                            {!$Label.site.register}
+                        </div> -->
+                        </div>
+                        <script>
+                            // Rancho_PS28_20230802 - update marketing wording
+                            $(".cigna-pics").click(function(){
+                                let url = '';
+                                if ("{!$Label.Header_Language_Code}" == 'zh_TW') {
+                                    url = "{!PersonalInformationCollectionStatement_chi}";
+                                }else{
+                                    url = "{!PersonalInformationCollectionStatement_eng}";
+                                }
+                                window.open(url, "_blank");
+                            });
+                        </script>
+                    </div>
+                </apex:outputPanel> 
+                
+                <apex:outputPanel id="RegStep3" rendered="{!piRegisterStep3}"> 
+                    <div class="col-xs-12 col-md-12">
+                        <h4>{!transFieldPI['Register_Teladoc'][$Label.Header_Language_Code_Current]}</h4>
+                        <br/>
+                        <apex:outputPanel id="agreeDiv">
+                            <p>
+                                <h5>
+                                    <apex:outputPanel >
+                                        <apex:outputText value="{!transFieldPI['Hello'][$Label.Header_Language_Code_Current]}" ></apex:outputText>&nbsp;
+                                        <apex:outputText value="{!fullName}"></apex:outputText>
+                                        <apex:outputText value="{!transFieldPI['Comma'][$Label.Header_Language_Code_Current]}" ></apex:outputText>   
+                                        &nbsp; 
+                                        <apex:outputText value="{!transFieldPI['Consent_Content'][$Label.Header_Language_Code_Current]}" ></apex:outputText>
+                                    </apex:outputPanel>
+                                    <br/>
+                                    <br/>
+                                    <apex:outputPanel rendered="{!$Label.Header_Language_Code_Current == 'en_US'}">
+                                        <div class="form-group col-xs-12 col-md-12">
+                                            <input id="acceptTela" type="checkbox" class="validate-checkbox" />
+                                            <label for="acceptTela" class="control-label">{!$Label.I_Agree_with}</label>
+                                            <!-- Linus 5 Jan 2022 -->
+                                            <!--<label class="control-label" style="font-weight: normal;">{!$Label.TelaDoc_S}</label>-->
+                                            <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!SMT_Teladoc_Privacy_Notice}" target="_blank"><label class="control-label" style="cursor:pointer;text-decoration: underline;font-weight: normal;">{!$Label.Data_Privacy_Notice_telaDoc}</label></a>
+                                            <label class="control-label" style="font-weight: normal;">{!$Label.Comma_label}</label>
+                                            <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!Cathay_Terms_Conditions}" target="_blank"><label class="control-label" style="cursor:pointer;text-decoration: underline;font-weight: normal;">{!$Label.Terms_Conditions_telaDoc}</label></a>
+                                             &nbsp;
+                                            <apex:outputText value="{!transFieldPI['Share_Info_to_TelaDoc_Consent'][$Label.Header_Language_Code_Current]}" ></apex:outputText>
+                                            <apex:inputHidden id="acceptDNTC" value="{!acceptDNTC}" />
+                                        </div>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!$Label.Header_Language_Code_Current == 'zh_TW'}">
+                                        <div class="form-group col-xs-12 col-md-12">
+                                            <input id="acceptTela" type="checkbox" class="validate-checkbox" />
+                                            <label for="acceptTela" class="control-label">{!$Label.I_Agree_with}</label>
+                                            <!-- Linus 5 Jan 2022 -->
+                                            <!--<label class="control-label" style="font-weight: normal;">{!$Label.TelaDoc_S}</label>-->
+                                            <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!SMT_Teladoc_Privacy_Notice_TC}" target="_blank"><label class="control-label" style="cursor:pointer;text-decoration: underline;font-weight: normal;">{!$Label.Data_Privacy_Notice_telaDoc}</label></a>
+                                            <label class="control-label" style="font-weight: normal;">{!$Label.Comma_label}</label>
+                                            <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!Cathay_Terms_Conditions_TC}" target="_blank"><label class="control-label" style="cursor:pointer;text-decoration: underline;font-weight: normal;">{!$Label.Terms_Conditions_telaDoc}</label></a>
+                                            <!--&nbsp;-->
+                                            <apex:outputText value="{!transFieldPI['Share_Info_to_TelaDoc_Consent'][$Label.Header_Language_Code_Current]}" ></apex:outputText>
+                                            <apex:inputHidden id="acceptDNTCZh" value="{!acceptDNTC}" />
+                                        </div>
+                                    </apex:outputPanel>
+                                    
+                                </h5>
+                            </p>
+                        </apex:outputPanel>
+                    </div>
+                    <div class="col-xs-12 col-md-12">
+                        <div class="bs btn btn-primary btn-block" onclick="checkAndGoToStep4();">
+                            {!$Label.Confirm}
+                        </div>
+                    </div>
+                </apex:outputPanel> 
+                <apex:outputPanel id="RegStep4" rendered="{!piRegisterStep4}"> 
+                    <div class="col-xs-12 col-md-12">
+                        <apex:outputPanel >
+                            <apex:outputText value="{!transFieldPI['register_success'][$Label.Header_Language_Code_Current]}" ></apex:outputText>
+                        </apex:outputPanel>
+                        <br/><br/>
+                        <apex:outputPanel >
+                            <apex:outputText value="{!transFieldPI['MyCigna_App_URL'][$Label.Header_Language_Code_Current]}" ></apex:outputText>
+                        </apex:outputPanel>
+                    </div>
+                    <div id="appCodeDiv" class="bs col-sm-12 col-xs-12">
+                        <div class="bs col-sm-4 col-xs-12">
+                        </div>
+                        <div class="bs col-sm-4 col-xs-12" style="padding-top:35px;text-align:center;">
+                            <div class="bs col-sm-6 col-xs-12"  style="min-width: 200px;padding: 0px;">
+                                <div >
+                                    <div>
+                                        <apex:image id="Google_QRcode" value="{!$Resource.Google_QRcode}" width="200px" height="200px" />
+                                    </div>
+                                    <div>
+                                        <apex:image id="Google_Download" styleClass="onclick-pointer" value="{!$Resource.Google_Download}" width="200px" height="80px" onclick="window.open('{!$Label.GoogleStore_MyCignaHK_App_Link}')"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bs col-sm-6 col-xs-12"  style="min-width: 200px;padding: 0px;">
+                                <div>
+                                    <div>
+                                        <apex:image id="IOS_QRcode" value="{!$Resource.IOS_QRcode}" width="200px" height="200px" />
+                                    </div>
+                                    <div>
+                                        <apex:image id="IOS_Download" styleClass="onclick-pointer" value="{!$Resource.IOS_Download}" width="200px" height="80px" onclick="window.open('{!$Label.IOSStore_MyCignaHK_App_Link}')"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>     
+                        <div class="bs col-sm-4 col-xs-12"></div>
+                    </div>
+                </apex:outputPanel> 
+            </apex:outputPanel>
+        </apex:define>
+    </apex:composition>
+</apex:page>

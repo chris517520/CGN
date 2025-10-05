@@ -1,0 +1,250 @@
+<apex:page docType="html-5.0" id="CSEsalesApplicationSearchVFP" Controller="EsalesApplicationSearchCtrl" showHeader="false" title="E-Sales Application">
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <apex:includeScript value="/support/console/41.0/integration.js"/>
+    <style>
+    .cignaCS-form-section-header {
+            background: #eee;
+            padding-top: 20px;
+            padding-bottom: 20px;
+            margin-bottom: 15px;
+        }
+    .header {
+                background-color: #F7F9F9 !important;
+                color: black;
+                padding-left: 30px;
+                border-radius: 5px;
+            }     
+    </style>
+
+    <script>
+            var noSearchValueErrMsg = '{!$Label.Error_Input_Criteria}';
+            var DateFormatErrMsg = 'FormatErr! Please input Date Format like "YYYY/MM/DD."';
+
+            function searchValidation(){
+                var searchHolderNameStr = $("input[id*='selectedPolicyHolderName']").val();
+                var searchInsuredNameStr = $("input[id*='selectedPersonInsuredName']").val();
+                var searchInsuredHKIDStr = $("input[id*='selectedPersonInsuredHKID']").val();
+                var searchHolderHKIDStr = $("input[id*='selectedHolderHKID']").val();
+                
+                
+                var day = $("input[id*='selectedSubmissionDate-Day']").val();
+                var month = $("input[id*='selectedSubmissionDate-Month']").val();
+                var year = $("input[id*='selectedSubmissionDate-Year']").val();
+                var searchSubmissionDate = '';
+                if(day!=null && month!=null && year!=null && day!='' && month!='' && year!=''){
+                    searchSubmissionDate = year + '/' + month + '/' + day;
+                }                
+                //var reg = /\d{4}\/([[0]\d{1}]|[1][12])\/(([0][1-9])|([12]\d{1})|([3][01]))/;
+                //var r = searchSubmissionDate.match(reg);
+
+                if(searchHolderNameStr.trim()== '' && searchInsuredNameStr.trim() == '' && searchHolderHKIDStr.trim() == '' && searchInsuredHKIDStr.trim() == '' && searchSubmissionDate.trim() == ''){                    
+                    $('#inputCharErrorMessage').text(noSearchValueErrMsg);
+                    $('#inputCharErrorMessage').show();
+                    return false;
+                }
+                else if(searchHolderNameStr && searchHolderNameStr.trim().length<=2){
+                	$('#inputCharErrorMessage').show();
+                }
+                else if(searchInsuredNameStr && searchInsuredNameStr.trim().length<=2){
+                	$('#inputCharErrorMessage').show();
+                }
+                else if(searchHolderHKIDStr && searchHolderHKIDStr.trim().length<=2){
+                	$('#inputCharErrorMessage').show();
+                }
+                else if(searchInsuredHKIDStr && searchInsuredHKIDStr.trim().length<=2){
+                	$('#inputCharErrorMessage').show();
+                }
+                else {
+                    $('#inputCharErrorMessage').hide();
+                    $('#inputDateErrorMessage').hide();
+                    searchEsales.SearchResult();
+                }
+
+            }
+            
+            function viewDetails(id, type, tranprosid) {
+
+                if (sforce.console.isInConsole()) {
+                    var rnd = Math.floor(Math.random() * 1000000000000);               
+                    sforce.console.openPrimaryTab(null, '/apex/CSESalesApplicationDetailsVFP' + '?pageRnd=' + rnd + '&id=' + id + '&type=' + type, true, tranprosid, null, id, rnd,'Application Details');
+                    sforce.console.setCustomConsoleComponentVisible(false);
+                } else {
+                    var url =  '/apex/CSESalesApplicationDetailsVFP' + '?pageRnd=' + rnd + '&id=' + id + '&type=' + type;
+                    sforce.one.navigateToURL(url, false);
+                }
+            }
+                     
+            function deleteStr(resour,event){
+                
+                if(event.keyCode==8){
+                    if(event.preventDefault){
+                            event.preventDefault();
+                    }
+
+                    if(resour.value.length==1){
+                        resour.value='';
+                    }else{
+                        
+                        var container=resour.value.toString().split('');
+                        container.length--;
+                        resour.value=container.join('');
+                        }
+                    }
+
+                }
+           function getNextInput(resour,index){       
+
+              if(index==3){if(resour.value.length==resour.maxLength){resour.blur();}}
+              else if(resour.value.length==resour.maxLength)
+              {
+                resour.parentNode.getElementsByClassName('param-date')[index].focus();
+              }
+           }
+           function isNumberKey(charCode, min, max) {
+                if ((charCode >= 48 && charCode <= 57) || 
+                    $.inArray(charCode, [8, 127]) !== -1) {
+                    if (!isNaN(min) && !isNaN(max) && typeof min != undefined && typeof max != undefined) {
+                        if ((charCode - 48) >= min && (charCode - 48) <= max) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    } else {
+                        return true;
+                    }
+                } else {
+                    return false;
+                }
+            }
+            
+            function onKidAgeChange(evt) {
+                return isNumberKey(evt.charCode);
+            }
+            
+        </script>
+
+
+    <apex:form id="esalesForm">
+        <apex:actionFunction name="SearchResult" action="{!SearchResult}" namespace="searchEsales" reRender="resultPanel" status="loader-icon" />
+        <apex:actionFunction name="Resultprev" action="{!handlePrevious}" namespace="searchEsales" reRender="resultPanel" status="loader-icon" />
+        <apex:actionFunction name="Resultnext" action="{!handleNext}" namespace="searchEsales" reRender="resultPanel" status="loader-icon" />
+
+        <apex:actionStatus id="loader-icon">
+             <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                     &nbsp;
+                 </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Please Wait...</span>
+                    </div>
+                 </div>
+            </apex:facet>
+        </apex:actionStatus>
+
+        <apex:pageBlock id="SearchFilterpageBlock" title="E-Sales Application Search" tabStyle="ESales_Transaction__c" >
+            <apex:pageBlockSection columns="1">
+                <apex:inputText id="selectedPolicyHolderName" size="60" value="{!searchHolderName}" label="Policy Holder Name"/>
+                <apex:inputText id="selectedPersonInsuredName" size="60" value="{!searchInsuredName}" label="Person Insured Name" />
+                <apex:inputText id="selectedHolderHKID" size="60" value="{!searchHolderHKID}" label="Policy Holder HKID/Passport No." />
+                <apex:inputText id="selectedPersonInsuredHKID" size="60" value="{!searchInsuredHKID}" label="Person Insured HKID/Passport No."/>
+                
+                <apex:outputText label="Submission Date" >
+                    <apex:input id="selectedSubmissionDate-Day" type="tel" value="{!searchSubmissionDateDay}" 
+                                               html-maxlength="2"                                                
+                                               size="5"
+                                               style="display: inline; width: auto;height:15px;"
+                                               styleClass="param-date"
+                                               html-placeholder="{!$Label.DD}" 
+                                               onkeydown="deleteStr(this,event);"
+                                               onkeyup="getNextInput(this,1);"
+                    />--
+                    <apex:input id="selectedSubmissionDate-Month" type="tel" value="{!searchSubmissionDateMonth}" 
+                                                           html-maxlength="2"                                                           
+                                                           size="5"
+                                                           style="display: inline; width: auto;height:15px;"
+                                                           styleClass="param-date"
+                                                           html-placeholder="{!$Label.MM}"
+                                                           onkeydown="deleteStr(this,event);"
+                                                           onkeyup="getNextInput(this,2);" 
+                    />--
+                    <apex:input id="selectedSubmissionDate-Year" type="tel" value="{!searchSubmissionDateYear}" 
+                                                           html-maxlength="4"                                                            
+                                                           size="7"
+                                                           style="display: inline; width: auto;height:15px;"
+                                                           styleClass="param-date"
+                                                           html-placeholder="{!$Label.YYYY}"
+                                                           onkeydown="deleteStr(this,event);"
+                                                           onkeyup="getNextInput(this,3);"                                                        
+                    />
+                    <script>
+                        $('.param-date').keypress(onKidAgeChange);
+                    </script>
+                </apex:outputText>
+                <apex:pageBlockSectionItem dataStyle="text-align: center;">
+                   <apex:commandButton status="loader-icon" value="Search" onclick="searchValidation();" reRender="resultPanel" />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+             <apex:outputPanel id="inputCharErrorMessagePanel">
+                        <div id="inputCharErrorMessage" style="color:red;padding-bottom:20px;display:none; text-align: center;">
+                                {!$Label.Please_input_at_least_2_characters_to_search}
+                        </div>
+             </apex:outputPanel>
+             <apex:outputPanel id="inputDateErrorMessagePanel">
+                        <div id="inputDateErrorMessage" style="color:red;padding-bottom:20px;display:none; text-align: center;">
+                                FormatErr!
+                        </div>
+             </apex:outputPanel>
+            
+            <apex:pageBlock id="resultBlock" title="Result" tabStyle="ESales_Transaction__c">
+            <apex:pageBlockSection id="resultPanel" columns="1">
+                <apex:pageBlockTable id="resultTable" value="{! resultList}" var="result" first="{!startIndex}" rows="20">
+                        <apex:column styleClass="cell" headerValue="Prospect ID/E-Transaction ID" >
+                            <a href="#" onclick="viewDetails('{!result.Id}','{!result.Type}','{!result.TranProsID}'); return false;">{!result.TranProsID}</a>
+                        </apex:column>
+                        <apex:column styleClass="cell" headerValue="{!$Label.Policy_Number}" value="{! result.policyNumbers}" />
+                        <apex:column styleClass="cell" headerValue="Policy Holder" value="{! result.HolderName}" />
+                        <apex:column styleClass="cell" headerValue="Policy Insured" value="{! result.InsuredName}" />
+                        <apex:column styleClass="cell" headerValue="Policy Holder HKID/Passport No." value="{! result.HolderHKID}" />
+                        <apex:column styleClass="cell" headerValue="Person Insured HKID/Passport No." value="{! result.InsuredHKID}" />
+                        <apex:column styleClass="cell" headerValue="Submission Date">
+                            <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false" >
+                                <apex:Param value="{! result.SubmissionDate}" />
+                            </apex:OutputText>
+                        </apex:column>
+                        <apex:column styleClass="cell" headerValue="Plan Name" value="{! result.PlanName}" />
+                        <apex:facet name="footer">
+                             <apex:outputPanel rendered="{! totalPage != 0}" layout="block" style="text-align: right;">
+                                <span>Page {!currentPage} of {!totalPage } &nbsp;</span>
+                                <span><a id="previousLink"
+                                         href="{!IF(hasPrevious,'javascript:void(0);','#')}" 
+                                         style="{!IF(hasPrevious,'','text-decoration:none; cursor:text;')}" 
+                                         onclick="{!IF(hasPrevious,'searchEsales.Resultprev();','')}">
+                                         <font color="{!IF(hasPrevious,'','grey')}"> &lt;&lt; Previous Page </font>
+                                      </a>
+                                </span>
+                                <span> &nbsp; | &nbsp;</span>                   
+                                <span><a id="nextLink"
+                                         href="{!IF(hasNext,'javascript:void(0);','#')}" 
+                                         style="{!IF(hasNext,'','text-decoration:none; cursor:text')}" 
+                                         onclick="{!IF(hasNext,'searchEsales.Resultnext();','')}">
+                                         <font  color="{!IF(hasNext,'','grey')}"> Next Page &gt;&gt; </font>
+                                      </a>
+                                </span>
+                            </apex:outputPanel>
+                         </apex:facet>
+                    </apex:pageBlockTable>       
+                    <apex:outputPanel rendered="{!totalPage == 0 && resultList != null}">
+                                <div style="padding-top: 30px; text-align: center; color:red;">
+                                    <i aria-hidden="true" class="fa fa-smile-o cigna-fg-black"></i>
+                                    No record found
+                                </div>
+                    </apex:outputPanel>
+            </apex:pageBlockSection>
+            </apex:pageBlock> 
+        </apex:pageBlock>
+
+    </apex:form>
+
+</apex:page>

@@ -1,0 +1,535 @@
+<apex:page showHeader="false" applyHtmlTag="false" renderAs="pdf" controller="GOPApproveLLetterController"><!-- Rancho_HC201_20220222: enable css -->
+
+    <!-- Rancho_HC201_20220222: override footer -->
+    <!-- <apex:stylesheet value="{!URLFOR($Resource.GOPPDFStyle, 'footer.css')}"/> -->
+    <apex:stylesheet value="{!$Resource.PDFDocumentStyle}" />
+    
+    <c:PDFHeaderFooter type="footer" position="center">
+        <div class="footer" style="text-align: center; font-size: 7pt; color: #333; {!if(allHospitalCollet || allCignaCollet, 'margin: 0pt 0 30pt 0;', 'margin: 0pt 0 -30pt 0;')}">
+            <apex:outputPanel rendered="{!(allHospitalCollet || allCignaCollet)}">
+                <br/>
+                <table width="100%" style="position: relative;top: 6px;font-size: small; color: #000000;padding-top: 1pt;">
+                    <tbody>
+                        <tr>
+                            <td style="width: 50%"><span style="font-size:11px;text-decoration: overline">Patient’s Signature (parent or guardian, if patient under age 18)</span></td>
+                            <td style="width: 50%"><span style="font-size:11px;text-decoration: overline;width: 50%">Date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <br/><br/>
+                <table width="100%" style="position: relative;left: -180px;bottom: 1px;font-size: small; color: #000000;padding-bottom: 1pt;">
+                    <tbody>
+                        <tr>
+                            <td style="width: 50%"><span style="font-size:11px;text-decoration: overline">Patient Full name in block letter &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </apex:outputPanel>
+            <div style="border-top: .25pt solid #666; font-family: Arial Unicode MS;">
+                Confidential, unpublished property of Cigna. Do not duplicate or distribute. Use and distribution limited solely to authorized personnel.<br/>
+                Cigna Worldwide General Insurance Company Limited 信諾環球保險有限公司
+            </div>
+        </div>
+    </c:PDFHeaderFooter>
+
+    <div style="width: 100%">
+        <div style="text-align: center;">
+            <apex:outputPanel rendered="{!(allHospitalCollet || allCignaCollet || allPatient)}">
+                <b>{!if(isLife,'','Cigna ')}Health Insurance Scheme Guarantee of Payment (GOP)</b> <br /> <!-- Lijun_JOBR222_20220929:change GOP Letter by isPolicyLife -->
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!allClinic}">
+                <b>{!if(isLife,'','Cigna ')}Health Insurance Scheme Guarantee of Payment (GOP)</b><br /><!-- Lijun_JOBR222_20220929:change GOP Letter by isPolicyLife -->
+            </apex:outputPanel>
+            <apex:outputPanel >
+                <b>Letter relating to application for Cashless Medical Service (CMS)</b>
+            </apex:outputPanel>
+            <div>
+                &nbsp;
+            </div>
+            <div style="font-family: Arial Unicode MS;">
+                <b>有關 免找數醫療服務(CMS)</b> 申請
+            </div>
+        </div>
+    </div>
+    <div style="position:absolute;right:0;top:0;width:10%;float:right">
+        <apex:image url="{!$Resource.Cigna_Logo}" width="50" height="70"/>
+    </div>
+    <hr />
+    <div style="text-align: center;font-size:14.5px;">
+        <b>Contact For revalidation – Email:</b> Please reply to approval email  <!--<u><span style="color:#0000ff;">preauthhk@cigna.com</span></u>--><br/>
+    </div>
+    <div>&nbsp;</div>
+    <div style="text-align: center;font-size:15.5px;">
+        <b><u>Letter to Hospital/ Clinic</u></b>
+    </div>
+    <div>&nbsp;</div>
+    <div style="text-align: center;font-size:15.5px;font-family: Arial Unicode MS;">
+        <b><u>致醫院/診所的信件</u></b>
+    </div>
+    <div>&nbsp;</div>
+    
+    <apex:outputPanel id="information">
+        <!-- Kirk_HC201_20220513: enable css -->
+        <table style="width: 100%">
+            <tbody>
+                <tr>
+                    <td>
+                        <span style="border-bottom: .25pt solid;">
+                            Date of Letter
+                            <span style="font-family: Arial Unicode MS;">信件日期:</span>
+                        </span>{!issueDate}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span style="border-bottom: .25pt solid;">
+                            Reference number of application for CMS 
+                            <span style="font-family: Arial Unicode MS;">申請個案編號:</span>
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div>&nbsp;</div>
+
+        <table style="width: 100%">
+            <tbody>
+                <tr>
+                    <td><u><b>Policy's Particulars</b> <span style="font-family: Arial Unicode MS;">保單資料</span></u></td>
+                </tr>
+                <tr><td>&nbsp;</td></tr>
+                <tr>
+                    <td>
+                        <span style="border-bottom: .25pt solid;">
+                            Name of insurance plan
+                            <span style="font-family: Arial Unicode MS;">保單名稱:</span>
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span style="border-bottom: .25pt solid;">
+                            Policy number
+                            <span style="font-family: Arial Unicode MS;">保單號碼:</span>
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div>&nbsp;</div>
+
+        <table style="width: 100%">
+            <tbody>
+                <tr>
+                    <td><u><b>Person Insured’s Particulars</b>
+                        <span style="font-family: Arial Unicode MS;">受保人資料</span></u>
+                    </td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td style="width:50%; ">Person Insured's Name <span style="font-family: Arial Unicode MS;">受保人姓名:</span>{!memberName}</td>
+                    <td style="width:50%; ">Person Insured's HKID <span style="font-family: Arial Unicode MS;">受保人香港身分證:</span>{!patientHKID}</td>
+                </tr>
+            </tbody>
+        </table>
+        <div>&nbsp;</div>
+        <div>&nbsp;</div>
+        
+        <table style="width: 100%">
+            <tbody>
+                <tr>
+                    <td><u><b>Treatment Details<span style="font-family: Arial Unicode MS;">治療詳情</span></b></u></td>
+                </tr>
+                <tr><td>&nbsp;</td></tr>
+                <tr>
+                    <td>Diagnosis<span style="font-family: Arial Unicode MS;">診斷:</span></td>
+                </tr>
+                <tr>
+                    <td>
+                        <ol>
+                            <apex:repeat value="{!diagnosis}" var="diagCode" id="newDiagRepeat">
+                                <li>{!diagCode}</li>
+                            </apex:repeat>
+                            <li>Diag Code 1</li>
+                            <li>Diag Code 2</li>
+                            <li>Diag Code 3</li>
+                            <li>Diag Code 4</li>
+                        </ol>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Procedure(s)<span style="font-family: Arial Unicode MS;">治療程序:</span></td>
+                </tr>
+                <tr>
+                    <td>
+                        <ol>
+                            <apex:repeat value="{!procedures}" var="procedure" id="newProceduresRepeat">
+                                <li>{!procedure}</li>
+                            </apex:repeat>
+                            <li>Procedure 1</li>
+                            <li>Procedure 2</li>
+                            <li>Procedure 3</li>
+                            <li>Procedure 4</li>
+                        </ol>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:50%; ">Admission date<span style="font-family: Arial Unicode MS;">入院日期:</span>{!admissionDate}</td>
+                    <td style="width:50%; ">Estimated length of stay<span style="font-family: Arial Unicode MS;">預計住院日數:</span>{!esStay}</td>
+                </tr>
+                <tr>
+                    <td>Hospital<span style="font-family: Arial Unicode MS;">醫院</span>/Clinic<span style="font-family: Arial Unicode MS;">診所</span>:{!hospital}</td>
+                </tr>
+                <tr>
+                    <td>Booked class of ward<span style="font-family: Arial Unicode MS;">病房級別:</span>{!ward}</td>
+                </tr>
+            </tbody>
+        </table>
+        <div>&nbsp;</div>
+        
+        <table style="width: 100%">
+            <tbody>
+                <tr>
+                    <td><u><b>Physicians’ Particulars<span style="font-family: Arial Unicode MS;">醫生資料</span></b></u></td>
+                </tr>
+                <tr><td>&nbsp;</td></tr>
+                <tr>
+                    <td style="width:50%; ">Surgeon’s name<span style="font-family: Arial Unicode MS;">醫生姓名:</span> {!doctorName}</td>
+                    <td style="width:50%; ">Email address<span style="font-family: Arial Unicode MS;">電郵地址:</span> {!email}</td>
+                </tr>
+                <tr>
+                    <td style="width:50%; ">Tel. number<span style="font-family: Arial Unicode MS;">電話號碼:</span> {!tel}</td>
+                    <td style="width:50%; ">Fax number<span style="font-family: Arial Unicode MS;">傳真號碼:</span> {!fax}</td>
+                </tr>
+                <tr>
+                    <td style="width:50%; ">Daily doctor’s attendance fee<span style="font-family: Arial Unicode MS;">每日巡房費:</span> {!inpatientFee}</td>
+                    <td style="width:50%; ">Anesthetist fee<span style="font-family: Arial Unicode MS;">麻醉科醫生費:</span> xxxxx</td>
+                </tr>
+            </tbody>
+        </table>
+    </apex:outputPanel>
+    <div>&nbsp;</div>
+    <div>&nbsp;</div>
+    <div>&nbsp;</div>
+    
+    <!-- Results of CMS Application & Other Information-->
+    <apex:outputPanel id="allCignaCollethospital">
+        <!-- Rancho_HC201_20220222: add pagination if coverage details could not fully displayed in the first page -->
+        <div style="page-break-inside: avoid;">
+            <span><u><b>Result of CMS Application <span style="font-family: Arial Unicode MS;">申請結果</span></b></u></span><br />
+            <br />
+            <span>
+                We refer to the Pre-approval Form for Cashless Medical Service completed by the above-mentioned Person Insured and abovementioned Physicians which was received by Cigna Worldwide General Insurance Company Limited (“Cigna” or “we / us”) on [insert date of receipt] (“Pre-approval Form”).
+            </span>
+            <br />
+            <br />
+            
+            <span>
+                In consideration of the Pre-approval Form and subject to the “Important Information” section in this letter, we will pay to the above-mentioned Hospital/Clinic the reasonable cost(s) in connection with the following surgery(ies)/treatment(s)/investigation(s) to be conducted on the Person Insured up to the amount of the approved cost stated in the table below.
+            </span>
+            <br />
+            <br />
+            
+            <p style="font-family: Arial Unicode MS;">
+                根據信諾環球保險有限公司（「信諾環球」或「我們」）於 [插入收據日期] 收到的由上述被保險人和上述醫生填寫的CMS申請表（「申請表」）。
+            </p>
+            <p style="font-family: Arial Unicode MS;">
+                考慮到申請表的內容並受限於本信中「重要資訊」部分，我們將如下表所示的批核金額，向上述醫院 / 診所支付與受保人進行以下手術 / 治療/檢驗有關的合理費用。
+            </p>
+            <br />
+            <br />
+            
+            <table border="1px" cellspacing="0">
+                <tr>
+                    <th>Surgery/ treatment/ investigation required<span style="font-family: Arial Unicode MS;">所需手術/治療/檢驗</span></th>
+                    <th>Requested cost<br /><span style="font-family: Arial Unicode MS;">要求金額</span><br /> (HKD)</th>
+                    <th>Approved cost<br /><span style="font-family: Arial Unicode MS;">已批核金額</span><br /> (HKD)</th>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>Total<span style="font-family: Arial Unicode MS;">總數:</span>{!cr.GOP_Surgical_Fees__c}</td>
+                    <td>Total<span style="font-family: Arial Unicode MS;">總數:</span>{!cr.GOP_Total_Approved_Fees__c}</td>
+                </tr>
+            </table>
+            <br /><br /><br />
+            Other information<span style="font-family: Arial Unicode MS;">其他資訊: {!otherInfor}</span>
+            <br /><br /><br />
+            <p>
+                The Hospital/Clinic will contact Cigna for revalidation if the accumulative expenses exceed HK$xxxxx, or if the confinement is longer than the estimated length of stay specified under the "Treatment Details" section.
+            </p>
+
+            <p style="font-family: Arial Unicode MS;">
+                如累計住院費用超過 HK$xxx,xxx 或長於預計住院日數，醫院/診所將聯絡信諾環球更新 CMS 審批內容。
+            </p>
+
+            <p>
+                In order to settle the final cost charged for the confinement, the abovementioned Hospital/Clinic will collect the following sums from the Person Insured directly 
+                <span style="font-family: Arial Unicode MS;">上述醫院/診所會直接向受保人收取以下款項:</span>
+            </p>
+			
+            <table>
+                <tr>
+                    <td>
+                        <ol style="list-style-type: lower-roman;">
+                            <li style="margin-bottom: 5px;">
+                                The annual deductible under the Policy as of the abovementioned Date of Letter
+                                <span style="font-family: Arial Unicode MS;">保單內年度自付費餘額(截至上述信件日期) i.e. 即HK$ xxx,xxx; and及</span>
+                            </li>
+                            <li style="margin-bottom: 5px;">
+                                Any amount charged for the above surgery(ies)/treatment(s)/investigations(s) exceeding theabove approved cost as of the abovementioned Date of Letter
+                                <span style="font-family: Arial Unicode MS;">上述手術/治療/檢驗超出已批核金額的餘額(截至上述信件日期) i.e. 即 HK$ xxx,xxx</span>
+                            </li>
+                            <apex:outputText rendered="true">
+                                <li style="margin-bottom: 5px;">
+                                    20% of the final cost charged for the confinement after deducting i. and ii.
+                                    <span style="font-family: Arial Unicode MS;">已扣減(i)及(ii)的最終費用的20%.</span>
+                                </li>
+                            </apex:outputText>    
+                        </ol>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </apex:outputPanel>
+    
+    <div>&nbsp;</div><div>&nbsp;</div>
+    
+    <!-- Important Information & Signature -->
+    <apex:outputPanel >
+        <div style="page-break-inside: avoid;">
+            <div><b><u>Important Information</u></b></div>
+            <ol>
+                <li style="margin-bottom: 10px;">Neither the Pre-approval Form nor this letter shall be construed as admission of liability on the part of Cigna. The actualeligible or payable amount shall be subject to the final claim decision. All benefits payable are subject to the terms and conditions,including but not limited to the exclusions, in the Policy.</li>
+                <li style="margin-bottom: 10px;">Cigna has the sole and absolute discretion in relation to all matters arising from or in connection with this CMS application,and that in the event of disputes, the decision of Cigna shall be final.</li>
+                <li style="margin-bottom: 10px;">All decisions made for this CMS application are based on the information provided in the Pre-approval Form and otherrelated information available at the time of this case's assessment.</li>
+                <li style="margin-bottom: 10px;">This letter is valid for 30 days from the abovementioned Date of Letter unless otherwise specified.</li>
+                <li style="margin-bottom: 10px;">Before any surgery/treatment/investigation is conducted on the Person Insured and/or any costs are incurred in connectionthereof, the Person Insured must sign a copy of this letter to Hospital/Clinic and return it to Cigna.</li>
+                <li style="margin-bottom: 10px;">For surgery(ies)/treatment(s)/investigation(s) and expenses that are not listed in this letter, please contact your Physicians orHospital/Clinic for further information.</li>
+                <li style="margin-bottom: 10px;">If Cigna has settled or is requested to settle any charges which exceed the applicable benefit limit(s) in the Policy or which arenot eligible for reimbursement under the Policy, the Person Insured shall promptly reimburse Cigna of the shortfall amounts in fullupon receipt of the relevant notice. For details, please refer to the Policy and the Pre-approval Form.</li>
+                <li style="margin-bottom: 10px;">Cigna has the sole and absolute right to amend, vary, suspend and/or cancel any Cashless Medical Service from time to time and at any time without prior notice.</li>
+                <li style="margin-bottom: 10px;">In case of discrepancies between the English version and the Chinese version of this letter, the English version shall applyand prevail.</li>
+            </ol>
+            <br />
+            <div style="font-family: Arial Unicode MS;"><u>重要資訊</u></div>
+            <ol style="font-family: Arial Unicode MS;">
+                <li style="margin-bottom: 10px;">申請表和本函均不應被理解為信諾環球承擔責任。實際符合資格或應付金額均以最終理賠決定為準。所有應付權益均須取決於保單內的條款及細則，包括但不限於不保事項。</li>
+                <li style="margin-bottom: 10px;">信諾環球對於由本 CMS 申請引起或與之相關的所有事宜擁有唯一且絕對決定權，如有爭議，信諾環球的決定將為最終決定。</li>
+                <li style="margin-bottom: 10px;">本 CMS的所有決定均基於申請表中提供的資訊以及評估本個案時的相關可用資訊。</li>
+                <li style="margin-bottom: 10px;">除另有規定外，本函自上述信件日期起 30 天內有效。</li>
+                <li style="margin-bottom: 10px;">在對受保人進行任何手術/治療/檢查和/或產生與之相關的任何費用之前，受保人必須簽署發給醫院/診所的信件副本並將其交予信諾環球。</li>
+                <li style="margin-bottom: 10px;">對於本函中未列出的手術/治療/檢驗費用，請聯繫您的主診醫生或醫院/診所以獲取更多資訊。</li>
+                <li style="margin-bottom: 10px;">如果信諾環球已結算或被要求結算超出保單中適用的權益限額或不符合保單索償資格的任何費用，受保人於收到相關通知後，應立即向信諾環球支付全數差額。在不影響前述規定的情況下，信諾環球有權將其根據保單應向受保人支付的任何金額與差額進行抵銷。詳情請參閱保單及申請表。</li>
+                <li style="margin-bottom: 10px;">信諾環球擁有隨時修改、變更、暫停和/或取消任何CMS的唯一且絕對權利，恕不另行通知。</li>
+                <li style="margin-bottom: 10px;">此信函備有中英文版本，如內容有異，以英文版本為準。</li>
+            </ol>
+            <br /><br />
+            Signature <span style="font-family: Arial Unicode MS;">簽署</span>
+            <br /><br /><br />
+            <span>
+                I, the abovementioned Person Insured or the Guardian (if the Person Insured is below 18 years old), confirm that I have read, understand, and agree to the contents of this letter (including but not limited to the “Important information” section).
+            </span>
+            <br />
+            <span style="font-family: Arial Unicode MS;">
+                我確認我已閱讀、理解並同意本函內容（包括但不限於重要資訊部分）。
+            </span>
+            <br /><br /><br /><br /><br /><br /><br />
+            <table style="font-size: 10px;">
+                <tr>
+                    <td style="width: 60%;">
+                        <div style="width: 100%; border-bottom: .25pt solid;">&nbsp;</div>
+                        <div>
+                            Signature of the Person Insured or the Guardian (if the Person Insured is below 18 years old)
+                        </div>
+                        <div style="font-family: Arial Unicode MS;">由受保人 或 監護人 (如受保人未滿18歲)簽署</div>        
+                    </td>
+                    <td style="width: 10%;">
+                        <div>&nbsp;</div>
+                        <div>&nbsp;</div>
+                        <div>&nbsp;</div>
+                    </td>
+                    <td style="width: 30%;">
+                        <div style="width: 100%; border-bottom: .25pt solid;">&nbsp;</div>
+                        <div>
+                            Date Signed <span style="font-family: Arial Unicode MS;">簽署日期 (年/月/日 YY/MM/DD)</span>    
+                        </div>
+                        <span style="font-family: Arial Unicode MS;">&nbsp;</span>
+                    </td>
+                </tr>
+            </table>
+                          
+            <br /><br />
+            
+            <table style="font-size: 10px;width: 63%;">
+                <tr>
+                    <td>
+                        <div style="border-bottom: .25pt solid;">
+                            &nbsp;
+                        </div>
+                        <span>Name of the Person Insured or the Guardian (if the Person Insured is below 18 years old) (in block letters)</span>
+                        <br />
+                        <span style="font-family: Arial Unicode MS;">受保人或監護人 (如受保人未滿18歲)姓名 (請以正楷書 寫)</span>
+                    </td>
+                </tr>
+            </table>
+            
+        </div>
+    </apex:outputPanel>
+    
+
+    <apex:outputPanel id="allHospitalCollethospital" rendered="false">
+        <!-- Rancho_HC201_20220222: add pagination if coverage details could not fully displayed in the first page -->
+        <div style="page-break-inside: avoid;">
+            <span style="font-family: Arial Unicode MS;"><u><b>Other information其他資訊: XXX</b></u></span><br />
+            <br />
+            <span>The member’s medical card can be accepted at the treatment location stated above.</span><br />
+            <br />
+            <span>Credit limit:  HK$<apex:outputText value="{0, number}">
+                                        <apex:param value="{!gopCreditLimit}" />
+                                    </apex:outputText></span><br /><br />
+            <span>Please call Cigna for revalidation if accumulative hospital expenses exceed HK$<apex:outputText value="{0, number}">
+                                        <apex:param value="{!gopCreditLimit}" />
+                                    </apex:outputText>.</span><br /><br />
+
+            <span><b>Please collect HK$<apex:outputText value="{0,number}"><apex:param value="{!deductAmount}"/></apex:outputText> as of the balance of annual deductible from the member upon discharge.</b></span><br/><br/>
+            <span><b>Please also collect HK$<apex:outputText value="{0,number}"><apex:param value="{!shortfallAmount}"/></apex:outputText> as of the balance of outstanding amount from the member upon discharge.</b></span><br /><br/>
+
+            <span>Other information: {!otherInfor}</span><br/><br/>
+        </div>
+    </apex:outputPanel>
+
+    <apex:outputPanel id="allPatient" rendered="false">
+        <!-- Rancho_HC201_20220222: add pagination if coverage details could not fully displayed in the first page -->
+        <div style="page-break-inside: avoid;">
+            <span><u><b>Coverage Details</b></u></span><br />
+            <br />
+            <span>The above mentioned cost will be paid under the following benefits of your scheme.</span><br />
+            <br />
+            <table border="1px" cellspacing="0">
+                <tr>
+                    <th>Surgery/ treatment/ investigation</th>
+                    <th>Requested cost (HKD)</th>
+                    <th>Approved cost (HKD)</th>
+                </tr>
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:repeat value="{!coverageDetails}" var="cpt">
+                    <tr>
+                        <td>{!cpt.GOP_CPT_Description__c}</td>
+                        <!-- Rancho_HC201_20220222: display total fees -->
+                        <!-- <td>{!cpt.GOP_Surgical_Fees__c}</td>
+                        <td>{!cpt.GOP_Approved_Fee__c}</td> -->
+                        <td rowspan="{!rowspanSize}" style="{!if(rowNum==0, '', 'display:none')}">Total: {!cr.GOP_Surgical_Fees__c}</td>
+                        <td rowspan="{!rowspanSize}" style="{!if(rowNum==0, '', 'display:none')}">Total: {!cr.GOP_Total_Approved_Fees__c}</td>
+                    </tr>
+                    <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                </apex:repeat>
+            </table>
+            <br/>
+            <span>Credit limit:  HK$<apex:outputText value="{0, number}">
+                                        <apex:param value="{!gopCreditLimit}" />
+                                    </apex:outputText></span><br />
+            <span>The hospital will call Cigna for revalidation if accumulative hospital expenses exceed HK$<apex:outputText value="{0, number}">
+                                        <apex:param value="{!gopCreditLimit}" />
+                                    </apex:outputText>.</span><br /><br />
+
+            <span><b>Cigna/ Hospital will collect the balance of your annual deductible amount, i.e. HK$ <apex:outputText value="{0,number}"><apex:param value="{!deductAmount}"/></apex:outputText> as of today, from you after your discharge.</b></span><br/>
+            <span><b>Cigna/ Hospital will also collect the balance of outstanding amount, i.e. HK$ <apex:outputText value="{0,number}"><apex:param value="{!shortfallAmount}"/></apex:outputText> as of today, from you after your discharge.</b></span><br/><br/>
+            <span>Other information: {!otherInfor}</span><br/><br/>
+        </div>
+    </apex:outputPanel>
+
+    <apex:outputPanel id="allClinic" rendered="false">
+        <!-- Rancho_HC201_20220222: add pagination if coverage details could not fully displayed in the first page -->
+        <div style="page-break-inside: avoid;">
+            <span><u><b>Coverage Details</b></u></span><br />
+            <br />
+            <span>The above mentioned cost will be paid under the following benefits of the member’s scheme.</span><br />
+            <br />
+            <table border="1px" cellspacing="0">
+                <tr>
+                    <th width="50%" align="center">Surgery/ treatment/ investigation</th>
+                    <th width="25%" align="center">Requested cost (HKD)</th>
+                    <th width="25%" align="center">Approved cost (HKD)</th>
+                </tr>
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:repeat value="{!coverageDetails}" var="cpt">
+                    <tr>
+                        <td width="50%">{!cpt.GOP_CPT_Description__c}</td>
+                        <!-- Rancho_HC201_20220222: display total fees -->
+                        <!-- <td width="25%" align="center">{!cpt.GOP_Surgical_Fees__c}</td>
+                        <td width="25%" align="center">{!cpt.GOP_Approved_Fee__c}</td> --> 
+                        <td rowspan="{!rowspanSize}" style="{!if(rowNum==0, '', 'display:none')}">Total: {!cr.GOP_Surgical_Fees__c}</td>
+                        <td rowspan="{!rowspanSize}" style="{!if(rowNum==0, '', 'display:none')}">Total: {!cr.GOP_Total_Approved_Fees__c}</td>
+                    </tr>
+                    <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                </apex:repeat>
+            </table>
+            <br/>
+            <span>Credit limit:  HK$<apex:outputText value="{0, number}">
+                                        <apex:param value="{!gopCreditLimit}" />
+                                    </apex:outputText></span><br />
+            <span>The hospital will call Cigna for revalidation if accumulative hospital expenses exceed HK$<apex:outputText value="{0, number}">
+                                        <apex:param value="{!gopCreditLimit}" />
+                                    </apex:outputText>.</span><br/><br/>
+            <span>Other information: {!otherInfor}</span><br/><br/>
+        </div>
+    </apex:outputPanel>
+    <apex:outputPanel rendered="false">
+        <div style="page-break-after: always"/>
+            <div>
+                <span><u><b>Important Information</b></u></span>
+                <ol>
+                    <li>Please note that all fees listed in this letter are treatment costs only and do not represent the actual claim settlement amount.</li>
+                    <li>All decisions made for this GOP are based on the information available at the time of this case&#39;s assessment.</li>
+                    <li>The GOP does not represent a final claim decision by Cigna.</li>
+                    <li>The final claim decision will depend on the information that Cigna finally receives (including the discharge reports and relevant documents provided by the hospital).</li>
+                    <li>This letter is valid for 30 days from the date of issuance unless otherwise specified.</li>
+                    <li>Any alteration on this letter without Cigna's approval will invalidate the GOP.</li>
+                    <li>For expenses not listed in this letter, please contact your attending doctor or hospital for further information.</li>
+                    <li>Hospital should collect the un-covered items stated on the exclusion listed as per policy. Should there is/are any uncovered item(s) billed to Cigna, Cigna has reserved a right to offset any refund or claim to the Policyholder against the outstanding shortfall incurred as a result of the use of the {!if(isLife,'','Cigna ')}Medical Plan.</li> <!-- Lijun_JOBR222_20220929:change GOP Letter by isPolicyLife -->
+                    <li>Cigna reserves the right to require the member to reimburse Cigna in full for all amounts paid by Cigna pursuant to the GOP provided and/or all liabilities incurred by Cigna arising out of the GOP provided, if Cigna subsequently finds or determines that the relevant treatment, medical procedure or medical expense falls into any exclusion under the policy or is not included in the policy coverage. </li>
+                </ol>
+                <span><u><b>Major Exclusions (For member’s reference only)*</b></u></span>
+                <ul>
+                    <li>Pre-existing medical conditions</li>
+                    <li>Any damage being caused by insured&#39;s suicide, attempted suicide or intentionally self-inflicted injuries</li>
+                    <li>Any damage being caused under the influence of alcohol or drugs</li>
+                    <li>Pregnancy, childbirth and miscarriage or abortion</li>
+                    <li>Sexually transmitted disease</li>
+                    <li>Infertility or sterilization</li>
+                    <li>Birth defect, congenital, development and hereditary conditions</li>
+                    <li>Cosmetic and elective surgery</li>
+                    <li>Sleep disorders including insomnia, snoring, sleep -related breathing problems or sleep studies</li>
+                    <li>Not medically necessary treatments</li>
+                    <li>Non-medical services, including but not limited to guest meals, radio, telephone, photocopy, taxes, medical report charges and personal items</li>
+                    <li>Dental and orthodontic services</li>
+                    <li>Routine medical examination or health screening checks</li>
+                </ul>
+                <span>*Above only lists out the major items of the exclusions. For full details, customer/ member is suggested to refer to the policy provisions.</span><br/><br/>
+            </div>
+    </apex:outputPanel>
+    <apex:outputPanel rendered="false">
+        <div>
+                <div style="font-size: small;"><b>Patient’s Signature and Release (parent or guardian, if patient is under age 18)</b>: I certify that the information supplied is true and correct. I authorize the release of all records or other information which may be necessary to determine benefits payable. The information provided on this form may be used and disclosed to other persons or entities, including my Plan sponsor, for the purpose of processing of this claim and performing health plan administration. <br /><br /></div>
+                <div style="font-size: small;">I acknowledge and agree that the GOP provided by the Cigna is be based on the preliminary information available to Cigna and does not represent final claim decision by Cigna.   I further acknowledge and agree that, in making the final claim decision, Cigna may take into account, among other information, the discharge reports and relevant documents provided by the relevant hospital to Cigna.<br /><br /></div>
+                <div style="font-size: small;">I agree to reimburse Cigna in full for all amounts paid by Cigna pursuant to the GOP provided and/or all liabilities incurred by Cigna arising out of the GOP provided, if Cigna subsequently finds or determines that the relevant treatment, medical procedure or medical expense falls into any exclusion under the policy or is not included in the policy coverage. <br /><br /><br /><br /><br /></div>
+                <!-- Rancho_HC201_20220222: put signature into footer -->
+                <!-- <div style="font-size: small;">
+                    <table width="100%">
+                        <tbody>
+                            <tr>
+                                <td style="width: 50%">&nbsp;</td>
+                                <td style="width: 50%">&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td style="width: 50%"><span style="text-decoration: overline">Patient’s Signature (parent or guardian, if patient under age 18)</span></td>
+                                <td style="width: 50%">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="text-decoration: overline;width: 50%">Date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div> -->
+        </div>
+    </apex:outputPanel>
+    
+</apex:page>

@@ -1,0 +1,653 @@
+<apex:page Controller="MyClaimSubmitController" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+    </head>
+    <!--Kirk_20210723_PI37 Claim-->
+    <apex:define name="additionalLibraries">
+         <!--additional css, bootstrap, jquery,js libraries-->
+         <!-- CR-56_Link_20220214 -->
+		 <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+         <apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+         </apex:outputPanel>
+         <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    </apex:define>
+    <script>
+        function displayHKBankOnly(){
+            if (!$('#hkAcc').is(':visible')){
+                $('#hkAcc').toggle();
+                $('#overseaAcc').hide();
+            }
+        }
+        //Kirk_20210723_PI37 Claim
+        function validateBankHolder(value){  
+            if(/^[ ]+$/.test(value)) {
+                return false;  
+            }
+            return true;        
+        }
+
+        // Rancho_ChangeBank_20210825: validate length is within the specified range
+        function validateDigitLength(value, minlen, maxlen){
+            if(value.length < minlen || value.length > maxlen || !/^([0-9]*)$/.test(value)){
+                return false;
+            }
+            return true;
+        }
+
+        function displayOverseaBankOnly(){
+            if (!$('#overseaAcc').is(':visible')){
+                $('#overseaAcc').toggle();
+                $('#hkAcc').hide();
+            }
+        }
+        
+        function displayHKBank(){
+            displayHKBankOnly();
+            selectTransferHKBankAtAction();
+            clearUnselectedBankInformation('overseaAcc');
+
+            if({!!isCustomer}){
+                displayNextBtnIn(40);
+            } else {
+                displayNextBtnIn(6);
+            }
+            
+        }
+        
+        function displayOverseaBank(){
+            displayOverseaBankOnly();
+            selectTransferOverseaBankAtAction();
+            clearUnselectedBankInformation('hkAcc');
+
+            if({!!isCustomer}){
+                displayNextBtnIn(40);
+            } else {
+                displayNextBtnIn(6);
+            }
+        }
+        
+        function clearUnselectedBankInformation(div_id){
+            $("div[id*=" + div_id + "]").find("input[id*='change-bank-info']").val('');
+            $("div[id*=" + div_id + "]").find("textarea[id*='change-bank-info']").val('');
+        }
+        
+        function resetChangeBankFormValidation(){
+            $("form[id*='frmChangeBankAccount']").validate().resetForm();
+        }
+
+        //Kirk_20210723_PI37 Claim
+        jQuery.validator.addMethod("validateBankHolder", function(value, element) {
+                   return validateBankHolder(value);
+            }, "{!IF(contains(transKey, '~Required_Field~'), transField['Required_Field'][$Label.Header_Language_Code_Current],'Required_Field')}");
+        
+        // Rancho_ChangeBank_20210825: only alow 3 digits
+        jQuery.validator.addMethod("validateDigitLength3", function(value, element) {
+            return validateDigitLength(value, 3, 3);
+        }, "{!transField['Branch_code_should_be_3_digits'][$Label.Header_Language_Code_Current]}");
+
+        // Rancho_ChangeBank_20210825: only alow 6-9 digits
+        jQuery.validator.addMethod("validateDigitLength6To9", function(value, element) {
+            return validateDigitLength(value, 6, 9);
+        }, "{!transField['BankAccNo_should_be_within_6_to_9_digits'][$Label.Header_Language_Code_Current]}");
+    </script>
+    <div class="bs" style="padding-right:15px;">
+        <!-- change bank account start -->
+        <apex:outputPanel rendered="{!if(cList.size>0, true, false)}">
+            <apex:form id="frmChangeBankAccount">
+            
+                <!--Nicole_20200226_GS Claim-->
+                <!--Nicole_GS Claim UAT_20210430<apex:actionFunction name="addInputBankAccount" action="{!addInputBankAccount}" status="loader-icon" reRender="input-bank-account-list-panel"/>
+                <apex:actionFunction name="removeInputBankAccount" action="{!removeInputBankAccount}" status="loader-icon" reRender="input-bank-account-list-panel">
+                    <apex:param name="onChangeBankIndex" assignTo="{!onChangeBankIndex}" value=""/>
+                </apex:actionFunction>-->
+                <apex:actionFunction name="showHKBankAccount" action="{!showHKBankAccount}" status="loader-icon" reRender="input-bank-account-list-panel">
+                    <apex:param name="onChangeBankIndex" assignTo="{!onChangeBankIndex}" value=""/>
+                </apex:actionFunction>
+                <apex:actionFunction name="showOverseaBankAccount" action="{!showOverseaBankAccount}" status="loader-icon" reRender="input-bank-account-list-panel">
+                    <apex:param name="onChangeBankIndex" assignTo="{!onChangeBankIndex}" value=""/>
+                </apex:actionFunction>
+                <!--Nicole_GS Claim UAT_20210430<apex:actionFunction name="onPolicyChange" action="{!onPolicyChange}" status="loader-icon" reRender="input-bank-account-list-panel" />                
+                <apex:actionFunction name="validateBankPolicy" action="{!validateBankPolicy}" status="loader-icon" reRender="input-bank-account-list-panel" />-->               
+                
+                <!--Nicole_GS Claim UAT_20210430<apex:outputPanel id="changeBankAccDummyPanel">
+                </apex:outputPanel>-->
+                <apex:outputPanel id="changeBankAccountPanel" >
+                    <div class="bs form-field row content-choice-block" > 
+                        <!--Nicole_20200225_GS Claim-->
+                        <apex:outputPanel id="input-bank-account-list-panel" rendered="{!includeGSClaim}">    
+                        
+                            <apex:pageMessages id="error-message"/>
+                            <!--Nicole_GS Claim UAT_20210430<apex:inputHidden value="{!isPolicyValidationPass}" id="is-Policy-Validation-Pass"/>-->
+                                                                      
+                            <apex:variable value="{!0}" var="rowNumAcc"/>
+                            <apex:repeat value="{!bankAccountList}" var="bank">
+                                <!--Nicole_GS Claim UAT_20210430<apex:outputPanel rendered="{!policyOptions.size>1}">
+                                    <div class="bs col-sm-12" >
+                                        <apex:outputText value="{!transField['Select_Policy'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~Select_Policy~"), true,false)}" />
+                                    </div>
+                                    <div class="bs col-sm-12" >
+                                        <apex:selectList styleClass="bs form-field-style-select cigna-validation answer-validation sign-info-select" size="1" value="{!bank.Policy_Number__c}" onchange="onPolicyChange();" >
+                                            <apex:selectOptions value="{!policyOptions}"/>
+                                        </apex:selectList>
+                                    </div>
+                                    <br/>
+                                    <br/>
+                                    <br/>       
+                                </apex:outputPanel>-->    
+                                
+                                <div class="bs col-sm-12">{!$Label.Please_enter_account_information}</div>
+                                <div class="bs col-sm-12">
+                                    <div class="bs row content-choice-showBtn {!if(bank.Is_Selected_Transfer_to_HK_Bank__c, 'fg-orange','fg-grey')}" style="border-bottom: 0px;" 
+                                         onclick="showHKBankAccount('{!rowNumAcc}');">
+                                       <i class="fa fa-child content-icon" aria-hidden="true"></i>
+                                       {!$Label.Bank_transfer_in_Hong_Kong}
+                                    </div>
+                                    <apex:outputPanel rendered="{!bank.Is_Selected_Transfer_to_HK_Bank__c}">
+                                        <!-- Rancho_ChangeBank_20210825: add hint for change bank transfer in HongKong -->
+                                        <div class="bs row form-field">
+                                           <div class="bs col-xs-12 fg-orange" style="font-size:14px;">
+                                            <apex:outputText escape="false" value="{!transField['GS_Claim_Change_Bank_Hint_of_HK_1'][$Label.Header_Language_Code_Current]}"/>
+                                            <apex:outputText escape="false" value="{!transField['GS_Claim_Change_Bank_Hint_of_HK_2'][$Label.Header_Language_Code_Current]}"/>
+                                            </div>
+                                        </div>
+                                        <div id="hkAcc-Multiple-{!rowNumAcc}" class="bs row">
+                                            <apex:outputPanel rendered="{!if(cList.size>0, true,false)}" >
+                                                <div class="bs col-sm-12 col-xs-12">
+                                                    <div class="bs row form-field" >
+                                                       <div class="bs col-sm-3" >{!transField['BankAccountHolder'][$Label.Header_Language_Code_Current]}</div>
+                                                       <div class="bs col-sm-9" >
+                                                           <!--Kirk_20210723_PI37 Claim / Add input-no-sapce-->
+                                                           <apex:inputField id="bankHolder" value="{!bank.Account_Holder__c}" styleclass="form-field-style input-mandatory input-no-space"/>
+                                                       </div>
+                                                   </div>
+                                                   <div class="bs row form-field" >
+                                                         <div class="bs col-sm-3" >{!$Label.Bank_Name}</div>
+                                                         <div class="bs col-sm-9" >
+                                                             <apex:selectList styleClass="bs select-mandatory form-field-style-select cigna-validation answer-validation sign-info-select" size="1" value="{!bank.Bank_Code__c}">
+                                                              <apex:selectOptions value="{!bankNameList}"/>
+                                                             </apex:selectList>
+                                                         </div>
+                                                   </div>
+                                                   <div class="bs row form-field" >
+                                                       <div class="bs col-sm-3" >{!$Label.Branch_Code}</div>
+                                                       <div class="bs col-sm-9" >
+                                                           <!-- Rancho_ChangeBank_20210825: only alow 3 digits for branch code -->
+                                                           <apex:inputField value="{!bank.Branch_Code__c}" styleclass="form-field-style input-mandatory 3-digits-only" />
+                                                       </div>
+                                                   </div>
+                                                   <div class="bs row form-field" >
+                                                       <div class="bs col-sm-3" >{!$Label.Bank_Account_No}</div>
+                                                       <div class="bs col-sm-9" >
+                                                           <!-- Rancho_ChangeBank_20210825: only alow 6-9 digits for bank acc no. -->
+                                                           <apex:inputField value="{!bank.Bank_Account_No__c}" styleclass="form-field-style input-mandatory 6-9-digits-only" />
+                                                       </div>
+                                                   </div>  
+                                                </div>
+                                            </apex:outputPanel>
+                                        </div>
+                                    </apex:outputPanel>
+                                                                       
+                                    <apex:outputPanel rendered="{!IF(employeeMember.Region=='HK','false','true')}">
+                                        <div class="bs row content-choice-showBtn {!if((bank.Is_Selected_Transfer_to_Oversea_Bank__c), 'fg-orange','fg-grey')}"
+                                             onclick="showOverseaBankAccount('{!rowNumAcc}');">
+                                            <i class="fa fa-child content-icon" aria-hidden="true"></i>
+                                            {!$Label.Telegraphic_Transfer_payment_applicable_to_outside_Hong_Kong}                                    
+                                        </div>
+                                        
+                                        <apex:outputPanel rendered="{!bank.Is_Selected_Transfer_to_Oversea_Bank__c}">
+                                            <div id="overseaAcc-Multiple-{!rowNumAcc}" class="bs row">
+                                               <apex:outputPanel rendered="{!if(cList.size>0, true,false)}" >
+                                                  <div class="bs col-sm-12 col-xs-12">
+                                                     <div class="bs row form-field" >
+                                                        <div class="bs col-sm-3" >{!$Label.Account_Holder}</div>
+                                                        <div class="bs col-sm-9" >
+                                                            <!--Kirk_20210723_PI37 Claim / Add input-no-sapce-->
+                                                            <apex:inputField value="{!bank.Account_Holder__c}" styleclass="form-field-style input-mandatory input-no-space" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="bs row form-field" >
+                                                      <div class="bs col-sm-3" >
+                                                        <apex:outputText value="{!transField['BankAccCountry'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~BankAccCountry~"), true,false)}" />
+                                                      </div>
+                                                      <div class="bs col-sm-9" >
+                                                        <apex:selectList styleClass="bs select-mandatory form-field-style-select cigna-validation answer-validation sign-info-select" size="1" value="{!bank.Bank_Account_Country_Code__c}" disabled="true">
+                                                          <apex:selectOptions value="{!bankCountryList}"/>
+                                                        </apex:selectList>                                             
+                                                      </div>
+                                                    </div>
+                                                    <div class="bs row form-field" >
+                                                       <div class="bs col-sm-3" >{!$Label.Bank_Name}</div>
+                                                       <div class="bs col-sm-9" >
+                                                           <!--Kirk_20210723_PI37 Claim / Add input-no-sapce-->
+                                                           <apex:inputField value="{!bank.Bank_Name__c}" styleclass="form-field-style input-mandatory input-no-space"  />
+                                                       </div>
+                                                    </div>
+                                                    <!--Nicole_20200522_GS Claim UAT-->
+                                                    <!--<div class="bs row form-field" >
+                                                        <div class="bs col-sm-3" >{!$Label.Bank_Code}</div>
+                                                        <div class="bs col-sm-9" >
+                                                            <apex:inputField value="{!bank.Bank_Code__c}" styleclass="form-field-style input-mandatory digital-only" />
+                                                        </div>
+                                                    </div>-->
+                                                    <div class="bs row form-field" >
+                                                      <div class="bs col-sm-3" >{!$Label.Bank_Account_No}</div>
+                                                      <div class="bs col-sm-9" >
+                                                          <apex:inputField value="{!bank.Bank_Account_No__c}" styleclass="form-field-style input-mandatory digital-only" />
+                                                      </div>
+                                                    </div>
+                                                    <div class="bs row form-field" >
+                                                      <div class="bs col-sm-3" >
+                                                          <apex:outputText value="{!transField['SwiftCode'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~SwiftCode~"), true,false)}" />
+                                                      </div>
+                                                      <div class="bs col-sm-9" >
+                                                          <!--Kirk_20210723_PI37 Claim / Add input-no-sapce-->
+                                                          <apex:inputField value="{!bank.SWIFT_Code__c}" styleclass="form-field-style input-mandatory input-no-space" />                                                  
+                                                      </div>
+                                                    </div>   
+                                                  </div>
+                                               </apex:outputPanel>
+                                            </div>    
+                                        </apex:outputPanel> 
+                                    </apex:outputpanel> 
+                                </div>                         
+                                <!--Nicole_GS Claim UAT_20210430<apex:outputPanel rendered="{!rowNumAcc!=0}">
+                                    <div id="remove-icon-{!rowNumAcc}" class="bs col-xs-2 col-sm-2" style="padding-left:0px !important;" >
+                                        <i class="glyphicon glyphicon-minus-sign content-icon " aria-hidden="true" onclick="removeInputBankAccount('{!rowNumAcc}');" ></i>
+                                    </div>
+                                </apex:outputPanel>-->
+                                                                       
+                                <apex:variable var="rowNumAcc" value="{!rowNumAcc + 1}"/>  
+                            </apex:repeat>
+
+                            <div class="bs col-xs-12 col-sm-12" style="padding-top:20px;padding-bottom:20px">
+                                   <apex:outputText value="{!transField['SaveBankAccount'][$Label.Header_Language_Code_Current]}"/>
+                            </div>
+
+                            <!--Nicole_GS Claim UAT_20210430<apex:outputPanel rendered="{!isAddBCEnable}">
+                                    <br/>
+                                    <div class="bs col-sm-offset-10 col-sm-2 col-xs-offset-10 col-xs-2">
+                                        <span class="glyphicon glyphicon-plus-sign fa-lg onclick-pointer" style="left:-10px;" onclick="addInputBankAccount();"/>
+                                    </div>   
+                            </apex:outputPanel>--> 
+                                                               
+                            <apex:outputPanel rendered="{!isNextEnable_Bank}">
+                                <script>
+                                    if({!isCustomer}){
+                                        displayNextBtnIn(6);
+                                    }
+                                </script>
+                            </apex:outputPanel>
+                            
+                            <apex:outputPanel rendered="{!!isNextEnable_Bank}">
+                                <script>
+                                    if({!isCustomer}){
+                                        console.log('ClaimChangeBankAccountVFP');
+                                        hideNextBtnIn(6);
+                                    }
+                                </script>
+                            </apex:outputPanel>                            
+                       </apex:outputPanel>
+                        <!--Nicole_20200225_GS Claim End-->
+                        
+                        <apex:outputPanel rendered="{!!includeGSClaim}">
+                        <div class="bs col-sm-12">{!$Label.Please_enter_account_information}</div>
+                        <div class="bs col-sm-12">
+                            <div class="bs row content-choice-showBtn {!if((cList[0].Is_Selected_Transfer_to_HK_Bank__c) && isLoadOldClaim , 'fg-orange','fg-grey')}" style="border-bottom: 0px;" 
+                                 onclick="displayHKBank();resetChangeBankFormValidation();">
+                               <i class="fa fa-child content-icon" aria-hidden="true"></i>
+                               {!$Label.Bank_transfer_in_Hong_Kong}
+                            </div>
+                            <div id="hkAcc" style="display:none;" class="bs row">
+                                <apex:outputPanel rendered="{!if(cList.size>0, true,false)}" >
+                                    <!-- Rancho_ChangeBank_20210825: add hint for change bank transfer in HongKong -->
+                                    <div class="bs row form-field">
+                                       <div class="bs col-xs-12 fg-orange" style="font-size:14px; padding-left: 30px;">
+                                        <apex:outputText escape="false" value="{!transField['GS_Claim_Change_Bank_Hint_of_HK_1'][$Label.Header_Language_Code_Current]}"/>
+                                        <apex:outputText escape="false" value="{!transField['GS_Claim_Change_Bank_Hint_of_HK_3'][$Label.Header_Language_Code_Current]}"/>
+                                        </div>
+                                    </div>
+                                    <div id="infoFromBankAccountInfoHKFirst"> <!-- class="bs col-sm-12" -->
+                                       <div class="bs col-sm-12 col-xs-12">
+                                           <div class="bs row form-field" >
+                                               <div class="bs col-sm-3" >{!$Label.Account_Holder}</div>
+                                               <div class="bs col-sm-9" >
+                                                   <apex:inputText id="change-bank-info-hk1" value="{!cList[0].Bank_Account_Holder__c}" styleclass="form-field-style " />
+                                               </div>
+                                           </div>
+                                           <div class="bs row form-field" >
+                                                 <div class="bs col-sm-3" >{!$Label.Bank_Name}</div>
+                                                 <div class="bs col-sm-9" >
+                                                     <apex:inputText id="change-bank-info-hk2"  value="{!cList[0].Bank_Name__c}" styleclass="form-field-style "  />
+                                                 </div>
+                                           </div>
+                                           <div class="bs row form-field" >
+                                               <div class="bs col-sm-3" >{!$Label.Bank_Code}</div>
+                                               <div class="bs col-sm-9" >
+                                                   <apex:inputText id="change-bank-info-hk3-bank-code" value="{!cList[0].Bank_Code__c}" styleclass="form-field-style " />
+                                               </div>
+                                           </div>
+                                           <div class="bs row form-field" >
+                                               <div class="bs col-sm-3" >{!$Label.Branch_Code}</div>
+                                               <div class="bs col-sm-9" >
+                                                   <!-- Rancho_ChangeBank_20210825: only alow 3 digits for branch code -->
+                                                   <apex:inputText id="change-bank-info-hk4" value="{!cList[0].Bank_Branch_Code__c}" styleclass="form-field-style 3-digits-only" />
+                                               </div>
+                                           </div>
+                                           <div class="bs row form-field" >
+                                               <div class="bs col-sm-3" >{!$Label.Bank_Account_No}</div>
+                                               <div class="bs col-sm-9" >
+                                                   <!-- Rancho_ChangeBank_20210825: only alow 6-9 digits for bank acc no. -->
+                                                   <apex:inputText id="change-bank-info-hk5" value="{!cList[0].Bank_Account_Name__c}" styleclass="form-field-style 6-9-digits-only" />
+                                               </div>
+                                           </div>   
+                                       </div>
+                                   </div>
+                               </apex:outputPanel>
+                            </div>
+
+                            <div id="overseaText" class="bs row content-choice-showBtn {!if((cList[0].Is_Selected_Transfer_to_Oversea_Bank__c) && isLoadOldClaim , 'fg-orange','fg-grey')}" style="border-bottom: 0px;"
+                                 onclick="displayOverseaBank();resetChangeBankFormValidation();">
+                                <i class="fa fa-child content-icon" aria-hidden="true"></i>
+                                {!$Label.Telegraphic_Transfer_payment_applicable_to_outside_Hong_Kong}
+                            </div>
+
+                            <div id="overseaAcc" style="display:none;" class="bs row">
+                              <apex:outputPanel rendered="{!if(cList.size>0, true,false)}" >
+                                    <div id="infoFromBankAccountInfoOverseaCus"> <!--  class="bs col-sm-12"-->
+                                       <div class="bs col-sm-12 col-xs-12">
+                                           <div class="bs row form-field" >
+                                               <div class="bs col-sm-3" >{!$Label.Bank_Account_No}</div>
+                                               <div class="bs col-sm-9" >
+                                                   <apex:inputText id="change-bank-info-Oversea1" value="{!cList[0].Bank_Account_Number__c }" styleclass="form-field-style "  />
+                                               </div>
+                                           </div>
+                                           <div class="bs row form-field" >
+                                               <div class="bs col-sm-3" >{!$Label.SWIFT}</div>
+                                               <div class="bs col-sm-9" >
+                                                   <apex:inputText id="change-bank-info-Oversea2" value="{!cList[0].Bank_SWIFT__c }" styleclass="form-field-style " />
+                                               </div>
+                                           </div>
+                                           <div class="bs row form-field" >
+                                               <div class="bs col-sm-3" >{!$Label.ABA_Routing_code}</div>
+                                               <div class="bs col-sm-9" >
+                                                   <apex:inputText id="change-bank-info-Oversea3" value="{!cList[0].Bank_Routing_Code_ABA__c}" styleclass="form-field-style " />
+                                               </div>
+                                           </div>
+                                           <div class="bs row form-field" >
+                                               <div class="bs col-sm-3" >{!$Label.Bank_Branch_Address}</div>
+                                               <div class="bs col-sm-9" >
+                                                   <apex:inputTextarea rows="5" id="change-bank-info-Oversea4" value="{!cList[0].Bank_Branch_Address__c }" style="height: 110px !important;" styleclass="form-field-style-textarea" />
+                                                   
+                                               </div>
+                                           </div>
+                                       </div>
+                                   </div>
+                                   <!--Nicole_20200227_GS Claim -->
+                                   <div class="bs row form-field" >
+                                       <div class="bs col-xs-12 form-note">
+                                            <apex:outputText value="{!$Label.Reminder_Please_make_sure_the_account_you_entered_above_is_correct}" escape="false"></apex:outputText>
+                                        </div>
+                                   </div>
+                              </apex:outputPanel>                     
+                            </div>
+                       </div>
+                       </apex:outputPanel>
+                                              
+                    </div>
+                    <!--
+                    <apex:actionFunction status="loader-icon" name="saveChangeBankAccountAtAction" action="{!saveRecord}" reRender="changeBankAccountPanel" />
+                    -->
+                    <apex:actionFunction status="loader-icon" name="saveChangeBankAccountAtAction" action="{!saveRecord}" reRender="false" oncomplete="nextSixthStepsCus();" />
+                    <script>
+                        function saveChangeBankAccount(evt){                                                                                  
+                            if (validateForm_ChangeBankAccount()) {
+                                
+                                //Nicole_20200303_GS Claim
+                                // Nicole_GS Claim UAT_if({!includeGSClaim}){
+                                //    validateBankPolicy();
+                                //    var isPolicyVlidationPass = $('input[type="hidden"][id$="is-Policy-Validation-Pass"]').val();
+                                //    console.log('isPolicyVlidationPass '+isPolicyVlidationPass );
+                                //    if(isPolicyVlidationPass!='true'){return false;}
+                                //}
+                                
+                                saveChangeBankAccountAtAction();
+                                return true;
+                            } else {
+                                if ($('form[id$="frmChangeBankAccount"] input.error').length > 0) {
+                                    $('form[id$="frmChangeBankAccount"] input.error')[0].focus();
+                                    if (typeof evt != undefined && evt) {
+                                        evt.preventDefault();
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        function nextSixthStepsCus(){
+                            if({!!isCustomer}){
+                               NextStepsAtAction();
+                            } else {
+                              if ($('.content-step[data-step="7"]').length > 0) {
+                                  $('.content-step:visible').fadeOut(function(){
+                                      $('.content-step[data-step="7"]').fadeIn(function(){
+                                          
+                                      });
+                                  });
+                              }
+                              NextStepsToSevenAtAction();
+                            }
+                            //NextStepsAtAction();
+                            
+                            isPass = false;
+                            
+                        }
+                        
+                        function validateForm_ChangeBankAccount(){
+                            $("form[id*='frmChangeBankAccount']").validate({
+                                errorPlacement: function(label, element) {
+                                    label.addClass('errorDiv');
+                                    label.insertAfter(element);
+                                },
+                                wrapper: 'div'
+                            });
+                            
+                            $("form[id*='frmChangeBankAccount'] input[id*='change-bank-info']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    required: true
+                                });
+                            });
+                            
+                            $("form[id*='frmChangeBankAccount'] textarea[id*='change-bank-info']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    required: true
+                                });
+                            });
+                            
+                            $("form[id*='frmChangeBankAccount'] input[id$='change-bank-info-hk5']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    digits: true
+                                });
+                            });
+                            /**
+                            $("form[id*='frmChangeBankAccount'] input[id$='change-bank-info-Oversea1']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    digits: true
+                                });
+                            });
+                            **/
+                            $("form[id*='frmChangeBankAccount'] input[id$='change-bank-info-Oversea3']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    digits: true
+                                });
+                            });
+                            
+                            $("form[id*='frmChangeBankAccount'] input[id$='bank-code']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    digits: true,
+                                    maxlength: 3,
+                                    minlength: 3
+                                });
+                            });
+                            
+                            $("form[id*='frmChangeBankAccount'] input[id$='branch-code']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    digits: true,
+                                    maxlength: 3,
+                                    minlength: 3
+                                });
+                            });
+
+                            // Rancho_ChangeBank_20210825: only alow 3 digits for branch code
+                            $(".3-digits-only").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    validateDigitLength3: true
+                                });
+                            });
+
+                            // Rancho_ChangeBank_20210825: only alow 6-9 digits for bank acc no.
+                            $(".6-9-digits-only").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    validateDigitLength6To9: true
+                                });
+                            });
+
+                            //Kirk_20210723_PI37 Claim
+                            $(".input-no-space").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    validateBankHolder: true
+                                });
+                            });
+
+                            //Nicole_20200227_GS Claim
+                            $(".input-mandatory").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    required: true
+                                });
+                            });
+                            
+                            $(".select-mandatory").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    required: true
+                                });
+                            });
+                            
+                            $(".digital-only").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    digits: true
+                                });
+                            });
+                            
+                            return $("form[id*='frmChangeBankAccount']").validate().form();
+                        }
+                        
+                        if ({!cList[0].Is_Selected_Transfer_to_HK_Bank__c}){
+                            displayHKBankOnly();
+                            clearUnselectedBankInformation('overseaAcc');
+                        }
+                                            
+                        
+                        if ({!cList[0].Is_Selected_Transfer_to_Oversea_Bank__c}){
+                            displayOverseaBankOnly();
+                            clearUnselectedBankInformation('hkAcc');
+                        }
+                        
+                        //Nicole_20200227_GS Claim
+                        //{!if(!((cList[0].Bank_Account_Information__c == '' || cList[0].Bank_Account_Information__c == null )  && cList[0].Is_Contain_Individual_Policy__c), 'skipSteps = 1;', '' )}
+                        // 20220524 - Minghua - CTUI-53, cannot go to next step when type the bank account information
+                        // {!if(!((cList[0].Bank_Account_Information__c == '' || cList[0].Bank_Account_Information__c == null )), 'skipSteps = 1;', '' )}
+                        var bankAccInfo="{!cList[0].Bank_Account_Information__c}";
+                        console.log('bank acc infor:'+bankAccInfo+'.');
+                        if (!(bankAccInfo == null||bankAccInfo.trim()== '')) {
+                            skipSteps = 1;
+                        }
+                        console.log('bank acc infor skipSteps:'+skipSteps);
+
+                    </script>
+                    
+                    <!-- reminder start_Nicole_20200227_GS Claim -->
+                     <div class="bs row form-field" style="{!IF(includeGSClaim,'display: none;','')}" >
+                       <div class="bs col-xs-12 form-note">
+                           <apex:outputText value="{!$Label.Reminder_Please_make_sure_the_account_you_entered_above_is_correct}" escape="false"></apex:outputText>
+                        </div>
+                    </div>
+                     
+                    <div class="bs row form-field" style="{!IF(includeGSClaim && employeeMember.Region == 'HK','','display: none;')}" >
+                       <div class="bs col-xs-12 form-note">
+                            <apex:outputText value="{!transField['BankAccChangeReminderHK'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~BankAccChangeReminderHK~"), true,false)}" />            
+                        </div>
+                    </div>
+                    
+                    <div class="bs row form-field" style="{!IF(includeGSClaim && employeeMember.Region == 'TW','','display: none;')}" >
+                       <div class="bs col-xs-12 form-note">
+                            <apex:outputText value="{!transField['BankAccChangeReminderTW'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~BankAccChangeReminderTW~"), true,false)}" />
+                        </div>
+                    </div>       
+                    <!-- reminder end -->
+        
+                </apex:outputPanel>
+                <apex:actionFunction status="loader-icon" action="{!selectTransferHKBank}" name="selectTransferHKBankAtAction" reRender="dummyPanel"/>
+                <apex:actionFunction status="loader-icon" action="{!selectTransferOverseaBank}" name="selectTransferOverseaBankAtAction" reRender="dummyPanel"/>
+                
+            </apex:form>
+        </apex:outputPanel>
+        <!--Nicole_20200227_GS Claim
+        <div class="bs row form-field" >
+           <div class="bs col-xs-12 form-note">
+                <apex:outputText value="{!$Label.Reminder_Please_make_sure_the_account_you_entered_above_is_correct}" escape="false"></apex:outputText>
+            </div>
+        </div>-->
+        <!-- change bank account end -->
+                      
+        <apex:outputPanel rendered="{!isCustomer}">
+          <!-- next button -->
+          <!-- mobile -->
+          <div id="action-bar" class="bs action-bar hidden-sm hidden-md hidden-lg cigna-floating-bottom-panel nextStepBtnIn6" style="left:0px; display:none;" onclick="nextStep();">
+              <div id="callAction1" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                  <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</a>
+              </div>
+          </div>
+          
+          <!-- web -->
+          <div class="bs row hidden-xs nextStepBtnIn6" style="padding-top: 20px; padding-bottom: 20px; display:none;">
+              <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3 "></div>
+              <div id="callAction2" class="bs col-sm-6 col-md-6 col-xs-6 col-lg-6 onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn" onclick="nextStep();">
+                  {!$Label.Next}
+              </div>
+              <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3"></div>
+          </div>
+        </apex:outputPanel>
+
+         <apex:outputPanel rendered="{!!isCustomer}">
+          <!-- next button -->
+          <!-- mobile -->
+          <div id="action-bar" class="bs action-bar hidden-sm hidden-md hidden-lg cigna-floating-bottom-panel nextStepBtnIn40" style="left:0px; display:none;" onclick="nextStep();">
+              <div id="callAction1" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                  <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</a>
+              </div>
+          </div>
+          
+          <!-- web -->
+          <div class="bs row hidden-xs nextStepBtnIn40" style="padding-top: 20px; padding-bottom: 20px; display:none;">
+              <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3 "></div>
+              <div id="callAction2" class="bs col-sm-6 col-md-6 col-xs-6 col-lg-6 onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn" onclick="nextStep();">
+                  {!$Label.Next}
+              </div>
+              <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3"></div>
+          </div>
+        </apex:outputPanel>
+        
+        <apex:outputPanel rendered="{!if((cList[0].Is_Selected_Transfer_to_HK_Bank__c || cList[0].Is_Selected_Transfer_to_Oversea_Bank__c), 'true', 'false')}">
+            <script>
+            if({!!isCustomer}){
+                displayNextBtnIn(40);
+            } else {
+                displayNextBtnIn(6);
+            }
+            </script>
+        </apex:outputPanel>
+        
+    </div>
+    
+</apex:page>

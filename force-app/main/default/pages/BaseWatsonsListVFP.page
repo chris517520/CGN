@@ -1,0 +1,1174 @@
+<apex:page Controller="WatsonsListCtrl" sidebar="false" showHeader="false">
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover" />
+        <!--additional css, bootstrap, jquery,js libraries-->
+        <apex:includeScript value="{!URLFOR($Resource.signature_pad_1_5)}" />
+        <apex:includeScript value="{!$Resource.modernizr}" />
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+        <link rel="stylesheet" href="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/jquery-ui.min.css')}" />
+        <!--CR-56_Link_20220214-->
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/jquery-ui-1.13.min.js')}"></script>
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/datepicker-zh-TW.js')}"></script>
+        <!--
+        <apex:includeScript value="{!$Resource.Google_Map_JS}" />
+        <script type="text/javascript" src="https://ditu.google.cn/maps/api/js"></script>
+        <script type="text/javascript" src="https://maps.google.com/maps/api/js?sensor=false"></script>
+        -->
+        <script type="text/javascript" src="https://maps.google.com/maps/api/js?key={!$Label.Doctor_List_Google_Key}"></script>
+        <!-- CR-56_Link_20220214 -->
+		<script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+        
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+        <script type="text/javascript" src="{!URLFOR($Resource.App_Link_JS, 'js/applink.js')}"></script>
+        <apex:outputPanel rendered="{!lang == 'zh'}" layout="none">
+            <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+        </apex:outputPanel>
+        <style>
+
+	        select::-ms-expand {
+	            display: none;
+	        }
+
+	        /* hide input */
+	        .cigna-radio input.radio:empty {
+	            margin-left: -999px;
+	        }
+
+	        .cigna-radio label {
+	            width: 120px;
+	            font-size: 1em;
+	            font-weight: normal;
+	        }
+
+	        /* style label */
+	        .cigna-radio input.radio:empty ~ label {
+	            position: relative;
+	            float: left;
+	            line-height: 32px;
+	            text-indent: 3.25em;
+	            cursor: pointer;
+	            -webkit-user-select: none;
+	            -moz-user-select: none;
+	            -ms-user-select: none;
+	            user-select: none;
+	        }
+
+	        .cigna-radio input.radio:empty ~ label:before {
+	            position: absolute;
+	            display: block;
+	            top: 2px;
+	            bottom: 0;
+	            left: 0;
+	            content: '';
+	        }
+
+	        /* toggle on */
+	        .cigna-radio input.radio:checked:not(:disabled) ~ label:before {
+	            content:"\f058";
+	            text-indent: 0.4em;
+	            color: #39B54A;
+	            font: normal normal normal 24px/1 FontAwesome;
+	        }
+
+	        .cigna-radio input.radio:not(checked):not(:disabled) ~ label:before {
+	            content:"\f058";
+	            text-indent: 0.4em;
+	            color: #C8C9C7;
+	            font: normal normal normal 24px/1 FontAwesome;
+	        }
+
+	        .cigna-radio input.radio:disabled ~ label {
+	            color: #bdb6d6;
+	        }
+
+	        .cigna-radio input.radio:disabled ~ label:before {
+	            content:"\f058";
+	            text-indent: 0.4em;
+	            color: #bdb6d6;
+	            font: normal normal normal 24px/1 FontAwesome;
+	        }
+
+
+
+	        .bs .form-field-style-select:disabled {
+	            background: none !important;
+	            border-color: #bdb6d6 !important;
+	            color: #bdb6b6 !important;
+	        }
+	        .bs .value-row {
+	            padding-bottom: 5px;
+	        }
+
+	        .bs .card-content {
+	            font-weight: bold;
+	            font-size: 0.8em;
+	        }
+
+	        .bs .dl-font {
+	            font-size: 0.9em;
+	            line-height: 18px;
+	        }
+
+	        .bs .doctor-card {
+	            margin-left: -10px;
+	            margin-right: -10px;
+	            padding-left: 10px;
+	            padding-top: 10px;
+	            padding-bottom: 5px;
+	            border-top: rgba(207,207,207,1) solid 1px;
+	            border-bottom: rgba(207,207,207,1) solid 1px
+	        }
+
+	        .bs .table-font{
+	            font-size: 0.7em;
+	            word-break: break-all;
+	        }
+	        
+	        .modal-body {
+	            height: 400px;
+	            overflow-y: auto;
+	            overflow-x: hidden;
+	        }
+
+	        #HKList {
+	            padding: 0 60px;
+	            padding-bottom: 10px;
+	        }
+
+	        #WWList {
+	            padding: 0 75px
+	        }
+
+
+	        .bs .content-label {
+	            padding-left: 20px;
+	        }
+	        
+	        .bs .table-row {
+	            padding-bottom: 10px;
+	        }
+
+	        .bs .even-row {
+	            background-color: rgb(242, 242, 242);
+	        }
+	        
+	        @media screen and (min-width: 768px) {
+	            #wwSearchPanel {
+	                padding-top: 10px;
+	            }
+
+	            #mapPanel {
+	                padding: 0 60px;
+	            }
+
+	            .modal:before {
+	                display: inline-block;
+	                vertical-align: middle;
+	                height: 100%;
+	            }
+	            .modal-dialog {
+	                display: inline-block;
+	                text-align: left;
+	                vertical-align: middle;
+	            }
+	            #map {
+	                font-family: Arial;
+	                font-size: 12px;
+	                line-height: normal !important;
+	                height: 400px;
+	                //width: 100%;
+	                background: transparent;
+	            }
+	            #ListView {
+	                max-height: 400px;
+	                min-height: 400px;
+            /*margin-bottom: 50px;*/
+	                overflow: auto;
+	            }
+	            #map-wrapper {
+	                margin-bottom: 50px;
+	            }
+	            #clinic-done {
+	                margin-bottom: 50px;
+	            }
+	            .bs .detail-font {
+	                font-size: 0.9em;
+	            }
+	            div#VCIntroMessage {
+	                display: none;
+	                position: absolute;
+	                z-index: 11;
+	                margin: 150px auto 0px auto;
+	                width: 80%;
+	                height: 60%;
+	                background: #FFF;
+	                color: #000;
+	                left: 10%;
+	                padding: 20px;
+	                border-radius: 5px;
+	            }
+	        }
+	        
+	        @media (min-width: 768px) and (max-width: 991px) {
+	            #map {
+	                height: 500px !important;
+	            }
+	            #ListView {
+	                max-height: 500px !important;
+	            }
+	            #mapPanel {
+	                padding: 0 0;
+	            }
+	            #HKList {
+	                padding: 0 0;
+	                padding-bottom: 10px;
+	            }
+
+	            #WWList {
+	                padding: 0 15px;
+	                padding-bottom: 10px;
+	            }
+	        }
+	        
+	        @media (max-width: 767px) {
+	            
+	            .dl-mobile-padding {
+	                padding-bottom: 20px;
+	            }
+
+	            #wwSearchPanel {
+	                padding-top: 30px;
+	            }
+
+	            #map-wrapper {
+	                position: fixed;
+	                top: 50px;
+	                width: 100%;
+	                right: 0px;
+	                margin-left: -15px;
+	                padding: 0px;
+	            }
+	            #map {
+	                height: 200px;
+	            }
+	            /*#ListView {
+
+	                padding-top: 40px;
+	            }*/
+	            #HKList, #WWList {
+	                padding: 0 20px
+	            }
+
+	            .bs .detail-font {
+	                font-size: 0.8em;
+	            }
+
+	            .bs #list-back {
+	                position: fixed;
+	                top: 210px;
+	                width: 100%;
+	                z-index: 7;
+	                background: white;
+	            }
+
+	            div#VCIntroMessage {
+	                display: none;
+	                position: absolute;
+	                z-index: 11;
+	                margin: 100px auto 0px auto;
+	                width: 90%;
+	                height: 80%;
+	                background: #FFF;
+	                color: #000;
+	                left: 5%;
+	                padding: 20px;
+	                border-radius: 5px;
+	            }
+	            
+	        }
+	        
+	        .bs .mobile-version-button {
+	            height: 30px;
+	            font-size: 0.8em;
+	            padding: 8px;
+	        }
+	        
+	        .bs .no-border-input {
+	            padding: 0;
+	            border: none;
+	            background: none;
+	        }
+	        
+	        .bs .no-dpicon {
+	            -webkit-appearance: none;
+	            -webkit-border-radius: 0px;
+	            -moz-appearance: none;
+	            appearance: none;
+	        }
+	        
+	        .bs .all-page-width {
+	            margin-left: -15px;
+	            padding: 0px;
+	        }
+	        
+	        .bs td {
+	            font-family: "Gotham SSm A", "Gotham SSm B", Arial, Helvetica, sans-serif;
+	        }
+	        
+	        
+	        .disPanel select {
+	            border: 0px;
+	            border-bottom: 1px solid #58595B;
+	            background: url({!$Resource.select_arrow_style}) no-repeat 98% 50% !important;
+	            background-size: 7px 7px !important;
+	            padding-right: 20px;
+	            padding-left: 12px;
+	            -moz-appearance: none;
+	            -webkit-appearance: none;
+	            appearance: none;
+	            width: 100%;
+	            border-radius: 0px;
+	            height: 34px !important;
+	        }
+	        
+	        .disPanel-mb select {
+	            border: 0px;
+	            border-bottom: 1px solid #58595B;
+	            background: url({!$Resource.select_arrow_style}) no-repeat 98% 50% !important;
+	            background-size: 7px 7px !important;
+	            padding-right: 20px;
+	            padding-left: 12px;
+	            -moz-appearance: none;
+	            -webkit-appearance: none;
+	            appearance: none;
+	            width: 100%;
+	            border-radius: 0px;
+	            height: 34px !important;
+	        }
+
+	        div#VCIntroOverlay {
+	            display: none;
+	            z-index: 10;
+	            background: #D9D9D6;
+	            position: fixed;
+	            width: 100%;
+	            height: 100%;
+	            top: 0px;
+	            left: 0px;
+	            text-align: center;
+	        }
+	        #confirm-button{
+	        	margin-top: 50px;
+	        }
+	        #VCIntroCloseOverlay
+	        {
+	            position: absolute;
+	            top: 10px;
+	            right: 10px;
+	        }
+	        
+	        #VCIntroContent {
+	            padding: 10px;
+	            color: #000;
+	            font-size: 12px;
+	            width: 100%;
+	            height: 95%;
+	            overflow-y: auto;
+	            overflow-x: hidden;
+	        }
+
+        </style>
+        <script type="text/javascript">
+	        var changeLanguageWarningRequired = true;
+	        var tempScrollTop;
+	        var Cigna = Cigna || {};
+	        Cigna.DrList = function() {
+
+	            function showLabelLoading() {
+	                tempScrollTop = $('#ListView').scrollTop();
+	                $('#loadMore-label').hide();
+	                $('#loadMore-icon').fadeIn(100);
+	            }
+
+	             function hideLabelLoading() {
+	                $('#ListView').scrollTop(tempScrollTop);
+	                $('#loadMore-icon').hide();
+	                $('#loadMore-label').fadeIn(100);
+	            }
+
+	            var myOptions = {
+	                center:new google.maps.LatLng(22.2775459,114.1684373),
+	                zoom: 15,
+	                mapTypeId: google.maps.MapTypeId.ROADMAP,
+	                mapTypeControl: false,
+	                scrollwheel: true
+	            };
+
+	            var myPositon = {
+	                lat: 22.2775459,
+	                lng: 114.1684373,
+	                dummy: true
+	            };
+
+	            var map;
+	            var validator;
+	            var infowindow = new google.maps.InfoWindow({
+	                content: "Google Map"
+	            });
+
+	            var markers = [];
+                
+                //Add by Kermit at 20201105
+                var isMobile = Cigna.Util.isMobile();
+                console.log('isMobile:'+isMobile);
+                //Add by Kermit at 20201105
+
+
+	            //Functions for Loading
+	            function showLoading() {
+	                $('#login-loading').fadeIn(100);
+	            }
+
+	            function finishSubmission() {
+	                $('#login-loading').fadeOut(100);
+	            }
+
+	            function loadList(page){
+	                showLabelLoading();
+	                DrListAF.loadMore(page);
+	            }
+
+	            //Fuctions for Google Map
+	            function updateGeoLocation() {
+
+	                var timer = setTimeout( function() {handleLocationError();}, 5000);
+	                if (navigator.geolocation && Modernizr.geolocation) {
+	                    navigator.geolocation.getCurrentPosition(
+	                        function(position) {
+	                            clearTimeout(timer);
+	                            
+	                            myPositon.lat = position.coords.latitude;
+	                            myPositon.lng = position.coords.longitude;
+	                            myPositon.dummy = false;
+	                            $('#warning-box').hide();
+
+
+	                            $('#location-param input[id$="long"]').val(position.coords.longitude);
+	                            $('#location-param input[id$="lat"]').val(position.coords.latitude);
+
+	                            handleMapRefresh();
+	                            
+	                        },
+	                        function(err) {
+	                            clearTimeout(timer);
+	                            
+	                            console.warn('ERROR(' + err.code + '): ' + err.message);
+	                            $('#warning-box').show();
+
+	                            handleLocationError();
+	                        }
+	                    );
+	                } else {
+	                    clearTimeout(timer);
+	                    console.warn("Your browser is not updated");
+	                    handleLocationError();
+	                }
+	            }
+
+	            function handleLocationError() {
+	                //$('#location-param input[id$="long"]').val('NULL');
+	                //$('#location-param input[id$="lat"]').val('NULL');
+	                // Use Cigna building as the center
+	                $('#location-param input[id$="long"]').val(Cigna.DrList.myPositon.lng);
+	                $('#location-param input[id$="lat"]').val(Cigna.DrList.myPositon.lat);
+	                handleMapRefresh();
+	            }
+
+	            function handleMapRefresh() {
+	                if ($(window).width() < 768) {
+	                    DrListAF.findMe(true);
+	                } else {
+	                    DrListAF.findMe(false);
+	                }
+	                
+	            }
+
+	            function confirmPickUpLocation(){
+	            	var selectedWatsonsID = $('#location-param input[id$="selectedWatsonsID"]').val();
+	            	console.log('selectedWatsonsID='+selectedWatsonsID);
+	            	DrListAF.confirmPickUpLocation(selectedWatsonsID);
+
+	            }
+
+	            function resizeIframe() {
+	                var me = window.name;
+	                if (me) {
+	                    var iframes = parent.document.getElementsByName(me);
+	                    if (iframes && iframes.length == 1) {
+	                        height = document.body.offsetHeight;
+	                        iframes[0].style.height = height + "px";
+	                    }
+	                }
+	            }
+
+	            function openDetail(watsonsId, watsonsName,latitude,longitude) {
+	            	//alert('============latitude='+latitude+'=======longitude='+longitude);
+	            	//store the selected watsonsID
+	            	 $('#location-param input[id$="selectedWatsonsID"]').val(watsonsId);
+	            	//create the related tmp maker to highlight the google map
+	            	var myMakerLabel = watsonsName;
+
+                    var loc = new google.maps.LatLng(latitude,longitude);
+                    //create marker
+                    var currentMarker = new google.maps.Marker({
+                        position: loc,
+                        /*icon: "{!URLFOR($Resource.MyLocationMarker)}",*/
+                        map: Cigna.DrList.map,
+                        title: myMakerLabel
+                    });
+                    //change the list class and highlight the list item
+	            	$('.list-content').removeClass('cigna-bg-orange-light');
+                    $('#clinic-' + watsonsId + ' .list-content').addClass('cigna-bg-orange-light');
+
+
+                    /*alert('111='+$('#clinic-' + watsonsId + ' .list-content').offset().top+'  222='+$('#ListView').offset().top);
+                    alert($('#ListView').scrollTop());*/
+
+                    if( $(window).width() < 768){
+                        $('body').animate({
+                            scrollTop: $('#clinic-' + watsonsId + ' .list-content').offset().top - $('#ListView').offset().top - 100
+                        }, 100);
+                    } else {
+                        $('#ListView').animate({
+                            scrollTop: $('#clinic-' + watsonsId + ' .list-content').offset().top - $('#ListView').offset().top + $('#ListView').scrollTop()
+                        }, 100);
+                    }
+                    Cigna.DrList.infowindow.setContent('<div><strong>' + myMakerLabel + '</strong>' + '<a href="https://maps.google.com/maps?z=16&amp;q='+latitude+','+longitude+'&amp;ll='+latitude+','+longitude+'" style="height:200px;width:100px" target="_blank">test google map</a>'+ '</div>');
+                    Cigna.DrList.infowindow.open(Cigna.DrList.map, currentMarker);
+					//var isMobile = Cigna.Util.isMobile();
+					console.log('isMobile1='+isMobile);
+                    if(isMobile){
+                    	console.log('enter mobile');
+                    	$("#confirm-button").show();
+                    }else{
+                    	console.log('enter not mobile');
+                        $("#confirmBlock").show();
+                        $("#ListView").css('max-height','360px');
+                        $("#ListView").css('min-height','360px');
+                        var isIE = /(MSIE|Trident\/|Edge\/)/i.test(navigator.userAgent);
+                        if(isIE){
+                            $('#ListView').css('max-height','320px');
+                            $('#ListView').css('min-height','320px');
+                        }
+                        window.scrollTo(0,document.body.scrollHeight);
+                    }
+	            }
+
+	            function toggleVCIntro() {
+	                var overlay = document.getElementById('VCIntroOverlay');
+	                var specialBox = document.getElementById('VCIntroMessage');
+
+	                $('#VCIntroContent').scrollTop(0);
+	                if (overlay.style.display == "block") {
+	                    overlay.style.display = "none";
+	                    specialBox.style.display = "none";
+	                } else {
+	                    overlay.style.display = "block";
+	                    specialBox.style.display = "block";
+	                }
+	            }
+
+	            //Functions for navigation
+	            function goBack() {
+	                /*DrListAF.back();*/
+
+	                $("#mapPanel").hide();
+	                $("#searchPanel").hide();
+	                $('#myModal').modal('hide');
+
+	            }
+
+	            //Validation
+	            function submitAppointment() {
+	                if ($("form[id*='myform']").validate().form()) {
+	                    DrListAF.submit();
+	                } else {
+	                    if ($(window).width() >= 768) {
+	                        $("form[id*='myform']").validate().focusInvalid();
+	                    } else {
+	                        $('html').animate({
+	                            scrollTop: $("input[id*='appointment-date']").offset().top - 50
+	                        }, 100);
+	                    }
+	                }
+	            }
+
+	            function removeMarkers(){
+	                for (var i = 0; i < Cigna.DrList.markers.length; i++) {
+	                    Cigna.DrList.markers[i].setMap(null);
+	                }
+	                Cigna.DrList.markers = [];
+	            }
+
+	            /*function updateDoctor(sel) {
+	                $('#location-param input[id$="appointed-doctor"]').val(sel.value);
+		            }
+
+		            function updateDate(sel) {
+		                $('#location-param input[id$="appointed-date"]').val(sel.value);
+		            }
+
+		            function updateTime(sel) {
+		                $('#location-param input[id$="appointed-time"]').val(sel.value);
+		            }
+
+		            function updateRemark(sel) {
+		                $('#location-param input[id$="appointed-remark"]').val(sel.value);
+		            }
+				*/
+	            return {
+	                showLoading: showLoading,
+	                finishSubmission: finishSubmission,
+	                updateGeoLocation: updateGeoLocation,
+	                handleLocationError: handleLocationError,
+	                handleMapRefresh: handleMapRefresh,
+	                resizeIframe: resizeIframe,
+	                openDetail: openDetail,
+	                toggleVCIntro: toggleVCIntro,
+	                goBack: goBack,
+	                submitAppointment: submitAppointment,
+	                myPositon: myPositon,
+	                map: map,
+	                myOptions: myOptions,
+	                infowindow: infowindow,
+	                markers: markers,
+	                removeMarkers: removeMarkers,
+	                showLabelLoading: showLabelLoading,
+	                hideLabelLoading: hideLabelLoading,
+	                confirmPickUpLocation: confirmPickUpLocation,
+	                loadList: loadList
+	            }
+	        }();
+
+	        Cigna.DrList.showLoading();
+
+	       
+
+	        $(document).ready(function() {
+	            //create map
+	            Cigna.DrList.map = new google.maps.Map(document.getElementById("map"), Cigna.DrList.myOptions);
+	            //Initialize jQuery Validation
+	            $("form[id*='myform']").validate({});
+
+	            //Binding Button
+	            //CR-56_Link_20220214
+	            $(".detail-back-btn").on("click",function() {
+	            	//TODO:
+	            	Cigna.Util.navigateToVFP('PrescriptionDetailsVFP?PrescriptionNo={!prescriptionId}', null, null, true)
+	                /*$("#ListView").show();
+	                $("#clinic-detail-panel").hide();
+	                $("#map").show();
+	                $("#clinic-appointment").hide();
+	                $("#detail-back").hide();
+	                $("#list-back-panel").show();
+	                $("#searchPanel").show();
+
+	                if(!$('#map').is(':visible')){
+	                    $('.header-bar').css("position", "fixed");
+	                }*/
+	            });
+	            //DrListAF.initTab();
+	            //Initialize Google Map
+	            if ("{!currentLat}" == "" || "{!currentLong}" == "NULL") {
+
+	                Cigna.DrList.updateGeoLocation();
+
+	            } else {
+	                
+	                Cigna.DrList.myPositon.lat = parseFloat("{!currentLat}");
+	                Cigna.DrList.myPositon.lng = parseFloat("{!currentLong}");
+	                Cigna.DrList.myPositon.dummy = false;
+	               
+	                if ($(window).width() < 768) {
+
+	                    DrListAF.findMe(true);
+	                } else {
+	                    DrListAF.findMe(false);
+	                }
+	                
+	            }
+	            $('#myModal').on('shown.bs.modal', function () {
+	                $('#modal-clinic-detail').scrollTop(0);
+	            });
+
+	            $('a[data-applink]').applink();
+
+	            if(!Cigna.Util.isMobile()){
+	                $('a[data-applink]').attr('target','_blank');
+	                $('#list-back-panel-pc').show();
+	            }
+
+	            //Render app store links
+	            if(Cigna.Util.isMobile()){
+	                $('#desktop-store-div').hide();
+	                if(Cigna.Util.isIOS()){
+	                    $('#android-store').hide();
+	                } else {
+	                    $('#ios-store').hide();
+	                }
+	            } else {
+	                $('#mobile-store-div').hide();
+	            }
+
+	        });
+        </script>
+    </head>
+    <apex:form id="myform">
+        <div id="location-param" style="display: none;">
+            <apex:inputHidden value="{!currentLong}" id="long" />
+            <apex:inputHidden value="{!currentLat}" id="lat" />
+            <apex:inputHidden value="{!selectedWatsonsID}" id="selectedWatsonsID" />
+            <!-- <apex:inputHidden value="{!wwSelectedType}" id="wwType" />
+            <apex:inputHidden value="{!appointedDoctor}" id="appointed-doctor"/>
+            <apex:inputHidden value="{!appointedDate}" id="appointed-date"/>
+            <apex:inputHidden value="{!appointedTime}" id="appointed-time"/>
+            <apex:inputHidden value="{!remark}" id="appointed-remark"/> -->
+        </div>
+        <div class="bs">
+            <apex:pageMessages ></apex:pageMessages>
+            <!-- For HK List-->
+            <apex:actionFunction name="searchKeyWord" action="{!searchWatsonsByKeyWord}" reRender="TopPanel" namespace="DrListAF" status="loader-icon">
+                <apex:param name="firstParam" assignTo="{!currentpage}" value="1" />
+            </apex:actionFunction>
+
+            <apex:actionFunction name="loadMore" action="{!loadMore}" namespace="DrListAF" reRender="TopPanel" oncomplete="
+                Cigna.DrList.hideLabelLoading();">
+                <apex:param name="firstParam" assignTo="{!currentpage}" value="" />
+            </apex:actionFunction>
+            <apex:actionFunction name="searchKeyWordDT" action="{!searchWatsonsByKeyWord}" namespace="DrListAF" status="loader-icon"/>
+            <apex:actionFunction name="refreshList" action="{!refreshList}" namespace="DrListAF" reRender="searchApexPanel2,searchApexPanel" />
+            <!-- <apex:actionFunction name="back" action="{!backToSearch}" namespace="DrListAF"/> -->
+            <apex:actionFunction name="backRefresh" action="{!backToSearchRefresh}" namespace="DrListAF" />
+            <apex:actionFunction name="findMe" action="{!iFoundYou}" namespace="DrListAF" reRender="searchPanel,TopPanel">
+                <apex:param name="firstParam" assignTo="{!isMobile}" value="" />
+            </apex:actionFunction>
+            <apex:actionFunction name="confirmPickUpLocation" action="{!confirmPickUpLocation}" namespace="DrListAF">
+            	<apex:param name="selectedWatsonsID" assignTo="{!selectedWatsonsID}" value="" />
+        	</apex:actionFunction>
+            <apex:actionFunction name="initTab" action="{!initHKTab}" namespace="DrListAF" reRender="TopPanel" status="loader-icon"/>
+            <!-- End for HK List-->
+
+
+            <div class="bs" id="doctor-container">
+            	<div id="detail-back-panel" class="bs row visible-xs-block">
+            		<div id="detail-back" class="bs row visible-xs-block">
+            			<div style="font-family: sans-serif;font-style: italic;font-size: 14px; padding:0px 0px 1px 12px;margin-bottom: 0px;">
+                        </div>
+	                    <div class="bs col-xs-12" style="padding-top: 10px;">
+	                        <p><a id="detail-back-btn" href="#" class="bs cigna-fg-orange-medium detail-back-btn"><i class="ci-hk-arrow-29" ></i> 
+	                        {!$Label.Back}</a>
+	                        </p>
+	                    </div>
+	                </div>
+                </div>
+                <div id="list-back-panel" style="{!IF(currentPanel == 'L','','display:none;')}">
+                    <div id="list-back" class="bs row visible-xs-block">
+                        <div class="bs col-xs-12" style="padding-top: 10px;">
+                            <p><a onclick="DrListAF.backRefresh()"  href="#" class="bs cigna-fg-orange-medium"><i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div id="list-back-panel-pc" style="display:none;">
+                    <!-- Back Button -->
+                    <div class="bs row" style="padding-top:10px;">
+                        <div class="bs col-lg-12 cigna-fg-orange-medium onclick-pointer detail-back-btn">
+                            <i class="ci-hk-arrow-29 ci-hk-sm" aria-hidden="true"></i> {!$Label.Back}
+                        </div>
+                        <!-- </apex:outputLink> -->
+                    </div>
+                    <!-- Back Button End -->
+                </div>
+
+                <apex:outputPanel id="searchPanel" layout="block">
+                    <div id="HKList" class="tab-pane bs">
+                       	<div id="searchPanel" style="{!IF(currentPanel == 'F','display:none;','')}" class="bs {!IF(currentPanel == 'S','','hidden-xs')}">
+                            <div class="bs visible-xs" style="padding: 0px 15px;">
+                                <div id="moreOption" style="padding-top: 50px;">
+                                    <div class="bs row" style="padding-bottom: 20px;">
+                                        <div class="bs col-sm-2 col-md-2 col-xs-12 col-lg-2" style="padding: 0px;">
+                                            <apex:inputField value="{!searchCriteria.Region__c}" styleClass="bs form-field-style-select" onchange="DrListAF.refreshList()" />
+                                        </div>
+                                    </div>
+                                   <apex:outputPanel id="searchApexPanel2">
+                                        <div class="bs row disPanel-mb" style="padding-bottom: 20px;">
+                                            <div class="bs col-sm-2 col-md-2 col-xs-12 col-lg-2" style="padding: 0px;">
+                                                <apex:inputField id="districtList" styleClass="bs form-field-style-select" value="{!searchCriteria.District__c}" />
+                                            </div>
+                                        </div>
+                                    </apex:outputPanel>
+                                </div>
+                                <div class="bs row" style="padding-top: 20px;">
+                                    <div class="bs col-sm-2 col-md-2 col-xs-12 col-lg-2" style="padding: 0px;">
+                                        <apex:inputText style="font-size: 0.75em;" id="address" styleClass="bs form-field-style" value="{!theAddress_mb}" html-placeholder="{!$Label.Search_Address}" />
+                                    </div>
+                                </div>
+                                <!-- <div class="bs row" style="padding-top: 50px;">
+                                    <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-5"></div>
+                                    <div id="seach-button" onclick="DrListAF.searchKeyWordDT();" class="bs col-sm-6 col-md-6 col-xs-6 col-lg-2 onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn">
+                                        {!$Label.Doctor_List_Search_Button}
+                                    </div>
+                                    <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-5"></div>
+                                    
+                                </div> -->
+                                <div class="bs visible-xs cigna-floating-bottom-panel hidden-lg">
+                                    <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                                        <a href="javascript:void(0);" onclick="DrListAF.searchKeyWordDT();" class="onclick-pointer action-btn cigna-fg-white" role="button">
+                                            <span class="ci-hk-clip-offcial" aria-hidden="true" style="padding-right:10px;"></span>
+                                            <br/> {!$Label.Doctor_List_Search_Button}
+                                        </a>
+                                    </div>
+                                </div>
+                                <!-- <div style="font-family: sans-serif;font-style: italic;font-size: 14px; padding:1px 0px 1px 5px;margin-bottom: 0px;">
+                                                {!$Label.Doctor_List_Click_Here_Previous}&nbsp; <div style="font-weight: bold;display:inline;">{!$Label.Doctor_List_Click_Here_Plan}</div>{!$Label.Doctor_List_Click_Here_Please}&nbsp;<a href="{!CLICK_HERE_URL}">{!$Label.Doctor_List_Click_Here}</a>&nbsp;{!$Label.Doctor_List_Click_Here_Behaviour}
+                                    </div> -->
+                            </div>
+                            <div class="bs hidden-xs" style="padding: 0px 15px;">
+                                <div class="bs row" style="padding: 10px 15px 0px 15px;" >
+                                    <div class="bs col-sm-2 col-md-2 col-lg-2" style="padding-right: 5px;padding-left: 15px;">
+                                        <apex:inputField value="{!searchCriteriaDesktop.Region__c}" styleClass="bs form-field-style-select" onchange="DrListAF.refreshList()" />
+                                    </div>
+
+                                    <apex:outputPanel id="searchApexPanel" layout="block">
+                                        <div class="bs col-sm-2 col-md-2 col-lg-2 disPanel" style="padding: 0px 5px;">
+                                            <apex:inputField id="districtList_mb" styleClass="bs form-field-style-select" value="{!searchCriteriaDesktop.District__c}" />
+                                        </div>
+                                    </apex:outputPanel>
+                                    <div class="bs col-sm-6 col-md-6 col-lg-6" style="padding: 0px 15px;">
+                                        <apex:inputText id="address_mb" styleClass="bs form-field-style" value="{!theAddress}" html-placeholder="{!$Label.Search_Address}" />
+                                    </div>
+                                    <div class="bs col-sm-2 col-md-2 col-lg-2" style="padding: 0px 5px">
+                                        <div id="seach-button" onclick="DrListAF.searchKeyWord()" class="bs mobile-version-button onclick-pointer cigna-fg-white cigna-bg-orange-dark desktop-action-btn" style="width: 90%;">
+                                            {!$Label.Doctor_List_Search_Button}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bs row" style="padding: 5px 0px;">
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+
+                <apex:outputPanel id="mapPanel" layout="block">
+                    <div id="mapPanel"  style="{!IF(currentPanel == 'F','display:none;','')}" class="bs {!IF(currentPanel == 'L','','hidden-xs')}">
+                            <apex:outputPanel id="TopPanel" layout="block">
+                                <apex:variable value="{!1}" var="rowNum" />
+                                <div id="ListViewContainer" class="bs col-sm-5 col-md-5 col-xs-12 col-lg-5">
+                                <div id="ListView" class="bs col-sm-12 col-md-12 col-xs-12 col-lg-12" style="padding-right:0px;-webkit-transform: translate3d(0, 0, 0);">
+                                    <div class='bs'>
+                                        <apex:outputPanel layout="block" rendered="{!availableWatsonsList.size == 0}">
+                                            <div style="text-align: center;padding-top: 20px;">
+                                                <p>{!$Label.Doctor_List_No_Record_Found}</p>
+                                            </div>
+                                        </apex:outputPanel>
+                                        <apex:repeat value="{!availableWatsonsList}" var="currentWatsons">
+                                            <div id="clinic-{!currentWatsons.id}">
+                                                <div class="bs onclick-pointer" onclick="Cigna.DrList.openDetail('{!currentWatsons.id}','{!If(lang='en',JSINHTMLENCODE(currentWatsons.Name),JSINHTMLENCODE(currentWatsons.Chinese_Name__c))}','{!TEXT(currentWatsons.Coordinate__Latitude__s)}','{!TEXT(currentWatsons.Coordinate__Longitude__s)}')">
+                                                    <!--<td class='Centre_num'>{!rowNum}</td> -->
+                                                    <span class="mark" style="display:none" />
+                                                    <div class='bs col-sm-12 col-md-12 col-lg-12 col-xs-12 list-content' style="padding: 10px;border-bottom: 1px solid grey;">
+                                                        <div style="font-size: 0.9em;margin-bottom: 5px;">
+                                                            <apex:outputText escape="false" value="{!IF(lang='en',currentWatsons.Name,currentWatsons.Chinese_Name__c)}"/>
+                                                            <!-- <apex:outputPanel>
+                                                            <i class="ci-hk-arrow-31" aria-hidden="true" style="float:right;color: #134688;"></i>
+                                                            </apex:outputPanel> -->
+                                                        </div>
+                                                        <div style="font-size: 0.7em;line-height: 1.5em;">
+                                                            <apex:outputText escape="false" value="{!currentWatsons.Address_Display__c}"/>
+                                                        </div>
+                                                        <div style="font-size: 0.7em;line-height: 1.5em;">
+                                                            {!$Label.Opening_Hours}<br/>
+                                                           <!--  <apex:outputText escape="false" value="{! IF(lang = 'en',currentWatsons.Opening_Hours_en__c,currentWatsons.Opening_Hours_zh__c)}"/> -->
+                                                             <apex:outputText value="{!SUBSTITUTE(SUBSTITUTE(JSENCODE(IF(lang="en",currentWatsons.Opening_Hours_en__c,currentWatsons.Opening_Hours_zh__c)),'\\r\\n','<br/>'),'\\n','<br/>')}" escape="false"/>
+                                                        </div>
+                                                        <!-- <p style="font-size: 0.7em;line-height: 1.5em;color: #E35205">
+                                                            <apex:outputPanel id="VCIntroLabel" style="cursor: pointer;" onclick="Cigna.DrList.toggleVCIntro();event.stopPropagation()">
+                                                                {!$Label.Doctor_List_How_VC_Work}
+                                                            </apex:outputPanel>
+                                                        </p> -->
+
+                                                        <p style="font-size: 0.7em;color: #134688;margin-bottom: 0px;">
+                                                            <apex:outputPanel >
+                                                                <i class="fa fa-circle" aria-hidden="true" />&nbsp;	
+                                                                 {!IF(noUserLocation || !currentWatsons.Coordinate_Available__c,$Label.Doctor_List_Unknown, TEXT(currentWatsons.DistanceToMe__c)&" KM")} &nbsp;&nbsp;
+                                                            </apex:outputPanel>
+                                                            <!-- <apex:outputPanel rendered="{!showMakeAnAppointment&& currentWatsons.BookOnline__c}">
+                                                                <i class="ci-hk-calendar-check" aria-hidden="true" />&nbsp;{!$Label.Doctor_List_Online_Appointment}
+                                                            </apex:outputPanel> -->
+                                                        </p>
+                                                        
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Detail List -->
+                                            
+                                            <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                                        </apex:repeat>
+                                        <!-- Load More -->
+                                        <apex:outputPanel layout="block" rendered="{!renderShowMore}">
+                                            <div class="bs">
+                                                <label id="loadMore-label" class="cigna-fg-white cigna-bg-blue-dark onclick-pointer"  onclick="Cigna.DrList.loadList({!currentpage+1});" style="padding: 5px;margin: 10px;margin-bottom: 20px;">
+                                                {!$Label.Doctor_List_Load_More}
+                                                </label>
+                                                <i id="loadMore-icon" style="display: none;color:#004986;font-size: 1.5em;margin: 10px;" class="bs spinner-icon fa fa-spinner fa-pulse fa-fw"></i>
+                                            </div>
+                                        </apex:outputPanel>
+                                        <!--<apex:outputPanel rendered="{!NOT(isMobile)}">
+	                                        <div id = 'confirm-button' style="display:none;" class="bs col-sm-12 col-md-5 col-xs-12 col-lg-5" rendered = "{!NOT(isMobile)}">
+		                                        <div class="bs col-sm-12" style="padding-top: 20px;padding-bottom: 20px;">
+		                                            <div class="bs col-sm-3 "></div>
+		                                            <div id="submit-btn-mb" style="display: table;" onclick="Cigna.DrList.confirmPickUpLocation();" class="bs col-sm-6 text-center onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn lg-option-btn">
+		                                                <div style="display: table-cell; vertical-align: middle;">
+		                                                        {!$Label.Confirm}
+		                                                </div>
+		                                            </div>
+		                                        </div>
+	                                        	<div class="bs col-sm-2"></div>
+	                                        </div>
+                                    	</apex:outputPanel>-->
+                                    </div>
+                                    <script>
+                                        var isIE = /(MSIE|Trident\/|Edge\/)/i.test(navigator.userAgent);
+                                        if(isIE){
+                                            $('#ListView').css('max-height','360px');
+                                            $('#ListView').css('min-height','360px');
+                                        }
+                                    </script>
+                                </div>
+                                    <div id="confirmBlock" style="display:none;max-height:40px;min-height:40px;" class="bs col-sm-12 col-md-12 col-xs-12 col-lg-12">
+                                        <div id="submit-btn-mb" style="display:table;" onclick="Cigna.DrList.confirmPickUpLocation();" class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3 text-center onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn lg-option-btn">
+                                            <div style="display:table-cell; vertical-align:middle;">
+                                                {!$Label.Confirm}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- <div class="bs col-sm-5 col-md-5 col-xs-12 col-lg-5" style="padding-top: 18px">
+                                    
+                                    <div id="confirm-button" onclick="Cigna.DrList.confirmPickUpLocation();" class="bs onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn" style="width: 100%">
+                                        {!$Label.Confirm}
+                                    </div>
+                                    
+                                </div> -->
+                                <!-- <div id="clinic-detail-panel" style="display:none;" >
+                                </div> -->
+                                <apex:outputPanel rendered="{!isMobile}">
+	                                <div id = 'confirm-button' style="display:none;" class="bs col-sm-5 col-md-5 col-xs-12 col-lg-5">
+	                                    <div class="bs visible-xs cigna-floating-bottom-panel hidden-lg">
+	                                        <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+	                                            <a href="javascript:void(0);" onclick="Cigna.DrList.confirmPickUpLocation();" class="onclick-pointer action-btn cigna-fg-white" role="button">
+	                                                <span class="ci-hk-clip-offcial" aria-hidden="true" style="padding-right:10px;"></span>
+	                                                <br/> {!$Label.Confirm}
+	                                            </a>
+	                                        </div>
+	                                    </div>
+
+	                                </div>
+                            	</apex:outputPanel>
+                                <apex:outputPanel rendered="{!showMap}" >
+
+                                    <script>
+	                                    function initMakers() {
+	                                        if($('#map').is(':visible')){
+	                                            Cigna.DrList.removeMarkers();
+	                                            var bounds = new google.maps.LatLngBounds();
+
+	                                            var myMakerLabel = '';
+	                                            var lang = "{!lang}";
+	                                            if(lang=='en'){
+	                                            	myMakerLabel = Cigna.DrList.myPositon.dummy?"Cigna Hong Kong":"Me";
+	                                            }else{
+	                                            	myMakerLabel = Cigna.DrList.myPositon.dummy?"香港信諾":"我";
+	                                            }
+	                                            var loc = new google.maps.LatLng(Cigna.DrList.myPositon.lat,Cigna.DrList.myPositon.lng);
+
+	                                            //center map
+	                                            Cigna.DrList.map.setCenter(loc);
+
+	                                            //create marker
+	                                            var currentMarker = new google.maps.Marker({
+	                                                position: loc,
+	                                                icon: "{!URLFOR($Resource.MyLocationMarker)}",
+	                                                map: Cigna.DrList.map,
+	                                                title: myMakerLabel
+	                                            });
+
+
+	                                            currentMarker.addListener('click', function() {
+	                                                Cigna.DrList.infowindow.setContent('<div><strong>' + myMakerLabel + '</strong>' + '</div>');
+	                                                Cigna.DrList.infowindow.open(Cigna.DrList.map, this);
+	                                            });
+
+	                                            bounds.extend(loc);
+	                                            Cigna.DrList.markers.push(currentMarker);
+
+	                                            var lats = new Array();
+	                                            var lngs = new Array();
+	                                            //var allNames = new Array();
+	                                            //var markerList = new Array();
+	                                            //Prepare Data
+
+	                                            var WatsonsList = [];
+
+	                                            
+	                                            <apex:repeat value="{!allLat}" var="Lat">
+	                                                lats.push("{!Lat}"); 
+	                                            </apex:repeat> 
+
+	                                            <apex:repeat value="{!allLng}" var="Lng">
+	                                                lngs.push("{!Lng}"); 
+	                                            </apex:repeat>
+
+	                                            <apex:repeat value="{!availableWatsonsList}" var="Watsons">
+	                                                var c = {};
+	                                                c.name = "{!IF(lang='en',JSENCODE(Watsons.Name),JSENCODE(Watsons.Chinese_Name__c))}";
+	                                                //alert("{!Watsons.Chinese_Name__c}");
+	                                                c.hasCoordinate = {!Watsons.Coordinate_Available__c};
+	                                                c.id = "{!Watsons.id}";
+	                                                if(c.hasCoordinate){
+	                                                    WatsonsList.push(c); 
+	                                                }
+	                                            </apex:repeat> 
+	                                            
+	                                           
+	                                            for (var i in lats) {
+	                                                if (!(isNaN(parseFloat(lats[i])) || isNaN(parseFloat(lngs[i])))) {
+
+	                                                    var loc = new google.maps.LatLng(parseFloat(lats[i]), parseFloat(lngs[i]));
+
+	                                                    var marker = new google.maps.Marker({
+	                                                        position: loc,
+	                                                        map: Cigna.DrList.map,
+	                                                        title: String(WatsonsList[i].name)
+	                                                    });
+
+	                                                    google.maps.event.addListener(marker, 'click', (function(marker, i) {
+	                                                        return function() {
+	                                                            
+	                                                            $('.list-content').removeClass('cigna-bg-orange-light');
+	                                                            $('#clinic-' + WatsonsList[i].id + ' .list-content').addClass('cigna-bg-orange-light');
+
+
+	                                                            if( $(window).width() < 768){
+	                                                                $('body').animate({
+	                                                                    scrollTop: $('#clinic-' + WatsonsList[i].id + ' .list-content').offset().top - $('#ListView').offset().top - 100
+	                                                                }, 100);
+	                                                            } else {
+	                                                                $('#ListView').animate({
+	                                                                    scrollTop: $('#clinic-' + WatsonsList[i].id + ' .list-content').offset().top - $('#ListView').offset().top + $('#ListView').scrollTop()
+	                                                                }, 100);
+	                                                            }
+	                                                            
+	                                                            Cigna.DrList.infowindow.setContent('<div><strong>' + WatsonsList[i].name + '</strong>' + '<a href="https://maps.google.com/maps?z=16&amp;q='+parseFloat(lats[i])+','+parseFloat(lngs[i])+'&amp;ll='+parseFloat(lats[i])+','+parseFloat(lngs[i])+'" style="height:200px;width:100px" target="_blank">test google map</a>'+ '</div>');
+	                                                            Cigna.DrList.infowindow.open(Cigna.DrList.map, marker);
+	                                                        }
+	                                                    })(marker, i));
+
+
+	                                                    bounds.extend(loc);
+	                                                    Cigna.DrList.markers.push(marker);
+	                                                }
+
+	                                            }
+
+
+	                                            //auto center
+	                                            Cigna.DrList.map.fitBounds(bounds);
+
+												var $mapDiv = $('#map');
+												console.log('mapDim---'+$mapDiv.height()+'---'+$mapDiv.width());
+												var mapDim = { height: $mapDiv.height(), width: $mapDiv.width() };
+
+												var zoom=getBoundsZoomLevel(bounds,mapDim);
+												console.log('getBoundsZoomLevel---'+zoom);
+
+												google.maps.event.addListenerOnce(Cigna.DrList.map, 'bounds_changed', function(event) {
+													console.log('this.getZoom()---'+this.getZoom());
+													this.setZoom(zoom);
+												});
+
+												//auto set zoom
+												function getBoundsZoomLevel(bounds, mapDim) {
+													var WORLD_DIM = { height: 256, width: 256 };
+													var ZOOM_MAX = 21;
+
+													function latRad(lat) {
+														var sin = Math.sin(lat * Math.PI / 180);
+														var radX2 = Math.log((1 + sin) / (1 - sin)) / 2;
+														return Math.max(Math.min(radX2, Math.PI), -Math.PI) / 2;
+													}
+
+													function zoom(mapPx, worldPx, fraction) {
+														return Math.floor(Math.log(mapPx / worldPx / fraction) / Math.LN2);
+													}
+
+													var ne = bounds.getNorthEast();
+													var sw = bounds.getSouthWest();
+
+													var latFraction = (latRad(ne.lat()) - latRad(sw.lat())) / Math.PI;
+
+													var lngDiff = ne.lng() - sw.lng();
+													console.log('lngDiff---'+lngDiff);
+													var lngFraction = ((lngDiff < 0) ? (lngDiff + 360) : lngDiff) / 360;
+
+													var latZoom = zoom(mapDim.height, WORLD_DIM.height, latFraction);
+													var lngZoom = zoom(mapDim.width, WORLD_DIM.width, lngFraction);
+
+													return Math.min(latZoom, lngZoom, ZOOM_MAX);
+												}
+	                                            // google.maps.event.addListenerOnce(Cigna.DrList.map, 'bounds_changed', function(event) {
+												//   if (this.getZoom() > 15) {
+												//     this.setZoom(15);
+												//   }
+												// });
+												///Cigna.DrList.map.panToBounds(bounds);
+	                                        }
+	                                    }
+
+	                                    if({!hideVCMap}){
+	                                        $('#map-wrapper').hide();
+	                                        $('#ListView').css('width','100%');
+	                                        if ($(window).width() < 768) {
+	                                            $('#list-back').css("top", "210px");
+	                                            $('#ListView').css("padding-top", "180px");
+	                                            $('.header-bar').css("position", "fixed");
+	                                            $('.header-bar').css("width", "100%");
+	                                            $('.header-bar').css("z-index", "7");
+	                                        }
+	                                        /*Cigna.DrList.finishSubmission();*/
+	                                    } else {
+	                                        $('#map-wrapper').show();
+	                                        initMakers();
+	                                        /*Cigna.DrList.finishSubmission();*/
+	                                    }
+
+                                    </script>
+                                    
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                             <script>
+                             	Cigna.DrList.finishSubmission();
+                             </script>
+                            <div id="map-wrapper" class="bs col-sm-7 col-md-7 col-xs-12 col-lg-7" style="display: none;">
+                                <div id="map"></div>
+                            </div>
+                    </div>
+                </apex:outputPanel>
+            </div>
+        </div>
+    </apex:form>
+</apex:page>

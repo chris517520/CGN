@@ -1,0 +1,435 @@
+<apex:page showHeader="false" applyHtmlTag="false" renderAs="PDF" cache="true" controller="PolicyChangeAPPFormPDFExportCTRL">
+    <head>
+        <style >
+            @page {
+                padding-top: 90px;
+                margin-bottom: 90px;
+                
+                @top-center {
+                    content: element(header);
+                }
+                
+                @bottom-left {
+                    content: element(footer);
+                }
+            }
+            div.header {
+                font-size: 8pt;
+                display: block;
+                padding-top: 30px;
+                text-align: left;
+                position: running(header);
+                font-family: Arial Unicode MS;
+                //color:  #d3d3d3;
+                
+            }
+            div.footer {
+                
+                text-align: center;
+                padding: 0px;
+                font-size: 8pt;
+                font-family: Arial Unicode MS;
+                position: running(footer);
+            }
+            div.content{
+                font-family: Arial Unicode MS;
+                font-size: 8pt;
+                fill-opacity:.5; 
+                stroke:black; 
+                stroke-width:2;
+                /** does not work **/
+                word-wrap: break-word;
+                word-break: break-all;
+                /** does not work end **/
+            }
+            .pagenumber:before {
+                content: counter(page);
+            }
+            .pagecount:before {
+                content: counter(pages);
+            }
+            tr {
+                height:30px;
+            }
+            
+            .rTable { 
+                display: table; 
+                width: 100%;
+                float: left;
+                margin-bottom: -1px;
+            }
+            .rTableRow { 
+                display: table-row;
+                border: 1px solid black;
+                border-top: 0px;
+            }
+            .rTableRow_title { 
+                display: table-row; 
+                background-color: rgb(24, 140, 204);
+                color:white;
+            }
+            
+            .rTableCell_header { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border: 1px solid black;
+                padding:10px;
+            }
+            
+            .rTableCell_title { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border-right: 1px solid black;
+                padding:10px;
+                width: 35%;
+                font-weight: bold;
+                vertical-align: top;
+                border-width: 0px 1px 1px 1px;
+                border-style: solid;
+                border-color: black;
+            }
+            
+            .rTableCell { 
+                display: table-cell; 
+                border-collapse: collapse;
+                padding:10px;
+                border-style: solid;
+                border-width: 0px 1px 1px 0px;
+                width: 65%;
+                vertical-align: middle;
+            }
+            .sourceOptionsDiv *{
+                vertical-align: middle;
+            }
+            
+            .beneficiary_table{
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .beneficiary_table th{
+                width: 25%;
+            }
+            .beneficiary_table th, .beneficiary_table td{
+                border: 1px solid black;
+                border-collapse: collapse;
+                padding: 10px;
+                display: table-cell;
+            }
+            
+            
+        </style>
+    </head>
+    <div class="header">
+        <div style="width:720px;">
+            <div style="width: 100%; float:left;">
+                <div style="width: 60%; float:left;">
+                    <apex:outputText value="Private & Confidential 私人及機密"></apex:outputText> 
+                </div>
+                <div style="width: 40%; float:left;">
+                    <div style="width: 40%; float:left;">
+                        <apex:image url="{!$Resource.Icon_For_Form}" width="60px" /> 
+                    </div>
+                    <div style="width: 60%; float:left;">
+                        <apex:outputText escape="false" value="{!$Label.Cigna_Address_en_2_line}"/><br/><br/>
+                        Tel: 2560 1990 <apex:outputText value=" Fax: 2560 3605" rendered="{!request.IsGerneralPolicy__c}"/> <br/>
+                        www.cigna.com.hk
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <div style="width:720px;">
+            <div style="float:right;"  >
+                <apex:outputText ><span class="pagenumber"/> / <span class="pagecount"/></apex:outputText>
+            </div>
+        </div>
+    </div>
+    <div class="content">
+        <div style="width:720px;">
+            
+            <!-- page content -->
+            <div style="width:98%">
+                <div style="width:100%; float: left;">
+                    <div style="float:right; ">
+                        Ref. 參考:<apex:outputText value="&nbsp; &nbsp; &nbsp; &nbsp; " style="text-decoration: underline;" escape="false" />(for office use內部專用)  
+                    </div>
+                </div>
+                
+                <apex:outputPanel rendered="{!request.Automatic_Premium_Payment_Action__c == 'Apply'}">
+                    <div style="width:100%; float: left; font-size: 16px;">
+                        Policy Change Form – Automatic Premium Payment  
+                    </div>
+                    <div style="width:100%; float: left; font-size: 16px;">
+                        保單更改–自動以基金供款
+                    </div>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!request.Automatic_Premium_Payment_Action__c == 'Cancel'}">
+                    <div style="width:100%; float: left; font-size: 16px;">
+                        Policy Change Form – Cancel Automatic Premium Payment  
+                    </div>
+                    <div style="width:100%; float: left; font-size: 16px;">
+                        保單更改–取消自動以基金供款
+                    </div>
+                </apex:outputPanel>
+                
+                <div style="width:100%; float: left; padding-top: 10px; padding-bottom: 10px;" class="sourceOptionsDiv">
+                    <div style="width:10%; float: left; ">
+                        <apex:outputText value="Source  " />
+                        <apex:outputText value="來源：  " />
+                    </div>
+                    <div style="width:20%; float: left;">
+                        <apex:image url="{!IF(sitePrefix == '/customer',$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12" style="margin:0px 5px;"/>
+                        <apex:outputText style="width: 100px;" value="Customer Portal      " />
+                        <apex:outputText style="width: 100px;" value="客戶      " />
+                    </div>
+                    <div style="width:20%; float: left;">
+                        <apex:image url="{!IF(sitePrefix == '/broker',$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12" style="margin:0px 5px;"/>
+                        <apex:outputText style="width: 100px;" value="Broker Portal      " />
+                        <apex:outputText style="width: 100px;" value="經紀      " />
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            Personal Particulars<br/>
+                            個人資料
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Submission Date<br/>
+                            申請日期<br/>
+                            (YYYY/MM/DD)
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{0,date, yyyy/MM/dd}">
+                                <apex:param value="{!TODAY()}" />
+                            </apex:outputText>
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Name of Policy Holder<br/>
+                            保單持有人姓名
+                        </div>
+                        <div class="rTableCell">
+                            {!request.Policy_Holder_Name__c}
+                        </div>
+                    </div>
+                    
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Policy No.<br/>
+                            保單編號
+                        </div>
+                        <div class="rTableCell">
+                            {!request.Policy_No__c}
+                        </div>
+                    </div>
+                    <apex:outputPanel rendered="{! sitePrefix == '/broker' }">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Broker Name<br/>
+                                經紀公司
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Broker_Name__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Financial Consultant Name<br/>
+                                財務顧問姓名
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Financial_Consultant_Name__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Financial Consultant Code<br/>
+                                財務顧問編號
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Financial_Consultant_Code__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Financial Consultant Contact No.<br/>
+                                財務顧問聯絡電話                        
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Financial_Consultant_Contact_No__c}
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    
+                </div>
+                
+                <apex:outputPanel rendered="{!(request.Automatic_Premium_Payment_Action__c == 'Apply'|| request.Automatic_Premium_Payment_Action__c == 'Apply until further notice')}">
+                    <div class="rTable" >
+                        <div class="rTableRow_title" >
+                            <div class="rTableCell_header">
+                                Apply for Automatic Premium Payment<br/>
+                                申請自動以基金供款 
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rTable" >
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Policy No.<br/>
+                                保單編號
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Policy_No__c}
+                            </div>
+                        </div>
+                        <apex:outputPanel rendered="{!request.Automatic_Premium_Payment_Action__c == 'Apply'}">
+                            <div class="rTableRow" >
+                                <div class="rTableCell_title">
+                                    Period From<br/>
+                                    開始日期
+                                </div>
+                                <div class="rTableCell">
+                                    {!request.Effective_Start_Date_Year__c}/{!request.Effective_Start_Date_Month__c}
+                                </div>
+                            </div>
+                            <div class="rTableRow" >
+                                <div class="rTableCell_title">
+                                    Period To (Inclusive)<br/>
+                                    停止日期 (上述日期包括在內)
+                                </div>
+                                <div class="rTableCell">
+                                    {!request.Effective_End_Date_Year__c}/{!request.Effective_End_Date_Month__c}
+                                </div>
+                            </div>
+                        </apex:outputpanel>
+                        <apex:outputPanel rendered="{!request.Automatic_Premium_Payment_Action__c == 'Apply until further notice'}">
+                            <div class="rTableRow" >
+                                <div class="rTableCell_title">
+                                    Period From<br/>
+                                    開始日期
+                                </div>
+                                <div class="rTableCell">
+                                    {!request.Effective_Year__c}/{!request.Effective_Month__c}
+                                </div>
+                            </div>
+                            <div class="rTableRow" >
+                                <div class="rTableCell_title">
+                                    Period To<br/>
+                                    停止日期
+                                </div>
+                                <div class="rTableCell">
+                                    Until further notice<br/>
+                                    申請直至另行通知為止
+                                </div>
+                            </div>
+                        </apex:outputpanel>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Deduction Sequence &amp; Fund Name<br/>
+                                調用次序及基金名稱
+                            </div>
+                            <div class="rTableCell">
+                                <apex:repeat value="{! request.Policy_Change_Request_Details__r}" var="detail">
+                                    {!detail.Sequence__c}. {!detail.Fund_Name__c} {!detail.Fund_Name_Chinese__c}<br/>
+                                </apex:repeat>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </apex:outputPanel>
+                
+                <apex:outputPanel rendered="{!request.Automatic_Premium_Payment_Action__c == 'Cancel'}">
+                    <div class="rTable" >
+                        <div class="rTableRow_title" >
+                            <div class="rTableCell_header">
+                                Cancel for Automatic Premium Payment <br/>
+                                取消自動以基金供款
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rTable" >
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Policy No.<br/>
+                                保單編號
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Policy_No__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Effective Month<br/>
+                                生效日期
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Effective_Year_Cancel__c}/{!request.Effective_Month_Cancel__c}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rTable" >
+                        <div class="rTableRow" >
+                            <!-- tnc -->
+                            <div class="rTableCell_title" style="width:100%;" >
+                                Reminder: Please submit ‘Direct Debit Authorisation Form’ for setting up autopay if needed. You may download it from ‘Useful Form’.<br/>
+                                提示：如果需要設置自動轉帳，請提交‘直接付款授權書‘。您可以從“常用表格”下載。
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                
+                
+                
+                
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            <apex:outputText value="Declaration & Authorization" ></apex:outputText><br/>
+                            聲明及授權
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <!-- tnc -->
+                        <div class="rTableCell_title" style="width:100%;" >
+                            <!--JOBR-184: JOBR-199/226 updated by Kermit at 20221012-->
+                     		<!--<apex:include pageName="DeclarationFormVFP"/>-->
+                     		<c:DeclarationFormComponent isContainGIPolicy="{!request.IsGerneralPolicy__c}" isContainLifePolicy="{!request.IsLifePolicy__c}"/>
+                        </div>
+                    </div>
+                </div>
+                <apex:outputPanel rendered="{! sitePrefix == '/broker' }">
+                    <div class="rTable">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title" >
+                                <div>
+                                Signature<br/>
+                                簽署
+                                </div>
+                            </div>
+                            <div class="rTableCell">
+                                <apex:image url="/servlet/servlet.FileDownload?file={!ph_esignature.id}" width="450px"/>
+                                <br/>
+                                Name of Policy Holder 保單持有人姓名：{!request.Policy_Holder_Name__c} <br/>
+                                Date Signed 簽署日期(YYYY/MM/DD)：
+                                <apex:outputText value="{0,date, yyyy/MM/dd}">
+                                    <apex:param value="{!TODAY()}" />
+                                </apex:outputText>
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+            </div>
+            
+        </div>
+    </div>
+    
+</apex:page>

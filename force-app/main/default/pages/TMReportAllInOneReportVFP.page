@@ -1,0 +1,240 @@
+<apex:page showHeader="true" docType="html-5.0" sidebar="false" controller="TMReportTMAllInOneReportCtrl" ReadOnly="TRUE" id="TMReportTMAllInOneReportVFP" title="TMReportTMAllInOneReport" tabStyle="report">
+
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <style>
+        th{
+            text-align: center;
+        }
+    </style>
+    <script language="javascript" type="text/javascript">
+        function PrintDoc() {
+            $(".s_close").remove();
+            window.print();
+        }
+
+        function ReTabColumn(_this) {
+            $("#tdheji").attr("colspan", parseInt($("#tdheji").attr("colspan") - 1));
+            TabColRemove(_this, false);
+        }
+
+        function TabColRemove(_this, isDellast) {
+            if (isDellast) {
+                $(_this).parent().parent().parent().find("tr td:nth-child(" + ($(_this).parent().index() + 1) + ")").remove();
+            } else {
+                $(_this).parent().parent().parent().find("tr:not(:last-child)").find("td:nth-child(" + ($(_this).parent().index() + 1) + ")").remove();
+            }
+        }
+
+        function HtmlExportToExcel(tableid) {
+            $(".s_close").remove();
+            var filename = 'TM All-In-One Report';
+            if (getExplorer() == 'ie' || getExplorer() == undefined) {
+                HtmlExportToExcelForIE(tableid, filename);
+            }
+            else {
+                HtmlExportToExcelForEntire(tableid, filename)
+            }
+        }
+
+        function HtmlExportToExcelForIE(tableid, filename) {
+            try {
+                var winname = window.open('', '_blank', 'top=10000');
+                var strHTML = document.getElementById(tableid).innerHTML;
+
+                winname.document.open('application/vnd.ms-excel', 'export excel');
+                winname.document.writeln(strHTML);
+                winname.document.execCommand('saveas', '', filename + '.xls');
+                winname.close();
+
+            } catch (e) {
+                alert(e.description);
+            }
+        }
+
+        var HtmlExportToExcelForEntire = (function() {
+            var uri = 'data:application/vnd.ms-excel;base64,',
+            template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>{worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>{table}</table></body></html>',
+            base64 = function(s) { return window.btoa(unescape(encodeURIComponent(s))) },
+            format = function(s, c) { return s.replace(/{(\w+)}/g, function(m, p) { return c[p]; }) }
+            return function(table, name) {
+                if (!table.nodeType) { table = document.getElementById(table); }
+                var ctx = { worksheet: name || 'Worksheet', table: table.innerHTML }
+                document.getElementById("dlink").href = uri + base64(format(template, ctx));
+                document.getElementById("dlink").download = name + ".xls";
+                document.getElementById("dlink").click();
+            }
+        })()
+        function getExplorer() {
+            var explorer = window.navigator.userAgent;
+            //ie 
+            if (explorer.indexOf("MSIE") >= 0) {
+                return 'ie';
+            }
+            //firefox 
+            else if (explorer.indexOf("Firefox") >= 0) {
+                return 'Firefox';
+            }
+            //Chrome
+            else if (explorer.indexOf("Chrome") >= 0) {
+                return 'Chrome';
+            }
+            //Opera
+            else if (explorer.indexOf("Opera") >= 0) {
+                return 'Opera';
+            }
+            //Safari
+            else if (explorer.indexOf("Safari") >= 0) {
+                return 'Safari';
+            }
+        }
+    
+    </script>
+    <a id="dlink" style="display: none;"></a>
+    <br/>
+    <apex:form id="dateRange">
+        <apex:pageBlock title="TM All-In-One Report">
+            Start Date: <apex:inputfield value="{!dateFilter.Start_Date__c}" /> &nbsp; End Date: <apex:inputfield value="{!dateFilter.End_Date__c}" />
+            <br/>
+            <apex:commandButton value="Load Data" action="{!loadData}" />
+            <input type="button" class="btn" value="Export to excel" onclick="javascript:HtmlExportToExcel('PanelExcel')" />
+            <br/><br/>
+        </apex:pageBlock>
+        
+        <div id="PanelExcel" class="padding:10px;margin:10px">
+            <apex:outputPanel >
+                <apex:outputText value="{!$Label.TM_Report_Generation_Date}: "/>&nbsp;  
+                <apex:OutputText value="{0,date,dd/MM/yyyy}" escape="false">
+                    <apex:Param value="{!Now()}"/>
+                </apex:OutputText>
+                <br/><br/>
+            </apex:outputPanel>
+            <br/><br/>
+            
+            <apex:outputPanel id="PerfDataTable" >
+                <table border="1" cellspacing="1" cellpadding="1" style="border-collapse: collapse;text-align:center;"> 
+                    <tr>
+                        <th rowspan="2">prospect_id</th>
+                        <th rowspan="2">spv_id</th>
+                        <th rowspan="2">agent_id</th>
+                        <th rowspan="2">sellerid</th>
+                        <th rowspan="2">seller_name</th>
+                        <th rowspan="2">call_start_time</th>
+                        <th rowspan="2">call_end_time</th>
+                        <th rowspan="2">call_id</th>
+                        <th rowspan="2">call_list_id</th>
+                        <th rowspan="2">remark1</th>
+                        <th rowspan="2">remark2</th>
+                        <th rowspan="2">remark3</th>
+                        <th rowspan="2">remark4</th>
+                        <th rowspan="2">remark5</th>
+                        <th rowspan="2">iq_id</th>
+                        <th rowspan="2">running_no</th>
+                        <th rowspan="2">wa_activity</th>
+                        <th rowspan="2">wa_crt_date</th>
+                        <th rowspan="2">quote_plan1</th>
+                        <th rowspan="2">quote_plan2</th>
+                        <th rowspan="2">quote_plan3</th>
+                        <th rowspan="2">quote_plan4</th>
+                        <th rowspan="2">optout_flag</th>
+                        <th rowspan="2">optout_date</th>
+                        <th rowspan="2">assigndate</th>
+                    </tr>
+                    <tr>
+                    </tr>
+                    <apex:repeat value="{!dataRows}" var="row">
+                        <tr>
+                            <td>{!row.prospect_id}</td>
+                            <td>{!row.spv_id}</td>
+                            <td>{!row.agent_id}</td>
+                            <td>{!row.sellerid}</td>
+                            <td>{!row.seller_name }</td>
+                            <td>{!row.call_start_time}</td>
+                            <td>{!row.call_end_time}</td>
+                            <td>{!row.call_id}</td>
+                            <td>{!row.call_list_id }</td>
+                            <td>{!row.remark1}</td>
+                            <td>{!row.remark2}</td>
+                            <td>{!row.remark3}</td>
+                            <td>{!row.remark4}</td>
+                            <td>{!row.remark5}</td>
+                            <td>{!row.iq_id}</td>
+                            <td>{!row.running_no}</td>
+                            <td>{!row.wa_activity}</td>
+                            <td>{!row.wa_crt_date}</td>
+                            <td>{!row.quote_plan1}</td>
+                            <td>{!row.quote_plan2}</td>
+                            <td>{!row.quote_plan3}</td>
+                            <td>{!row.quote_plan4}</td>
+                            <td>{!row.optout_flag}</td>
+                            <td>{!row.optout_date}</td>
+                            <td>{!row.assigndate }</td>
+                        </tr>     
+                    </apex:repeat>
+                    
+                </table>
+            </apex:outputPanel>
+            
+            <br/><br/>
+            <apex:outputPanel id="PerfDataTable2" >
+                <table border="1" cellspacing="1" cellpadding="1" style="border-collapse: collapse;text-align:center;"> 
+                    <tr>
+                        <th rowspan="2">sponsor_code</th>
+                        <th rowspan="2">partner_name</th>
+                        <th rowspan="2">campaign_id</th>
+                        <th rowspan="2">call_list_id</th>
+                        <th rowspan="2">product_code</th>
+                        <th rowspan="2">product_name</th>
+                        <th rowspan="2">campaign_name</th>
+                        <th rowspan="2">channel_code</th>
+                        <th rowspan="2">ipas_campaign_code</th>
+                        <th rowspan="2">call_list_start_date</th>
+                        <th rowspan="2">call_list_end_date</th>
+                        <th rowspan="2">camp_type</th>
+                        <th rowspan="2">projection_year</th>
+                        <th rowspan="2">projection_month</th>
+                        <th rowspan="2">actual_base</th>
+                        <th rowspan="2">projection_base</th>
+                        <th rowspan="2">projection_contRate</th>
+                        <th rowspan="2">projection_callRate</th>
+                        <th rowspan="2">projection_callRR</th>
+                        <th rowspan="2">projection_TRR</th>
+                        <th rowspan="2">projection_order</th>
+                        <th rowspan="2">projection_AARP</th>
+                        <th rowspan="2">projection_ANP</th>
+                    </tr>
+                    <tr>
+                    </tr>
+                    <apex:repeat value="{!dataRows2}" var="row">
+                        <tr>
+                            <td>{!row.sponsor_code}</td>
+                            <td>{!row.partner_name}</td>
+                            <td>{!row.campaign_id}</td>
+                            <td>{!row.call_list_id}</td>
+                            <td>{!row.product_code}</td>
+                            <td>{!row.product_name}</td>
+                            <td>{!row.campaign_name}</td>
+                            <td>{!row.channel_code}</td>
+                            <td>{!row.ipas_campaign_code }</td>
+                            <td>{!row.call_list_start_date}</td>
+                            <td>{!row.call_list_end_date}</td>
+                            <td>{!row.camp_type }</td>
+                            <td>{!row.projection_year}</td>
+                            <td>{!row.projection_month}</td>
+                            <td>{!row.actual_base}</td>
+                            <td>{!row.projection_base}</td>
+                            <td>{!row.projection_contRate}</td>
+                            <td>{!row.projection_callRate}</td>
+                            <td>{!row.projection_callRR}</td>
+                            <td>{!row.projection_TRR}</td>
+                            <td>{!row.projection_order}</td>
+                            <td>{!row.projection_AARP}</td>
+                            <td>{!row.projection_ANP}</td>
+                        </tr>     
+                    </apex:repeat>
+                    
+                </table>
+            </apex:outputPanel>
+      
+        </div>
+    </apex:form>
+</apex:page>

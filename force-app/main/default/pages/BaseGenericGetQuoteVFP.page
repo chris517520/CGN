@@ -1,0 +1,828 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" title="{!$Label.Get_a_Quote}" controller="GenericGetQuoteCtrl">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    
+        <style>
+            .bs .cigna-quote-question {
+                padding:15px 0 30px 20px;
+                border-bottom: 1px solid #D9D9D6;
+            }
+            .bs .cigna-quote-answer {
+                padding-top:20px;
+            }    
+            .bs input.cigna-question-text {
+                border: 0;
+                border-bottom: 1px solid #58595B;
+                background: transparent;
+                width: 100%;
+                box-shadow: none !important;
+                border-radius: 0;
+                color: #58595B;
+                width: 50px;
+                text-align: left;
+                outline: none;
+                padding: 10px;
+            }
+            .bs input.cigna-question-text:focus {
+                box-shadow: none !important;
+                border-bottom: 1px solid #eac048 !important;
+            }
+        
+            .bs .cigna-quote-summaryTop {
+                width: 100%;
+                min-height: 50px;
+                background: #D9D9D6;
+                color: #58595B;
+                padding: 10px 0px;
+                position: fixed;
+                top: 50px;
+                height: 9999px;
+            }
+            .bs .cigna-quote-summary {
+                width: 100%;
+                min-height: 50px;
+                background: #D9D9D6;
+                color: #58595B;
+                padding: 10px 0px;
+            }
+            @media (min-width: 768px) {
+                .bs .cigna-floating-bottom-panel {
+                    position: relative;
+                }
+            }
+            @media (max-width: 767px) {
+                .bs .cigna-floating-bottom-panel {
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                }
+            }        
+            .bs .cigna-quote-amount {
+                margin: 0 !important;
+                display: table;
+                table-layout: fixed;
+                width: 100%;
+            }
+            .bs .cigna-quote-amount div{
+                font-size: 0.9em;
+                font-weight: bold;
+                vertical-align: text-top;
+            }
+            .bs .cigna-plan-bullet {
+                font-size: 0.9em;
+                line-height: 1.5;
+                padding:0 0 0 17px !important;
+                z-index: -10 !important;
+                border-left:0 !important;
+            }
+            label.error{color: #337ab7;}
+        </style>
+
+        <script>
+            $(document).ready(function(){
+                console.log('getCustomerBasic'+{!AppLinkSubmitted});
+                console.log('getCustomerBasic'+{!AppLinkEnabled});
+                console.log('getCustomerBasic'+{!multipleAdultQuestion.questionType = radioQuestionType});
+                getCustomerBasic();
+        
+                //CR-56_Link_20220214
+                $(window).on("scroll",function(){
+                    
+                    if($(window).scrollTop() > 200 && $(window).width() >= 768){
+                        $('#cigna-quote-summary-desktop').css('top', $(window).scrollTop() - 200);
+                    } else if ($(window).width() >= 768) {
+                        $('#cigna-quote-summary-desktop').css('top', 0);
+                    } else {
+                        $('#cigna-quote-summary-desktop').removeAttr('style');
+                    }
+                });
+                      
+                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal() && navigator.userAgent.toLowerCase().match(/(ipad)/i) !=null) {
+                    // $('body').scroll(function(e){
+                    $('#cigna-quote-summary-desktop').css('position', 'fixed');
+                    if($(window).width()<=768){
+                        $('#cigna-quote-summary-desktop').css('top', $(window).height()/2 - 300);
+                    }else{
+                        $('#cigna-quote-summary-desktop').css('top', $(window).height()/2 - 150);
+                    }
+                    $('#cigna-quote-summary-desktop').css('width', 304);
+                    $('#cigna-quote-summary-desktop').css('left', $(window).width()/2+($(window).width()/2-304)-20);
+                    
+                    //});
+                    
+                    $('body').on("orientationchange",function(){
+                        if($(window).width()<=768){
+                            $('#cigna-quote-summary-desktop').css('position', 'fixed');
+                            $('#cigna-quote-summary-desktop').css('top', $(window).height()/2 - 300);
+                            $('#cigna-quote-summary-desktop').css('width', 304);
+                            $('#cigna-quote-summary-desktop').css('left', 1024/2+(1024/2-304)-20);
+                            
+                        } else {
+                            $('#cigna-quote-summary-desktop').css('position', 'fixed');
+                            $('#cigna-quote-summary-desktop').css('top', $(window).height()/2 - 150);
+                            $('#cigna-quote-summary-desktop').css('width', 304);
+                            $('#cigna-quote-summary-desktop').css('left', 768/2+(768/2-304)-20);
+                            
+                        }
+                    });
+                    
+                    //CR-56_Link_20220214
+                    $('body').on("scroll",function(){
+                        $('#cigna-quote-summary-desktop').css('position', 'fixed');
+                        if($(window).width()<=768){
+                            $('#cigna-quote-summary-desktop').css('top', $(window).height()/2 - 300);
+                        }else{
+                            $('#cigna-quote-summary-desktop').css('top', $(window).height()/2 - 150);
+                        }
+                        $('#cigna-quote-summary-desktop').css('width', 304);
+                        $('#cigna-quote-summary-desktop').css('left', $(window).width()/2+($(window).width()/2-304)-20);
+                        
+                    });
+                    
+                }
+                
+                
+                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isCustomerPortal()) {
+                    $('html').css('position', 'fixed').css('overflow', 'auto').css('width', '100%').css('height', '100%');
+                    $('body').css('position', 'fixed').css('overflow-x', 'scroll').css('width', '100%').css('height', '100%');
+                }
+                
+                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isCustomerPortal()) {
+                    var result = document.getElementById('resultDiv');
+                    result.style.display='none';
+                }
+                
+                if("{!transactionId}"){
+                    console.log('saved Quote Init');
+                    if("{!txn.Spouse_Discount_Policy__c}"){
+                        checkHasPolicy();
+                    }else{
+                        console.log('start get Quote');
+                        startGetQuote();
+                    }
+                }     
+            });    
+            
+            function clickSave(){
+                console.log('click save');
+        
+                //add by minghua for convoy FNA
+                $('input[type="hidden"][id$="useApplicationId"]').val(false);
+                clickSaveQuotation();
+            }
+            function afterSaved(){
+                console.log('Record Id value:'+$('input[type="hidden"][id$="savePageParam"]').val());
+                Cigna.Util.navigateToVFP("GenericSaveQuoteVFP?"+$('input[type="hidden"][id$="savePageParam"]').val(), null, null, true);
+            }
+        
+            function preventDefault(event){
+                if(event.preventDefault){
+                    event.preventDefault();
+                }else{
+                    window.event.returnValue=false;
+                    return false;
+                }
+            }
+        
+            function changetoDetail(){
+                console.log('##changetoDetail');
+                ServerQuote.getQuoteDetails();
+        
+                if(Cigna.Util.isIOS() || Cigna.Util.isSalesforce1()){
+                    var is_mobi =navigator.userAgent.toLowerCase().match(/(ipad)/i) != null;
+                    if(is_mobi){}
+                        else{
+                            //$('#resultDiv').addClass('cigna-quote-summaryTop').removeClass('cigna-quote-summary');
+                            if(Cigna.Util.isBrokerPortal()){
+                                $('#resultDivApp').addClass('cigna-quote-summaryTop').removeClass('cigna-quote-summary');
+                            }
+                        }
+                    }
+                }
+                
+                function changetoSummary(){
+                    console.log('##changetoSummary');
+                    ServerQuote.getQuoteSummary();
+                
+                    if(Cigna.Util.isIOS() || Cigna.Util.isSalesforce1()){
+    
+                        var is_mobi =navigator.userAgent.toLowerCase().match(/(ipad)/i) != null;
+                        if(is_mobi){}
+                        else{
+                            $('#resultDiv').addClass('cigna-quote-summary').removeClass('cigna-quote-summaryTop');
+                            $('#resultDiv').innerHTML='';
+                            if(Cigna.Util.isBrokerPortal()){
+                                $('#resultDivApp').addClass('cigna-quote-summary').removeClass('cigna-quote-summaryTop');
+                                $('#resultDivApp').innerHTML='';
+                            }
+                        }                    
+                    }
+                }  
+    
+                function goBack(evt) {
+                    Cigna.Util.navigateToVFP("GetProtectedVFP?pc={!JSINHTMLENCODE(selectedProduct)}&Category={!JSINHTMLENCODE(paramCategory)}", null, null, true);                                  
+                }
+    
+                function validate() {
+                    var questionsAnswered = $("form[id$='form']").validate().form();    
+                    return questionsAnswered;        
+                }
+    
+                var isGetQuoteComplete = false;
+                function startGetQuote(evt) {
+                    console.log("start get quote");
+                    console.log("Validation"+validate());
+                    
+                    if(validate()){
+                        getQuoteAmount();
+                        isGetQuoteComplete = true;
+                    }else if(isGetQuoteComplete){
+                        clearQuoteSammry();
+                        isGetQuoteComplete = false;
+                    }
+                }                
+    
+                function contactMe(){
+                    Cigna.Util.navigateToVFP("ContactMeVFP?plan={!JSINHTMLENCODE(selectedProduct)}", null, null, true);                                
+                } 
+    
+                //add by minghua for convoy FNA
+                function confirmDel(choice) {
+                    if (choice == 'true') {
+                        $('input[type="hidden"][id$="useApplicationId"]').val(true);
+                        redirectToESales();
+                    }else{
+                        $('input[type="hidden"][id$="useApplicationId"]').val(false);
+                        redirectToESales();
+                    }
+                    document.getElementById('overlayFNA').style.display = "none";
+                    document.getElementById('delConfirmBox').style.display = "none";
+                }
+    
+                //add by minghua for convoy FNA
+                function delChange() {
+                    var overlay = document.getElementById('overlayFNA');
+                    var delConfirmBox = document.getElementById('delConfirmBox');
+                    overlay.style.opacity = .95;
+                    if (overlay.style.display == "block") {
+                        overlay.style.display = "none";
+                        delConfirmBox.style.display = "none";
+                    } else {
+                        overlay.style.display = "block";
+                        delConfirmBox.style.display = "block";
+                    }
+                }
+    
+                function buyNow() {
+                    console.log('buyNow'+validate());
+                    var personNum=$('input[type="hidden"][id$="person-number"]').val();
+                    if (validate()&&parseInt(personNum)>0) {
+                        //add by minghua for convoy FNA
+                        var checkFNApopup = $('input[type="hidden"][id$="checkFNApopup"]').val();
+                        if (checkFNApopup == 'true') {
+                            delChange();
+                        }else{
+                            redirectToESales();
+                        }
+                    } else {
+                        if ($(".error:visible").length > 0) {
+                            $('html, body').animate({
+                                scrollTop: $(".error:visible").first().parent().parent().offset().top - 50
+                            }, 400);
+                        } else if ($('#quote-question-num-kids').is(':visible')) {
+                            $('html, body').animate({
+                                scrollTop: $("#quote-question-num-kids").first().parent().parent().offset().top - 50
+                            }, 400);
+                        }
+                    }
+                }
+    
+                function openESalesPage() {
+                        Cigna.Util.navigateToVFP("GenericEsalesVFP?" + $('input[type="hidden"][id$="param-esales"]').val(), null, null, true);
+                }
+    
+                function showNext(parentEle) {
+                    var chooseVal = $(parentEle).val();
+                // console.log($(this));
+                if ('yes' == chooseVal) {
+                    $("[id$='isSelectBroker']").show();
+                    $("#quote-buy-btn-xs").hide();
+                } else {
+                    $("[id$='isSelectBroker']").hide();
+                    // clearBuyNowEnable();
+                    $("#quote-buy-btn-xs").show();
+                }
+            } 
+    
+            function ApplinkSubmit01() {
+                $('[id$="form"]').hide();
+                $('[id$="summary-pannel"]').hide();
+                //summary-pannel
+                $('div[id$="confirmationPage"]').show();
+                AppLinkConfirm();
+            }  
+             
+            function sendEmailQuote() {
+                    var quoteReady = $('input[type="hidden"][id$="getQuoteReady"]').val();
+                    if (validate() && quoteReady) {
+                        ServerQuote.redirectToEmailQuote();
+                    } else {
+                        if ($(".error:visible").length > 0) {
+                            $('html, body').animate({
+                                scrollTop: $(".error:visible").first().parent().parent().offset().top - 50
+                            }, 400);
+                            
+                        } else if ($('#quote-question-num-kids').is(':visible')) {
+                            $('html, body').animate({
+                                scrollTop: $("#quote-question-num-kids").first().parent().parent().offset().top - 50
+                            }, 400);
+                        }
+                    }
+    
+            }
+                
+            function redirectToSendEmail(){
+                Cigna.Util.navigateToVFP("GenericEmailQuoteVFP?tid=" + $('input[type="hidden"][id$="esales-Id"]').val() + "&plan={!selectedProduct}", null, null, true);
+            }
+        </script>
+    </head>
+
+    <apex:define name="additionalLibraries">
+        <!--additional css, bootstrap, jquery,js libraries-->
+        <!-- CR-56_Link_20220214 -->
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+        <apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+        </apex:outputPanel>
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    </apex:define>
+
+    <apex:form id="form">
+        <!-- Back Button -->
+        <apex:outputPanel layout="block" styleClass="bs row" id="quote-back-btn-div">
+            <div class="bs col-xs-12">
+              <p><a id="quote-back-btn" class="bs cigna-fg-orange-medium onclick-pointer" onclick="goBack();"><i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a></p>
+            </div>
+        </apex:outputPanel>
+        <!-- add bob 20210107 CM User -->
+        <apex:outputPanel id="errorMessage">
+            <apex:pagemessages />
+        </apex:outputPanel>
+        <!-- end -->
+        <!-- Person Detail Panel -->
+        <apex:outputPanel id="initPersonDetailPanel">
+            <apex:outputPanel layout="block" styleClass="bs row" id="personDetailPanel" style="width:500px;" rendered="{!no_of_AppLink ==0 && isCustomerPortal}">
+                <div class="bs col-xs-12 cigna-fg-green-medium">
+                    <h4>{!$Label.QUOTATION_FOR}</h4>
+                </div>
+                <div class="bs col-xs-12 cigna-fg-gray-dark">
+                    <h3>
+                        <apex:outputText value="{0} ({1}, {2})" rendered="{!!showPHfullName}">
+                            <apex:param value="{!PHfirstName & ' ' & PHlastName}" />
+                            <apex:param value="{!IF($Label.Header_Language_Code == 'zh_TW',IF(PHgender =='Male','Male','Female'),IF(PHgender =='Male','男性','女性'))}" />
+                            <apex:param value="{!PHage}" />
+                        </apex:outputText>
+                        
+                        <apex:outputText value="{0} ({1}, {2})" rendered="{!showPHfullName}">
+                            <apex:param value="{!PHfullName}"/>                            
+                            <apex:param value="{!IF($Label.Header_Language_Code == 'zh_TW',IF(PHgender =='Male','Male','Female'),IF(PHgender =='Male','男性','女性'))}" />
+                            <apex:param value="{!PHage}" />
+                        </apex:outputText>
+                    
+                    </h3>
+                </div>
+            </apex:outputPanel>  
+        </apex:outputPanel>
+
+        <!-- Question List -->
+        <div class="bs col-xs-12 col-sm-6 col-lg-7">
+            <!-- Please default all action functions here -->
+            <apex:actionFunction action="{!getQuoteDetails}" namespace="ServerQuote" name="getQuoteDetails" reRender="resultPanel,summary-pannel-app" />
+            <apex:actionFunction action="{!getQuoteSummary}" namespace="ServerQuote" name="getQuoteSummary" reRender="resultPanel,summary-pannel-app" />
+            <apex:actionFunction action="{!clearBuyNowEnable}" name="clearBuyNowEnable" reRender="summary-pannel"/>
+            <apex:actionFunction action="{!AppLinkConfirm}" name="AppLinkConfirm" reRender="errorMessage"/>
+            <apex:actionFunction action="{!changeAdultList}" name="changeAdultList" reRender="form,validation-Panel" oncomplete="startGetQuote();" status="loader-icon"/>
+            <apex:actionFunction action="{!changeAdultListForRadio}" name="changeAdultListForRadio" reRender="form,validation-Panel" oncomplete="startGetQuote();" status="loader-icon"/>
+            <apex:actionFunction action="{!changeChildrenList}" name="changeChildrenList" reRender="form,validation-Panel" oncomplete="startGetQuote();" status="loader-icon"/>
+            <apex:actionFunction action="{!regenerate}" name="regenerate" reRender="form,validation-Panel" oncomplete="startGetQuote();" status="loader-icon"/>
+            <apex:actionFunction name="refreshPlanLevelQuestion" reRender="form,validation-Panel" oncomplete="startGetQuote();" status="loader-icon"/>
+            <apex:actionFunction action="{!getCustomerBasic}" name="getCustomerBasic"  status="loader-icon"  reRender="personDetailPanel" oncomplete="initAppLink()"/> 
+            <apex:actionFunction action="{!checkHasPolicy}" name="checkHasPolicy" reRender="checkPolicyMessage" status="loader-icon" oncomplete="startGetQuote();" />  
+            <apex:actionFunction action="{!checkApplicantInfo}" name="checkApplicantInfo" reRender="check-Exited-Customer-Panel" status="loader-icon" />  
+            <apex:actionFunction action="{!getQuoteAmount}" name="getQuoteAmount" reRender="resultPanel,summary-pannel-app,DiscountInfoPanel,isApplinkisCus" status="loader-icon"/>
+            <apex:actionFunction action="{!clearQuoteSammry}" name="clearQuoteSammry" reRender="resultPanel" status="loader-icon"/>
+            <apex:actionFunction action="{!getAgeQuestionC1}" name="getAgeQuestionC1" status="loader-icon"/>
+            <apex:actionFunction action="{!saveQuotation}" name="clickSaveQuotation" reRender="form,esalesIdPanel" oncomplete="afterSaved()"/>
+            <apex:actionFunction action="{!redirectToESales}" name="redirectToESales" reRender="param-panel" oncomplete="openESalesPage();" status="loader-icon" />
+            <apex:actionFunction action="{!redirectToEmailQuote}" namespace="ServerQuote" name="redirectToEmailQuote" reRender="param-panel,esalesIdPanel" oncomplete="redirectToSendEmail();isPhone();" />
+           
+            <!--Nicole_LEVY-10_20201024
+            <apex:actionFunction name="initAppLink" action="{!initAppLink}" reRender="isApplinkisCus,isApplinkAlreadySubmit,initPersonDetailPanel,multipleQuestion,childrenQuestion,summary-pannel"  status="loader-icon"/>
+            -->
+            <apex:actionFunction name="initAppLink" action="{!initAppLink}" reRender="isApplinkisCus,isApplinkAlreadySubmit,initPersonDetailPanel,multipleQuestion,childrenQuestion"  status="loader-icon"/>
+
+            <apex:outputPanel id="param-panel">
+                <apex:inputHidden value="{!params}" id="param-esales"/>
+                <apex:inputHidden value="{!personNum}" id="person-number"/>
+                <apex:inputHidden value="{!savePageParam}" id="savePageParam"/>    
+            </apex:outputPanel>
+            <apex:outputPanel id="esalesIdPanel">
+                <apex:inputhidden value="{!transactionId}" id="esales-Id" />
+            </apex:outputPanel>
+            <apex:inputhidden value="{!getQuoteReady}" id="getQuoteReady" />
+        
+            <!-- add by minghua for convoy FNA -->
+            <apex:inputHidden id="useApplicationId" value="{!useApplicationId}" />
+            <apex:inputHidden id="checkFNApopup" value="{!checkFNApopup}" />
+            <apex:outputPanel id="delmsgdiv">
+                <div id="overlayFNA" class="overlay" style="display:none;">
+                    <div id="delConfirmBox" class="ConfirmBox">
+                        <div id="delmsg" class="alertmsg">
+                            {!$Label.convoy_FNA_uncompleted_esales}
+                        </div>
+                        <div class="bs col-xs-6 col-sm-6">
+                            <i class="glyphicon glyphicon-ok-sign oksign onclick-pointer" onclick="confirmDel('true')"></i>
+                        </div>
+                        <div class="bs col-xs-6 col-sm-6">
+                            <i class="glyphicon glyphicon-remove-sign cancelsign onclick-pointer" onclick="confirmDel('false')"></i>
+                        </div>
+                    </div>
+                </div>
+            </apex:outputPanel>
+
+            <!-- Discount List -->
+            <!-- Rancho_JOBR318_20230616 - hide discount section in page -->
+            <!-- <apex:outputPanel id="DiscountInfoPanel" styleClass="bs col-xs-12">
+                <apex:outputPanel rendered="{!IF(discountInfoList.size>0,True,False)}">
+                    <div class="bs row"><div class="bs col-xs-9"> {!$Label.You_are_eligible_for_the_following_special_discounts}</div></div>
+                    <div class="bs row"><div class="bs col-xs-8"></div><div class="bs col-xs-4" style="color:#39B54A">{!$Label.First_Year}</div></div>
+                    <apex:repeat value="{!discountInfoList}" var="discount">
+                        <div class="bs row" style="{!if(discount.percentage == '0%', 'display:none;', '')}">
+                          <div class="bs col-xs-8">{!discount.description}</div><div class="bs col-xs-4">{!discount.percentage}</div>
+                        </div>
+                    </apex:repeat>
+                </apex:outputPanel>
+            </apex:outputPanel>  -->
+
+            <!-- Questions to determine the number of PIs -->
+
+            <!-- Questions to determine the number of adults-->
+            <apex:outputPanel id="multipleQuestion" rendered="{!multipleAdultEnabled}" layout="block">            
+                <apex:outputPanel rendered="{!multipleAdultQuestion.questionType = radioQuestionType}">
+                    <c:ESaleRadio idPrefix="{!multipleAdultQuestion.answer}-question-ans-{!multipleAdultQuestion.questionId}" esaleQuestion="{!multipleAdultQuestion}" onchange="changeAdultListForRadio" />
+                </apex:outputPanel>
+
+                <apex:outputPanel rendered="{!no_of_AppLink ==0 && multipleAdultQuestion.questionType = checkboxesQuestionType}">
+                    <c:EsaleCheckboxes idPrefix="{!multipleAdultQuestion.answer}-question-ans-{!multipleAdultQuestion.questionId}" esaleQuestion="{!multipleAdultQuestion}" onchange="changeAdultList" />
+                </apex:outputPanel>
+            </apex:outputPanel> 
+            <apex:outputPanel id="childrenQuestion">
+                 <apex:outputPanel rendered="{!if(isCustomerPortal,no_of_AppLink ==0 && childEnabled,childEnabled)}" layout="block">
+                      <c:ESaleRadio idPrefix="{!numberOfChildrenQuestion.answer}-question-ans-{!numberOfChildrenQuestion.questionId}" esaleQuestion="{!numberOfChildrenQuestion}" onchange="changeChildrenList" />
+                 </apex:outputPanel>
+            </apex:outputPanel>
+
+            <!-- Question to check applicant information -->
+            <apex:outputPanel rendered="{!applicantInfoEnabled}" layout="block" id="check-Exited-Customer-Panel">
+                <c:EsaleText idPrefix="question-ans-{!applicantInfoQuestion.questionId}" esaleQuestion="{!applicantInfoQuestion}" hasButton="true" buttonOnClick="checkApplicantInfo" buttonActionMessage="{!checkApplicantMessage}" buttonActionResult="{!checkApplicantResult}"/>
+            </apex:outputPanel>
+            
+            <!-- Questions for 1 Adult -->
+            <apex:outputPanel rendered="{! (ask1AdultGender || ask2AdultsGender) && !isCustomerPortal}" layout="block"> 
+                <c:ESaleDropDown idPrefix="question-ans-{!genderQuestionAd1.questionId}" esaleQuestion="{!genderQuestionAd1}" onchange="startGetQuote"/>
+                <c:ESaleField idPrefix="question-ans-{!ageQuestionAd1.questionId}" esaleQuestion="{!ageQuestionAd1}" />
+                <c:ESaleRadio idPrefix="question-ans-{!SmokerQuestionAd1.questionId}" esaleQuestion="{!SmokerQuestionAd1}" onchange="startGetQuote"/>
+                <c:ESaleRadio idPrefix="question-ans-{!ApplicantQuestionAd1.questionId}" esaleQuestion="{!ApplicantQuestionAd1}" onchange="startGetQuote"/>
+            </apex:outputPanel>
+
+            <!-- Questions for 2 Adults -->
+            <apex:outputPanel rendered="{!ask2AdultsGender && !isCustomerPortal}" layout="block"> 
+                <c:ESaleDropDown idPrefix="question-ans-{!genderQuestionAd2.questionId}" esaleQuestion="{!genderQuestionAd2}" onchange="startGetQuote"/>
+                <c:ESaleField idPrefix="question-ans-{!ageQuestionAd2.questionId}" esaleQuestion="{!ageQuestionAd2}" /> 
+                <c:ESaleRadio idPrefix="question-ans-{!SmokerQuestionAd2.questionId}" esaleQuestion="{!SmokerQuestionAd2}" onchange="startGetQuote"/>
+            </apex:outputPanel>
+
+            <apex:outputPanel rendered="{!askChild1DOB && !isCustomerPortal}" layout="block">
+                <c:ESaleField idPrefix="question-ans-{!ageQuestionC1.questionId}" esaleQuestion="{!ageQuestionC1}" onchange="startGetQuote"/>
+            </apex:outputPanel>
+
+            <apex:outputPanel rendered="{!askChild2DOB && !isCustomerPortal}" layout="block">
+                <c:ESaleField idPrefix="question-ans-{!ageQuestionC2.questionId}" esaleQuestion="{!ageQuestionC2}" onchange="startGetQuote"/>
+            </apex:outputPanel>
+
+            <apex:outputPanel rendered="{!askChild3DOB && !isCustomerPortal}" layout="block">
+                <c:ESaleField idPrefix="question-ans-{!ageQuestionC3.questionId}" esaleQuestion="{!ageQuestionC3}" onchange="startGetQuote"/>
+            </apex:outputPanel>
+
+            <!-- Questions for PI's basic information -->
+            <apex:outputPanel rendered="{!askSmokerPH && isCustomerPortal}" layout="block">
+                <c:ESaleRadio idPrefix="question-ans-{!smokeQuestionPh.questionId}" esaleQuestion="{!smokeQuestionPH}" onchange="startGetQuote"/>
+            </apex:outputPanel>
+
+            <apex:outputPanel rendered="{!askSpouseDOB && isCustomerPortal}" layout="block">
+                <c:ESaleDate idPrefix="question-ans-{!birthdayQuestionSP.questionId}" esaleQuestion="{!birthdayQuestionSP}" onchange="startGetQuote" isFromQuotation="true"/>
+            </apex:outputPanel>
+            
+            <apex:outputPanel rendered="{!askSmokerSP && isCustomerPortal}" layout="block">
+                <c:ESaleRadio idPrefix="question-ans-{!smokeQuestionSP.questionId}" esaleQuestion="{!smokeQuestionSP}" onchange="startGetQuote"/>
+            </apex:outputPanel>
+            
+            <apex:outputPanel rendered="{!askChild1DOB && isCustomerPortal}" layout="block">
+                <c:ESaleDate idPrefix="question-ans-{!birthdayQuestionCH1.questionId}" esaleQuestion="{!birthdayQuestionCH1}" onchange="startGetQuote" isFromQuotation="true"/>
+            </apex:outputPanel>
+            
+            <apex:outputPanel rendered="{!askChild2DOB && isCustomerPortal}" layout="block">
+                <c:ESaleDate idPrefix="question-ans-{!birthdayQuestionCH2.questionId}" esaleQuestion="{!birthdayQuestionCH2}" onchange="startGetQuote" isFromQuotation="true"/>
+            </apex:outputPanel>
+            
+            <apex:outputPanel rendered="{!askChild3DOB && isCustomerPortal}" layout="block">
+                <c:ESaleDate idPrefix="question-ans-{!birthdayQuestionCH3.questionId}" esaleQuestion="{!birthdayQuestionCH3}" onchange="startGetQuote" isFromQuotation="true"/>
+            </apex:outputPanel>
+            <!-- Questions for PI's basic information End-->
+            
+            <!-- Question to check discount eligible for PI -->
+            <apex:outputPanel rendered="{!discountEligibleEnabled}" layout="block" id="checkPolicyMessage">
+                <c:EsaleText idPrefix="question-ans-{!discountEligibleQuestion.questionId}" esaleQuestion="{!discountEligibleQuestion}" hasButton="true" buttonOnClick="checkHasPolicy" buttonActionMessage="{!checkPolicyNumberMessage}" buttonActionResult="{!displayCheckMessage}"/>
+            </apex:outputPanel>
+            
+            <!-- Question to determine if we select different plan level and Rider per PI -->
+            <apex:outputPanel rendered="{!differentPlanEnabled}" layout="block">
+                <c:ESaleRadio idPrefix="{!differentPlanLevelQuestion.answer}-question-ans-{!differentPlanLevelQuestion.questionId}" esaleQuestion="{!differentPlanLevelQuestion}" onchange="regenerate" />
+            </apex:outputPanel>
+            
+            <apex:repeat rendered="{!IF(questions.size>0,True,False)}" value="{!questions}" var="q">
+                <apex:outputPanel rendered="{!q.questionType = radioQuestionType}">
+                    <c:ESaleRadio idPrefix="question-ans-{!q.questionId}" esaleQuestion="{!q}" onchange="refreshPlanLevelQuestion" hiddenContentShowAction="hiddenContentShowAction" dispalyContentHideAction="dispalyContentHideAction" hasTooltip="true"/>
+                </apex:outputPanel>
+
+                <apex:outputPanel rendered="{!q.questionType = checkboxesQuestionType}">
+                    <c:EsaleCheckboxes idPrefix="question-ans-{!q.questionId}" esaleQuestion="{!q}" onchange="refreshPlanLevelQuestion"/>
+                </apex:outputPanel>
+            </apex:repeat>
+            <apex:outputPanel id="isApplinkisCus">
+                <apex:inputHidden value="{!AppLinkEnabled}" id="AppLinkEnabled" />
+                <apex:outputPanel rendered="{!isApplink && isCustomerPortal && AppLinkEnabled}">
+                    <c:ESaleRadio idPrefix="question-ans-{!FollowedQuestion.questionId}" esaleQuestion="{!FollowedQuestion}" onchange="showNext"/>
+                </apex:outputPanel>
+                <apex:outputPanel id="isSelectBroker" rendered="{!AppLinkEnabled}" style="display: none;">
+                    <c:EsalesApplinkComPany idPrefix="question-ans-{!SelectBrokerQuestion.questionId}" esaleQuestion="{!SelectBrokerQuestion}" AppLinkOrgList="{!AppLinkOrgList}" AppLinkOrgSize="{!AppLinkOrgSize}" selectedOrg="{!selectedOrg}" onchange="ApplinkSubmit01"/>
+                </apex:outputPanel>
+            </apex:outputPanel>
+
+            <div id="web-app-padding" class="bs row" style="padding-bottom: 150px;">
+                <div class="bs col-xs-12"></div>
+            </div>
+        </div>        
+    </apex:form> 
+    <apex:outputPanel id="isApplinkAlreadySubmit">
+        <apex:outputPanel rendered="{!no_of_AppLink!=0 }" layout="block" styleClass="bs cigna-quote-question cigna-fg-gray-dark col-xs-12">
+            <div id="AppLink-Submitted-block" class="bs cigna-answer-wrapper">
+                <p class="bs col-xs-12 col-sm-12"> 
+                    <label for="serviced-by-broker-question-00">{!$Label.AppLink_Application_is_passed_to_Broker_already}</label>
+                </p>
+            </div>
+        </apex:outputPanel>
+    </apex:outputPanel>   
+    <div class="bs content-step col-xs-12 form-field" data-step="2" style="display:none; padding-top:20px !important;" id="confirmationPage"> <!--  display:none; -->
+        <div class="bs col-xs-12 col-sm-10 col-sm-offset-1">
+            <div class="col-xs-12 col-sm-12" style="text-align:center;">
+                <i class="fa fa-check-circle-o content-active" style="padding-top:30px;font-size:68px;" aria-hidden="true"></i>
+            </div>
+            <div style="padding-top:100px;text-align:center;font-size:20px;"> <!-- class="col-xs-12 col-sm-12"  -->
+                <apex:outputText value="{!$Label.AppLink_Thanks_And_Broker_will_reaching}" escape="false" />
+            </div>
+        </div>  
+        <div class="bs col-xs-3 hidden-xs" />
+        <div class="bs col-xs-12 ">
+            <div style="padding:20px;"></div>
+            <!--desktop action button-->
+            <div id="confirmbtnsm" class="bs hidden-xs col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="Cigna.Util.navigateToVFP('GetProtectedVFP', null, null, true);">
+                {!$Label.Back}
+    
+    
+            </div>
+
+            <!--mobile action button-->    
+            <div id="mobile-app-padding" class="bs row" style="display:none; padding-bottom:100px;">
+                <div class="bs col-xs-12"></div>
+            </div>
+    
+        </div>
+    </div>    
+    <!-- Quote Result Table -->
+    <apex:outputPanel id="summary-pannel">
+        <apex:outputPanel rendered="{!if(isCustomerPortal,no_of_AppLink ==0,true)}">
+            <div class="bs col-sm-6 col-lg-5  {!isBuyNowEnable}" id="Quote-Result-Table">
+                <div id="cigna-quote-summary-desktop" class="bs cigna-floating-bottom-panel">
+                	<!-- Owen_JOBR354_20231218 - hide discounted in broker -->
+                    <c:EsalesQuotationSummary QuoteTable="{!quoteTable}" productName="{!productName}" showSummary="{!showSummary}" showDetail="{!showDetail}" buyNowAction="buyNow" isCustomerPortal="{!isCustomerPortal}" contactMeAction="contactMe"
+                       isBuyNowEnable="{!isBuyNowEnable}" saveAction="clickSave" idPrefix="base" emailQuoteAction="sendEmailQuote" haveDiscount="{!displayDiscount}"/>
+                </div>
+            </div>
+        </apex:outputPanel>    
+    </apex:outputPanel>                       
+    <div id="web-app-padding" class="bs row" style="padding-bottom: 220px;">
+                <div class="bs col-xs-12"></div>
+            </div>
+        <div id="mobile-app-padding" class="bs row" style="display: none; padding-bottom: 220px;">
+            <div class="bs col-xs-12"></div>
+        </div>
+        <script>
+            if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                $('#action-bar').css('position', 'absolute');
+                if(navigator.userAgent.toLowerCase().match(/(ipad)/i)==null){
+                    $('#mobile-app-padding').css('display', 'block');
+                }
+            }
+            if (Cigna.Util.isSalesforce1() || !Cigna.Util.isCustomerPortal()) {
+                $('#esales-extra-padding').css('display', 'none');
+            }
+            //Ray's Update - Start
+            
+            if (Cigna.Util.isIOS() && Cigna.Util.isCustomerPortal() && $(window).width() < 768) {
+                //CR-56_Link_20220214
+                $('.bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select').on("focus",function(evt){
+                    console.log('Input focus');
+                    if ($('#cigna-quote-summary-desktop').is(':visible')) {
+                    console.log('Input focus 1');
+                        $('#cigna-quote-summary-desktop').addClass('hidden-xs').removeClass('visible-xs');
+                    }
+                });
+                    
+                $('.bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select').on("blur",function(evt){
+                 console.log('Input blur');
+                    if ($('#cigna-quote-summary-desktop').hasClass('hidden-xs')) {
+                    console.log('Input blur 1');
+                        $('#cigna-quote-summary-desktop').addClass('visible-xs').removeClass('hidden-xs');
+                    }
+                });
+                  
+            }
+            
+            //Ray's Update - End
+    
+        </script>
+        <!-- Validation panel -->
+        <apex:outputPanel id="validation-Panel">
+        <script>
+            function hiddenContentShowAction(Id){
+                $('#'+Id).addClass('hidden');
+                $('#'+Id.replace('show','hide')).removeClass('hidden');
+                $('#'+Id.replace('show','content')).css("display","block");
+            }
+        
+        
+            function dispalyContentHideAction(Id){
+                $('#'+Id).addClass('hidden');
+                $('#'+Id.replace('hide','show')).removeClass('hidden');
+                $('#'+Id.replace('hide','content')).css("display","none");
+            }
+            function birthValidationRule(resour){
+                console.log('Birthdate validation');
+                var parent =  resour.parentNode;    
+                var parentId =  parent.getAttribute("id");
+                console.log('parentId '+parentId );   
+        
+                var year =  $("input[id*='"+parentId+"-DOB-Year']").val();
+                var month =  $("input[id*='"+parentId +"-DOB-Month']").val();
+                var day =  $("input[id*='"+parentId +"-DOB-Day']").val();
+        
+                if(day!='' && month!='' && year!='' ){
+                    if(day==0 || day>31){ return false; }
+        
+                    if(month==2){
+                        if(day>29) return false;
+                        if(day == 29){
+                            console.log('Feb'+year%4);
+                            if(year%4!=0) return false;
+                        }
+                    }
+        
+                    if(month==4 || month==6 || month==9 || month==11){ if(day>30) return false; }
+                    if(month==0 || month>12){ return false; }
+        
+                    var adate=new Date(year,month-1,day);   
+                    var thedate=new Date();                    
+                    var nowYear=thedate.getFullYear();
+                    var nowMonth=thedate.getMonth()+1;
+                    var nowday=thedate.getDate();
+        
+                    if(year<1900 || year>nowYear){ return false; }
+        
+                    var minDays = 0;
+                    var minYear = 0;
+                    var maxDays = 0;
+                    var maxYear = 0;                    
+        
+                    if(typeof $("[id$='"+parentId+"-minAge']").val() != undefined && $("[id$='"+parentId+"-minAge']").val()!=null){
+                        if($("[id$='"+parentId+"-minAge']").val().indexOf(",") >= 0){
+                            var ageList = $("[id$='"+parentId+"-minAge']").val().split(',');
+                            if(ageList[0].indexOf("year")>=0 && ageList[0].indexOf("-")){
+                                minYear = ageList[0].split('_')[1];
+                            }
+                            if(ageList[1].indexOf("day")>=0 && ageList[1].indexOf("-")){
+                                minDays = ageList[1].split('_')[1];
+                            }
+                        }
+                    } 
+                    console.log(parentId + ' minYear '+minYear + ' minDays '+ minDays );
+        
+                    if(typeof $("[id$='"+parentId+"-maxAge']").val() != undefined && $("[id$='"+parentId+"-maxAge']").val()!=null){
+                        if($("[id$='"+parentId+"-maxAge']").val().indexOf(",") >= 0){
+                            var ageList = $("[id$='"+parentId+"-maxAge']").val().split(',');
+                            if(ageList[0].indexOf("year")>=0 && ageList[0].indexOf("-")){
+                                maxYear = ageList[0].split('_')[1];
+                            }
+                            if(ageList[1].indexOf("day")>=0 && ageList[1].indexOf("-")){
+                                maxDays = ageList[1].split('_')[1];
+                            }
+                        }
+                    } 
+                    console.log(parentId + ' maxYear '+maxYear + ' maxDays '+ maxDays );
+        
+                    var age=nowYear-year;                    
+                    if(nowMonth<=month){
+                        if(nowMonth==month){
+                            if(nowday<day){
+                                age--;                                
+                            }
+                        }else{
+                            age--;
+                        }
+                    }
+                    
+                    if(age<0) return false;
+                    
+                    var days = 0;
+                    if(age==0){                 
+                        days = (thedate - adate)/(1000 * 24 * 60 * 60);
+                    }
+                    console.log(parentId + ' age '+ age + ' days '+ days );
+        
+                    if(maxYear>0){
+                        if(age > maxYear){ return false; }
+                    }else if(maxDays>0){
+                        if(days > maxDays){ return false; }
+                    }
+        
+                    if(minYear>0){
+                        if(age < minYear){ return false;}
+                    }else if(minDays>0){
+                        if(age==0){
+                            if(days < minDays){ return false;}
+                        }else{
+                            return true;
+                        }
+                    }
+        
+                }                                                     
+                return true;
+            }
+        
+            jQuery.extend(jQuery.validator.messages, {
+                required: "{!$Label.ESales_Required_Field_Error_Message}"
+            });  
+        
+            jQuery.validator.addMethod("validateDOB", function(value, element) {
+               return birthValidationRule(element);
+           }, "{!$Label.ESales_Invalid_DOB}");     
+        
+            $("form[id$='form']").validate({
+                ignore: ':not(.answer-validation)'                 
+            }); 
+        
+            $(".answer-validation").each(function(idx, elem){
+                $(elem).rules("add", {
+                    required:true
+                });
+            });
+        
+            $(".birthdate-checking").each(function(idx, elem){
+                $(elem).rules("add", {
+                    validateDOB:true
+                });
+            });
+             $("input[class*=-input-field]").each(function(idx, elem){
+                var parent =  elem.parentNode;    
+                var parentId =  parent.getAttribute("id");
+                var minVaule = $("input[id*='"+parentId+"-minAge']").val();
+                var maxVaule = $("input[id*='"+parentId+"-maxAge']").val();
+                if((typeof(minVaule) != undefined && minVaule!=null)&&(typeof(maxVaule) != undefined && maxVaule!=null)){
+                    console.log(minVaule+maxVaule);
+                    $(elem).rules("add", {
+                        required: true,
+                        digits : true,
+                        number: true,
+                        min:parseInt(minVaule),
+                        max:parseInt(maxVaule)
+                        });
+                }
+                        
+            }); 
+        
+        </script>
+    </apex:outputPanel>
+</apex:page>

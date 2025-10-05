@@ -1,0 +1,63 @@
+<apex:page id="TMUnreadUWComments" Controller="TMUnreadUWCommentsCtrl" title="Unread UW Comments" action="{!getPolicies}" showHeader="false" sidebar="false">
+  
+  <apex:includeScript value="/support/console/40.0/integration.js" /> 
+  <apex:include pageName="CignaUtilJS" />
+  <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script> 
+  <style>
+    .header-title{
+        font-weight: bold;
+        padding-left:8px;
+    }
+  </style>
+  <script>
+     
+      function toPolicyDetailPage(policyId, policyNo){
+          var url = '/'+policyId;
+          sforce.console.openPrimaryTab(null, url, true, policyNo, null, policyNo); 
+          if(sforce.console.isInConsole()) {
+         var rnd = Math.floor(Math.random() * 1000000000000);
+       sforce.console.openPrimaryTab(null, url, true, policyNo, null, policyNo);
+       sforce.console.setCustomConsoleComponentVisible(false);
+     } else {
+       sforce.one.navigateToURL(url, false);
+     } 
+      }
+  </script>
+  
+  <apex:form id="TMUnreadUWCommentsForm">
+  <apex:outputPanel id="TMUnreadUWComments">
+      <p class="bs header-title">
+      	Unread UW Comments
+      </p>
+      <apex:pageBlock >
+          <apex:pageBlockTable border="1" value="{! policyList }" var="p">
+              <apex:column headerValue="Policy Number">
+                  <apex:outputLink onclick="toPolicyDetailPage('{! p.Id }', '{! p.Policy_No__c}')">{! p.Policy_No__c}</apex:outputLink>
+              </apex:column>
+              <apex:column headerValue="Policy Transaction" value="{! p.Policy_Transaction__c}"/>
+              <apex:column headerValue="Policy Holder Name" value="{! p.Policy_Holder_Name__c}"/>
+              <apex:column headerValue="Product Code" value="{! p.Product_Code__c}"/>
+              <apex:column headerValue="Product Name" value="{! p.Product_Name__c}"/>
+              <apex:column headerValue="Policy Status" value="{! p.Policy_Status__c}"/>
+              <apex:column headerValue="Annual Premium" value="{! p.Annual_Premium__c}"/>
+              <apex:column headerValue="Created By Alias" value="{! p.CreatedBy.Alias}"/>
+              <apex:column headerValue="Last Modified Date" value="{! p.LastModifiedDate}"/>
+          </apex:pageBlockTable>
+          <div id="PageButton" align="right" style="{!IF(recNum>0,'','display:none')};margin-top:4px">
+              <apex:commandLink action="{! First }" value="«« First" rendered="{! HasPrevious }"/>
+              <apex:outputText style="color: #ccc;" value="«« First" rendered="{! !HasPrevious }"/>&nbsp; 
+              <apex:commandLink action="{! Previous }" value="« Previous" rendered="{! HasPrevious }"/>
+              <apex:outputText style="color: #ccc;" value="« Previous" rendered="{! !HasPrevious }"/>
+              &nbsp;&nbsp;  
+              Page: <apex:outputText value=" {! currentPage } of {! maxPage }"/>
+              &nbsp;&nbsp; 
+              <apex:commandLink action="{! Next }" value="Next »" rendered="{! HasNext }"/>
+              <apex:outputText style="color: #ccc;" value="Next »" rendered="{! !HasNext }"/>&nbsp; 
+              <apex:commandLink action="{! End }" value="End »»" rendered="{! HasNext }"/>
+              <apex:outputText style="color: #ccc;" value="End »" rendered="{! !HasNext }"/>
+          </div>
+          
+      </apex:pageBlock>
+  </apex:outputPanel>   
+  </apex:form>
+</apex:page>

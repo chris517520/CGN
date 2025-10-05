@@ -1,0 +1,201 @@
+<apex:page Controller="RPQFormController" showHeader="false" sidebar="false" docType="html-5.0" cache="false" action="{!initRPQSubmitResult}">
+    
+    <apex:define name="additionalLibraries">
+            <apex:include pageName="CignaCommonCSS" />
+            <!-- CR-56_Link_20220214 -->
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap3.4.1.css')}" />
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+            
+            <!-- Bootstrap Core CSS -->
+            <!-- CR-56_Link_20220214 -->
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-3.6.0.min.js')}"/>
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap3.4.1.min.js')}"/>
+            <apex:include pageName="CignaUtilJS"/>
+        </apex:define>
+    <apex:outputPanel id="resultPannel">
+        <style>
+            .resultText{
+            	widthtext-align: center;
+                display:inline-block;
+                margin:0 auto;
+                width:35%
+            }
+        </style>
+        <script>
+            console.log('********** beginning of ackPanel');
+        	function goHome() {
+                    var userAgent = window.navigator.userAgent.toLowerCase();
+                    var sf1withoutBrowser = /salesforce1/i.test( userAgent );
+                    
+                    var sitePrefix = "{!$Site.Prefix}";
+                    var url = "";
+                    //Rancho_BPE60_20210503
+                    var tempSiteName = "{!$Setup.Portal_Settings__c.Broker_Portal_Lightning_Site_Name__c}";
+                    var siteName = "{!$Site.name}";
+    
+                    if (Cigna.Util.isBrokerPortal()) {
+                        // url = sitePrefix + "/apex/BrkBrokerLandingVFP";
+                        if(siteName==tempSiteName){
+                            url = sitePrefix + "/s/";
+                        }else{
+                            url = sitePrefix + "/apex/BrkBrokerLandingVFP";
+                        }
+                    } else if (Cigna.Util.isCustomerPortal()) {
+                        url = sitePrefix + "/apex/CustomerLandingPage";
+                    } else {
+                        var currentUrl = window.location.href.substring(window.location.href.lastIndexOf('/'));
+                        if (currentUrl.toLowerCase().indexOf('/cus') == 0) {
+                            url = "/apex/CustomerLandingPage"; 
+                        } else if (currentUrl.toLowerCase().indexOf('/brk') == 0) {
+                            // Rancho_BPE60_20210503
+                            // url = "/apex/BrkBrokerLandingVFP";
+                            if(siteName==tempSiteName){
+                                url = sitePrefix + "/s/";
+                            }else{
+                                url = sitePrefix + "/apex/BrkBrokerLandingVFP";
+                            }
+                        } else {
+                            url = "/apex/CustomerLandingPage"; 
+                        } 
+                    }
+    
+                    if (Cigna.Util.isSalesforce1()) {
+                        // Rancho_BPE60_20210503
+                        if(siteName==tempSiteName){
+                            window.parent.location.href = url;
+                        }else{
+                            sforce.one.navigateToURL(url, true);
+                        }    
+                    } else {
+                        window.parent.location.href = url;
+                    }
+                }
+        </script>
+            <apex:outputPanel rendered="{!AND(!sendEmailOnly,result == 'Success')}">
+                <div class="col-xs-12 col-sm-12 " style="text-align:center;">
+                    <i class="fa fa-check-circle-o content-active cigna-fg-green-medium" style="font-size:50px;" aria-hidden="true"></i>
+                </div>
+                <br /><br />
+                <div class="col-xs-12 col-sm-12" style="text-align:center;">
+                    <div class="resultText" >
+                        <apex:outputPanel id="RPQResultPanel">
+                            <div>
+								<p>{!transField['Success']} </p>
+                                <p>{!transField['Status_upload_as_below']}</p>
+                                <p>{!transField['RPQ_Status']} {!RPQStatus}</p>
+                                <p>{!transField['RPQ_Effective_Date']} <apex:outputText value="{0,date, MM/dd/yyyy}"> <apex:param value="{!RPQEffectiveDate}" /> </apex:outputText></p> 
+                                <apex:outputPanel rendered="{!AND(hasIncompleteTransaction,isCustomer)}" layout="block">{!transField['Customer_Incomplete_Transaction_msg']}</apex:outputPanel>
+                                <apex:outputPanel rendered="{!AND(hasIncompleteTransaction,NOT(isCustomer))}" layout="block">{!transField['Broker_Incomplete_Transaction_msg']}</apex:outputPanel>
+                            </div>
+                        </apex:outputPanel>
+                    </div>
+                </div>
+                <apex:outputPanel styleClass="bs row" layout="block">
+                    <div id="action-bar-desktop" class="bs hidden-xs text-center">
+                        <apex:outputLink value="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!PDFAttRecordID}" styleClass="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" target="_blank">
+                            {!transField['Download_RPQ']}
+                        </apex:outputLink>
+                        
+                        <a id="eSales-home-btn2" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" 
+                           role="button" onclick="goHome();">
+                            {!$Label.Home}
+                        </a>
+                    </div>
+                    <apex:outputPanel >
+                        
+                        <div id="action-bar" class="bs cigna-floating-bottom-panel visible-xs">
+                            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                                <apex:outputLink value="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!PDFAttRecordID}" styleClass="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" target="_blank">
+                                    {!transField['Download_RPQ']}
+                                </apex:outputLink>
+                                
+                                <a id="eSales-home-btn2" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" 
+                                   role="button" onclick="goHome();">
+                                    {!$Label.Home}
+                                </a>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!AND(sendEmailOnly,result == 'Success')}">
+                <div class="col-xs-12 col-sm-12 " style="text-align:center;">
+                    <i class="fa fa-check-circle-o content-active cigna-fg-green-medium" style="font-size:50px;" aria-hidden="true"></i>
+                </div>
+                <br /><br />
+                <div class="col-xs-12 col-sm-12" style="text-align:center;">
+                    <div class="resultText" >
+                        <apex:outputPanel id="RPQsendMailPanel">
+                            <div>
+                                <apex:outputPanel rendered="{!isCustomer}" layout="block">
+                                    {!transField['customer_submit_the_change_of_RPQ_status']}
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!NOT(isCustomer)}" layout="block">
+                                    {!transField['broker_submit_the_change_of_RPQ_status']}
+                                </apex:outputPanel>
+                            </div>
+                        </apex:outputPanel>
+                    </div>
+                </div>
+                <apex:outputPanel styleClass="bs row" layout="block">
+                    <div id="action-bar-desktop" class="bs hidden-xs text-center">
+                        <apex:outputLink value="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!PDFAttRecordID}" styleClass="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" target="_blank">
+                            {!transField['Download_RPQ']}
+                        </apex:outputLink>
+                        
+                        <a id="eSales-home-btn2" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" 
+                           role="button" onclick="goHome();">
+                            {!$Label.Home}
+                        </a>
+                    </div>
+                    <apex:outputPanel >
+                        
+                        <div id="action-bar" class="bs cigna-floating-bottom-panel visible-xs">
+                            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                                <apex:outputLink value="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!PDFAttRecordID}" styleClass="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" target="_blank">
+                                    {!transField['Download_RPQ']}
+                                </apex:outputLink>
+                                
+                                <a id="eSales-home-btn2" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" 
+                                   role="button" onclick="goHome();">
+                                    {!$Label.Home}
+                                </a>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!AND(NOT(ISNULL(result)),result == 'Fail')}">
+                <div class="bs col-xs-12 col-sm-12" style="text-align:center;">
+                    <i class="bs cigna-fg-red-alert fa fa-times-circle fg-lg" style="font-size:50px;" aria-hidden="true"></i>
+                </div>
+                <div class="col-xs-12 col-sm-12" style="text-align:center;">
+                    <div class="resultText">
+                    	<apex:outputText value="{!transField['Fail']}" escape="false"></apex:outputText>
+                    </div>
+                </div>
+				<apex:outputPanel styleClass="bs row" layout="block">
+                    <div id="action-bar-desktop" class="bs hidden-xs text-center">
+                        <a id="eSales-home-btn2" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" 
+                           role="button" onclick="goHome();">
+                            {!$Label.Home}
+                        </a>
+                    </div>
+                    <apex:outputPanel >
+                        
+                        <div id="action-bar" class="bs cigna-floating-bottom-panel visible-xs">
+                            <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                                
+                                <a id="eSales-home-btn2" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" 
+                                   role="button" onclick="goHome();">
+                                    {!$Label.Home}
+                                </a>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+            </apex:outputPanel>
+    </apex:outputPanel>
+        
+    
+</apex:page>

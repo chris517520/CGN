@@ -1,0 +1,54 @@
+<apex:page controller="HealthUserCtr">
+	<apex:includeScript value="{!URLFOR($Resource.JSXLSX)}" />
+	<head>
+		<script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-3.6.0.min.js')}"/>
+		<script>
+	        $(document).ready(function(){
+	        	console.log('ready');
+	        	// createUser();
+	        });
+	        var filesToUpload = '';  
+	        function uploadAtt(attType,element){
+                $("#"+attType).each(function(){
+                    console.log('attType found');
+                    filesToUpload=$(this)[0].files[0];
+                });
+        
+                var reader = new FileReader();
+                reader.file = filesToUpload;
+                reader.onload = function(e){
+                    var binary = "";
+                    var bytes = new Uint8Array(e.target.result);
+                    var length = bytes.byteLength;
+                    
+                    for (var i = 0; i < length; i++)
+                    {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    var workbook = XLSX.read(binary, {type:'binary'});
+			      	console.log('workbook',workbook);
+					var sheetNameList = workbook.SheetNames;
+					var jsonObject = XLSX.utils.sheet_to_json(workbook.Sheets[sheetNameList[0]]);
+				
+					$('input[id$="uploadatt"]').val(JSON.stringify(jsonObject));
+					console.log('jsonObject',$('input[id$="uploadatt"]').val());
+					uploadJson();
+                };
+                reader.readAsArrayBuffer(filesToUpload);
+            }
+            function resetFile(){
+            	$("#PreAdmissionAtt").value=null;
+            	console.log('resetFile');
+            }
+	    </script>
+	</head>
+	<apex:form id="preForm">
+		<apex:actionFunction name="CreateUser" action="{!CreateUser}" oncomplete="regUserWS();" reRender="preForm" />
+		<apex:actionFunction name="regUserWS" action="{!registerUserWS}" reRender="preForm" />
+		<apex:actionFunction name="uploadJson" action="{!uploadFile}" oncomplete="resetFile();" reRender="preForm" />
+		<apex:inputHidden id="uploadatt" value="{!jsonFile}" />
+		<input id="PreAdmissionAtt" type="file" onchange="uploadAtt('PreAdmissionAtt',this);" /><br />
+		create health user
+		{!result}
+	</apex:form>
+</apex:page>

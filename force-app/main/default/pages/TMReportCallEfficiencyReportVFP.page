@@ -1,0 +1,239 @@
+<apex:page showHeader="true" sidebar="false" controller="TMReportCallEfficiencyReportCtrl" tabStyle="report" id="TMReportCallEfficiencyReportVFP" title="{!$Label.TM_Report_CallEfficiencyReport}">
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <!--
+  <apex:sectionHeader title="{!$Label.TM_Report_CallEfficiencyReport}"/>
+  <apex:outputText value="{!$Label.TM_Report_ReportOption}" rendered="false"/>
+  <apex:outputText value="{!$Label.TM_Report_PrintDate}"/><br/>
+  <apex:outputText value="{!$Label.TM_Report_ReportDate}"/><br/>
+  <apex:outputText value="Build (***) Team"/><br/>
+  <style>
+    .LockRow /*固定行的样式*/      {position: relative; top:0px; z-index:2; }  
+    .LockCell /*固定列的样式*/      { position: relative; left:0px; z-index:0; border-right: solid 1px gray;}  
+    .LockCross /*行列交叉处样式*/      { z-index:3; }  
+    .divBoxing /*外出div样式*/      { clear:both; overflow: scroll; position:relative; }  
+    .tbLock /*设置单元格间隙的样式*/      { border-collapse:collapse; }  
+    .lockRowBg      { background-color:lightgrey; }  
+    .lockRowBg  th{ padding:5px; text-align: center; border-right: solid 1px gray;border-bottom: solid 1px gray;}
+    .lockColumnBg      { background-color:lightgrey; margin:5px; text-align: left; }  
+    .dataRow td:not(.LockCell):not(:first-child){margin:5px; text-align: center;border-right: dashed 1px gray;border-bottom: dashed 1px gray;}
+    .LockCell:nth-child(2){border-top: solid 1px gray;}
+</style>
+    <script type="text/javascript" language="javascript">
+   (function($) {  
+    $.extend($.fn, {  
+        TableLock: function(options) {  
+            var tl = $.extend({  
+                table:'lockTable',//table的id  
+                lockRow:1,//固定行数  
+                lockColumn:1,//固定列数  
+                width:'100%',//表格显示宽度（实质是外出div宽度）  
+                height:'100%',//表格显示高度（实质是外出div高度）  
+                lockRowCss:'lockRowBg',//锁定行的样式  
+                lockColumnCss:'lockColumnBg'//锁定列的样式  
+            }, options);  
+              
+            var tableId=tl.table;  
+            var table=$('#'+tableId);  
+            var rowSpan=function(tr){  
+                  
+            }  
+            if(table){  
+                var box=$("<div id:='divBoxing' class='divBoxing'></div>").scroll(function(){//在此处添加事件  
+                    $('.LockRow').css('top',$(this).prop('scrollTop')+'px');  
+                    $('.LockCell').css('left',$(this).prop('scrollLeft')+'px');  
+                });  
+                box.css('width',tl.width).css('height',tl.height);//设置高度和宽度  
+                table.wrap(box);  
+                table.addClass('tbLock');  
+                var crossNum=tl.lockRow*tl.lockColumn;  
+                console.log('crossNum:'+crossNum);
+                if(tl.lockRow>0){  
+                    var tr;  
+                    for(var r=0;r<tl.lockRow;++r){//添加行锁定  
+                        tr=table.find('tr:eq('+r+')').addClass('LockRow').addClass(tl.lockRowCss);  
+                        for(var c=0;c<tl.lockColumn;++c){//设置交叉单元格样式，除了锁定单元格外还有交叉单元格自身样式  
+                            if(tr)  
+                            tr.find('td:eq('+c+')').addClass('LockCell LockCross').addClass(tl.lockRowCss);  
+                        }  
+                    }  
+                }  
+                if(tl.lockColumn>0){  
+                    var rowNum=$('#'+tableId+' tr').length;  
+                    var tr;  
+                    for(var r=(tl.lockRow);r<rowNum;++r){  
+                        tr=table.find('tr:eq('+r+')');  
+                        for(var c=0;c<tl.lockColumn;++c){//添加列锁定  
+                            tr.find('td:eq('+c+')').addClass('LockCell').addClass(tl.lockColumnCss);  
+                        }     
+                    }  
+                }  
+                  
+            }else{  
+                alert('没有找到对应的table元素，请确保table属性正确性！');  
+            }  
+        }  
+    });  
+})(jQuery);  
+$(function(){  
+        $.fn.TableLock({table:'lockTable',lockRow:1,lockColumn:2,width:'100%',height:'400px'});  
+    });
+    </script>
+-->
+<style>
+    .rw {padding-top: 5px;padding-bottom: 5px}
+</style>
+<apex:sectionHeader title="{!$Label.TM_Report_CallEfficiencyReport}"/><br/>
+<apex:form >
+    <apex:actionStatus id="loader-icon">
+            <apex:facet name="start">
+                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                         &nbsp;
+                     </div>
+                    <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                        <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                            <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                            <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                        </div>
+                     </div>
+                </apex:facet>
+            </apex:actionStatus>
+
+    <apex:pageBlock >
+    <apex:outputPanel id="msgPanel" layout="none"> 
+        <apex:pageMessages id="showmsg"></apex:pageMessages>
+    </apex:outputPanel>
+    <div class="rw"  Class="requiredInput">  
+        <h2>Partner Name </h2>
+        <apex:pageBlockSection >
+            <apex:pageBlockSectionItem >
+                <apex:outputPanel styleClass="requiredInput" layout="block"> 
+                     <!--<apex:inputField id="txt_businessPartner" value="{!tmwg.Partner_Name__c}" required="true"/> <apex:message for="txt_businessPartner"></apex:message>-->
+                    <apex:outputPanel styleClass="requiredBlock" layout="block"/>
+                      <apex:selectList value="{!tmwg.Partner_Name__c}"  size="1" required="true"> 
+                        <apex:selectOptions value="{!options}"/>
+                    </apex:selectList>
+                </apex:outputPanel>
+            </apex:pageBlockSectionItem>
+        </apex:pageBlockSection>
+
+    </div>
+     <div class="rw">  
+        <h2>Transaction Date </h2> 
+        <apex:pageBlockSection >
+            <apex:pageBlockSectionItem >
+                <apex:inputField value="{!filter.Start_Date__c}"  required="true"/> 
+            </apex:pageBlockSectionItem>
+        </apex:pageBlockSection>
+    </div>  
+    <!--
+    <div class="rw">    
+        <h2>Report Recepient </h2> <apex:inputField value="{!filter.Text1__c}"  required="true"/>
+    </div>
+-->
+    <div class="rw">        
+        <span  class="btn" onclick="submitClicked();">Generate report</span> 
+    </div>
+  <!--   
+    <apex:outputPanel id="msgPanel" layout="none"> 
+        <apex:outputPanel id="resMsg" rendered="{!submitted}">
+            <div class="rw" style="color:red; ">         
+                <span >Your request has been submitted. You will receive an email when report is generated. Thank you.</span> 
+            </div>
+        </apex:outputPanel>
+
+        <apex:outputPanel id="errMsg" rendered="{!hasError}">
+            <div class="rw" style="color:red; ">         
+                <span >{!errMsgFromWS}</span> 
+            </div>
+        </apex:outputPanel>
+
+    </apex:outputPanel>
+      --> 
+
+    <apex:actionFunction name="submitClicked" action="{!submitClicked}"  reRender="msgPanel" status="loader-icon"  />
+</apex:pageBlock>
+<!--
+<div style="float:left;">
+  <table id="lockTable" border="0" cellpadding="0" cellspacing="0">
+            <tr class="headerRow  ">
+              <apex:repeat value="{!headings}" var="heading">
+                <th class="headerRow ">{!heading}</th>
+              </apex:repeat>
+            </tr>
+            <apex:repeat value="{!rows}" var="row">
+               <tr class="dataRow">
+                 <apex:repeat value="{!row.values}" var="value">
+                   <td>{!value}</td>
+                 </apex:repeat>
+               </tr>
+            </apex:repeat>
+        </table>
+        </div>
+        <div style="float:left;">
+        <table id="CallEfficiencyTable" border="0" cellpadding="0" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>
+                        Date
+                    </th>
+                    <th>
+                        Description
+                    </th>
+                    <th>
+                        Sub Total
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        Average
+                    </td>
+                    <td>
+                        Working Hours
+                    </td>
+                    <td></td>
+                </tr>
+                <tr><td></td><td>Login Time (HH:MM)</td><td></td></tr>
+                <tr><td></td><td>Total Talk Time (HH:MM)</td><td></td></tr>
+                <tr><td></td><td>Total Wrap Time (HH:MM)</td><td></td></tr>
+                <tr><td></td><td>Total IDLE Time (HH:MM)</td><td></td></tr>
+                <tr><td></td><td>Total Park Time (HH:MM)</td><td></td></tr>
+                <tr><td></td><td>Total Preview Time (HH:MM)</td><td></td></tr>
+                <tr><td></td><td>Total Connect</td><td></td></tr>
+                <tr><td></td><td>Total Contacts</td><td></td></tr>
+                <tr><td></td><td>Callable Names</td><td></td></tr>
+                <tr><td></td><td>% of IDLE Time</td><td></td></tr>
+                <tr><td></td><td>% of Wrap Time</td><td></td></tr>
+                <tr><td></td><td>Callable Names Per Hour</td><td></td></tr>
+                <tr><td></td><td>Average Talk Time</td><td></td></tr>
+
+
+                <tr>
+                    <td>
+                        Total
+                    </td>
+                    <td>
+                        Working Hours
+                    </td>
+                </tr>
+                <tr><td></td><td>Login Time (HH:MM)</td><td></td></tr>
+                <tr><td></td><td>Total Talk Time (HH:MM)</td><td></td></tr>
+                <tr><td></td><td>Total Wrap Time (HH:MM)</td><td></td></tr>
+                <tr><td></td><td>Total IDLE Time (HH:MM)</td><td></td></tr>
+                <tr><td></td><td>Total Park Time (HH:MM)</td><td></td></tr>
+                <tr><td></td><td>Total Preview Time (HH:MM)</td><td></td></tr>
+                <tr><td></td><td>Total Connect</td><td></td></tr>
+                <tr><td></td><td>Total Contacts</td><td></td></tr>
+                <tr><td></td><td>Callable Names</td><td></td></tr>
+                <tr><td></td><td>% of IDLE Time</td><td></td></tr>
+                <tr><td></td><td>% of Wrap Time</td><td></td></tr>
+                <tr><td></td><td>Callable Names Per Hour</td><td></td></tr>
+                <tr><td></td><td>Average Talk Time</td><td></td></tr>
+            </tbody>
+        </table>
+        </div>
+
+-->
+</apex:form>
+</apex:page>

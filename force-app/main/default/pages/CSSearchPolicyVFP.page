@@ -1,0 +1,729 @@
+<apex:page docType="html-5.0" controller="SearchPolicyCtrl" showHeader="false" sidebar="false" title="Search Policy" >
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script> 
+    <apex:include pageName="CignaUtilJS" />
+    
+    <!--Nicole_20200602_GS Performance-->
+    <apex:includeScript value="/support/console/33.0/integration.js" />
+    
+    <apex:insert name="additionalLibraries"/>     
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+        <apex:include pageName="CignaCommonCSS" />                
+        <script type="text/javascript">
+            $(document).ready(function() {
+                $('#resultDiv tr').filter(":odd").css('background-color', 'rgb(242, 242, 242)');
+                $('#indivRow.listcontent').filter(":even").css('background-color', 'rgb(242, 242, 242)');
+                $('#groupRow.listcontent').filter(":even").css('background-color', 'rgb(242, 242, 242)');
+                $('#resultDivGroup tr').filter(":odd").css('background-color', 'rgb(242, 242, 242)');
+              
+                $("#resultDiv").hide();
+                $("#resultDivGroup").hide();
+                // 20220829 - minghua - JOBR-152 Health Migration
+                $("#resultDivHealthMigration").hide();
+            });
+        </script> 
+        <script type="text/javascript">
+            var initGroup = false;
+            var initInd = false;
+            var noSearchValueErrMsg = '{!$Label.Error_Input_Criteria}';
+
+            function showLoading(){
+                $j = jQuery.noConflict();
+                $j("#msgContent").text("Searching");
+                $j("#uploadMsg,#cover").show();
+            }
+
+            function searchAllV(){
+                console.log("searchAllvalidation");
+                $("[id$='ErrorApex']").hide();
+                SearchPolicy.searchAll();
+            }
+            function getNextInput(resour,index){       
+
+                if(index==3){if(resour.value.length==resour.maxLength){resour.blur();}}
+                else if(resour.value.length==resour.maxLength)
+                {
+                    resour.parentNode.getElementsByClassName('form-control')[index].focus();
+                }
+            }
+
+            function hiddenonblur(input){
+                var InputId = input.id;
+                $("input[id*='" + InputId + "']").blur();
+            }                    
+            function getCheckDOB(datetype , input){
+                var InputId = input.id;
+                var InputVal = $("input[id*='" + InputId  + "']").val();
+
+                var oncheckRole = datetype.substring(0,2);
+               
+                if(datetype.indexOf("CH1") >= 0 ) oncheckRole = 'CH1';
+                if(datetype.indexOf("CH2") >= 0 ) oncheckRole = 'CH2';
+                if(datetype.indexOf("CH3") >= 0 ) oncheckRole = 'CH3';
+                
+                $("input[id*='" + oncheckRole + "-Day-DOB-Check']").val('');
+                var DOBDate = $("input[id*='Val-DOB-Day-" + oncheckRole + "']").val();
+                var DOBMonth = $("input[id*='Val-DOB-Month-" + oncheckRole + "']").val();
+                var DOBYear = $("input[id*='Val-DOB-Year-" + oncheckRole + "']").val();
+                if((DOBDate!=null && DOBDate!='')
+                    && (DOBMonth!=null && DOBMonth!='')
+                    && (DOBYear!=null && DOBYear!='')){
+                        $("input[id*='" + oncheckRole + "-Day-DOB-Check']").val(DOBDate+'/'+DOBMonth+'/'+DOBYear);
+                        $("input[id*='" + oncheckRole + "-Day-DOB-Check']").focus();
+                }
+            }
+            function refresh(){
+                return null;
+            }
+
+            function searIndAndGroVal(){
+                $("#resultDiv").empty();
+                $("#resultDivGroup").empty();
+                                 
+                $("[id$='error-message-panel']").css('display','none');
+                
+                $.ajaxSetup({cache : false });
+                var PolicyNumberVal = $("[id$='PolicyNumber']").val();
+                var PolicyHolderNameVal = $("[id$='PolicyHolderName']").val();
+                var PersonInsuredNameVal = $("[id$='PersonInsuredName']").val();
+                var PolicyInsuredHKIDVal = $("[id$='PolicyInsuredHKID']").val();
+                var paramDOBPIVal = $("[id$='PI-Day-DOB-Check']").val();
+                var ClaimNumberVal = $("[id$='ClaimNumber']").val();
+                var PolicyHolderBankAccountNumberVal = $("[id*='PolicyHolderBankAccountNumber']").val();
+                var PolicyHolderContactNumberVal = $("[id$='PolicyHolderContactNumber']").val();
+                var PolicyHolderHKIDVal = $("[id$='PolicyHolderHKID']").val();
+                var paramDOBPHVal = $("[id$='PH-Day-DOB-Check']").val();
+                var MemberCertIDVal = $("[id$='MemberCertID']").val();
+                
+                var ValDOBDayPHVal = $("[id$='Val-DOB-Day-PH']").val();
+                var ValDOBMonthPHVal = $("[id$='Val-DOB-Month-PH']").val();
+                var ValDOBYearPHVal = $("[id$='Val-DOB-Year-PH']").val();
+                var ValDOBDayPIVal = $("[id$='Val-DOB-Day-PI']").val();
+                var ValDOBMonthPIVal = $("[id$='Val-DOB-Month-PI']").val();
+                var ValDOBYearPIVal = $("[id$='Val-DOB-Year-PI']").val();
+                 
+                if(PolicyNumberVal == '' && PolicyHolderNameVal == '' && PersonInsuredNameVal == '' && PolicyInsuredHKIDVal == '' &&paramDOBPIVal == '' && paramDOBPHVal == '' 
+                     && ClaimNumberVal == '' &&PolicyHolderHKIDVal == '' && PolicyHolderBankAccountNumberVal == '' && PolicyHolderContactNumberVal == '' 
+                     && MemberCertIDVal == ''){
+                    $('#inputCharErrorMessage').text('{!$Label.Pol_Not_All_Null}');
+                    $('#inputCharErrorMessage').show();
+
+                    return null;
+                }else{
+                    $('#inputCharErrorMessage').hide();
+                }
+
+                if(PolicyHolderNameVal != '' || PersonInsuredNameVal != ''){                    
+                    if((PolicyHolderNameVal != '' && PolicyHolderNameVal.length < 2) || (PersonInsuredNameVal != '' &&PersonInsuredNameVal.length < 2)){
+                        $('#inputCharErrorMessage').text('{!$Label.Please_input_at_least_2_characters_to_search}'); 
+                        $('#inputCharErrorMessage').css('display','block');
+                        return null;
+                    }
+                }
+                  
+                if(paramDOBPIVal != ''){
+                    if(PersonInsuredNameVal != '' || PolicyInsuredHKIDVal != '' || ClaimNumberVal != ''){
+                        $('#inputCharErrorMessage').css('display','none');          
+                        
+                        SearchPolicy.searchAll();
+                        var flag = $('input[type="hidden"][id$="flag"]').val();
+                        var flag2 = $('input[type="hidden"][id$="flag2"]').val();
+                        if(flag == 1){
+                            $('#resultDiv').show();
+                           
+                        }
+                        if(flag2 == 1){                            
+                             $('#resultDivGroup').show();
+                        } 
+                    }else{
+                        $('#inputCharErrorMessage').text('at least one more field is inputted');  
+                        $('#inputCharErrorMessage').show();  
+                    }
+                }else if( PersonInsuredNameVal != '' || PolicyInsuredHKIDVal != '' || ClaimNumberVal != ''){
+                    $('#inputCharErrorMessage').css('display','none');
+                    
+                    SearchPolicy.searchAll();
+                    var flag = $('input[type="hidden"][id$="flag"]').val();
+                    var flag2 = $('input[type="hidden"][id$="flag2"]').val();
+
+                    if(flag == 1){
+                        $('#resultDiv').show();
+                       
+                    }
+                    if(flag2 == 1){                            
+                        $('#resultDivGroup').show();
+                    } 
+                }else if(PolicyNumberVal != '' || PolicyHolderNameVal != ''){
+                    if(MemberCertIDVal != ''){
+                        $('#inputCharErrorMessage').css('display','none');          
+
+                        SearchPolicy.searchAll();
+                        var flag = $('input[type="hidden"][id$="flag"]').val();
+                        var flag2 = $('input[type="hidden"][id$="flag2"]').val();
+
+                        if(flag == 1){
+                            $('#resultDiv').show();
+                           
+                        }
+                        if(flag2 == 1){                            
+                             $('#resultDivGroup').show();
+                        } 
+                    }else{
+                        SearchPolicy.searchAll();                
+                        var flag = $('input[type="hidden"][id$="flag"]').val();
+                        if(flag == 1){
+                            $('#resultDiv').show();            
+                        }
+                    }
+                }else if((PolicyHolderHKIDVal != '' || PolicyHolderBankAccountNumberVal != '' || PolicyHolderContactNumberVal != '' ||  paramDOBPHVal != '') && MemberCertIDVal != ''){
+                    $('#inputCharErrorMessage').css('display','none');          
+
+                    SearchPolicy.searchAll();
+                    var flag = $('input[type="hidden"][id$="flag"]').val();
+                    var flag2 = $('input[type="hidden"][id$="flag2"]').val();
+                    if(flag == 1){
+                        $('#resultDiv').show();
+                       
+                    }
+                    if(flag2 == 1){                            
+                        $('#resultDivGroup').show();
+                    } 
+                }else if( PolicyHolderHKIDVal != '' || PolicyHolderBankAccountNumberVal != '' || PolicyHolderContactNumberVal != '' ||  paramDOBPHVal != '' ){ 
+                    SearchPolicy.searchAll();              
+                    var flag = $('input[type="hidden"][id$="flag"]').val();
+                    if(flag == 1){
+                        $('#resultDiv').show();            
+                    }
+                }else if(MemberCertIDVal != ''){
+                    SearchPolicy.searchAll();
+                    var flag2 = $('input[type="hidden"][id$="flag2"]').val();
+                    if(flag2 == 1){                            
+                        $('#resultDivGroup').show();
+                    }   
+                }      
+            }
+
+            function openNewTab_Account(){   
+                
+                var id = $("input[id$='param-selected-account-id']").val();
+                var name = $("input[id$='param-selected-account-name']").val();  
+                var targetPolNo = $("input[id$='param-selected-targetPolNo']").val();
+                var hkid = $("input[id$='param-selected-hkid']").val();// Rancho_HKITSFDC250_20250514 - add hkid
+                console.log('hkid: ', hkid);
+                if(id!=null && id!='' && name!=null && name!=''){
+                    if (sforce.console.isInConsole()) {
+                          var rnd = Math.floor(Math.random() * 1000000000000);
+                          sforce.console.openPrimaryTab(null, '/' + id + '?pageRnd=' + rnd + '&polNo=' + targetPolNo + '&hkid=' + hkid, true, name, null, name + rnd);
+                          sforce.console.setCustomConsoleComponentVisible(false);                                
+                    } else {
+                          //window.open('/' + id, '_blank');
+                          var url= "/" + id;
+                        console.log('url= '+url);
+                        sforce.one.navigateToURL(url,false);
+                    }
+                }else{
+                    $("input[id*='error-message-focus']").focus();
+                }
+            } 
+            
+            // 20220829 - minghua - JOBR-152 Health Migration
+            function goToWebLifePH2(PHId){
+                if(PHId!=null && PHId!=''){
+                    if (sforce.console.isInConsole()) {
+                          var rnd = Math.floor(Math.random() * 1000000000000);
+                          sforce.console.openPrimaryTab(null, '/' + PHId + '?pageRnd=' + rnd, true);
+                          sforce.console.setCustomConsoleComponentVisible(false);                                
+                    } else {
+                          var url= "/" + PHId;
+                          console.log('url= '+url);
+                          sforce.one.navigateToURL(url,false);
+                    }
+                }
+            } 
+
+            // Rancho_HKITSFDC250_20250514 - CS revamp
+            function openNewTab_Policy(policyNo,policyType,certNo,InsuredSSN,accessible,holderSSN,effDate){
+                console.log('openNewTab_Policy: ', policyNo, policyType, certNo, InsuredSSN, accessible, holderSSN, effDate);
+                console.log('in console: ', sforce.console.isInConsole());
+                if(policyNo!=null &&  policyNo!='' && accessible == 'true'){
+                    if (sforce.console.isInConsole()) {
+                        var rnd = Math.floor(Math.random() * 1000000000000); 
+                        if(policyType!=null && policyType!='' && policyType!='Group'){
+                            sforce.console.openPrimaryTab(null, '/apex/CSPolicyDetailsVFP'+'?pageRnd=' + rnd+'&policyNumber='+policyNo+'&policyType='+policyType+'&insuredSSN='+InsuredSSN, true, policyNo, null, policyNo + rnd + '');
+                        }else if(certNo!=null && certNo!=''){
+                            sforce.console.openPrimaryTab(null, '/apex/CSPolicyDetailsVFP'+'?pageRnd=' + rnd+'&policyNumber='+policyNo+'&policyType='+policyType+'&certNo='+certNo+'&insuredSSN='+InsuredSSN, true, policyNo, null, policyNo + rnd + '');
+                        }
+                        sforce.console.setCustomConsoleComponentVisible(false);                                
+                    } else {
+                        if(policyType!=null && policyType!='' && policyType!='Group'){                               
+                            // window.open('/apex/CSPolicyDetailsVFP'+'?policyNumber='+policyNo+'&policyType='+policyType, '_blank');    
+                            // Rancho_HKITSFDC250_20250514 - CS revamp
+                            // var url= "/apex/CSPolicyDetailsVFP?policyNumber=" + policyNo+"&policyType=" + policyType+'&insuredSSN='+InsuredSSN;
+                            // var url = '/lightning/n/Policy_Detail?c__policyNo=' + policyNo + '&c__effDate=' + effDate + '&c__holderSSN=' + holderSSN +'&c__pageRnd=' + rnd;
+                            // var url = '/lightning/cmp/c__csPolicyDetail?c__policyNo=' + policyNo + '&c__effDate=' + effDate + '&c__holderSSN=' + holderSSN;
+                            var url = '/lightning/cmp/c__LWCWrapper?c__lwcName=csPolicyDetail&c__policyNo=' + policyNo + '&c__effDate=' + effDate + '&c__holderSSN=' + holderSSN;
+                            console.log('url: ', url);
+                            sforce.one.navigateToURL(url,false);
+
+                        }else if(certNo!=null && certNo!=''){
+                            //window.open('/apex/CSPolicyDetailsVFP'+'?policyNumber='+policyNo+'&policyType='+policyType+'&certNo='+certNo, '_blank');
+                            var url= "/apex/CSPolicyDetailsVFP?policyNumber=" + policyNo+"&policyType=" + policyType +'&certNo='+certNo+'&insuredSSN='+InsuredSSN;
+                            sforce.one.navigateToURL(url,false); 
+                        }
+                    }
+                }
+            }   
+                    
+            function clearAll(){
+                $("[id$='PolicyNumber']").val('');
+                $("[id$='PolicyHolderName']").val('');
+                $("[id$='PersonInsuredName']").val('');
+                $("[id$='PolicyInsuredHKID']").val('');
+                $("[id$='PI-Day-DOB-Check']").val('');
+                $("[id$='ClaimNumber']").val('');
+                $("[id*='PolicyHolderBankAccountNumber']").val('');
+                $("[id$='PolicyHolderContactNumber']").val('');
+                $("[id$='PolicyHolderHKID']").val('');
+                $("[id$='PH-Day-DOB-Check']").val('');
+                $("[id$='MemberCertID']").val('');
+                
+                $("[id$='Val-DOB-Day-PH']").val('');
+                $("[id$='Val-DOB-Month-PH']").val('');
+                $("[id$='Val-DOB-Year-PH']").val('');
+                $("[id$='Val-DOB-Day-PI']").val('');
+                $("[id$='Val-DOB-Month-PI']").val('');
+                $("[id$='Val-DOB-Year-PI']").val('');
+            }              
+        </script>
+
+    </head>
+  
+    <apex:define name="additionalLibraries">
+       <!-- <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/Chart.min.js')}"></script>--><!--Remove HKITSFDC-28 20240621-->
+    </apex:define>
+    <div  style="height:10px;padding-top:15px;padding-left:20px;font-size: 1.3em;">
+        <h5 >Policy &amp; Customer Search</h5>
+    </div>
+    <apex:form id="myForm" style="padding-left:20px;padding-right:20px;">  
+        
+        <apex:actionFunction name="nextPage" action="{!handleNextPage}" namespace="searchPage" reRender="PN-02" oncomplete="hideLoading()" status="loader-icon"/>
+        <apex:actionFunction name="prevPage" action="{!handlePrevPage}" namespace="searchPage" reRender="PN-02" oncomplete="hideLoading()" status="loader-icon"/>
+        <apex:actionFunction name="searchAll" action="{!SearchAll}" namespace="SearchPolicy" reRender="PN-02,PN-03, PN_Flag,PN_Flag2,ErrorApex,mobileButtonApex" status="loader-icon" oncomplete="initInd=true; " />
+        <apex:actionFunction name="SearchIndividual" action="{!SearchIndividual}" namespace="SearchPolicy" reRender="PN-02,PN-03,PN_Flag,PN_Flag2,ErrorApex" status="loader-icon"/>
+        <apex:actionFunction name="SearchGroup" action="{!SearchGroup}" namespace="SearchPolicy" reRender="PN-02,PN-03,PN_Flag2,PN_Flag,ErrorApex" status="loader-icon"/>
+
+        <apex:actionStatus id="loader-icon">
+             <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                     &nbsp;
+                 </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Please Wait...</span>
+                    </div>
+                 </div>
+            </apex:facet>
+        </apex:actionStatus>
+
+        <apex:actionFunction name="goToCustomerProfile" action="{!goToCustomerProfile}" reRender="param-panel" oncomplete="CustomerProfileAF.refreErrorMessgae();openNewTab_Account();recordAuditTrail()">
+            <apex:param name="selectedAccountId" value="" assignTo="{!selectedAccountSSN}"/>
+           <!-- <apex:param name="selectedAccountId" value="" assignTo="{!selectedAccountCustomerId}"/>-->
+            <apex:param name="targetPolNo" value="" assignTo="{!targetPolNo}"/>
+            <apex:param name="haveAccessibility" value="" assignTo="{!haveAccessibility}"/>
+        </apex:actionFunction>
+
+        <apex:actionFunction action="{!refreErrorMessgae}" name="refreErrorMessgae" namespace="CustomerProfileAF" reRender="error-message-panel"  />
+            
+        <!--JR-1785-->
+        <apex:actionFunction action="{!recordAuditTrail}" name="recordAuditTrail" reRender=""/>
+        <apex:actionFunction action="{!checkAuditTrailAccess}" name="checkAuditTrailAccess" oncomplete="CustomerProfileAF.refreErrorMessgae();" reRender="">
+            <apex:param name="haveAccessibility" value="" assignTo="{!haveAccessibility}"/>
+        </apex:actionFunction>
+        <!--JR-1785-->
+        
+        <apex:outputPanel id="error-message-panel">
+            <input id="error-message-focus" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" />                
+            <apex:pageMessages escape="false"></apex:pageMessages> 
+        </apex:outputPanel>
+        
+        
+        <apex:outputPanel id="param-panel">        
+            <apex:inputText id="param-selected-account-id" value="{!selectedAccount.Id}" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" />    
+            <apex:inputText id="param-selected-account-name" value="{!selectedAccount.Name}" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" /> 
+            <apex:inputText id="param-selected-targetPolNo" value="{!targetPolNo}" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" />
+            <!-- Rancho_HKITSFDC250_20250514 - add hkid -->
+            <apex:inputText id="param-selected-hkid" value="{!selectedAccountSSN}" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" />
+        </apex:outputPanel>     
+   
+        <apex:outputPanel id="PN-01" >
+            <apex:pageMessages id="showmsg"></apex:pageMessages>
+            <div> 
+                <h5>Search Criteria applicable to both Individual and Group Policy</h5>         
+                <div id="SearchPolicyBothIndividualAndGroup"  style="padding-bottom: 40px;" class="ig-from">
+                    <apex:pageBlock >
+                        <apex:pageBlockSection columns="1">
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >Policy Number</apex:outputLabel>
+                                <apex:inputText id="PolicyNumber" value="{!policyNumber}" size="60"/>
+                                
+                            </apex:pageBlockSectionItem>
+
+                            <apex:inputText id="PolicyHolderName" size="60" value="{!policyHolderName}" label="Policy Holder Name"/>
+                            <apex:inputText id="PersonInsuredName" size="60" value="{!personInsuredName}" label="Person Insured Name"/>
+                            <apex:inputText id="PolicyInsuredHKID" size="60" value="{!policyInsuredHKID}" label="Person Insured HKID/Passport No."/>                    
+                                    
+                            <apex:outputText label="Person Insured DOB" >
+                                <apex:input id="Val-DOB-Day-PI" type="tel" value="{!paramDOBPIDay}" 
+                                    html-maxlength="2" 
+                                    size="5"
+                                    style="display: inline; width: auto;height:15px;"
+                                    html-placeholder="{!$Label.DD}" 
+                                    onkeyup="getNextInput(this,1);" 
+                                    onblur="getCheckDOB('PI day',this)"    
+                                />--
+                                <apex:input id="Val-DOB-Month-PI" type="tel" value="{!paramDOBPIMonth}" 
+                                    html-maxlength="2" 
+                                    size="5"
+                                    style="display: inline; width: auto;height:15px;"
+                                    html-placeholder="{!$Label.MM}"
+                                    onkeyup="getNextInput(this,2);"
+                                    onblur="getCheckDOB('PI month',this)"  
+                                />--
+                                <apex:input id="Val-DOB-Year-PI" type="tel" value="{!paramDOBPIYear}" 
+                                    html-maxlength="4" 
+                                    size="7"
+                                    style="display: inline; width: auto;height:15px;"
+                                    html-placeholder="{!$Label.YYYY}"
+                                    onkeyup="getNextInput(this,3);"
+                                    onblur="getCheckDOB('PI year',this)"
+                                                               
+                                />
+                                <apex:inputtext id="PI-Day-DOB-Check" value="{!paramDOBPI}" Styleclass="hidden-input-field" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" onfocus="hiddenonblur(this)" />
+                            </apex:outputText>  
+                                          
+                            <apex:inputText id="ClaimNumber" size="60" value="{!claimNumber}" label="Claim Number"/>
+                          
+                        </apex:pageBlockSection>
+    
+                    </apex:pageBlock>                           
+                </div>
+
+                <h5>Search Criteria which only applicable to Individual Policy</h5> 
+                <div id="OnlyIndividual"  style="padding-bottom: 40px;">
+                    <apex:pageBlock >
+                        <apex:pageBlockSection columns="1">                                                      
+                            <apex:inputText id="PolicyHolderHKID" size="60" value="{!policyHolderHKID }" label="Policy Holder HKID/Passport No."/>
+                            <apex:inputText id="PolicyHolderBankAccountNumber" size="60" value="{!bankAccountNumber}" label="Policy Holder Bank Account Number"/>
+                            <apex:inputText id="PolicyHolderContactNumber" size="60" value="{!contactNumber}" label="Policy Holder Contact Number"/>                                                                                                               
+                            <apex:outputText label="Policy Holder DOB" >
+                                <apex:input id="Val-DOB-Day-PH" type="tel" value="{!paramDOBPHDay}" 
+                                    html-maxlength="2" 
+                                    size="5"
+                                    style="display: inline; width: auto;height:15px;"
+                                    html-placeholder="{!$Label.DD}" 
+                                    onkeyup="getNextInput(this,1);" 
+                                    onblur="getCheckDOB('PH day',this)"    
+                                />--
+                                <apex:input id="Val-DOB-Month-PH" type="tel" value="{!paramDOBPHMonth}" 
+                                    html-maxlength="2" 
+                                    size="5"
+                                    style="display: inline; width: auto;height:15px;"
+                                    html-placeholder="{!$Label.MM}"
+                                    onkeyup="getNextInput(this,2);"
+                                    onblur="getCheckDOB('PH month',this)"  
+                                />--
+                                <apex:input id="Val-DOB-Year-PH" type="tel" value="{!paramDOBPHYear}" 
+                                    html-maxlength="4" 
+                                    size="7"
+                                    style="display: inline; width: auto;height:15px;"
+                                    html-placeholder="{!$Label.YYYY}"
+                                    onkeyup="getNextInput(this,3);"
+                                    onblur="getCheckDOB('PH year',this)"
+                                                           
+                                />
+                                <apex:inputText id="PH-Day-DOB-Check" value="{!paramDOBPH}" Styleclass="hidden-input-field" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" onfocus="hiddenonblur(this)" />
+                            </apex:outputText>                                                                                         
+                        </apex:pageBlockSection>
+                    </apex:pageBlock>     
+                </div>
+                    
+                <div id="OnlyGroup"  style="padding-bottom: 40px;">
+                    <h5>Search Criteria which only applicable to Group Policy</h5> 
+                    <apex:pageBlock >   
+                    <apex:pageBlockSection columns="1">
+                        <apex:inputText id="MemberCertID" size="60" value="{!MemberCertID}" label="Member Cert.ID"/>
+                    </apex:pageBlockSection></apex:pageBlock>   
+                </div>  
+                    
+                <div>
+                    <div id="back-btn-dt"  style="text-align: center;">
+                        <apex:commandbutton styleclass="btn"
+                                                status="loader-icon"
+                                                onclick="searIndAndGroVal()"
+                                                value="Search"                                               
+                                                rerender="PN-02,PN-03,PN_Flag,PN_Flag2,ErrorApex"
+                                                html-data-loading-text="Loading..." />
+                        <apex:commandbutton styleclass="btn"
+                                                status="loader-icon"
+                                                onclick="clearAll()"
+                                                value="Clear All"                                               
+                                                rerender="PN-02,PN-03,PN_Flag,PN_Flag2,ErrorApex"
+                                                html-data-loading-text="Loading..." />
+                    </div>          
+                </div>
+            </div>              
+        </apex:outputPanel>
+        
+        <div id="inputCharErrorMessage"  style="color:red;padding-bottom:20px;display:none;">
+                
+        </div>
+
+        <apex:outputPanel id="ErrorApex" layout="block">
+            <div class="bs col-sm-12 col-xs-12" style="{!IF(showTooManyRecordsWarning,'','display:none;')}color: red;padding-bottom: 30px; text-align: center;" >
+                The max. limit of searches has been exceeded, please input more information to refine the search result.
+            </div>
+            <div class="bs col-sm-12 col-xs-12" style="{!IF(systemError,'','display:none;')}color: red;padding-bottom: 30px; text-align: center;" >{!$Label.Search_Policy_System_Error}
+            </div>
+
+        </apex:outputPanel>
+        <br/>
+        <apex:outputPanel id="PN-02" rendered="{!searched}">   
+            <div id="resultDiv">
+                   
+                <div id="resultDesktop" style="width:1646.25px">
+                    <apex:actionFunction action="{!individualprevPage}" name="individualprevPage" reRender="individualResult" status="loader-icon"  oncomplete="hideLoading()"/>
+                    <apex:actionFunction action="{!individualnextPage}" name="individualnextPage" reRender="individualResult" status="loader-icon"  oncomplete="hideLoading()" />
+                    <apex:outputPanel id="individualResult" rendered="{!IF(policyList !=null && searched ,true,false)}" >
+                        <apex:pageBlock title="Individual">                           
+                        <!--table 1 start-->    
+                                                 
+                            <apex:pageBlockTable value="{!individualMap[individualPage]}" var="result" > 
+                                <apex:column headerValue="Policy No" >
+                                    <!-- Rancho_HKITSFDC250_20250514 - CS revamp -->
+                                    <apex:outputText value=""><div class="{!IF(result.accessible, 'onclick-pointer','')}" 
+                                    onclick="openNewTab_Policy('{!result.policyNumber}','{!result.policyType }','{!result.certNumber}','','{!result.accessible}','{!result.holderSSN}','{!result.effDate}');checkAuditTrailAccess('{!result.accessible}');" 
+                                    style="{!IF(result.accessible, 'cursor:pointer;','')}text-decoration:underline">{! result.policyNumber}</div></apex:outputText>
+                                </apex:column>                                                               
+                  
+                                <apex:column headerValue="Policy Holder" value="{! result.holderName}" 
+                                onclick="goToCustomerProfile('{! result.holderSSN}','{!result.policyNumber}','{!result.accessible}')" 
+                                style="{!IF(result.accessible, 'cursor:pointer;','')}text-decoration:underline;width:115px;"/>
+                                
+                                <apex:column headerValue="{!$Label.CP_Policy_Insured}" >
+                                    
+                                    <apex:repeat value="{!result.InsuredList}" var="insured">
+                                        <apex:outputText ><div onclick="goToCustomerProfile('{! insured.ssnNumber}','{!result.policyNumber}','{!result.accessible}')" 
+                                        style="{!IF(result.accessible, 'cursor:pointer;','')}text-decoration:underline">{!insured.fullName}&nbsp;</div></apex:outputText>                                
+                                    </apex:repeat>
+                                </apex:column>
+                                <apex:column headerValue="Person Insured HKID/Passport No." value="{! result.insuredSsn}"/>
+                                <apex:column headerValue="Status" value="{! result.policyStatusDisplayName}" />
+                                <apex:column headerValue="Payment Mode" value="{! result.paymentMode}" />                       
+                                <!--SPS-165-->
+                                <apex:column headerValue="Modal Premium" value="{!result.currencySymbol} {!result.paymentAmt}" />
+                                <!--SPS-165-->
+
+                                <!-- 20200610 - minghua - levyII -->
+                                <apex:column headerValue="Levy" value="{!result.currencySymbol} {!result.nextLevy}" />
+                                <apex:column headerValue="Modal Premium Including Levy" value="{!result.currencySymbol} {!result.modalPremiumIncludeLevy}" />
+                                
+                                <apex:column headerValue="Effective Date">
+                                    <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false" >
+                                        <apex:Param value="{! result.effDateInDate}" />
+                                    </apex:OutputText>
+                                </apex:column>
+                                <apex:column headerValue="Cancellation Date">
+                                    <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false" >
+                                        <!--<apex:Param value="{! result.termDateInDate }" />-->
+                                        <!--SPS-165-->
+                                            <apex:Param value="{!result.cancelDate}"/>
+                                        <!--SPS-165-->
+                                    </apex:OutputText>
+                                    
+                                </apex:column>
+                                <apex:column headerValue="Source System" value="{! result.sourceSystem}" />
+                                <apex:column headerValue="Product Name" value="{! result.planName}" />
+                                <apex:column headerValue="Product Code" value="{! result.productCode}" />
+                                <apex:column headerValue="Company Code">   
+                                    <apex:OutputText value="{!IF(result.isLifePolicy, 'CLT','CGI')}" /> 
+                                </apex:column>
+                                <!-- Owen 20230530 For PS-23 add new columu 'Partner Code' -->
+                                <apex:column headerValue="Partner Code" value="{! result.partnerCode}" />
+                            </apex:pageBlockTable>
+                        </apex:pageBlock>
+                        <!--table 1 end -->                            
+                        <div style="{!IF((policyList == null || policyList.size == 0) && searched, '', 'display:none;')}">
+                            <div style="padding-top: 30px;text-align:center;color:red">         
+                                <i aria-hidden="true"></i>
+                                {!$Label.Search_Policy_No_Records_Info}
+                            </div>
+                        </div>
+                        <div  style="text-align: left;padding-top:30px;{!IF(searched,'','display: none;')}">                            
+                            <apex:outputText value="{!$Label.Page_0_of_1}">
+                            <apex:param value="{!individualPage}" />
+                            <apex:param value="{!individualTotalPage}" />
+                            </apex:outputText>
+                            <apex:outputPanel rendered="{!If(individualTotalPage>1 && individualhasPrev,true,false)}" style="cursor:pointer;" styleClass="handle_page_active onclick-pointer" onclick="individualprevPage();">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!individualhasPrev}" styleClass="handle_page_inactive" style="color:grey">&lt;Previous Page</apex:outputPanel>                   
+                            <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                            <apex:outputPanel rendered="{!If(individualTotalPage>1 && individualhasNext,true,false)}" style="cursor:pointer;" styleClass="handle_page_active onclick-pointer" onclick="individualnextPage();">Next Page&gt;</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!individualhasNext}" styleClass="handle_page_inactive" style="color:grey">Next Page&gt;</apex:outputPanel> 
+                        </div>                      
+                    </apex:outputPanel>
+                </div>
+            </div>
+        </apex:outputPanel>
+        <br/>
+       
+        <apex:outputPanel id="PN-03" rendered="{!searched}" >
+            <div id="resultDivGroup" >
+                <div id="resultDesktop1" style="width:1646.25px">
+                    <apex:actionFunction action="{!groupprevPage}" name="groupprevPage" reRender="groupResult" status="loader-icon" />
+                    <apex:actionFunction action="{!groupnextPage}" name="groupnextPage" reRender="groupResult" status="loader-icon" />
+                                        
+                    <apex:outputPanel id="groupResult">
+                        <!--table 2 start -->
+                        <apex:pageBlock title="Group">   
+                            <apex:pageBlockTable value="{!groupMap[groupPage]}" var="result">                        
+                                <apex:column headerValue="Policy No">
+                                    <apex:outputText value=""><div class="{!IF(result.accessible, 'onclick-pointer','')}" 
+                                    onclick="openNewTab_Policy('{!result.policyNumber}','Group','{!result.certificateNo}','{! result.ssnNumber }','{!result.accessible}');checkAuditTrailAccess('{!result.accessible}');" 
+                                    style="{!IF(result.accessible,'cursor:pointer;','')}text-decoration:underline;">{! result.policyNumber}</div></apex:outputText>
+                                </apex:column>  
+                                <apex:column headerValue="Policy Holder" value="{! result.holdername}" />
+                                <apex:column headerValue="Cert NO." value="{! result.certificateNo}" />
+                                <apex:column styleClass="cell" headerValue="Member/Spouse/Dependent Name" value="{! result.fullName}" 
+                                onclick="goToCustomerProfile('{!result.ssnNumber}','{!result.policyNumber}','{!result.accessible}')" 
+                                style="{!IF(result.accessible,'cursor:pointer;','')}text-decoration:underline;width:180px;"/>
+                                <apex:column styleClass="cell" headerValue="HKID/ Passport No." value="{! result.ssnNumber }"/>                                              
+                                <apex:column styleClass="cell" headerValue="DOB" >
+                                    <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false" >
+                                        <apex:Param value="{! result.birthDateInDate}" />
+                                    </apex:OutputText>
+                                </apex:column>
+                                <apex:column styleClass="cell" headerValue="Relationship" value="{! result.insurableInterestReason}" />
+                                <apex:column styleClass="cell" headerValue="Policy Status" value="{! result.policyStatus}" />
+                                <apex:column styleClass="cell" headerValue="Member Status" value="{! result.memberStatusDisplay}" />
+                                <apex:column styleClass="cell" headerValue="Coverage Period From">
+                                    <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false" >
+                                        <apex:Param value="{! result.policyEffectiveDate}" />
+                                    </apex:OutputText>
+                                </apex:column>
+                                <apex:column styleClass="cell" headerValue="Coverage Period To">
+                                    <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false" >
+                                        <apex:Param value="{! result.policyTerminationDate }" />
+                                    </apex:OutputText>
+                                </apex:column>
+                                <apex:column styleClass="cell" headerValue="Product Type" value="{! result.productType}" />
+                            </apex:pageBlockTable>
+                        </apex:pageBlock>
+                        <!--table 2 end -->
+                                   
+                        <div style="{!IF(newGroupList == null || newGroupList.size == 0 && searched, '','display:none;')}">
+                            <div  style="padding-top: 30px;text-align:center;color:red">
+                                <i aria-hidden="true" class="fa fa-smile-o cigna-fg-black"></i>
+                                {!$Label.Search_Policy_No_Records_Info}
+                            </div>
+                        </div>
+
+                        <div style="text-align: left;padding-top:30px;{!IF(showGroup ,'','display: none;')}; margin-bottom: 100px; ">
+                            <apex:outputText value="{!$Label.Page_0_of_1}">
+                                <apex:param value="{!groupPage}" />
+                                <apex:param value="{!groupTotalPage}" />
+                            </apex:outputText>
+                            <apex:outputPanel rendered="{!If(groupTotalPage>1 && grouphasPrev,true,false)}" style="cursor:pointer;" styleClass="handle_page_active onclick-pointer" onclick="groupprevPage();">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!grouphasPrev}" styleClass="handle_page_inactive" style="color:grey">&lt;Previous Page</apex:outputPanel>                   
+                            <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                            <apex:outputPanel rendered="{!If(groupTotalPage>1 && grouphasNext,true,false)}" style="cursor:pointer;" styleClass="handle_page_active onclick-pointer" onclick="groupnextPage();">Next Page&gt;</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!grouphasNext}" styleClass="handle_page_inactive" style="color:grey">Next Page&gt;</apex:outputPanel>
+                        </div>
+
+                    </apex:outputPanel>
+                </div>
+            </div>
+        </apex:outputPanel>
+        
+        <!-- 20220829 - minghua - JOBR-152 Health Migration -->
+        <apex:outputPanel id="PN-04">
+            <div> 
+                <h5>Search Health Migration</h5>         
+                <div id="SearchHealthMigrationRequest" style="padding-bottom:5px;" class="ig-from">
+                    <apex:pageBlock >
+                        <apex:pageBlockSection columns="1">
+                            <apex:inputText id="PHHKID" value="{!PHHKID}" size="60" label="PH HKID/Passport No. "/>
+                            <apex:inputText id="PHName" size="60" value="{!PHName}" label="PH Name"/>
+                            <apex:inputText id="mobileNo" size="60" value="{!mobileNo}" label="Mobile No"/>
+                        </apex:pageBlockSection>
+                    </apex:pageBlock>                           
+                </div>   
+                <div>
+                    <div id="back-btn-dt2"  style="text-align: center;">
+                        <apex:commandbutton styleclass="btn" status="loader-icon" action="{!SearchHealthMigration}" value="Search" reRender="PN-05" html-data-loading-text="Loading..." />
+                    </div>          
+                </div>
+            </div>            
+        </apex:outputPanel>
+        <apex:outputPanel id="PN-05">   
+            <div id="resultDivHealthMigration">
+                <div id="resultHealthMigration" style="width:1646.25px">
+                    <apex:actionFunction action="{!healthMigrationprevPage}" name="healthMigrationprevPage" reRender="HealthMigrationResult" status="loader-icon" />
+                    <apex:actionFunction action="{!healthMigrationnextPage}" name="healthMigrationnextPage" reRender="HealthMigrationResult" status="loader-icon" />
+                    <apex:outputPanel id="HealthMigrationResult">
+                        <apex:pageBlock title="Health Migration List">
+                            <apex:pageBlockTable value="{!healthMigrationMap[healthMigrationPage]}" var="result"> 
+                                <apex:column headerValue="Application No" value="{!result.Name}" style="text-decoration:underline;width:115px;cursor: pointer;" onclick="goToWebLifePH2('{!result.Id}')">
+                                </apex:column>                                                               
+                                <apex:column headerValue="PH SSN" value="{!result.Policy_Holder_SSN__c}" />
+                                <apex:column headerValue="PH First Name" value="{!result.Policy_Holder_First_Name__c}" />
+                                <apex:column headerValue="PH Last Name" value="{!result.Policy_Holder_Last_Name__c}" />
+                                <apex:column headerValue="Mobile" value="{!result.Mobile__c}" />
+                                <apex:column headerValue="Email" value="{!result.Email__c}" />
+                                <apex:column headerValue="Creation datetime">
+                                    <apex:OutputText value="{0,date,yyyy/MM/dd hh:mm:ss}" escape="false">
+                                        <apex:Param value="{!result.CreatedDate}" />
+                                    </apex:OutputText>
+                                </apex:column>
+                                <apex:column headerValue="Last updated datetime">
+                                    <apex:OutputText value="{0,date,yyyy/MM/dd hh:mm:ss}" escape="false">
+                                        <apex:Param value="{!result.LastModifiedDate}"/>
+                                    </apex:OutputText>
+                                </apex:column>
+                                <apex:column headerValue="Last update by" value="{!result.LastModifiedBy.Name}" />
+                            </apex:pageBlockTable>
+                        </apex:pageBlock>
+                        <div style="{!IF((phList==null||phList.size==0),'','display:none;')}">
+                            <div style="padding-top:20px;padding-bottom:20px;text-align:center;color:red">         
+                                <i aria-hidden="true"></i>
+                                {!$Label.Search_Policy_No_Records_Info}
+                            </div>
+                        </div>
+                        <div style="text-align:left;padding-top:10px;{!IF(showHealthMigration,'','display:none;')}; margin-bottom: 20px;">
+                            <apex:outputText value="{!$Label.Page_0_of_1}">
+                                <apex:param value="{!healthMigrationPage}" />
+                                <apex:param value="{!healthMigrationTotalPage}" />
+                            </apex:outputText>
+                            <apex:outputPanel rendered="{!If(healthMigrationTotalPage>1&& healthMigrationhasPrev,true,false)}" style="cursor:pointer;" styleClass="handle_page_active onclick-pointer" onclick="healthMigrationprevPage();">&lt;Previous Page</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!healthMigrationhasPrev}" styleClass="handle_page_inactive" style="color:grey">&lt;Previous Page</apex:outputPanel>                   
+                            <apex:outputText ><span class="handle_page_inactive">&nbsp;|&nbsp;</span></apex:outputText>
+                            <apex:outputPanel rendered="{!If(healthMigrationTotalPage>1 && healthMigrationhasNext,true,false)}" style="cursor:pointer;" styleClass="handle_page_active onclick-pointer" onclick="healthMigrationnextPage();">Next Page&gt;</apex:outputPanel>
+                            <apex:outputPanel rendered="{!!healthMigrationhasNext}" styleClass="handle_page_inactive" style="color:grey">Next Page&gt;</apex:outputPanel>
+                        </div>
+                    </apex:outputPanel>
+                </div>
+            </div>
+        </apex:outputPanel>
+
+        <apex:outputPanel id="PN_Flag" rendered="{!searched}">  
+            <apex:inputhidden id="flag" value="{!flag}"/>
+        </apex:outputPanel>  
+         
+        <apex:outputPanel id="PN_Flag2" rendered="{!searched}">  
+            <apex:inputhidden id="flag2" value="{!flag2}"/>
+        </apex:outputPanel>
+         
+        <div id="cover"></div>
+        <div id="msgConten"></div>
+        
+    </apex:form>
+</apex:page>

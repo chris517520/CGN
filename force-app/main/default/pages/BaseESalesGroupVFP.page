@@ -1,0 +1,2545 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" title="Get Protected" controller="ESalesGroupApplicationCtrl">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+
+        <script type="text/javascript" src="{! $Resource.shim_js }"></script>
+        <script type="text/javascript" src="{! $Resource.xlsx_core_min_js }"></script>
+        <style>
+        
+            @media (max-width: 768px) {
+                body {
+                    padding-top: 50px;
+                }
+
+                .uploadCensusText { 
+                    text-align: left;
+                    width:100%;
+                    font-size: 24px;
+                    font-weight: bold;
+                }
+                 
+                .midblock1 {
+                    display: block;
+                    width: 100%;
+                    vertical-align: middle;
+                    text-align: center;
+                    float: none;
+                    font-size: 20px;                    
+                }
+                .midblock2 {
+                    display: block;                 
+                    width: 100%;
+                    vertical-align: middle;
+                    text-align: center;
+                    float: none;
+                    font-weight: bold;
+                    font-size: 24px;
+                    margin-top: 20px;
+                    margin-bottom:  20px;
+                }
+                .midblock3 {
+                    display: block; 
+                    width: 100%;
+                    vertical-align: middle;
+                    text-align: center;
+                    float: none;
+                    font-size: 20px;
+                }
+                #ctrtbl {
+                    text-align: center;
+                    font-size: 18px;
+                }
+            }
+            @media (min-width: 769px) {
+                body {
+                    padding-top: 50px;
+                    min-height: 1024px;
+                }
+
+                .uploadCensusText {
+                    text-align: left;
+                    width:100%;
+                    font-size: 22px;
+                    font-weight: bold;
+                }
+                
+                .midblock1 {
+                    display: inline-block;
+                    width: 48%;
+                    vertical-align: top;
+                    text-align: center;
+                    min-height: 250px;
+
+                }
+                .midblock2 {
+                    display: inline-block;                  
+                    width: 5%;
+                    vertical-align: top;
+                    text-align: center ;
+                    min-height: 250px;
+                    padding-top: 120px;
+                    font-weight: bold;
+                    font-size: 24px;             
+                }
+                .midblock3 {
+                    display: inline-block; 
+                    width: 43%;
+                    vertical-align: top;
+                    text-align: center;
+                    min-height: 250px;
+                }
+                 #ctrtbl {
+                    text-align: left;
+                    font-size:18px; 
+                }
+
+            }
+
+            .uploadCensusTable td{
+                 padding: 2% !important;
+                  /*  padding:15px !important; */
+                }
+
+            div#overlay{
+                display: none;
+                z-index: 11;
+                background: #D9D9D6;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                text-align: left;
+            }
+            
+            div#specialBox{
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 150px auto 0px auto;
+                width: 80%;
+                height: 60%;
+                background: #FFF;
+                color: #000;
+                left: 10%;
+                padding:20px;
+                border-radius:5px;
+            }
+            
+            #closeOverlay{
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
+            #tccontent {
+                padding:5px;
+                color:#000;
+                font-size:12px;
+                width: 100%;
+                height: 90%;
+                overflow-y:auto;
+            } 
+
+            <!--additional inline css-->
+            <!--tooltips-->
+            .tooltip {
+                position: relative;
+                display: inline-block;
+            }
+            .tooltip .tooltiptext {
+                visibility: hidden;
+                width: 120px;
+                background-color: black;
+                color: #fff;
+                text-align: center;
+                border-radius: 6px;
+                padding: 5px 0;
+            }
+            .tooltip:hover .tooltiptext {
+                visibility: visible;
+            }
+            .tooltip-inner {
+                /* Change the tooltip width here */
+                max-width: 250px !important;
+                /* If max-width does not work, try using width instead */
+                width: 250px; 
+                min-width: 100px;
+            }
+            .helptext-icon {
+                background:none !important;
+                border:none !important;
+                border-radius:0px !important;
+                font-size:14px !important;
+            }
+            
+            .bs .cigna-btn-desktop {
+                width: 30%;
+                //text-transform: uppercase;
+                font-family: "Gotham SSm A", "Gotham SSm B", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+                font-style: normal;
+                font-weight: 500;
+            }
+            .bs .form-control:focus {
+                //box-shadow: none !important;
+                -webkit-box-shadow:0 0 0px 1000px white inset !important;
+                border-bottom: 1px solid #eac048 !important;
+            }
+
+            .bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select, .bs span.form-control  {
+                border-top: 0 !important;
+                border-left: 0 !important;
+                border-right: 0 !important;
+                border-bottom: 1px solid #58595B !important;
+                background: transparent;
+                width: 100%;
+                //box-shadow: none !important;
+                -webkit-box-shadow:0 0 0px 1000px white inset !important;
+                border-radius: 0 !important;
+                background-color:#FFF!important;
+            } 
+        
+            .bs .cigna-progress-bar-inner > div {
+                font-size: 0.7em;
+            }
+            
+            .bs .cigna-form-section {
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
+            
+            .bs .cigna-form-section-header {
+                background: #eee;
+                padding-top: 20px;
+                padding-bottom: 20px;
+                margin-bottom: 15px;
+            }
+            
+            .bs .cigna-answer-wrapper > p {
+                background: #fff;
+            }
+            .bs .cigna-answer-wrapper > p > label {
+                margin-left: 10px;
+                margin-top: 5px;
+                font-weight: normal;
+                padding: 5px;
+                width: 100%;
+            }
+            
+            .bs .cigna-answer-wrapper-same-address > p {
+                background: #fff;
+            }
+            .bs .cigna-answer-wrapper-same-address > p > label {
+                //margin-left: 0px;
+                margin-top: 5px;
+                font-weight: normal;
+                padding: 5px 0px 5px 0px;
+                width: 100%;
+            }
+
+            .bs .cigna-group-plan-detail {
+                border-top: 5px solid #40ABF7;
+                border-left: 1px solid #D9D9D6;
+                border-bottom: 1px solid #D9D9D6;
+                border-right: 1px solid #D9D9D6;
+                border-radius: 3px;
+            }
+
+            .rgtbrd {
+                margin:auto;
+                padding: auto;
+                width:100%; 
+                border-right:2px #D9D9D6 solid;
+            }
+
+            .topbrd {  
+                border-top:2px #D9D9D6 solid;
+            }
+
+
+        </style>
+
+        <script type="text/javascript">
+            var __sfdcSessionId = '{!GETSESSIONID()}';
+            var filesToUpload = '';  
+            var uploadedFile = 0;
+        </script>
+        <script src="/soap/ajax/32.0/connection.js" type="text/javascript"></script>
+        <script>
+         
+         var planDetail ={};
+         var key='';
+         <apex:repeat value="{!planDetails2}" var="va">
+            key = '{!va}' ;
+            key =key.toLowerCase();
+            planDetail[key]=0;
+            console.log('###test planDetail: ' + planDetail);
+            console.log('###test key: ' + key);
+         </apex:repeat>
+         
+         var bankCodes = {};
+         // 20200902 - minghua - Check Sensitivity code for e-sales
+         <apex:repeat value="{!bankCodesList}" var="bc">
+            key =  "{!bc}";
+            bankCodes[key]='1';
+         </apex:repeat>
+ 
+        </script>
+        <script type="text/javascript">
+        
+            var changeLanguageWarningRequired = true;
+            
+            var Cigna = Cigna || {};
+            Cigna.EGroup = function(){
+                
+                var btnNextDisabled = false;
+                var btnPrevDisabled = false;
+
+                function nextStep(evt){
+
+                    var currentStep = $('#esales-current-step').val();
+
+                    if (!btnNextDisabled && validateForm()) {  
+                        if (currentStep == '{!STEP_ESIGNATURE}') {
+                            // TO-DO: Extra Action
+                            
+
+                            Cigna.ESignatureComp.saveSignature();
+                            btnNextDisabled = true;
+                            GroupESales.nextStep();
+                        
+                        }
+                        
+                        else if (currentStep == '{!STEP_UPLOADCENSUS}'){     
+                            var questionList = $('input[type="hidden"][id$="hasQuestionnaireList"]').val();
+                            if({!txn.Group_Existing_Employee__c < 5}){
+                                if(questionList == 'false' && $('#fupload').val().length > 0){
+                                    $("#emptyQuestionnaireFileAlert").show();
+                                    $("#errQuestionnaireFileExt").hide();
+                                    $("#emptyFileAlert").hide();
+                                    $("#errFileExt").hide();
+                                }    
+                                if($('#fupload').val().length == 0 && questionList == 'true'){
+                                    $("#emptyQuestionnaireFileAlert").hide();
+                                    $("#errQuestionnaireFileExt").hide();
+                                    $("#emptyFileAlert").show();
+                                    $("#errFileExt").hide();
+                                }    
+                                if($('#fupload').val().length == 0 && questionList == 'false'){
+                                    $("#emptyQuestionnaireFileAlert").show();
+                                    $("#errQuestionnaireFileExt").hide();
+                                    $("#emptyFileAlert").show();
+                                    $("#errFileExt").hide();
+                                }    
+                                if(questionList == 'true' && $('#fupload').val().length > 0){
+                                    $("#emptyQuestionnaireFileAlert").hide();
+                                    $("#errQuestionnaireFileExt").hide();
+                                    $("#emptyFileAlert").hide();      
+                                    $("#errFileExt").hide(); 
+                                    uploadExcel(document.getElementById('fupload').files);
+                                }
+                            } else {
+                                if ( $('#fupload').val().length>0 ){    
+                                    $("#emptyFileAlert").hide();      
+                                    $("#errFileExt").hide();                                            
+                                    uploadExcel(document.getElementById('fupload').files);
+                                }else{
+                                    //alert ("please select a template file");
+                                    $("#emptyFileAlert").show();
+                                    $("#errFileExt").hide(); 
+                                }
+                            }
+                        }
+
+
+                        else{
+                            btnNextDisabled = true;
+                            GroupESales.nextStep();
+                        }
+                        
+                        
+                        $("html, body").animate({ scrollTop: 0 }, "fast");
+                        
+                    } else{
+                        if(Cigna.Util.isCustomerPortal()){
+                            if ($('form[id$="frmGroupApplication"] input.error').length > 0) {
+                                    $('form[id$="frmGroupApplication"] input.error')[0].focus();
+                                    if (typeof evt != undefined && evt) {
+                                        evt.preventDefault();
+                                    }
+                            }           
+                        //} else if(Cigna.Util.isBrokerPortal()){
+                        } else { 
+                            if ($('form[id$="frmGroupApplication"] input.error').length > 0) {
+                                var elementId = $('form[id$="frmGroupApplication"] input.error')[0].getAttribute("id");
+                                $('form[id$="frmGroupApplication"] input.error')[0].focus();
+                                $('form[id$="frmGroupApplication"] input.error')[0].blur();
+                                if (typeof evt != undefined && evt) {
+                                    evt.preventDefault();
+                                }
+                            } else if($('form[id$="frmGroupApplication"] select.error').length > 0){
+                                $('form[id$="frmGroupApplication"] select.error')[0].focus();
+                                $('form[id$="frmGroupApplication"] select.error')[0].blur();
+                            }else{
+                                $("html, body").animate({ scrollTop: 0 }, "fast");
+                            }
+                        }
+                        //$("html, body").animate({ scrollTop: 0 }, "fast");
+
+                    }
+                }
+               
+                function prevStep(evt) {
+                    if (!btnPrevDisabled) {
+                        btnPrevDisabled = true;
+                        GroupESales.prevStep();
+                    }
+                    evt.preventDefault();
+                }
+                
+                function saveRecord(evt) {
+                    var currentStep = $('#esales-current-step').val();
+
+                    if(validateForm()){
+                        GroupESales.saveRecord();
+                    }else{
+                        if(Cigna.Util.isCustomerPortal()){
+                            if ($('form[id$="frmGroupApplication"] input.error').length > 0) {
+                                    $('form[id$="frmGroupApplication"] input.error')[0].focus();
+                                    if (typeof evt != undefined && evt) {
+                                        evt.preventDefault();
+                                    }
+                            }           
+                        //} else if(Cigna.Util.isBrokerPortal()){
+                        } else { 
+                            if ($('form[id$="frmGroupApplication"] input.error').length > 0) {
+                                var elementId = $('form[id$="frmGroupApplication"] input.error')[0].getAttribute("id");
+                                $('form[id$="frmGroupApplication"] input.error')[0].focus();
+                                $('form[id$="frmGroupApplication"] input.error')[0].blur();
+                                if (typeof evt != undefined && evt) {
+                                    evt.preventDefault();
+                                }
+                            } else if($('form[id$="frmGroupApplication"] select.error').length > 0){
+                                $('form[id$="frmGroupApplication"] select.error')[0].focus();
+                                $('form[id$="frmGroupApplication"] select.error')[0].blur();
+                            }else{
+                                $("html, body").animate({ scrollTop: 0 }, "fast");
+                            }
+                        }
+                    }
+                    
+                }
+                
+                function onRadioChange(evt) {
+                    var val = $(this).val();
+                    var parent = $(this).parent();
+                    //$(parent).siblings('p').removeClass('cigna-bg-green-medium');
+                    //$(parent).addClass('cigna-bg-green-medium');
+                    $(parent).siblings('input[type="hidden"]').val(val).trigger('change');
+                    console.log('onRadioChange# ' + val);
+
+                    evt.preventDefault();
+                }
+                
+                function onCheckboxChange(evt) {
+                    var val = $(this).is(':checked');
+                    /*
+                    if (val) {
+                        $(this).parent().addClass('cigna-bg-green-medium');
+                    } else {
+                        $(this).parent().removeClass('cigna-bg-green-medium');
+                    }
+                    */
+                    console.log('### val: ' + val);
+
+                    $(this).siblings('input[type="hidden"]').val(val).trigger('change');
+
+                }
+
+                function finishLoading() {
+                    btnNextDisabled = false;
+                    btnPrevDisabled = false;
+                }
+
+                function refreshResultPage(){
+                    var currentStep = $('#esales-current-step').val();
+                    var id = $('#esales-txn-id').val();
+                    if (currentStep == '{!STEP_CONFIRMATION}'){
+                        var params = { 
+                                tid : id
+                            };
+                        Cigna.Util.navigateToVFP("ESalesGroupVFP?plan=LHB&" + $.param(params), null, null, true);
+                    }
+                    
+                }
+
+                function validateForm() {
+                    return $("form[id*='frmGroupApplication']").validate().form();
+                }
+                
+                function goHome() {
+                    var userAgent = window.navigator.userAgent.toLowerCase();
+                    var sf1withoutBrowser = /salesforce1/i.test( userAgent );
+                    
+                    var sitePrefix = "{!$Site.Prefix}";
+                    var url = "";
+    
+                    if (Cigna.Util.isBrokerPortal()) {
+                        url = sitePrefix + "/apex/BrkBrokerLandingVFP";
+                    } else if (Cigna.Util.isCustomerPortal()) {
+                        url = sitePrefix + "/apex/CustomerLandingPage";
+                    } else {
+                        var currentUrl = window.location.href.substring(window.location.href.lastIndexOf('/'));
+                        if (currentUrl.toLowerCase().indexOf('/cus') == 0) {
+                            url = "/apex/CustomerLandingPage"; 
+                        } else if (currentUrl.toLowerCase().indexOf('/brk') == 0) {
+                            url = "/apex/BrkBrokerLandingVFP";
+                        } else {
+                            url = "/apex/CustomerLandingPage"; 
+                        } 
+                    }
+    
+                    if (Cigna.Util.isSalesforce1()) {
+                        if(sf1withoutBrowser){
+                            sforce.one.navigateToURL(url, true);
+                        } else {
+                            window.location.href = url;
+                        }    
+                    } else {
+                        window.location.href = url;
+                    }
+                }
+                
+                function viewOtherPlans() {
+                    if (Cigna.Util.isBrokerPortal()) {
+                        Cigna.Util.navigateToVFP("ProductDeckVFP", null, null, true);
+                    } else {
+                        Cigna.Util.navigateToVFP("GetProtectedVFP", null, null, true);
+                    }
+                }
+                
+                function hiddenonblur(element){
+                   //CR-56_Link_20220214
+                   $(element).trigger("blur");
+                }
+
+                //validation
+                function checkFirstCharacter(value){
+                    //the first character cannot be space and *
+                    if(value.indexOf('*') == 0 || value.indexOf(' ') == 0){
+                        return false;
+                    }
+                    return true;
+                }
+                function validateLength(value, len){
+
+                    if(value.length > len){
+                        return false;
+                    }
+
+                    return true;
+                }
+                function checkChinese(value){
+                    if(/.*[\u4e00-\u9fa5]+.*$/.test(value)) {
+                        return false;
+                    }
+                    return true;
+                }
+                function checkContactNoLength(value){
+
+                    if(value.length > 20){
+                        return false;
+                    }
+                    return true;
+                }
+                function checkHKID(value){
+                    //only allow english character and numbers
+
+                    if(/^[0-9a-zA-Z]*$/.test(value)) {
+                        return true;
+                    }
+                    return false;
+                }
+
+                function showLoadingIcon(id){
+                    $('#' + id).show();
+                }
+        
+                function hideLoadingIcon(id){
+                    $('#' + id).hide();
+                }
+                
+                function redirectToQuote() {
+                
+                    var params;
+                    if(Cigna.Util.isBrokerPortal()){
+                        params = {
+                            plan : "{!paraPlan}",
+                            tid : "{!paramESalesTxnId}",
+                            fromPage : "Esales"
+                        };
+                        
+                        Cigna.Util.navigateToVFP("GroupProductQuotationVFP?" + $.param(params), null, null, true);
+                        
+                    }else{
+                        params = {
+                            plan : "{!paraPlan}"
+                        };
+
+                        Cigna.Util.navigateToVFP("GroupProductQuotationVFP?" + $.param(params), null, null, true);
+                        
+                    }
+                }
+
+                function refreshEsignatrueButton(){
+                    
+                    if($('#mobile-submit').length ){
+                        $('#mobile-submit').show();
+                        $('#mobile-sendEmail').hide();
+                        $('#mobile-esignature-sendEmail').hide();
+                        $('#mobile-esignature-submit').hide();
+                    }
+                }
+                
+                function uploadQuestionnaireFile(parentId, attType, files){
+                    $("#errQuestionnaireFileExt").hide();
+                    var f=  files[0];
+                    var expr1 = /\.xlsx$/;
+                    var expr2 = /\.pdf$/;
+                    var expr3 = /\.docx$/;
+                    var expr4 = /\.jpeg$/;
+                    if(expr1.test(f.name) || expr2.test(f.name) || expr3.test(f.name) || expr4.test(f.name)){
+                        showLoadingIcon('snd-loading-icon');
+
+                        $('#errNoFile').hide();
+
+                        $("#"+attType).each(function(){
+                          filesToUpload=$(this)[0].files[0];
+                        });
+                        
+                        var reader = new FileReader();
+                
+                        // Keep a reference to the File in the FileReader so it can be accessed in callbacks
+                        reader.file = filesToUpload;
+                
+                        reader.onload = function(e)
+                        {
+                            var maxFileSize = 26214400;//7340032;
+                            var passFileSize;
+                            var passFileType;
+                            if(this.file.size>maxFileSize){
+                                $("#errFileSize").show();
+                                passFileType = false;
+                            }else{
+                                passFileSize = 'true';
+                                $("#errFileSize").hide();
+                            }
+                            if(this.file.type!='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && this.file.type!='application/pdf' && this.file.type!='application/vnd.openxmlformats-officedocument.wordprocessingml.document' && this.file.type!='image/jpeg'){
+                                $("#errFileType").show();
+                            }else{
+                                passFileType  = 'true';
+                                $("#errFileType").hide();
+                            }
+                            if(passFileType=='true' && passFileSize=='true' && parentId && parentId != undefined){
+                                
+                                //GroupESales.removeOldCensus();
+                                
+                                var att = new sforce.SObject("Attachment");
+                                var num = Math.random()*9999;
+                                num = parseInt(num, 10);
+                                
+                                $('input[type="hidden"][id$="randomNum"]').val(num);
+                                console.log('randomNum ' + num);
+                                
+                                var txnName = $('input[type="hidden"][id$="txnName"]').val();
+                                //att.Name = attType+'_'+num+'_'+this.file.name;
+                                /*
+                                att.Name = txnName+'_'+'HealthForm_'+this.file.name;
+                                att.ContentType = this.file.type;
+                                att.ParentId = parentId;
+                                */
+                                var binary = "";
+                                var bytes = new Uint8Array(e.target.result);
+                                var length = bytes.byteLength;
+                
+                                for (var i = 0; i < length; i++)
+                                {
+                                    binary += String.fromCharCode(bytes[i]);
+                                }
+                
+                                //att.Body = (new sforce.Base64Binary(binary)).toString();
+                                var attachment_object = {
+                                    parentId: parentId,
+                                    Body: window.btoa(binary), 
+                                    Name: txnName+'_'+'HealthForm_'+this.file.name, 
+                                    ContentType: this.file.type 
+                                };
+                                
+                                $.ajax({
+                                    url: '{!$Site.BaseUrl}/services/data/v38.0/sobjects/Attachment',
+                                    data: JSON.stringify(attachment_object),
+                                    type: 'POST',
+                                    processData: false,
+                                    contentType: false,
+                                    headers: {'Authorization': 'Bearer {!GETSESSIONID()}', 'Content-Type': 'application/json'},
+                                    xhr: function(){
+                                        var xhr = new window.XMLHttpRequest();
+                                        //Upload progress
+                                        xhr.upload.addEventListener("progress", function(evt){
+                                            if (evt.lengthComputable) {
+                                                var percentComplete = evt.loaded / evt.total;
+                                                //Do something with upload progress
+                                                console.log("Percentage:"+percentComplete);
+                                            }
+                                        }, false);
+                                        return xhr;
+                                    },
+                                    
+                                    success: function(response) {
+                                        console.log(response); 
+                                        hideLoadingIcon('snd-loading-icon');
+                                        refreshQuestionnaireAttlist();
+                                        //checkAtt();
+                                        $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                                    },
+                                    
+                                    error: function(xhr, status, error) {
+                                        var errorMessage = xhr.status + ': ' + xhr.statusText
+                                        console.log('ERROR:'+ errorMessage); 
+                                        hideLoadingIcon('snd-loading-icon');
+                                    }
+                                });
+                            }else{
+                                hideLoadingIcon('snd-loading-icon');
+                            }
+                        }
+                    }else{
+                            $("#emptyQuestionnaireFileAlert").hide();
+                            $("#errQuestionnaireFileExt").show();
+                    };
+                    
+                    if(filesToUpload!='' || filesToUpload!='1'){
+                        reader.readAsArrayBuffer(filesToUpload);
+                        $("#errNoFile").hide();
+                    }else{
+                        //finishSubmission();
+                        $("#errNoFile").show();
+                    }
+                    
+                } 
+
+                return {
+                    nextStep : nextStep,
+                    prevStep : prevStep,
+                    finishLoading : finishLoading,
+                    onRadioChange : onRadioChange,
+                    onCheckboxChange : onCheckboxChange,
+                    saveRecord : saveRecord,
+                    goHome : goHome,
+                    viewOtherPlans : viewOtherPlans,
+                    showLoadingIcon : showLoadingIcon,
+                    hideLoadingIcon : hideLoadingIcon,
+                    redirectToQuote : redirectToQuote,
+                    checkFirstCharacter : checkFirstCharacter,
+                    validateLength : validateLength,
+                    checkChinese : checkChinese,
+                    checkHKID : checkHKID,
+                    checkContactNoLength : checkContactNoLength,
+                    uploadQuestionnaireFile : uploadQuestionnaireFile,
+                    refreshResultPage : refreshResultPage
+                }
+            }(); 
+            
+            $(document).ready(function(){
+                
+                $('[data-toggle="tooltip"]').tooltip({
+                        placement: "top"
+                });
+
+                sforce.connection.serverUrl = "{!$Site.Prefix}/services/Soap/u/32.0";
+                refreshEsignature();
+
+                refreshDownloadIcon();
+                
+            });
+
+            function refreshDownloadIcon(){
+                if (Cigna.Util.isSalesforce1()) { 
+                    $("#pnl_download_normal").hide();
+                    $("#pnl_download_sf1").show();             
+                } else{
+                    $("#pnl_download_normal").show();
+                    $("#pnl_download_sf1").hide();        
+                }
+                //alert('called');
+            }
+            
+            var X = XLSX;
+            
+            function uploadExcel( files){       
+                var f=  files[0];                               
+                var reader = new FileReader(); 
+                reader.onload = function(e)  
+                   {  
+                        var data = e.target.result;    
+                        data =new Uint8Array(data);                 
+                        var workbook  = X.read(data, {type:'array',cellText:false, cellDates:true}); 
+                        if (!uploadCensusValidation(workbook)){
+                            displayErrosList();
+                        }else{
+                            GroupESales.nextStep();
+                    //        setTimeout (function (){var a=0;}, 2000);
+                    //        setTimeout (function (){alert('a');}, 1500);
+                            //setTimeout (function (){refreshpage();}, 1800);
+                            
+                        }
+                         //call ws and go to confirm page
+                   };                      
+              //  reader.readAsBinaryString(f);         
+                reader.readAsArrayBuffer(f);                   
+            };
+            
+            function sendEmailQuote() { 
+                CensusTemplate.SendEmail(); 
+                $('#lblEmailSent').text('{!$Label.Esales_Email_Sent}');
+                if (typeof evt != undefined && evt) {
+                        evt.preventDefault();
+                }
+            }
+            
+            //add By David at 2018/1/23
+            function sendCensusTemplete() {
+                var addr = $('input[id*="UploadCensusEmailAddr"]').val();
+                
+                $('input[type="hidden"][id*="tempTempleteAddr"]').val(addr);
+                //alert('addr='+addr);
+                GroupESales.sendCensusTemplete(addr); 
+                $('#CensusEmailSent').text('{!$Label.Esales_Email_Sent}');
+                if (typeof evt != undefined && evt) {
+                    evt.preventDefault();
+                }
+            }
+            
+            //sendQuesTemplete
+            function sendQuesTemplete() {
+                var Quesaddr = $('input[id*="UploadQuestionnaireEmailAddr"]').val();
+                
+                $('input[type="hidden"][id*="tempQuesTempleteAddr"]').val(Quesaddr);
+                //alert('Quesaddr'+Quesaddr );
+                GroupESales.sendQuesTemplete(Quesaddr); 
+                $('#QuestionnaireEmailSent').text('{!$Label.Esales_Email_Sent}');
+                if (typeof evt != undefined && evt) {
+                    evt.preventDefault();
+                }
+            }
+
+            function popFileName(files){
+                var f=  files[0];
+                var expr = /\.xlsx$/;
+                if (expr.test(f.name)  ){
+                    $("#lblFilename").text(f.name);
+                    $("#errFileExt").hide();
+                    $("#emptyFileAlert").hide();
+                }else{
+                    $("#lblFilename").text('');
+                    $("#errFileExt").show();
+                     $("#emptyFileAlert").hide();
+                }
+             //   $("input[id$='JSONStr']").val('');
+            }
+            
+            //add by David at 2018/1/18
+            /*function QuestionnaireFileName(files){
+                //var f=  files[0];
+                var expr = /\.xlsx$/;
+                for(i=0; i<files.length; i++){
+                    var f=  files[i];
+                    if (expr.test(f.name)  ){
+                        //$("#QuestionnaireFilename").text(f.name);
+                        $("#QuestionnaireFilename").append(f.name + "<br/>&nbsp;&nbsp;")
+                        $("#errQuestionnaireFileExt").hide();
+                        $("#emptyQuestionnaireFileAlert").hide();
+                    }else{
+                        $("#QuestionnaireFilename").text('');
+                        $("#errQuestionnaireFileExt").show();
+                         $("#emptyQuestionnaireFileAlert").hide();
+                    }
+                }
+             //   $("input[id$='JSONStr2']").val('');
+            }*/
+            
+            function uploadCensusValidation(workbook){
+                var errArr = new Array(); 
+                var errCount = 0;
+                var hdrmap= {};
+                var ex = /^\d+$/;
+                var ex_bc = /^\#[\d]{3}$/;
+                var ex_ba = /^\#[\d\s]+$/;
+                var maxEmployeeCount = 50;
+                var employeeCount = 0;
+                //check spreedsheet format   
+                var roa = X.utils.sheet_to_json(workbook.Sheets['Census'],{ defval:'',dateNF:'dd/mm/yyyy',blankrows:false});       
+                if ( roa.length<1){
+                    errArr[errCount++] = '{!$Label.Upload_Alert_Census_Not_Found}';
+                    $('#ulErrMsgList').html('<ul><li>{!$Label.Upload_Alert_Census_Not_Found}</li></ul>');
+                    return false;
+                }
+                
+                //check header format
+                var roawh = XLSX.utils.sheet_to_json(workbook.Sheets['Census'], {header:1,blankrows:false});
+                var headers = roawh[0];
+                for(var i=0;i<headers.length;i++){
+                    hdrmap[headers[i]]="1"; 
+                }              
+                if (hdrmap["Plan Number"]==null ){
+                    errArr[errCount++] = "Plan Number";
+                }
+                if (hdrmap["Plan Name"]==null ){
+                    errArr[errCount++] = "Plan Name";
+                }
+                if (hdrmap["Member Type"]==null ){
+                    errArr[errCount++] = "Member Type";                
+                }
+                if (hdrmap["Member Name"]==null ){
+                    errArr[errCount++] = "Member Name";
+                }
+                if (hdrmap["Gender"]==null ){
+                    errArr[errCount++] = "Gender";
+                }
+                if (hdrmap["Marital Status"]==null ){
+                    errArr[errCount++] = "Marital Status";
+                }
+                if (hdrmap["Date of Birth"]==null ){
+                    errArr[errCount++] = "Date of Birth";
+                }
+                if (hdrmap["Employment Date of the Employee"]==null ){
+                    errArr[errCount++] = "Employment Date of the Employee";
+                }
+                if (hdrmap["ID / Passport Type"]==null ){
+                    errArr[errCount++] = "ID / Passport Type";
+                }
+                if (hdrmap["ID / Passport Number"]==null ){
+                    errArr[errCount++] = "ID / Passport Number";
+                }
+                if (hdrmap["Bank Code"]==null ){
+                    errArr[errCount++] = "Bank Code";
+                }
+                if (hdrmap["Bank Account Number"]==null ){
+                    errArr[errCount++] = "Bank Account Number";
+                }
+                //add by lu weizheng at 2018/04/16
+                //modify at 04/27
+                if(hdrmap["Email Address"]==null && hdrmap["Email"]==null){
+                    errArr[errCount++] = "Email Address";
+                }
+                //end add
+                /*
+                if (hdrmap["Cert Num Control"]==null ){
+                    errArr[errCount++] = "Cert Num Control";
+                }
+                if (hdrmap["PEM_SUBPLAN"]==null ){
+                    errArr[errCount++] = "PEM_SUBPLAN";
+                }
+                */
+                if (errCount>0) {/*
+                    var htm = "{!$Label.Upload_Alert_Missing_Header}<br/><ul>";
+                    for (var i=0; i<errCount; i++){
+                       htm += "<li>"+errArr[i]+"</li>";
+                    }                    
+                    htm+="</ul>";
+                    */
+                    var htm = "<ul><li>{!$Label.Upload_Alert_Invalid_Excel_Format}</li></ul>";                   
+                    $('#ulErrMsgList').html(htm);
+                    return false;                    
+                }  
+                //check excel data  
+                var lastMemberType = "";
+                var lastSubplan="";
+                var curMemberType="";
+                var curSubplan="";
+                var lastFamily=0;
+                var curFamily=0;
+                var familyMap = {};
+                var idMap = {};
+                var planNameCheck = {};
+                var curGender="";
+                var lastGender="";
+                var lastPlanNumber="";
+                var pname = "";
+                
+                var plannum = 0;
+                <apex:repeat value="{!planDetails3}" var="pna">
+                    pname = '{!pna}' ;
+                    
+                    planNameCheck[plannum]=pname;
+                    plannum++;
+                    
+                </apex:repeat>
+                
+                for(var rcidx in roa){    
+                    var rc = roa[rcidx];
+               //    alert (JSON.stringify(rc));  
+                    var errMsg ="";        
+                    var planname ="";
+                    var plannumber = "";
+                    var idnum ="";
+                    var idtype="";   
+                    var isEmptyRow=true;
+                    //eliminate blank rows
+                    for (var att in rc){
+                        var val = rc[att].trim();
+                        if (val!=''){
+                            isEmptyRow=false;
+                            break;
+                        }
+                    }
+                    if (isEmptyRow){
+                        continue;
+                    }
+                    //traverse attributes         
+                    for (var att in rc){
+                        var val = rc[att].trim();
+                        var attText='';
+                        if (att=='Plan Number') attText ="{!$Label.Upload_Excel_Header_Plan_Number}";
+                        else if (att=='Plan Name') attText ="{!$Label.Upload_Excel_Header_Plan_Name}";
+                        else if (att=='Member Type') attText ="{!$Label.Upload_Excel_Header_Member_Type}";
+                        else if (att=='Member Name') attText ="{!$Label.Upload_Excel_Header_Member_Name}";
+                        else if (att=='Gender') attText ="{!$Label.Upload_Excel_Header_Gender}";
+                        else if (att=='Marital Status') attText ="{!$Label.Upload_Excel_Header_Marital_Status}";
+                        else if (att=='Date of Birth') attText ="{!$Label.Upload_Excel_Header_DOB}";
+                        else if (att=='Employment Date of the Employee') attText ="{!$Label.Upload_Excel_Header_Employment_Date_2}";
+                        else if (att=='ID / Passport Type') attText ="{!$Label.Upload_Excel_Header_ID_Passport_Type}";
+                        else if (att=='ID / Passport Number') attText ="{!$Label.Upload_Excel_Header_ID_Passport_Number}";
+                        else if (att=='Bank Code') attText ="{!$Label.Upload_Excel_Header_Bank_Code}";
+                        else if (att=='Bank Account Number') attText ="{!$Label.Upload_Excel_Header_Bank_Account_Number}"; 
+                        else if (att=='Email' || att=='Email Address') attText = "{!$Label.Upload_Excel_Header_Email}";
+
+
+                        if(val=='' && att!='Email' && att!='Email Address'){
+                            
+                            errMsg += attText + ": {!$Label.Upload_Alert_Not_Empty}" +"||";
+                           
+                        }else if(val=='' && (att=='Email' || att=='Email Address')){
+                            // email is not required field
+                        }
+                        
+                        else{ 
+                            if (att =='Plan Number'){
+                                if ( val.length>20 || !ex.test(val)) {                                     
+                                    errMsg += attText+ ": {!$Label.Upload_Alert_Integer}" + "||";
+                                }  
+                                plannumber = val;
+                            } 
+                            if (att =='Plan Name'){
+                                if ( val.length>50  ) {                                     
+                                    errMsg += attText+ ": {!$Label.eSales_Exceed_Max_Length} 50 {!$Label.eSales_Exceed_Max_Length_2}"+ "||";
+                                }  
+                                planname = val;
+                            } 
+                            if (att =='Member Type'){                            
+                                if ( val.toLowerCase() !="e" &&  val.toLowerCase() !="s" &&  val.toLowerCase() !="c"  ) { 
+                                    errMsg += attText+ ":  {!$Label.Upload_Alert_Member_Type_Check} "+ "||";
+                                } 
+                                if (val.toLowerCase() =="s" && lastMemberType !="e" ){
+                                    errMsg += attText+ ":  {!$Label.Upload_Alert_Spouse_Location}"+ "||";
+                                }                            
+                                lastMemberType = val.toLowerCase();
+                                curMemberType = val.toLowerCase();
+                                if (val.toLowerCase() =="e"){
+                                    employeeCount++;                                    
+                                }
+                            } 
+                            if (att =='Member Name'){
+                                if ( val.length>60  ) {                                     
+                                    errMsg += attText+ ": {!$Label.Upload_Alert_Member_Name_Length_Check}"+ "||";
+                                }  
+                                if ( !Cigna.ValidationUtil.isEnglishOnly(val)  ) {
+                                    errMsg += attText+ ":  {!$Label.Upload_Alert_English_Only}"+"||";
+                                } 
+                            } 
+                            if (att =='Gender'){
+                                if ( val.toLowerCase() !="m" &&  val.toLowerCase() !="f" ) {
+                                    errMsg += attText+ ": {!$Label.Upload_Alert_One_Of} \"M\" {!$Label.Upload_Alert_Or} \"F\"."+ "||";
+                                }  
+                                lastGender = curGender;
+                                curGender = val.toLowerCase();
+                            } 
+                            if (att =='Marital Status'){
+                                if ( val.toLowerCase() !="m" &&  val.toLowerCase() !="d" &&  val.toLowerCase() !="s"  ) { 
+                                    errMsg += attText+ ": {!$Label.Upload_Alert_Member_Marital_Status_Check}"+ "||";
+                                }   
+                            }                              
+                            if (att =='Date of Birth'){
+                              //  alert ( val);
+                                if ( !dateValidationddmmyyyy(val) ) {
+                                    errMsg += attText+ ": {!$Label.Upload_Alert_Member_Validate_DOB}"+ "||";
+                                }  else
+                                if ( greatThan64(val) ) {
+                                    errMsg += attText+ ":  {!$Label.Upload_Alert_Older_Than_64}."+ "||";
+                                } else if (isFutureDate(val)){
+                                    errMsg += attText+ ":  {!$Label.Upload_Alert_Member_DOB_Not_Future}"+ "||";
+                                }
+ 
+                            }                             
+                            if (att =='Employment Date of the Employee'){
+                                if ( !dateValidationddmmyyyy(  val ) ) {                                     
+                                    errMsg += attText+ ": {!$Label.Upload_Alert_Member_Validate_ED}"+ "||";
+                                }  
+                            } 
+                            if (att =='ID / Passport Type'){
+                                if ( val.toLowerCase() !="1" &&  val.toLowerCase() !="2" &&  val.toLowerCase() !="6" &&  val.toLowerCase() !="7" &&  val.toLowerCase() !="9"  ) { 
+                                    errMsg += attText+ ": {!$Label.Upload_Alert_ID_Passport_Type_Check}"+ "||";
+                                }  
+                                idtype = val;
+                            } 
+                            if (att =='ID / Passport Number'){
+                                if (  val.length>30   ) {
+                                    errMsg += attText+ ": {!$Label.Upload_Alert_ID_Passport_Number_Length_Check}"+ "||";
+                                }  
+                                idnum = val;
+                            } 
+                            if (att =='Bank Code'){
+                                if (  !ex_bc.test(val)  ) {
+                                    errMsg += attText+ ": {!$Label.Upload_Alert_Bank_Code_Format_Text}"+ '||';
+                                } else if (bankCodes[val]==null || bankCodes[val] !='1' ){
+                                    errMsg += attText+ ": {!$Label.Upload_Alert_Undefined_Bank_Code}"+ "||";
+                                }
+                            } 
+                            if (att =='Bank Account Number'){
+                                if (  val.length>29   ) {
+                                    errMsg += attText+ ": {!$Label.Upload_Alert_Bank_Account_Number_Length_Check}"+ "||";
+                                }  
+                                else if (  !ex_ba.test(val)  ) {
+                                    errMsg += attText+ ": {!$Label.Upload_Alert_Bank_Account_Number_Format_Check}"+ "||";
+                                }  
+                            }  
+                            //add by lu weizheng at 2018/04/16
+                            //modify at 04/27
+                            if(att == 'Email Address' || att == 'Email'){
+                                if(!Cigna.ValidationUtil.isValidEmail(val)){
+                                    errMsg += attText + ": {!$Label.Upload_Alert_Email_Format}"+"||";
+                                }
+                            }
+                            //end add
+                            /*
+                            if (att =='Cert Num Control'){
+                                if ( val.length>10 || !ex.test(val)) {                                     
+                                    errMsg += "Cert Num Control: must be a valid integer." + "||";
+                                }  
+                                lastFamily=curFamily;
+                                curFamily= parseInt(val);
+                                if (curFamily<lastFamily){
+                                    errMsg += "Cert Num Control: incorrect Cert Number Control sequence." + "||";
+                                }                                
+                                 
+                            }
+                            if (att =='PEM_SUBPLAN'){
+                                if ( val.toLowerCase() !="1e" &&  val.toLowerCase() !="2s" &&  val.toLowerCase() !="3c"  ) { 
+                                    errMsg += "PEM_SUBPLAN: must be one of \"1E\", \"2S\" and \"3C\"."+ "||";
+                                }  
+                                lastSubplan = curSubplan;
+                                curSubplan = val.toLowerCase();
+                            }
+                            */
+
+                        }  
+                                              
+                    }
+                    /*
+                    if (! ((curSubplan=='1e' && curMemberType=='employee') || 
+                            (curSubplan=='2s' && curMemberType=='spouse') || 
+                            (curSubplan=='3c' && curMemberType=='child') )
+                        ){
+                        errMsg += "Member type : Must align with PEM_SUBPLAN."+ "||";
+                     //alert (curSubplan + '--' + curMemberType);
+                    }
+                    
+                    if ( lastFamily!=curFamily && (curMemberType=='spouse' ||curMemberType=='child')){
+                        errMsg += "Member type : Employee is missing on this family."+ "||";
+                    } 
+                    
+                    if (lastMemberType=='employee'){
+                        if (familyMap[lastFamily]!= null){
+                            errMsg += "Member type : Only one employee is allowed for each Cert Num Control."+ "||";
+                        }
+                        else{
+                            familyMap[lastFamily]='1';
+                        }
+                    }
+                     */
+                     /*
+                    if (curMemberType=='s' && curGender==lastGender){
+                        errMsg += "Gender : {!$Label.Upload_Alert_Spouse_Gender}"+ "||";
+                    }
+                    */
+                  //  var planc = plannumber+ "|" +planname ;
+                    var planc = plannumber ;
+                    planc =planc.toLowerCase();
+             //       console.log('###test planDetail22: ' + planDetail);
+                    if ( planDetail[planc] ==null   ){
+                        errMsg += "{!$Label.Upload_Excel_Header_Plan_Number}: {!$Label.Upload_Alert_Plan_Not_Exist}"+ "||";
+                    }else{
+                        var intTemp = planDetail[planc] ;
+                        planDetail[planc] = intTemp+1;
+                    }
+
+                    if (planNameCheck[plannumber-1] ==null  ){
+                        
+                        planNameCheck[plannumber-1] = planname;
+                    }else if (planNameCheck[plannumber-1] != planname ){
+                        
+                        errMsg += "{!$Label.Upload_Alert_Plan_Name_Inconsistent}"+ "||";
+                    }
+
+                    if (curMemberType=='e'){
+                        lastPlanNumber = plannumber;
+                    }else {
+                        if (lastPlanNumber != plannumber){
+                            errMsg += "{!$Label.Upload_Excel_Header_Plan_Number}：{!$Label.Upload_Alert_Plan_Number_Not_Aligned}"+ "||";
+                        }
+                    }
+
+                    var idset = idtype + "-" + idnum;
+                    if (idMap[idset] ==null){
+                        idMap[idset] = '1';
+                    }else{
+                        errMsg += "{!$Label.Upload_Excel_Header_ID_Passport_Number}: {!$Label.Upload_Alert_ID_Passport_Number_Duplicate_Check}"+ "||";
+                    }
+
+                    if (errMsg!=""){
+                        var rowidx = parseInt(rcidx)+2;
+                        errArr[errCount++] =   rowidx + "||" + errMsg;
+                    }                         
+                }
+                // overall check after scanning whole file
+                if (errCount==0){
+                    for (var kk in planDetail  ){
+                        if (planDetail[kk]==0){
+                             //errArr[errCount++] = 'Quotation plan not detected '+ kk ;
+                                $('#ulErrMsgList').html('<ul><li>{!$Label.Upload_Alert_Plan_Not_Found_In_Quotation} '+kk+ '.</li></ul>');
+                                return false;
+                        }
+                    }
+
+                    if (employeeCount>50){
+                       // errArr[errCount++] = 'Excel template must not contain more than 50 employees.';
+                        $('#ulErrMsgList').html('<ul><li>{!$Label.Upload_Alert_Member_Number_More_Than_50}</li></ul>');
+                        return false;
+                    }
+                    if (employeeCount<3){
+                      //  errArr[errCount++] = 'Excel template must not contain less than 3 employees.';
+                        $('#ulErrMsgList').html('<ul><li>{!$Label.Upload_Alert_Member_Number_Less_Than_3}</li></ul>');
+                        return false;
+                    }
+                }
+                //alert (JSON.stringify(roa));
+                //display data issue
+                if (errCount>0){
+                    var htm = "";
+                    for (var i=0;i<errCount;i++){
+                        var temp = errArr[i].split('||');
+                        htm += "<span>{!$Label.Upload_Alert_Row} "+ temp[0]+ ":</span>";
+                        htm += "<ul>";
+                        for (var ind=1;ind<temp.length;ind++){
+                            if ( temp[ind].trim()=='' ) continue;
+                            htm += "<li>" + temp[ind] + "</li>"; 
+                        }
+                        htm += "</ul>";
+                    }
+                    $('#ulErrMsgList').html(htm);
+                    return false;   
+                }else{
+                    //pass to backend
+                    $("input[id$='JSONStr']").val(JSON.stringify(roa));
+                    return true;
+                }               
+            }
+
+            function greatThan64(str){
+                var nw=new Date();
+                var inputDate = str;
+                var year = inputDate.split("/")[2];
+                var month = inputDate.split("/")[1];
+                var day = inputDate.split("/")[0];   
+                var dt = new Date( );
+                dt.setFullYear ( parseInt(year)+64);
+                if (dt - nw  <  0 ){
+                    return true;
+                }
+                return false;
+            }
+
+            function isFutureDate(str){
+                var nw=new Date();
+                var inputDate = str;
+                var year = inputDate.split("/")[2];
+                var month = inputDate.split("/")[1];
+                var day = inputDate.split("/")[0];   
+                var dt = new Date( );
+                dt.setFullYear ( parseInt(year), parseInt(month)-1, parseInt(day));
+                if (dt > nw ){
+                    return true;
+                }
+                return false;
+            }
+
+            function dateValidationddmmyyyy(str){                
+                if(str.length >10 || str.length<6){
+                    return false;
+                }                
+                var isvalid = true;
+                try{
+                    var inputDate = str;
+                    var year = inputDate.split("/")[2];
+                    var month = inputDate.split("/")[1];
+                    var day = inputDate.split("/")[0];                    
+                    //define how many days in selected month
+                    var daysInMonth = 31;
+                    if (month==4 || month==6 || month==9 || month==11) {
+                        daysInMonth = 30
+                    }
+                    if (month==2) {
+                        daysInMonth = (((year % 4 == 0) && ( (!(year % 100 == 0)) || (year % 400 == 0))) ? 29 : 28 );
+                    }                    
+                    //do validation
+                    if( (year > 2100 || year < 1900 || year.length > 4) 
+                        ||(month > 12 || month < 1 || month.length > 2)
+                        ||(day > daysInMonth || day < 1 || day.length > 2) )
+                    {
+                        isvalid = false;
+                    }                    
+                }catch(e){
+                    isvalid = false;
+                }     
+                return isvalid;
+            }
+            
+            function displayErrosList(){
+                $('#ulErrMsg').show();
+                $('#midctn').hide();      
+                $('#midctn2').hide();    
+                $("span[id$='showNextButton']").hide();
+             //   $('action-bar').hide();
+            }
+            function retryUpload(){
+                $('#ulErrMsg').hide();
+                $('#midctn').show();  
+                $('#midctn2').show();
+                $("span[id$='showNextButton']").show();
+               // $('action-bar').show();
+            }
+
+            function refreshpage(){
+                var id = $('#esales-txn-id').val();
+                    var params = { 
+                                tid : id
+                            };
+                      //      alert('in');
+                    Cigna.Util.navigateToVFP("ESalesGroupVFP?plan=LHB&" + $.param(params), null, null, true);
+                
+            }
+        </script>
+        
+        
+    </head>
+    <apex:define name="additionalLibraries">
+         <!--additional css, bootstrap, jquery,js libraries-->
+         <!-- CR-56_Link_20220214 -->
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+         <apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+         </apex:outputPanel>
+         <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+         
+    </apex:define>
+
+    <div class="bs col-xs-12 form-horizontal">
+    <apex:outputPanel id="errmessage">
+        <div class="bs row">
+            <apex:pagemessages ></apex:pagemessages>
+        </div>
+    </apex:outputPanel>
+
+    <apex:outputPanel id="wrapper">
+        <apex:form id="frmGroupApplication" styleClass="cigna-esales-form" enctype="multipart/form-data">
+            <apex:actionFunction action="{!nextStep}" name="nextStep" namespace="GroupESales" 
+                             reRender="wrapper,wrapperApp,errmessage,cfmpage,cfmpageresult,txnName" oncomplete="refreshDownloadIcon();refreshEsignature();Cigna.EGroup.finishLoading();Cigna.EGroup.refreshResultPage();" status="loader-icon"
+            />
+            <apex:actionFunction action="{!prevStep}" name="prevStep" namespace="GroupESales" 
+                                 reRender="wrapper,wrapperApp" oncomplete="refreshDownloadIcon();Cigna.EGroup.finishLoading();" status="loader-icon"
+            />
+            <apex:actionFunction action="{!saveRecord}" name="saveRecord" namespace="GroupESales" 
+                                 reRender="wrapper,wrapperApp" status="loader-icon"
+            />
+            <apex:actionFunction name="refreshEsignature" reRender="payment-esignature-section" status="loader-icon" />
+
+            <apex:actionFunction action="{!emailCensusTemplate}" namespace="CensusTemplate" name="SendEmail" reRender="ctrtbl" status="loader-icon"/>
+            
+            <!-- add by Dviad at 2018/1/18 -->
+            <apex:actionFunction action="{!emailQuestionnaireTemplate}" namespace="QuestionnaireTemplate" name="SendQuestionnaireEmail" reRender="ctrtbl" status="loader-icon"/>
+
+            <apex:actionFunction action="{!removeOldCensus}" name="removeOldCensus" namespace="GroupESales" reRender="false"></apex:actionFunction>
+            
+            <apex:actionFunction name="refreshCensusAttlist" reRender="Censuslist" status="loader-icon"/>
+            <apex:actionFunction name="refreshQuestionnaireAttlist" reRender="hasQuestionnaireList,Questionnairelist,txnName" status="loader-icon"/>
+            
+            <apex:actionFunction name="removeAttachment" action="{!removeQuestionnaireAtt}" reRender="hasQuestionnaireList,Questionnairelist" status="loader-icon">
+                <apex:param name="id" value="" assignTo="{!removeAttId}"/>
+            </apex:actionFunction>
+            
+            <apex:actionFunction name="sendCensusTemplete" action="{!emailCensusTemplate}" namespace="GroupESales" reRender="Censuslist"/>
+            <apex:actionFunction name="sendQuesTemplete" action="{!emailQuesTemplate}" namespace="GroupESales" reRender="Questionnairelist"/>
+            <!--<apex:actionFunction name="sendAppForm" action="{!sendApplicationForm}" namespace="GroupESales"/>-->
+            <!-- add by Dviad at 2018/1/18 -->
+                
+            <input type="hidden" id="esales-current-step" value="{!currentStep}" />
+            <input type="hidden" id="esales-txn-id" value="{!txn.Id}" />
+
+            <apex:inputHidden id="esales-basicProduct" value="{!txn.Basic_Plan_Code__c}" />
+            <apex:inputHidden id="hasQuestionnaireList" value="{!hasQuestionnaireList}" />
+            <apex:inputHidden id="tempTempleteAddr" value="{!tempTempleteAddr}"/>
+            <apex:inputHidden id="tempQuesTempleteAddr" value="{!tempQuesTempleteAddr}"/>
+            <apex:inputHidden id="txnName" value="{!txn.name}"/>
+            
+            <apex:outputPanel layout="block" rendered="{!currentStep > STEP_CLIENT_DETAIL}" styleClass="bs row">
+                <div class="bs col-xs-12" style="vertical-align:middle;padding-top:10px;">
+                    <p class="bs pull-left">
+                    <apex:outputPanel layout="inline" rendered="{!currentStep != STEP_CONFIRMATION  && currentStep!=STEP_END}" styleClass="bs pull-left">
+                    <a id="eSales-back-btn" class="bs cigna-fg-orange-medium onclick-pointer" style="text-decoration: none;"><i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a>
+                    </apex:outputPanel>
+                    </p>
+                    <p class="bs pull-right"   >
+                    <apex:outputPanel layout="inline" rendered="{!currentStep != STEP_CONFIRMATION  && currentStep!=STEP_END}" styleClass="bs pull-right">
+                    <a id="eSales-save-btn" class="bs cigna-fg-orange-medium onclick-pointer" style="text-decoration: none;">{!$Label.Save} <i class="ci-hk-briefcase" aria-hidden="true"></i> </a> 
+                    </apex:outputPanel>
+                    </p>
+                </div>
+                <script>
+                    //CR-56_Link_20220214
+                    $('#eSales-back-btn').on("click",Cigna.EGroup.prevStep);
+                    $('#eSales-save-btn').on("click",Cigna.EGroup.saveRecord);
+                </script>
+            </apex:outputPanel>
+            <apex:outputPanel layout="block" rendered="{!currentStep == STEP_CLIENT_DETAIL}" styleClass="bs row">
+                <div class="bs col-xs-12">
+                    <p class="bs pull-left"><a id="eSales-back-btn" class="bs cigna-fg-orange-medium onclick-pointer" style="text-decoration: none;" onclick="Cigna.EGroup.redirectToQuote();"><i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a></p>
+                    <p class="bs pull-right"  ><a id="eSales-save-btn" class="bs cigna-fg-orange-medium onclick-pointer" style="text-decoration: none;">{!$Label.Save} <i class="ci-hk-briefcase" aria-hidden="true"></i> </a></p>
+                </div>
+                <script>
+                   //CR-56_Link_20220214
+                   $('#eSales-save-btn').on("click",Cigna.EGroup.saveRecord);
+                </script>
+            </apex:outputPanel>
+            
+            <div class="bs col-xs-12">
+                <apex:outputPanel layout="block"  rendered="{!currentStep != STEP_CONFIRMATION}"  >
+                <div class="bs hidden-xs col-sm-12 cigna-progress-bar desktopProgressBar">
+                    <div class="bs cigna-progress-bar-inner">
+                        <div class="bs {!IF(currentStep == STEP_CLIENT_DETAIL, 'active', '')}">{!$Label.Client_Details}</div>
+                        <div class="bs {!IF(currentStep == STEP_UPLOADCENSUS, 'active', '')}">{!$Label.LHB_Upload_Census}</div>
+                        <div class="bs {!IF(currentStep >= STEP_CONFIRMATION && currentStep < STEP_END, 'active', '')}">{!$Label.Confirmation}</div>
+                        <div class="bs {!IF(currentStep == STEP_END, 'active', '')}">{!$Label.LHB_Acknowledgement}</div>
+                    </div>
+                </div>
+                </apex:outputPanel>
+            </div>
+
+            <apex:outputPanel layout="block" rendered="{!currentStep == STEP_CLIENT_DETAIL}" styleClass="bs row">
+                <div class="bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h4>{!$Label.Policy_Holder}</h4>
+                </div>
+                <br/>
+                <div class="bs col-xs-12 cigna-fg-gray-dark form-horizontal">
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Company_Name__c.Label}" for="Group-Company-name"/>
+                        </div>
+                        <div class="bs col-xs-12">
+                            <apex:inputText id="Group-Company-name" value="{!txn.Company_Name__c}" styleClass="bs form-control"/>
+                        </div>
+                    </div>
+
+                    <div class="bs form-group">
+                        <div class="bs col-xs-6">
+                            <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Industry__c.Label}" for="Group-Industry"/>
+                        </div>
+                        <!--
+                        <div class="bs col-xs-6">
+                            <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Business_Nature__c.Label}" for="Group-Business-Nature"/>
+                        </div>
+                        -->
+                    </div>
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <apex:inputField id="Group-Industry" value="{!txn.Industry__c}" styleClass="bs form-field-style-select"            
+                            />
+                        </div>
+                        <!--
+                        <div class="bs col-xs-6">
+                            <apex:inputField id="Group-Business-Nature" value="{!txn.Business_Nature__c}" styleClass="bs form-field-style-select"
+                            />
+                        </div>
+                        -->
+                    </div>
+                    
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <apex:outputLabel value="{!$Label.LHB_Business_Registration_No}" for="Group-Business-Number"/>
+                        </div>
+                        <div class="bs col-xs-12">
+                            <apex:inputText id="Group-Business-Number" value="{!txn.Business_Registration_Incorporation_No__c}" styleClass="bs form-control"/>
+                        </div>
+                    </div>
+                    <div class="bs form-group">
+                        <!--
+                        <div class="bs col-xs-12">
+                            <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Date_of_Incorporation__c.Label}" for="Group-Date-Incorporation"/>
+                        </div>
+                        
+                        <div class="bs col-xs-6">
+                            <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Entity_Type__c.Label}" for="Group-Entity-Type"/>
+                        </div>
+                        -->
+                    </div>
+                    <!--
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <apex:input id="Val-Day-DOI" type="tel" value="{!DOIDay}" 
+                                                   html-maxlength="2" 
+                                                   styleClass="bs form-control text-center dob-input dob-day question-kid-age"
+                                                   size="5"
+                                                   style="display: inline; width: auto;"
+                                                   html-placeholder="{!$Label.DD}" 
+                                                   onblur="getCheckDate('DOI day',this)"    
+                                                                                          
+                            />
+                            <apex:input id="Val-Month-DOI" type="tel" value="{!DOIMonth}" 
+                                                   html-maxlength="2" 
+                                                   styleClass="bs form-control text-center dob-input dob-month question-kid-age"
+                                                   size="5"
+                                                   style="display: inline; width: auto;"
+                                                   html-placeholder="{!$Label.MM}"
+                                                   onblur="getCheckDate('DOI month',this)"  
+                            />
+                            <apex:input id="Val-Year-DOI" type="tel" value="{!DOIYear}" 
+                                                   html-maxlength="4" 
+                                                   styleClass="bs form-control text-center dob-input dob-year question-kid-age"
+                                                   size="7"
+                                                   style="display: inline; width: auto;"
+                                                   html-placeholder="{!$Label.YYYY}"
+                                                   onblur="getCheckDate('DOI year',this)"
+                                                   
+                            />
+
+                            <div class="bs">
+                                <apex:inputText id="Group-Day-Check-DOI" value="{!DOIDate}" Styleclass="hidden-input-field" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" onfocus="hiddenonblur(this)" />
+                            </div>
+                        </div>
+                        
+                        <div class="bs col-xs-6">
+                            <apex:inputField id="Group-Entity-Type" value="{!txn.Entity_Type__c}" styleClass="bs form-field-style-select"
+                            />
+                        </div>
+                        
+
+                    </div>
+                    -->
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputLabel value="{!$Label.LHB_Business_Address}"/>
+                        </div>
+                    
+                        <div class="bs col-xs-12">
+                            <apex:inputField value="{!txn.Registered_Office_Address_1__c}" id="Group-Company-Address-1" styleClass="bs form-control" html-placeholder="{!$Label.LHB_Address_Line_1}"/>
+
+                            <apex:inputField value="{!txn.Registered_Office_Address_2__c}" id="Group-Company-Address-2" styleClass="bs form-control" html-placeholder="{!$Label.LHB_Address_Line_2}"/>
+
+                            <apex:inputField value="{!txn.Registered_Office_Address_3__c}" id="Group-Company-Address-3" styleClass="bs form-control" html-placeholder="{!$Label.LHB_Address_Line_3}"/>
+
+                            <apex:inputField value="{!txn.Country__c}" id="Group-Company-Country" styleClass="bs form-field-style-select" html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Country__c.Label}"/>
+                        </div>
+                        
+                    </div>
+
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Policy_Effective_Date__c.Label}"/>
+                        </div>
+                    
+                        <div class="bs col-xs-12">
+
+                            <apex:input id="Val-Day-POL" type="tel" value="{!policyEffDay}" 
+                                                   html-maxlength="2" 
+                                                   styleClass="bs form-control text-center dob-input dob-day question-kid-age"
+                                                   size="5"
+                                                   style="display: inline; width: auto;"
+                                                   html-placeholder="{!$Label.DD}" 
+                                                   onblur="getCheckDate('POL day',this)"    
+                                                                                          
+                            />
+                            <apex:input id="Val-Month-POL" type="tel" value="{!policyEffMonth}" 
+                                                   html-maxlength="2" 
+                                                   styleClass="bs form-control text-center dob-input dob-month question-kid-age"
+                                                   size="5"
+                                                   style="display: inline; width: auto;"
+                                                   html-placeholder="{!$Label.MM}"
+                                                   onblur="getCheckDate('POL month',this)"  
+                            />
+                            <apex:input id="Val-Year-POL" type="tel" value="{!policyEffYear}" 
+                                                   html-maxlength="4" 
+                                                   styleClass="bs form-control text-center dob-input dob-year question-kid-age"
+                                                   size="7"
+                                                   style="display: inline; width: auto;"
+                                                   html-placeholder="{!$Label.YYYY}"
+                                                   onblur="getCheckDate('POL year',this)"
+                                                   
+                            /> 
+                            
+                        </div>
+                        <div class="bs col-xs-12 " >
+                            <apex:inputText id="Group-Day-Check-POL" value="{!policyEffDate}" Styleclass="hidden-input-field" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" onfocus="hiddenonblur(this);" />
+                             
+                        </div> 
+ 
+                    </div>
+                    
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <apex:outputLabel value="{!$Label.LHB_Existing_employees}"/>
+                        </div>
+                        <div class="bs col-xs-12 cigna-answer-wrapper">
+                            <p>
+                                <div class="bs col-xs-12">
+                                    <input type="radio" id="employment-date-selection-01" value="Date" name="employment-date-selection" class="bs cigna-question-radio" />
+                                    <label for="employment-date-selection-01" style="font-weight: normal;">{!$Label.LHB_On_Date_Employment}</label>
+                                </div>
+                                <div class="bs visible-xs col-xs-12">
+                                    <div class="bs row col-xs-12">
+                                    <input type="radio" id="employment-date-selection-02-1" value="Month" name="employment-date-selection" class="bs cigna-question-radio" />
+                                    <label for="employment-date-selection-02-1" class="bs" style="font-weight: normal;">{!$Label.LHB_Immediately_Coverage_After}</label>
+                                    </div>
+                                    <div class="bs row col-xs-12">
+                                    <apex:selectList value="{!txn.Waiting_Month__c}" id="employment-month-1" size="1" multiselect="false" style="display: inline; width: auto;text-align:center; padding:0" styleClass="bs form-field-style-select">
+                                        <apex:selectOptions value="{!WaitingMonthOption}"></apex:selectOptions>
+                                    </apex:selectList>
+                                    <label for="employment-date-selection-02-1" class="bs" style="font-weight: normal;">{!$Label.LHB_Months_of_Employment}</label>
+                                    </div>
+                                    
+                                </div>
+                                <div class="bs row hidden-xs col-xs-12 form-group">
+                                    <input type="radio" id="employment-date-selection-02" value="Month" name="employment-date-selection" class="bs cigna-question-radio col-xs-1" />
+                                    <!--<label for="employment-date-selection-02" class="bs col-xs-6" style="font-weight: normal;max-width:300px;">{!$Label.LHB_Immediately_Coverage_After}</label>
+                                    <apex:inputField id="employment-month-2" value="{!txn.Waiting_Month__c}" styleClass="bs form-field-style-select col-xs-1" style="max-width:100px;" />
+                                    <label for="employment-date-selection-02" class="bs col-xs-4" style="font-weight: normal;max-width:300px;">{!$Label.LHB_Months_of_Employment}</label>-->
+                                    <label for="employment-date-selection-02" class="bs col-xs-6" style="font-weight: normal;max-width:300px;">{!$Label.LHB_Immediately_Coverage_After}</label>
+                                    <apex:selectList value="{!txn.Waiting_Month__c}" id="employment-month-2" size="1" multiselect="false" style="display: inline; width: auto;text-align:center;" styleClass="bs col-xs-2 form-field-style-select">
+                                        <apex:selectOptions value="{!WaitingMonthOption}"></apex:selectOptions>
+                                    </apex:selectList>
+                                    <label for="employment-date-selection-02" class="bs col-xs-4" style="font-weight: normal;max-width:300px;">{!$Label.LHB_Months_of_Employment}</label>
+                                </div>
+                            </p>
+                
+                            <apex:inputHidden value="{!employmentEffMonth}" id="Group-waitingMonth"
+                                              html-class="cigna-validation" />
+                        </div>
+                        <script>
+                            if($("input[id$='Group-waitingMonth']").val() == 'Date'){
+                                $("#employment-date-selection-01").attr('checked','checked');
+                            } else if ($("input[id$='Group-waitingMonth']").val() == 'Month'){
+                                $("#employment-date-selection-02-1").attr('checked','checked');
+                                $("#employment-date-selection-02").attr('checked','checked');
+                            }
+                            
+                            //CR-56_Link_20220214
+                            $('input.cigna-question-radio').on("change",Cigna.EGroup.onRadioChange);
+                        </script>
+                    </div>
+                    
+                    <div class="bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h4>{!$Label.LHB_Contact_Person}</h4></div>
+                    <br/>
+
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <apex:outputLabel value="{!$Label.Quote_Given_Name_of_Contact_Person}"/>
+                        </div>
+                        <div class="bs col-xs-12">
+                            <apex:inputText id="Group-Contact-Person-firstname" value="{!txn.Policy_Holder_First_Name__c}" styleClass="bs form-control"/>
+                        </div>
+                    </div>
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <apex:outputLabel value="{!$Label.Quote_Family_Name_of_Contact_Person}"/>
+                        </div>
+                        <div class="bs col-xs-12">
+                            <apex:inputText id="Group-Contact-Person-lastname" value="{!txn.Policy_Holder_Last_Name__c}" styleClass="bs form-control"/>
+                        </div>
+                    </div>
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Person_Contact_Number__c.Label}" for="Group-Contact-Number"/>
+                        </div>
+                        <div class="bs col-xs-12">
+                            <apex:inputText id="Group-Contact-Number" value="{!txn.ThirdParty_Person_Contact_Number__c}" styleClass="bs form-control"/>
+                        </div>
+                    </div>
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Email_Address__c.Label}" for="Group-Email-Address"/>
+                        </div>
+                        <div class="bs col-xs-12">
+                            <apex:inputText id="Group-Email-Address" value="{!txn.Email_Address__c}" styleClass="bs form-control"/>
+                        </div>
+                    </div>
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Fax_Number__c.Label}" for="Fax-Number"/>
+                        </div>
+                        <div class="bs col-xs-12">
+                            <apex:inputText id="Fax-Number" value="{!txn.Fax_Number__c}" styleClass="bs form-control"/>
+                        </div>
+                    </div>
+
+                </div>
+                
+            </apex:outputPanel>
+            
+            
+            <!-- upload census steps -->
+            <apex:outputPanel layout="block" rendered="{!currentStep == STEP_UPLOADCENSUS}"  >  
+                <apex:inputHidden id="JSONStr" value="{!censusDataJSONStr}" /> 
+                <div class="bs col-xs-12 col-sm-12">
+                    <apex:outputText rendered="{!txn.Group_Existing_Employee__c < 5}" > {!$Label.LHB_Health_Alert}</apex:outputText>
+                </div>
+                <br/> 
+                <div id="midctn" class="bs col-xs-12 col-sm-12">
+                    <div class="bs cigna-fg-blue-light uploadCensusText">
+                        <p style="text-transform: uppercase;">{!$Label.LHB_Upload_Census}</p>
+                    </div>
+                    <div id="ctrtbl" >
+               
+                        <div class='midblock1 bs cigna-group-plan-detail' style='text-align: center;'>
+                        <table style=" padding:15px; margin:auto; width:90% "  class="uploadCensusTable" >
+                            <tr >
+                                <td></td>
+                                <td  style="text-align:center;"  >
+                                <div class="cigna-fg-blue-light" style=" text-align:center;font-weight:bold;margin-top: 5px;" >{!$Label.LHB_Download_Template_Desc}
+                                </div>
+                                </td>
+                                <td></td>
+                            </tr>
+                 
+                            <tr class='topbrd' >
+                                <td width="15%" style="text-align: middle;"  ><h1>1.</h1>
+                                </td >
+                                <td width="70%" style="text-align: left;"  >
+                                <div class="rgtbrd">
+                                <p>{!$Label.LHB_Download_LHB_Packaged_Plan}</p>
+                                </div>
+                                </td >
+                                <td width="15%" sytle=" border-left:1px #58595B solid;text-align:center;vertical-align: :middle; "  >
+                         
+                            <div id='pnl_download_normal'>
+                            <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!attachmentId}" target="_blank"  ><i class="ci-hk-document ci-hk-2x" ></i></a>    
+                            </div>  
+                      
+                            <div id='pnl_download_sf1' style='display:none;' >
+                            <a href="#" target="_blank" onclick='window.open("{!$Setup.Portal_Settings__c.File_Download_URL__c}{!attachmentId}");' ><i class="ci-hk-document ci-hk-2x"></i></a>    
+                            </div>   
+                                                
+                                </td>
+                            </tr> 
+                            <tr class='topbrd'>
+                                <td width="15%" style="text-align: middle;"><h1>2.</h1>
+                                </td >
+                                <td width="70%" style="text-align: left;">
+                                <div class="rgtbrd">
+                                <p>{!$Label.LHB_Upload_Census_File_Text}<br/>&nbsp;
+                                <span id='lblFilename' style='color: grey;font-weight: 14px;'></span></p>
+                                
+                                <p id='emptyFileAlert' style='color: red;display:none;'>{!$Label.LHB_Upload_File_Empty}</p>
+                                <p id='errFileExt' style='color: red;display:none;'>{!$Label.LHB_Upload_Invalid_File_Format}</p>
+                                </div>
+                                </td>
+                                <td width="15%" sytle=" text-align:center;vertical-align: :middle; ">
+                                      <input type="file" name="fupload" id="fupload" style="display:none;" onchange="popFileName(this.files);" />
+                                      <!-- //CR-56_Link_20220214 -->
+                                      <i class="ci-hk-outbox ci-hk-2x" style="cursor: pointer;" onclick="$('#fupload').trigger('click');"></i>            
+                                </td>
+                            </tr>
+                        </table>
+                        </div>                     
+                    <div class='midblock2'  >
+                         <span style="vertical-align: ">OR</span>
+                    </div>
+                 
+                    <div class='midblock3 bs cigna-group-plan-detail '>
+                        <table style="padding:15px;width:100%; "   class="uploadCensusTable"  >
+                            <tr>
+                                <td width="15%">
+                                </td>
+                                <td width="70%">
+                                <div class=" cigna-fg-blue-light" style=" text-align:center;font-weight:bold;margin-top: 5px;" >{!$Label.LHB_Send_Census_Template}
+                                </div>
+                                </td>
+                                <td width="15%">
+                                </td>
+                            </tr>            
+                            <tr >
+                            <td>
+                                </td>
+                                <td >
+                                    <div style="text-align: center;  ">
+                                        <apex:input type="email" style="width:100%" id="UploadCensusEmailAddr" value="{!emailaddr}" styleClass="bs form-field-style cigna-fg-gray-dark"/>
+                                    </div>
+                                </td>
+                                <td>
+                                </td>
+                            </tr>
+                            <tr >
+                            <td>
+                                </td>
+                                <td >
+                                    <div style="text-align: center;" >                                   
+                                        <div style="text-align: center; width:100%" class="bs btn cigna-fg-white cigna-bg-orange-dark " onclick="sendCensusTemplete();return false;">{!$Label.LHB_Send}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                </td>
+                            </tr>
+                            <tr >
+                            <td>
+                                </td>
+                                <td >
+                                    <div style="text-align: center;" >                                   
+                                        <span class='cigna-fg-blue-light' id='CensusEmailSent' style='font-weight: 14px;'></span>
+                                    </div>
+                                </td>
+                                <td>
+                                </td>
+                            </tr>
+                        </table>
+                        </div> 
+                    </div>
+                    
+                </div>
+                <!-- Error page -->
+                <div class="bs col-xs-12 col-sm-12" id="ulErrMsg" style="display: none;">
+                    <div class='uploadCensusText'>
+                    <p >{!$Label.LHB_Upload_Error}</p>
+                    </div>
+                    <br/>
+                    <div id="ulErrMsgList">
+
+                    </div>
+                    <br/>
+                    <div class="text-center col-xs-12  col-sm-12">
+                    <div class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark" style="width:100px" onclick="retryUpload();">
+                    {!$Label.LHB_Retry}
+                    </div>
+                    </div>
+                </div>
+                
+            </apex:outputPanel>
+
+            <!-- add by David at 2018/1/17 -->
+            <!-- upload Questionnaire steps -->
+            <apex:outputPanel id="QuesPanel" layout="block" rendered="{!currentStep == STEP_UPLOADCENSUS}"  >  
+                <!--<apex:inputHidden id="JSONStr2" value="{!censusDataJSONStr}" /> -->
+                <br/>
+                <apex:outputPanel rendered="{!txn.Group_Existing_Employee__c < 5}">
+                <div id="midctn2" class="bs col-xs-12 col-sm-12">
+                    <div class="bs cigna-fg-blue-light uploadCensusText">
+                        <p style="text-transform: uppercase;">{!$Label.LHB_Upload_Questionnaire}</p>
+                    </div>
+                    <div id="ctrtbl" >
+                        <div class="snd-loading-div">
+                            <span id="snd-loading-icon" style="display: none;">
+                                <div class="bs col-xs-12 col-lg-12 loading-div">
+                                    <span class="loading-helper"></span>
+                                    <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                            </span>
+                        </div>
+
+                        <div class='midblock1 bs cigna-group-plan-detail' style='text-align: center;'>
+                        <table style=" padding:15px; margin:auto; width:90% "  class="uploadCensusTable" >
+                            <tr >
+                                <td></td>
+                                <td  style="text-align:center;"  >
+                                <div class="cigna-fg-blue-light" style=" text-align:center;font-weight:bold;margin-top: 5px;" >{!$Label.LHB_Download_Template_Questionnaire}
+                                </div>
+                                </td>
+                                <td></td>
+                            </tr>
+                 
+                            <tr class='topbrd' >
+                                <td width="15%" style="text-align: middle;"  ><h1>1.</h1>
+                                </td >
+                                <td width="70%" style="text-align: left;"  >
+                                <div class="rgtbrd">
+                                <p>{!$Label.LHB_Download_LHB_Packaged_Questionnaire}</p>
+                                </div>
+                                </td >
+                                <td width="15%" sytle=" border-left:1px #58595B solid;text-align:center;vertical-align: :middle; "  >
+                         
+                            <div id='pnl_download_normal' >
+                            <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!healthFormAttachmentId}" target="_blank"  ><i class="ci-hk-document ci-hk-2x" ></i></a>    
+                            </div>  
+                      
+                            <div id='pnl_download_sf1' style='display:none;' >
+                            <a href="#" target="_blank" onclick='window.open("{!$Setup.Portal_Settings__c.File_Download_URL__c}{!healthFormAttachmentId}");' ><i class="ci-hk-document ci-hk-2x"></i></a>    
+                            </div>   
+                                                
+                                </td>
+                            </tr> 
+                            <tr class='topbrd'>
+                                <td width="15%" style="text-align: middle;"><h1>2.</h1>
+                                </td >
+                                <td width="70%" style="text-align: left;">
+                                <div class="rgtbrd">
+                                <p>{!$Label.LHB_Upload_Questoinnaire_File_Text}<br/>&nbsp;
+                                <span id='QuestionnaireFilename' style='color: grey;font-weight: 14px;'>
+                                    <apex:outputPanel id="Questionnairelist">
+                                        <apex:repeat value="{!QuestionnaireAppList}" var="QuesAtt">
+                                            {!QuesAtt.Name}
+                                            <i class="ci-hk-x pull-right onclick-pointer" onclick="removeAttachment('{!QuesAtt}');" aria-hidden="true"></i><br/>
+                                            &nbsp;
+                                        </apex:repeat>
+                                    </apex:outputPanel>
+                                </span></p>
+                                <p id='emptyQuestionnaireFileAlert' style='color: red;display:none;'>{!$Label.LHB_Upload_File_Empty}</p>
+                                <p id='errQuestionnaireFileExt' style='color: red;display:none;'>{!$Label.LHB_Upload_Invalid_File_Format2}</p>
+                                </div>
+                                </td>
+                                <td width="15%" sytle=" text-align:center;vertical-align: :middle; ">
+                                      <input type="file" name="fupload" id="User_QuestionnaireAPP" style="display:none;" onchange="Cigna.EGroup.uploadQuestionnaireFile('{!paratid}','User_QuestionnaireAPP',this.files);" />
+                                      <!-- //CR-56_Link_20220214 -->
+                                      <i class="ci-hk-outbox ci-hk-2x" style="cursor: pointer;" onclick="$('#User_QuestionnaireAPP').trigger('click');"></i>            
+                                </td>
+                            </tr>
+                        </table>
+                        </div>                     
+                    <div class='midblock2'  >
+                         <span style="vertical-align: ">OR</span>
+                    </div>
+                 
+                    <div class='midblock3 bs cigna-group-plan-detail '>
+                        <table style="padding:15px;width:100%; "   class="uploadCensusTable"  >
+                            <tr>
+                                <td width="15%">
+                                </td>
+                                <td width="70%">
+                                <div class=" cigna-fg-blue-light" style=" text-align:center;font-weight:bold;margin-top: 5px;" >{!$Label.LHB_Send_Questionnaire_Template}
+                                </div>
+                                </td>
+                                <td width="15%">
+                                </td>
+                            </tr>            
+                            <tr >
+                            <td>
+                                </td>
+                                <td >
+                                    <div style="text-align: center;  ">
+                                        <apex:input type="email" style="width:100%"  id="UploadQuestionnaireEmailAddr" value="{!emailaddr}" styleClass="bs form-field-style cigna-fg-gray-dark"/>
+                                    </div>
+                                </td>
+                                <td>
+                                </td>
+                            </tr>
+                            <tr >
+                            <td>
+                                </td>
+                                <td >
+                                    <div style="text-align: center;" >                                   
+                                        <div style="text-align: center; width:100%" class="bs btn cigna-fg-white cigna-bg-orange-dark " onclick="sendQuesTemplete();return false; "  >{!$Label.LHB_Send}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                </td>
+                            </tr>
+                            <tr >
+                            <td>
+                                </td>
+                                <td >
+                                    <div style="text-align: center;" >                                   
+                                        <span class='cigna-fg-blue-light' id='QuestionnaireEmailSent' style='font-weight: 14px;'></span>
+                                    </div>
+                                </td>
+                                <td>
+                                </td>
+                            </tr>
+                        </table>
+                        </div> 
+                    </div>
+                    
+                </div>
+                </apex:outputPanel>
+                
+                <!-- Error page -->
+                <div class="bs col-xs-12 col-sm-12" id="ulErrMsg" style="display: none;">
+                    <div class='uploadCensusText'>
+                    <p >{!$Label.LHB_Upload_Error}</p>
+                        <p id="errFileSize" style="display:none;">{!$Label.File_size_exceeds_10M}</p>
+                        <p id="errFileType" style="display:none;">{!$Label.Please_upload_a_valid_file} (.xls / .pdf/ .doc/ .jpeg)</p>
+                        <p id="errNoFile" style="display:none;">{!$Label.ErrMasg_Upload_Att}</p>
+                        <p id="errUpdateAllFile" style="display:none;">{!$Label.eSales_Paper_Application_Required}</p>
+                        <p id="errOnlyAllowOneFile" style="display:none;">{!$Label.eSales_Paper_Application_Only_allow_one_file}</p>
+                    </div>
+                    <br/>
+                    <div class="text-center col-xs-12  col-sm-12">
+                    <div class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark" style="width:100px" onclick="retryUpload();">
+                    {!$Label.LHB_Retry}
+                    </div>
+                    </div>
+                </div>
+                
+            </apex:outputPanel>
+
+            <script>
+                var step = $('#esales-current-step').val();
+                console.log('### step: ' + step);
+                var signatureDiv = document.getElementById('signatureDiv');
+                if(step == '{!STEP_ESIGNATURE}'){
+                    console.log('### step222: ' + step);
+                    if(signatureDiv.style.display == "none"){
+                        signatureDiv.style.display = "block";
+                        $('#signatureDiv').css('padding-bottom', '130px');
+                    }
+                }
+                
+            </script>
+            
+            <div id="signatureDiv" style="display:block;"> 
+            <apex:outputPanel id="payment-esignature-section" rendered="{!currentStep == STEP_ESIGNATURE}" styleClass="bs row" layout="block"> 
+            
+            <apex:outputPanel id="esignature-section">
+                
+                <div id="overlay" style="display:none;">
+                        
+                        <div id="specialBox">
+                            <a><div id="closeOverlay" class="onclick-pointer ci-hk-x" onclick="toggleOverlay();"></div></a>
+                            <h4>DECLARATION AND AUTHORIZATION   聲明及授權</h4>
+                            
+                            <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                            <div id="tccontent">
+                                <apex:outputPanel >
+                                       
+                                       I(We), on behalf of the Applicant/ Policyholder hereby agree and confirm all the following declarations and authorizations:<br/>
+                                       本人（吾等）謹此代表申請人/保單持有人同意並確認以下所有聲明及授權：<br/><br/>
+                                       
+                                                1.  The answers and statements in this application, whether or not contained in this form and whether or not written by my(our) own hand, are complete and true to the best of my(our) knowledge and belief.<br/>
+                                                有關此投保申請之作答及陳述，不論載於此表格與否，及不論由本人（吾等）親筆書寫與否，據本人所知及所信，均屬完整及屬實無訛。<br/><br/>
+                                                2.  My(Our) acceptance of any policy issued on this application will constitute an agreement to its terms and conditions and notification of any changes specified by Cigna Worldwide General Insurance Company Limited (the   "Company "  ) in the policy.<br/>
+                                                本人（吾等）接受本申請而發出的任何保單即等於接納條款同時追認信諾環球保險有限公司（「貴公司」）在保單上所作的任何更改。<br/><br/>
+                                                3.  I(We) understand that the information requested in this form is required in order for the Company to process this application for insurance, and failure to disclose any material facts or information which may influence or which the Company would regard as likely to influence the assessment and acceptance of this application, may render voidable by the Company the insurance coverage that may be issued pursuant to this application. In the event of doubt as to whether a fact or information is material, it should be disclosed in this form.<br/>
+                                                本人（吾等）明白本人（吾等）必須就本申請內要求的資料提供予貴公司作處理本投保申請之用。如未有披露任何重要事實或資料，而該等重要事實或資料足以影響貴公司評估及接受本申請，貴公司有權將所簽發的保單宣告無效。假如未能確定事實或資料重要性，則須於本申請披露該等事實或資料。<br/><br/>
+                                                4.  On the policy effective date, all eligible employees are actively at work.<br/>
+                                                證實在保單生效日，所有符合參加資格的僱員是正常在職工作。<br/><br/>
+                                                5.  I(We) have obtained all necessary consents from our employees and confirmations from our employees of having obtained the authorization from their dependents to supply to the Company the information including but not limited to the personal information in relation to the person(s) insured ( "Member(s)" ) under this application for insurance/ policy, and shall indemnify the Company for any loss or expenses incurred by the Company by reason of any misstatement in the above confirmation by me(us).<br/>
+                                                本人（吾等）已經取得僱員所有必要的授權及獲僱員確認已經取得其家屬的授權以向貴公司提供資料，包括但不限於有關此投保申請/保單的受保人「（會員）」的個人資料；本人（吾等）並應當賠償貴公司因本人（吾等）在上述確認的任何處假陳述而招致貴公司的任何損失或開支。<br/><br/>
+                                                6.  I(We) have verified the identification information of each of the Members against their identification documents.<br/>
+                                                本人（吾等）已經根據身分證明文件核實各會員的身分識別資料。<br/><br/>
+                                                7.  The list of Members and the identification information of each of the Members that are from time to time provided to the Company by the Applicant/ Policyholder or the representative of the Applicant/ Policyholder, including but not limited to the insurance intermediary acting on behalf of the Applicant/ Policyholder, shall be complete, true and up-to-date.<br/>
+                                                由申請人/保單持有人或申請人/保單持有人的代表（包括但不限於代表申請人/保單持有人行事的保險中介人）不時向貴公司提交的會員名單及各會員的身分識別資料，須屬完整，屬實無訛及仍然反映現況。<br/><br/>
+                                                8.  I(We) shall notify the Company as soon as reasonably practicable if there is any change in the information provided.<br/>
+                                                倘若所提供的資料有任何更改，本人（吾等）須在合理可行範圍內盡快通知貴公司。<br/><br/>
+                                                9.  I(We) agree that the Company and Cigna Worldwide Life Insurance Company Limited (collectively  "Cigna"  ) may use and/or disclose my(our)/Members' personal information in accordance with Cigna's Personal Information Collection Statement ( "Statement" ) and I(we) acknowledge that I(we) have read and understood the Statement.<br/>
+                                                本人同意貴公司及信諾環球人壽保險有限公司（統稱「信諾」）可根據其個人資料收集聲明（「聲明」），使用及/或披露本人（吾等）/會員之個人資料。本人（吾等）確認已閱讀及明白此聲明。<br/><br/>
+                               </apex:outputPanel>
+                            </div>
+                        </div>
+                </div>
+                    
+                <apex:actionFunction action="{!saveSignature}" name="saveSignature" namespace="GroupESales" reRender="false" oncomplete="GroupESales.nextStep();">
+                    <apex:param name="imgDataParam" assignTo="{!imgData}" value=""/>
+                </apex:actionFunction>
+                
+                
+                
+                <div class="bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h4>{!$Label.E_Signature}</h4></div>
+                <!-- add by David at 2018/1/17 -->
+                <h5><apex:outputText rendered="{!txn.Group_Existing_Employee__c < 5}" >{!$Label.LHB_premium_may_change}</apex:outputText></h5>
+                <c:eSignatureGroupComp emailAddress="{!txn.Email_Address__c}" 
+                                  displayPICS="false"
+                                  displayTC="true"
+                                  tcMessage="{!$Label.ESales_PICS_Accept}"
+                                  sendEmailMessage="{!$Label.An_email_with_the_E_Signature_access_link_can_be_sent_to}"
+                                  signNow="true"
+                                  BrokerScenarios="EsignatureSign"
+                                  isBroker="true"
+                                  PICSLink="{!PersonalInfoCollectionStatementURL}"
+                                  isEsales="true"
+                                  isGroupEsales="true"
+                />
+                <apex:inputHidden id="esignature-name" value="{!txn.Name__c}" />
+                <apex:inputHidden id="esignature-title" value="{!txn.Title__c}"/>
+                
+               <script>
+ 
+                    Cigna.ESignatureComp.saveSignature = function() {
+                        
+                        if($('#esignature-sign-div #esignature-pics').is(':checked') == false){
+                            $("#errNotAcceptTNC1").show();
+                            return;
+                        } else {
+                            $("#errNotAcceptTNC1").hide();
+                        }
+                        
+                        if(Cigna.ESignatureComp.isEmptyCanvas(1)){
+                            $("#errEmptySignature1").show();
+                            return;
+                        } else {
+                            $("#errEmptySignature1").hide();
+                        }
+
+                        $("input[id*=esignature-name]").val($('#ipName').val());
+                        $("input[id*=esignature-title]").val($('#ipTitle').val());
+
+                        if($("input[id*=esignature-name]").val() =='' || $("input[id*=esignature-name]").val()!=$('#ipName').val()){
+                            $("#errEmptyName").show();  
+                           //CR-56_Link_20220214
+                           $("#ipName").trigger("focus");                          
+                            return;
+                        } else{
+                            $("#errEmptyName").hide();  
+                        }
+
+                        if($("input[id*=esignature-title]").val() =='' || $("input[id*=esignature-title]").val()!=$('#ipTitle').val()){
+                            $("#errEmptyTitle").show();  
+                            //CR-56_Link_20220214
+                            $("#ipTitle").trigger("focus");
+                            return;
+                        } else{
+                            $("#errEmptyTitle").hide();  
+                        } 
+
+                        GroupESales.saveSignature(Cigna.ESignatureComp.getSignatureImage(1));
+                        $("html, body").animate({ scrollTop: 0 }, "fast"); 
+                    }
+                    
+                    Cigna.ESignatureComp.forceResizeCanvas();
+                    
+                    function toggleOverlay(){
+                        var overlay = document.getElementById('overlay');
+                        var specialBox = document.getElementById('specialBox');
+                        overlay.style.opacity = .95;
+                        if(overlay.style.display == "block"){
+                            overlay.style.display = "none";
+                            specialBox.style.display = "none";
+                        } else {
+                            overlay.style.display = "block";
+                            specialBox.style.display = "block";
+                        }
+                   }
+                    
+
+                    Cigna.EGroup.refreshEsignatrueButton();
+                    
+                </script>
+  
+            </apex:outputPanel>
+
+            </apex:outputPanel>
+            </div>
+
+        </apex:form>
+
+        
+        <apex:outputPanel layout="block" rendered="{!currentStep == STEP_CONFIRMATION}"  >
+            <apex:include id="cfmpage" pageName="BaseGroupProductQuotationVFP" />
+        </apex:outputPanel>
+
+        
+
+
+        <div id="web-app-padding" class="bs row" style="padding-bottom: 50px;">
+            <div class="bs col-xs-12"></div>
+        </div>
+        <div id="mobile-app-padding" class="bs row" style="display: none; padding-bottom: 120px;">
+            <div class="bs col-xs-12"></div>
+        </div>
+
+         <apex:outputPanel rendered="{!currentStep == STEP_END  }" styleClass="bs row" layout="block">
+            <apex:outputPanel rendered="{!!hasWSException}" >
+            <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">
+                <i class="fa fa-check-circle-o content-active cigna-fg-green-medium" style="font-size:50px;" aria-hidden="true"></i>
+            </div>
+            <div class="bs col-xs-12 col-sm-8 col-sm-offset-2" style="text-align:center;">  
+                <!--<button value="sendForm" onclick="sendApplicationForm();"/>-->
+                <p style="{!IF(txn.Group_Existing_Employee__c < 5,'','display:none')}">{!$Label.LHB_Application_to_underwriting_decision}</p>
+                <p style="{!IF(txn.Group_Existing_Employee__c < 5,'display:none','')}">{!$Label.LHB_Sumited_End}</p>
+            </div>
+            </apex:outputPanel>    
+            <div id="action-bar-desktop" class="bs hidden-xs text-center">
+                <a id="eSales-view-plans-btn" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" 
+                   role="button" onclick="Cigna.EGroup.viewOtherPlans();">
+                    {!$Label.View_Other_Plans}
+                </a>
+                <a id="eSales-home-btn" class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" 
+                    role="button" onclick="Cigna.EGroup.goHome();">
+                    {!$Label.Home}
+                </a>
+            </div>
+            <apex:outputPanel rendered="{!isCustomerPortal}">
+                <div id="action-bar" class="bs cigna-floating-bottom-panel visible-xs">
+                    <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                        <a id="eSales-view-plans-btn" href="javascript:void(0);" class="action-btn cigna-fg-white" role="button"
+                           onclick="Cigna.EGroup.viewOtherPlans();">
+                           <i class="ci-hk-modify" aria-hidden="true"></i><br/>
+                            {!$Label.View_Other_Plans}
+                        </a>
+                        <a id="eSales-home-btn" href="javascript:void(0);" class="action-btn cigna-fg-white" role="button" 
+                           onclick="Cigna.EGroup.goHome();">
+                           <i class="ci-hk-home" aria-hidden="true"></i><br/>
+                            {!$Label.Home}
+                        </a> 
+                    </div>
+                </div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <apex:outputPanel id="showNextButton" rendered="{!currentStep != STEP_ESIGNATURE && currentStep != STEP_CONFIRMATION &&  currentStep<=STEP_ESIGNATURE}">
+            <div id="action-bar-desktop" class="bs visible-md hidden-xs text-center" style="padding-bottom: 350px;">
+                <a class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" role="button" onclick="Cigna.EGroup.nextStep();">
+                    {!$Label.Next}
+                </a> 
+            </div>
+            <div id="action-bar-desktop" class="bs hidden-xs hidden-md text-center" style="padding-bottom: 100px;">
+                <a class="bs btn action-btn cigna-fg-white cigna-bg-orange-dark cigna-btn-desktop" role="button" onclick="Cigna.EGroup.nextStep();">
+                    {!$Label.Next}
+                </a> 
+            </div>
+
+            <script>
+                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                    $('#mobile-app-padding').css('display', 'block');
+                }
+
+            </script>
+
+        </apex:outputPanel>
+
+        <apex:outputPanel id="validationRulePanel">
+        <script>
+            function hiddenonblur(input){
+                var InputId = input.id;
+                //CR-56_Link_20220214
+                $("input[id*='" + InputId + "']").trigger("blur");
+            }   
+            function getCheckDate(datetype , input){
+                var InputId = input.id;
+                var InputVal = $("input[id*='" + InputId  + "']").val();
+                console.log('###test InputId: '+InputId);
+                console.log('###test InputVal: '+InputVal);
+
+                var oncheckRole = 'DOI';
+                console.log('###test oncheckRole: '+oncheckRole);
+                if(datetype.indexOf("DOI") >= 0 ) oncheckRole = 'DOI';
+                if(datetype.indexOf("POL") >= 0 ) oncheckRole = 'POL';
+                console.log('###test oncheckRole: '+oncheckRole);
+                $("input[id*='Group-Day-Check-" + oncheckRole + "']").val('');
+                var ddDate = $("input[id*='Val-Day-" + oncheckRole + "']").val();
+                var mmMonth = $("input[id*='Val-Month-" + oncheckRole + "']").val();
+                var yyYear = $("input[id*='Val-Year-" + oncheckRole + "']").val();
+                if((ddDate!=null && ddDate!='')
+                    && (mmMonth!=null && mmMonth!='')
+                    && (yyYear!=null && yyYear!='')){
+                        $("input[id*='Group-Day-Check-" + oncheckRole + "']").val(ddDate+'/'+mmMonth+'/'+yyYear);
+                        //CR-56_Link_20220214
+                        $("input[id*='Group-Day-Check-" + oncheckRole + "']").trigger("focus");
+                }
+            }
+            
+            function validateDate(resour){
+                
+                var checkId = resour.getAttribute("id");
+                var onCheckRole = 'DOI';
+                if(checkId.indexOf("DOI") >= 0 )  onCheckRole = 'DOI';
+                if(checkId.indexOf("POL") >= 0 )  onCheckRole = 'POL';
+
+                var day = $("input[id*='Val-Day-" + onCheckRole + "']").val();
+                console.log(day);
+                var month = $("input[id*='Val-Month-" + onCheckRole + "']").val();
+                console.log(month);
+                var year = $("input[id*='Val-Year-" + onCheckRole + "']").val();
+                console.log(year);
+                
+                if(day!='' && month!='' && year!='' ){
+                    if(day==0 || day>31){
+                         return false;
+                    }
+                    
+                    if(month==2){
+                        if(day>29) return false;
+                        if(day == 29){
+                            console.log('Feb'+year%4);
+                            if(year%4!=0) return false;
+                        }
+                    }
+                    
+                    if(month==4 || month==6 || month==9 || month==11){
+                        if(day>30) return false;
+                    }else{
+                        if(day>31) return false;
+                    }
+                    
+                    if(month==0 || month>12){
+                         return false;
+                    }
+                                        
+                    var adate=new Date(year,month-1,day);   
+                    console.log('adate'+adate);
+                    var thedate=new Date();
+                    
+                    var nowYear=thedate.getFullYear();
+                    var nowMonth=thedate.getMonth()+1;
+                    var nowday=thedate.getDate();
+                    
+                    if(year<1900){
+                         return false;
+                    }
+                }
+                return true;
+            }
+
+            jQuery.extend(jQuery.validator.messages, {
+                    required: "{!$Label.ESales_Required_Field_Error_Message}"
+            });
+
+            $("form[id*='frmGroupApplication']").validate({
+                ignore: ':hidden:not(.cigna-validation)'
+            });
+            jQuery.validator.addMethod("emailStrict", function(value, element) {
+                return this.optional(element) || Cigna.ValidationUtil.isValidEmail(value);
+            }, "{!$Label.eSales_Your_Email_Address_is_invalid}");
+            
+            jQuery.validator.addMethod("checkChinese", function(value, element) {
+                   return Cigna.EGroup.checkChinese(value);
+            }, "{!$Label.eSales_Cannot_input_Chinese}");
+
+            jQuery.validator.addMethod("checkHKID", function(value, element) {
+                   return Cigna.EGroup.checkHKID(value);
+            }, "{!$Label.eSales_Only_Allow_Eng_Num}");
+            
+            jQuery.validator.addMethod("checkContactNoLength", function(value, element) {
+                   return Cigna.EGroup.checkContactNoLength(value);
+            }, "{!$Label.eSales_Exceed_Max_Length} 20 {!$Label.eSales_Exceed_Max_Length_2}");
+            
+
+            <apex:outputPanel rendered="{!currentStep == STEP_CLIENT_DETAIL}" layout="none">
+
+                jQuery.validator.addMethod("checkFirstCharacter", function(value, element) {
+                       return Cigna.EGroup.checkFirstCharacter(value);
+                }, "{!$Label.eSales_Cannot_space_in_first_Character}");
+                
+                jQuery.validator.addMethod("validateLength42", function(value, element) {
+                       return Cigna.EGroup.validateLength(value, 42);
+                }, "{!$Label.eSales_Exceed_Max_Length} 42 {!$Label.eSales_Exceed_Max_Length_2}");
+
+                jQuery.validator.addMethod("validateLength10", function(value, element) {
+                       return Cigna.EGroup.validateLength(value, 10);
+                }, "{!$Label.eSales_Exceed_Max_Length} 10 {!$Label.eSales_Exceed_Max_Length_2}");
+
+                jQuery.validator.addMethod("validateLength50", function(value, element) {
+                       return Cigna.EGroup.validateLength(value, 50);
+                }, "{!$Label.eSales_Exceed_Max_Length} 50 {!$Label.eSales_Exceed_Max_Length_2}");
+
+                jQuery.validator.addMethod("validateLength60", function(value, element) {
+                       return Cigna.EGroup.validateLength(value, 60);
+                }, "{!$Label.eSales_Exceed_Max_Length} 60 {!$Label.eSales_Exceed_Max_Length_2}");
+
+                jQuery.validator.addMethod("validateLength48", function(value, element) {
+                       return Cigna.EGroup.validateLength(value, 48);
+                }, "{!$Label.eSales_Exceed_Max_Length} 48 {!$Label.eSales_Exceed_Max_Length_2}");
+
+                jQuery.validator.addMethod("validateDate", function(value, element) {
+                       return validateDate(element);
+                }, "{!$Label.ESales_Invalid_Date}");
+
+
+                $("input[id*='Group-']").each(function(idx, elem){
+                    if (elem.id.indexOf('Address-2') > -1 || elem.id.indexOf('Address-4') > -1 ||
+                        elem.id.indexOf('Address-3') > -1 ) {
+
+                        $(elem).rules("add", {
+                            checkChinese : true
+                        });
+                    } else {
+                        $(elem).rules("add", {
+                            required: true,
+                            checkChinese : true
+                        });
+                    }
+                });
+
+                $("select[id*='Group-']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        required: true
+                    });
+                });
+                
+                $("input[id*='Group-Email-Address']").rules("add", {
+                    emailStrict: true,
+                    checkChinese : true,
+                    validateLength50 : true
+                });
+
+                $("input[id*='Group-Contact-Number']").rules("add", {
+                    digits: true,
+                    checkContactNoLength : true
+                });
+                
+                $("input[id*='Fax-Number']").rules("add", {
+                    digits: true,
+                    checkContactNoLength : true
+                });
+
+                $("input[id*='Group-Day-Check-']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        validateDate : true
+                    });
+                });
+
+
+             function getPOL(){
+                var day = $("input[id*='Day-POL']").val(); 
+                var month =$("input[id*='Month-POL']").val();
+                var year = $("input[id*='Year-POL']").val();
+                var adate= new Date(year,month-1,day);     
+                return adate;
+            }
+            
+            function checkIsFutureDate(resour){
+                if (!validateDate(resour)) 
+                {
+                    return true;
+                }
+                var now = new Date();
+                var pol = getPOL();
+                if (pol <= now){
+                    return false;
+                }else{
+                    return true;
+                }
+            }
+             
+            function checkIsNotWithin7Days(resour){ 
+                if (!validateDate(resour)) 
+                {
+                    return true;
+                }    
+                var now = new Date();
+                var pol = getPOL();
+                if ((pol - now)<= 7*1000*60*60*24  ){
+                    return false;
+                }else{
+                    return true;
+                } 
+             
+            }
+            
+            function checkIsNotWithin14Days(resour){ 
+                if (!validateDate(resour)) 
+                {
+                    return true;
+                }
+                var now = new Date();
+                var pol = getPOL();
+                if ( (pol - now)>7*1000*60*60*24  && (pol - now)<=14 *1000*60*60*24 ){
+                    return false;
+                }else{
+                    return true;
+                }
+            }
+            
+            function checkIsNotOver180Days(resour){ 
+                if (!validateDate(resour)) 
+                {
+                    return true;
+                }
+                var now = new Date();
+                var pol = getPOL();
+                if ( (pol - now) > 180*1000*60*60*24   ){
+                    return false;
+                }else{
+                    return true;
+                }
+            }
+             
+            jQuery.validator.addMethod("checkIsFutureDate", function(value, element) {
+                            return checkIsFutureDate(element);
+                        }, "{!$Label.LHB_EffDate_Future_Date}");
+            
+            jQuery.validator.addMethod("checkIsNotWithin7Days", function(value, element) {
+                            return checkIsNotWithin7Days(element);
+                        }, "{!$Label.LHB_EffDate_within_7_days}");
+             /*
+            jQuery.validator.addMethod("checkIsNotWithin14Days", function(value, element) {
+                            return checkIsNotWithin14Days(element);
+                        }, "Processing time is tight but should be fine.");
+              
+            jQuery.validator.addMethod("validateDate2", function(value, element) {
+                            return validateDate2(element);
+                        }, "{!$Label.ESales_Invalid_Date}");
+            */
+            jQuery.validator.addMethod("checkIsNotOver180Days", function(value, element) {
+                            return checkIsNotOver180Days(element);
+                        }, "{!$Label.LHB_EffDate_7_to_180}");
+            
+            $("input[id*='Check-POL']").rules("add", {
+                            required: true,
+                            validateDate: true,
+                            checkIsFutureDate: true,
+                            checkIsNotWithin7Days: true,
+                           // checkIsNotWithin14Days: true,
+                            checkIsNotOver180Days: true
+                            
+                        });
+
+            </apex:outputPanel>
+            
+        </script>
+
+        <script>
+            
+            if (Cigna.Util.isIOS() && Cigna.Util.isCustomerPortal() && $(window).width() < 769) {
+                //CR-56_Link_20220214
+                $('.bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select').on("focus",function(evt){
+                    if ($('#action-bar').is(':visible')) {
+                        $('#action-bar').addClass('hidden-xs').removeClass('visible-xs');
+                    }
+                });
+                
+                $('.bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select').on("blur",function(evt){
+                    if ($('#action-bar').hasClass('hidden-xs')) {
+                        $('#action-bar').addClass('visible-xs').removeClass('hidden-xs');
+                    }
+                });
+            }
+            
+            
+            
+            if (Cigna.Util.isBrokerPortal()&& Cigna.Util.isAndroid()&& $(window).width() < 769) {
+                $('.bs input[type="tel"],.bs input[type="text"],.bs textarea').on("focus",function(evt){
+                    $("html, body").animate({ scrollTop: $(this).offset().top - 25 }, "fast");
+                });                     
+            }
+            
+        </script>
+        </apex:outputPanel>
+        <apex:outputPanel layout="block" rendered="{!currentStep == STEP_CONFIRMATION}"  >
+            <apex:include id="cfmpageresult" pageName="BaseGroupProductQuotationResultVFP" />
+        </apex:outputPanel>
+    </apex:outputPanel>
+    </div>
+
+    <script>
+        if (Cigna.Util.isSalesforce1()) { 
+             $("a").attr("target","");             
+        } 
+
+    </script>
+    
+</apex:page>

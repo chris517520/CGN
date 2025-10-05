@@ -1,0 +1,543 @@
+<apex:page showHeader="false" applyHtmlTag="false" renderAs="PDF" cache="true" controller="PolicyChangeBenefitFormPDFExportCTRL">
+    <head>
+        <style >
+            @page {
+                padding-top: 90px;
+                margin-bottom: 90px;
+                
+                @top-center {
+                    content: element(header);
+                }
+                
+                @bottom-left {
+                    content: element(footer);
+                }
+            }
+            div.header {
+                font-size: 8pt;
+                display: block;
+                padding-top: 30px;
+                text-align: left;
+                position: running(header);
+                font-family: Arial Unicode MS;
+                //color:  #d3d3d3;
+                
+            }
+            div.footer {
+                
+                text-align: center;
+                padding: 0px;
+                font-size: 8pt;
+                font-family: Arial Unicode MS;
+                position: running(footer);
+            }
+            div.content{
+                font-family: Arial Unicode MS;
+                font-size: 8pt;
+                fill-opacity:.5; 
+                stroke:black; 
+                stroke-width:2;
+                /** does not work **/
+                word-wrap: break-word;
+                word-break: break-all;
+                /** does not work end **/
+            }
+            .pagenumber:before {
+                content: counter(page);
+            }
+            .pagecount:before {
+                content: counter(pages);
+            }
+            tr {
+                height:30px;
+            }
+            
+            .rTable { 
+                display: table; 
+                width: 100%;
+                float: left;
+                margin-bottom: -1px;
+            }
+            .rTableRow { 
+                display: table-row;
+                border: 1px solid black;
+                border-top: 0px;
+            }
+            .rTableRow_title { 
+                display: table-row; 
+                background-color: rgb(24, 140, 204);
+                color:white;
+            }
+            
+            .rTableCell_header { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border: 1px solid black;
+                padding:10px;
+            }
+            
+            .rTableCell_title { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border-right: 1px solid black;
+                padding:10px;
+                width: 35%;
+                font-weight: bold;
+                vertical-align: top;
+                border-width: 0px 1px 1px 1px;
+                border-style: solid;
+                border-color: black;
+            }
+            
+            .rTableCell { 
+                display: table-cell; 
+                border-collapse: collapse;
+                padding:10px;
+                border-style: solid;
+                border-width: 0px 1px 1px 0px;
+                width: 65%;
+                vertical-align: middle;
+            }
+            .sourceOptionsDiv *{
+                vertical-align: middle;
+            }
+            
+            .beneficiary_table{
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .beneficiary_table th{
+                width: 25%;
+            }
+            .beneficiary_table th, .beneficiary_table td{
+                border: 1px solid black;
+                border-collapse: collapse;
+                padding: 10px;
+                display: table-cell;
+            }
+            
+            
+        </style>
+    </head>
+    <div class="header">
+        <div style="width:720px;">
+            <div style="width: 100%; float:left;">
+                <div style="width: 60%; float:left;">
+                    <apex:outputText value="Private & Confidential 私人及機密"></apex:outputText> 
+                </div>
+                <div style="width: 40%; float:left;">
+                    <div style="width: 40%; float:left;">
+                        <apex:image url="{!$Resource.Icon_For_Form}" width="60px" /> 
+                    </div>
+                    <div style="width: 60%; float:left;">
+                        <apex:outputText escape="false" value="{!$Label.Cigna_Address_en_2_line}"/><br/><br/>
+                        Tel: 2560 1990 <apex:outputText value=" Fax: 2560 3605" rendered="{!request.IsGerneralPolicy__c}"/> <br/>
+                        www.cigna.com.hk
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <div style="width:720px;">
+            <div style="float:right;"  >
+                <apex:outputText ><span class="pagenumber"/> / <span class="pagecount"/></apex:outputText>
+            </div>
+        </div>
+    </div>
+    <div class="content">
+        <div style="width:720px;">
+            
+            <!-- page content -->
+            <div style="width:98%">
+                <div style="width:100%; float: left;">
+                    <div style="float:right; ">
+                        Ref. 參考:<apex:outputText value="&nbsp; &nbsp; &nbsp; &nbsp; " style="text-decoration: underline;" escape="false" />(for office use內部專用)  
+                    </div>
+                </div>
+                <div style="width:100%; float: left; font-size: 16px;">
+                    Policy Change Form – Change of Benefit  
+                </div>
+                <div style="width:100%; float: left; font-size: 16px;">
+                    保單更改–更改保障
+                </div>
+                <div style="width:100%; float: left; padding-top: 10px; padding-bottom: 10px;" class="sourceOptionsDiv">
+                    <div style="width:10%; float: left; ">
+                        <apex:outputText value="Source  " />
+                        <apex:outputText value="來源：  " />
+                    </div>
+                    <div style="width:20%; float: left;">
+                        <apex:image url="{!IF(sitePrefix == '/customer',$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12" style="margin:0px 5px;"/>
+                        <apex:outputText style="width: 100px;" value="Customer Portal      " />
+                        <apex:outputText style="width: 100px;" value="客戶      " />
+                    </div>
+                    <div style="width:20%; float: left;">
+                        <apex:image url="{!IF(sitePrefix == '/broker',$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12" style="margin:0px 5px;"/>
+                        <apex:outputText style="width: 100px;" value="Broker Portal      " />
+                        <apex:outputText style="width: 100px;" value="經紀      " />
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            Personal Particulars<br/>
+                            個人資料
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Submission Date<br/>
+                            申請日期<br/>
+                            (YYYY/MM/DD)
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{0,date, yyyy/MM/dd}">
+                                <apex:param value="{!TODAY()}" />
+                            </apex:outputText>
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Name of Policy Holder<br/>
+                            保單持有人姓名
+                        </div>
+                        <div class="rTableCell">
+                            {!request.Policy_Holder_Name__c}
+                        </div>
+                    </div>
+                    
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Policy No.<br/>
+                            保單編號
+                        </div>
+                        <div class="rTableCell">
+                            {!request.Policy_No__c}
+                        </div>
+                    </div>
+                    <apex:outputPanel rendered="{! sitePrefix == '/broker' }">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Broker Name<br/>
+                                經紀公司
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Broker_Name__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Financial Consultant Name<br/>
+                                財務顧問姓名
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Financial_Consultant_Name__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Financial Consultant Code<br/>
+                                財務顧問編號
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Financial_Consultant_Code__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Financial Consultant Contact No.<br/>
+                                財務顧問聯絡電話                        
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Financial_Consultant_Contact_No__c}
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    
+                </div>
+                
+                <apex:outputPanel rendered="{! request.Change_of_Sum_Insured_Information__c }">
+                    <!-- Change of Sum Insured Information -->
+                    <div class="rTable" >
+                        <div class="rTableRow_title" >
+                            <div class="rTableCell_header">
+                                <apex:outputText value="Change of Sum Insured Information" ></apex:outputText><br/>
+                                更改投保額資料
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rTable" >
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title" style="width:100%;padding:0px;" >
+                                <table class="beneficiary_table">
+                                    <tr>
+                                        <th style="width:35%">
+                                            Benefit name/ code<br/>
+                                            保障名稱/ 代號
+                                        </th>
+                                        <th style="width:33%">
+                                            Currency<br/>
+                                            貨幣
+                                        </th>
+                                        <th style="width:32%">
+                                            Sum Insured/Benefit Level (To)<br/>
+                                            投保額(至)
+                                        </th>
+                                    </tr>
+                                    <apex:repeat value="{! changeOfSumInsuredList }" var="detail">
+                                        <tr>
+                                            <td>
+                                                {! detail.Benefit_Name_Code__c}<br/>
+                                                {! detail.Benefit_Name_Code_Chinese__c}
+                                            </td>
+                                            <td>
+                                                {!detail.Sum_Insured_From_Currency__c}<br/>
+                                                {!translationMap[detail.Sum_Insured_From_Currency__c]}
+                                            </td>
+                                            <td>
+                                                {!detail.Sum_Insured_To__c}
+                                            </td>
+                                        </tr>
+                                    </apex:repeat>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                
+                <apex:outputPanel rendered="{! request.Add_Delete_Rider__c }">
+                    <!-- Add/ Delete Rider -->
+                    <div class="rTable" >
+                        <div class="rTableRow_title" >
+                            <div class="rTableCell_header">
+                                <apex:outputText value="Add/ Delete Rider" ></apex:outputText><br/>
+                                增加/ 取消附加保障
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rTable" >
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title" style="width:100%;padding:0px;" >
+                                <table class="beneficiary_table">
+                                    <tr>
+                                        <th style="width:35%">
+                                            Add/Delete?<br/>
+                                            增加/ 取消?
+                                        </th>
+                                        <th style="width:65%">
+                                            Benefit name/code<br/>
+                                            保障名稱/代號
+                                        </th>
+                                    </tr>
+                                    <apex:repeat value="{! addDeleteRiderList }" var="detail">
+                                        <tr>
+                                            <td>
+                                                {!detail.Add_Delete_Rider__c}<br/>
+                                                {!translationMap[detail.Add_Delete_Rider__c]}
+                                            </td>
+                                            <td>
+                                                {!detail.Rider_Benefit_Name_Code__c}<br/>
+                                                {!detail.Rider_Benefit_Name_Code_Chinese__c}
+                                            </td>
+                                        </tr>
+                                    </apex:repeat>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                
+                <apex:outputPanel rendered="{! request.Additional_Contribution__c == 'Single' }">
+                    <!-- Additional Contribution - Single  -->
+                    <div class="rTable" >
+                        <div class="rTableRow_title" >
+                            <div class="rTableCell_header">
+                                <apex:outputText value="Additional Contribution - Single" ></apex:outputText><br/>
+                                額外供款 - 整付供款
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rTable" >
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Single<br/>
+                                整付供款
+                            </div>
+                            <div class="rTableCell">
+                                Y<br/>
+                                是
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Currency<br/>
+                                貨幣
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Single_Currency__c}<br/>
+                                {! translationMap[request.Single_Currency__c]}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rTable" >
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title" style="width:100%;padding:0px;" >
+                                <table class="beneficiary_table">
+                                    <tr>
+                                        <th style="width:35%">
+                                            Name of Investment Choice<br/>
+                                            投資選項名稱
+                                        </th>
+                                        <th style="width:65%">
+                                            Amount<br/>
+                                            金額
+                                        </th>
+                                    </tr>
+                                    <apex:repeat value="{! additionalContributionSingleList }" var="detail">
+                                        <tr>
+                                            <td>
+                                                {!detail.Single_Name_of_Investment_Choice__c}<br/>
+                                                {!detail.Name_of_Investment_Choice_Chinese_Single__c}
+                                            </td>
+                                            <td>
+                                                {! detail.Amount__c}
+                                            </td>
+                                        </tr>
+                                    </apex:repeat>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                
+                <apex:outputPanel rendered="{! request.Additional_Contribution__c == 'Regular' }">
+                    <!-- Additional Contribution - Regular -->
+                    <div class="rTable" >
+                        <div class="rTableRow_title" >
+                            <div class="rTableCell_header">
+                                <apex:outputText value="Additional Contribution - Regular" ></apex:outputText><br/>
+                                額外供款 - 定期供款
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rTable" >
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Regular <br/>
+                                定期供款
+                            </div>
+                            <div class="rTableCell">
+                                Y<br/>
+                                是
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Currency<br/>
+                                貨幣
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Regular_Currency__c}<br/>
+                                {! translationMap[request.Regular_Currency__c]}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Current Contribution Amount (Form)<br/>
+                                原有供款金額 (由)
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Current_Contribution_Amount_From__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                New Contribution Amount (To)<br/>
+                                新供款金額 (至)
+                            </div>
+                            <div class="rTableCell">
+                                {!request.New_Contribution_Amount_To__c}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rTable" >
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title" style="width:100%;padding:0px;" >
+                                <table class="beneficiary_table">
+                                    <tr>
+                                        <th style="width:35%">
+                                            Name of Investment Choice<br/>
+                                            投資選項名稱
+                                        </th>
+                                        <th style="width:65%">
+                                            Allocation (%) <br/>
+                                            分配 (%)
+                                        </th>
+                                    </tr>
+                                    <apex:repeat value="{! additionalContributionRegularList }" var="detail">
+                                        <tr>
+                                            <td>
+                                                {!detail.Name_of_Investment_Choice_Regular__c}<br/>
+                                                {!detail.Name_of_Investment_Choice_RegularChinese__c}
+                                            </td>
+                                            <td>
+                                                {!detail.Allocation__c}
+                                            </td>
+                                        </tr>
+                                    </apex:repeat>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                
+                
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            <apex:outputText value="Declaration & Authorization" ></apex:outputText><br/>
+                            聲明及授權
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <!-- tnc -->
+                        <div class="rTableCell_title" style="width:100%;" >
+                            <!--JOBR-184: JOBR-199/226 updated by Kermit at 20221012-->
+                     		<!--<apex:include pageName="DeclarationFormVFP"/>-->
+                     		<c:DeclarationFormComponent isContainGIPolicy="{!request.IsGerneralPolicy__c}" isContainLifePolicy="{!request.IsLifePolicy__c}"/>
+                        </div>
+                    </div>
+                </div>
+                <apex:outputPanel rendered="{! sitePrefix == '/broker' }">
+                    <div class="rTable">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title" >
+                                <div>
+                                Signature<br/>
+                                簽署
+                                </div>
+                            </div>
+                            <div class="rTableCell">
+                                <apex:outputPanel rendered="{! ph_esignature != null}">
+                                    <apex:image url="/servlet/servlet.FileDownload?file={!ph_esignature.id}" width="450px"/>
+                                </apex:outputPanel>
+                                <br/>
+                                Name of Policy Holder 保單持有人姓名：{!request.Policy_Holder_Name__c} <br/>
+                                Date Signed 簽署日期(YYYY/MM/DD)：
+                                <apex:outputText value="{0,date, yyyy/MM/dd}">
+                                    <apex:param value="{!TODAY()}" />
+                                </apex:outputText>
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+            </div>
+            
+        </div>
+    </div>
+    
+</apex:page>

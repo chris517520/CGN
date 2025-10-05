@@ -1,0 +1,107 @@
+<apex:page docType="html-5.0" id="BatchAssignOppty" title="Batch Assigned Opportunity" Controller="TMBatchAssignOpptyCtrl">
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    <apex:includeScript value="/support/console/33.0/integration.js"/>
+    
+    <b><apex:outputLabel value="{!$Label.TM_Oppty_Batch_Assignment_Title}" style="font-size:18px;"/></b>
+    
+    <apex:form >
+        <apex:actionStatus id="loader-icon">
+            <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                     &nbsp;
+                 </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                    </div>
+                 </div>
+            </apex:facet>
+        </apex:actionStatus>
+        
+        <apex:outputPanel id="ManageCallList" rendered="{! hasPermission }">
+        
+            
+        
+            <apex:pageBlock id="OpptyNumberInfo" mode="maindetail" title="">
+            
+                <apex:outputPanel id="error-message-panel">
+                    <apex:pageMessages ></apex:pageMessages>
+                </apex:outputPanel>
+                
+                <apex:pageBlockButtons location="bottom" rendered="{! remainingOppty != 0}">
+                    <apex:commandButton value="Assign" action="{!assignTo}" reRender="OpptyNumberInfo" status="loader-icon"/>
+                </apex:pageBlockButtons>
+                
+                <apex:pageBlockSection columns="2" >
+                    <!--
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel >{!$Label.TM_Total_No_Of_Oppty}</apex:outputLabel>
+                        <apex:outputLabel >{!totalOppty}</apex:outputLabel>
+                    </apex:pageBlockSectionItem>
+                    -->
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel >{!$Label.TM_Total_No_Of_Unassigned_Oppty}</apex:outputLabel>
+                        <apex:outputLabel >{!remainingOppty}</apex:outputLabel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                
+                <apex:outputPanel rendered="{!remainingOppty == 0}">
+                    <br/><br/>
+                    <apex:outputText >
+                        {!$Label.TM_No_unassigned_opportunities}
+                    </apex:outputText>
+                    <br/><br/>
+                </apex:outputPanel>
+                
+                <apex:outputPanel rendered="{! remainingOppty != 0}">
+                <div style='height:35px; float:left'>
+                    <b>Sort by: </b>
+                    <apex:selectList value="{!selectedColumn}" multiselect="false" size="1" label="Sort by: ">
+                        <apex:selectOptions value="{!columnList}" />
+                        <apex:actionSupport status="loader-icon" event="onchange" action="{!sortAssignWrapper}" ReRender="index, assignWrapper" />
+                    </apex:selectList>
+                    <apex:selectList value="{!sortOrder}" multiselect="false" size="1" >
+                        <apex:selectOptions value="{!orderList}" />
+                        <apex:actionSupport status="loader-icon" event="onchange" action="{!sortAssignWrapper}" ReRender="index, assignWrapper" />
+                    </apex:selectList>
+                </div>
+                </apex:outputPanel>
+                
+                <apex:variable id="index" var="personIndex" value="{!index}" /> 
+                <apex:pageblockTable id="assignWrapper" value="{!assignWrapper}" var="b" rendered="{! remainingOppty != 0}">
+                    <apex:column headerValue="#" >
+                        <apex:variable var="personIndex" value="{!personIndex + 1}" />
+                        {!personIndex}
+                    </apex:column>
+                    
+                    <apex:column headerValue="{!$Label.TM_Count}" >
+                        <apex:actionRegion >
+                            <apex:inputText value="{! b.opptyCount}"  >
+                                <apex:actionSupport event="onchange" action="{!calculateTotal}" rerender="Total" />
+                            </apex:inputText>
+                        </apex:actionRegion>
+                    </apex:column>
+                    
+                    <apex:column headerValue="{!$Label.TM_TMR_Agent_ID}" value="{!b.u.TM_Agent_ID__c}"/>
+                    
+                    <apex:column headerValue="{!$Label.TM_Assignee}" value="{!b.u.Name}"/>
+                    
+                    <apex:column headerValue="{!$Label.TM_Roles}" value="{!b.u.UserRole.Name}"/>
+                    
+                </apex:pageblockTable>
+                <apex:outputpanel rendered="{! remainingOppty != 0}">
+                &nbsp; Sum : &nbsp;&nbsp;<apex:outputText id="Total" value="{!total}"></apex:outputText>
+                </apex:outputpanel>
+                <script>
+                    var $j = jQuery.noConflict(); 
+                    $j('div.TalUserDropDown select').each(function(index) {
+                        $j(this).hide();
+                    });
+                </script>
+            </apex:pageBlock>
+        
+        </apex:outputPanel>
+    </apex:form>
+    
+</apex:page>

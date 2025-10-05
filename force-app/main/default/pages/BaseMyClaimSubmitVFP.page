@@ -1,0 +1,1276 @@
+<apex:page id="BaseMyClaimSubmitVFP"  Controller="MyClaimSubmitController" docType="html-5.0" showHeader="false" sidebar="false" title="{!$Label.Make_a_claim}" >
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+        <apex:include pageName="ClaimUtilJS"/>
+        <!--for upload attachement-->
+        <script type="text/javascript">
+            var __sfdcSessionId = '{!GETSESSIONID()}';
+            var filesToUpload = '';  
+            var uploadedFile = 0;
+            
+            function initDatePicker(){
+                Cigna.DatepickerUtil.init("input[id*='-date-format']");
+            }
+
+            if({!IF(cList.size > 0, true, false)}) {
+                isContainIndividualPolicy = {!cList[0].Is_Contain_Individual_Life_Policy__c};
+                isContainGroupPolicy = {!cList[0].Is_Contain_Group_Policy__c};
+            }
+            
+            /*test code: penetration 23-0928*/
+            // 禁止右键菜单
+            // document.oncontextmenu = function(){ return false; };
+            // // 禁止文字选择
+            // document.onselectstart = function(){ return false; };
+            // document.onselect = function(){ return false;};
+            // // 禁止复制
+            // document.oncopy = function(){ return false; };
+            // // 禁止剪切
+            // document.oncut = function(){ return false; };
+            // document.onmouseup = function(){ document.selection.empty(); };
+        </script>
+        <script src="/soap/ajax/37.0/connection.js" type="text/javascript"></script>
+    </head>
+    <apex:define name="additionalLibraries">
+        <!-- HKITSFDC-80 BEGIN --> 
+        <!--<link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.bootstrap_select_1_11_2, 'bootstrap-select-1.11.2/dist/css/bootstrap-select.min.css')}" />-->
+        <!-- HKITSFDC-80 END --> 
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+        <!-- HKITSFDC-80 BEGIN --> 
+        <!--<script type="text/javascript" src="{!URLFOR($Resource.bootstrap_select_1_11_2, 'bootstrap-select-1.11.2/dist/js/bootstrap-select.min.js')}"></script>-->
+        <!-- HKITSFDC-80 END --> 
+        <!-- CR-56_Link_20220214 -->
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+        <apex:outputPanel rendered="{!if( uList != null && uList.size>0 && uList[0].LanguageLocaleKey== 'zh_TW', true, false)}" layout="none">
+            <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+        </apex:outputPanel>
+        <!-- Date Picker -->
+         <link rel="stylesheet" href="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/jquery-ui.min.css')}" />
+         <!--CR-56_Link_20220214-->
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/jquery-ui-1.13.min.js')}"></script>
+         <script type="text/javascript" src="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/datepicker-zh-TW.js')}"></script>
+    </apex:define>
+    <!-- Start of the main body -->
+    <apex:define name="body">
+        <apex:outputPanel id="resultPanel">
+        <apex:outputPanel >
+            <!-- add bob 20201229 -->
+            <apex:outputPanel id="errorMessage">
+                <apex:pagemessages />
+            </apex:outputPanel>
+            <apex:form >
+                <!-- 20200817 - minghua - Performance issue in claim flow Step 2 -->
+                <apex:actionFunction action="{!performanceGetPersonBasic}" status="loader-icon" name="performanceGetPersonBasic" reRender="jSPanel,uploadDocResult,changeBankAccountPanel" />
+
+                <!-- btn share every page -->
+                <!-- save btn-->
+                <apex:actionFunction action="{!CreateClaimRecord}" status="loader-icon" name="CreateClaimRecordAtAction" oncomplete="saveRecordBrkPolicy();" reRender="componentRefreshClaimId" />
+                
+                <apex:actionFunction action="{!SaveRecord}" status="loader-icon" oncomplete="Cigna.Util.navigateToVFP('MyClaimVFP');" name="saveRecordSaveBtnAtAction" reRender="dummyPanel" >
+                    <apex:param name="steps" assignTo="{!steps}" value=""/>
+                </apex:actionFunction>
+                
+                <!-- next btn --><!-- Rancho_ReviseDescription_20210319 -->
+                <apex:actionFunction action="{!NextSteps}" status="loader-icon" name="NextStepsAtAction" reRender="jSPanel, eSignaturePanel,TandC-Panel, eSignaturePanelBrk, ackPanel, uploadDocResult,selectBankAccountForCusVFPPanel, changeBankAccountPanel,AnswerClaimQuestionCusPanel,selectBankAccountCusHeaderPanel,dailyHospitalCashPanel"/>
+                <apex:actionFunction action="{!NextStepsToSeven}" status="loader-icon" name="NextStepsToSevenAtAction" reRender="jSPanel, eSignaturePanel, eSignaturePanelBrk, ackPanel, uploadDocResult,changeBankAccountPanel" oncomplete="console.log('NextStepsToSeven');" />
+
+                <apex:actionFunction action="{!NextStepsTo40AtAction}" status="loader-icon" name="NextStepsTo40AtAction" reRender="jSPanel, eSignaturePanel, eSignaturePanelBrk, ackPanel, uploadDocResult" oncomplete="console.log('NextStepsTo40AtAction');" />
+                
+                <apex:actionFunction action="{!PreviousSteps}" status="loader-icon" name="PreviousStepsAtAction" reRender="jSPanel" oncomplete="console.log('previous save')">
+                    <apex:param name="oneBenefitFlag" assignTo="{!onlyOneBenefitType}" value=""/>
+                </apex:actionFunction>
+                <apex:actionFunction action="{!refreshSearch}" name="refreshSearch" rerender="brkSearchComp" />
+                <apex:actionFunction action="{!AllowTypeOfDoctorToClaim}" status="loader-icon" name="AllowTypeOfDoctorToClaimAtAction" reRender="dummyPanel"> 
+                    <apex:param id="allowTypeOfDoctorToClaimStr" name="allowTypeOfDoctorToClaimStr" value="allowTypeOfDoctorToClaimStr" assignTo="{!allowTypeOfDoctorToClaimStr}"/>
+                </apex:actionFunction>
+                <apex:actionFunction status="loader-icon" name="rerenderBrkDocumentPanel" reRender="displayUploadDocBrkPanel, uploadDocResult" />
+                
+                
+                <!-- end attachment part -->
+                <apex:actionFunction name="dummyActionAtAction" status="loader-icon" action="{!dummyAction}" oncomplete="console.log('reload doc list');"  reRender="attSection_brk, attSectionNextBtn_brk, attSection_cus, extraQuestion_brk, extraQuestionNextBtn_brk"></apex:actionFunction>
+                <apex:actionFunction name="passOneBenefitTypeFlag" status="loader-icon" action="{!passOneBenefitTypeFlag}" rerender="false">
+                    <apex:param name="oneBenefitFlag" assignTo="{!onlyOneBenefitType}" value=""/>
+                </apex:actionFunction>
+                <apex:actionFunction name="CannotEnterBankAccountInformationAtAction" status="loader-icon" action="{!CannotEnterBankAccountInformation}" rerender="dummyPanel" />
+                <apex:actionFunction name="CanEnterBankAccountInformationAtAction" status="loader-icon" action="{!CanEnterBankAccountInformation}" rerender="dummyPanel" />
+                <apex:actionFunction status="loader-icon" action="{!FindUploadAttachment}"  name="refreshDocPanel" reRender="uploadDocResult,covid-19-reminder"/><!-- Rancho_Covid19_20221019 - rerender covid-19 benefit reminder panel -->
+        
+                <apex:actionFunction name="SelectBrokerPACAtAction" status="loader-icon" action="{!SelectBrokerPAC}" rerender="dummyPanel" />
+                <apex:actionFunction name="ResetBrokerPACAtAction" status="loader-icon" action="{!ResetBrokerPAC}" rerender="dummyPanel" />
+                
+                <apex:actionFunction name="SelectHSBrokerPACAtAction" status="loader-icon" action="{!SelectHSBrokerPAC}" oncomplete="console.log('SelectHSBrokerPACAtAction');" rerender="dummyPanel" />
+                <apex:actionFunction name="ResetHSBrokerPACAtAction" status="loader-icon" action="{!ResetHSBrokerPAC}" oncomplete="console.log('ResetHSBrokerPACAtAction');"  rerender="dummyPanel" />
+                
+                <apex:actionFunction name="SelectHPABrokerPACAtAction" status="loader-icon" action="{!SelectHPABrokerPAC}" oncomplete="console.log('SelectHPABrokerPACAtAction');" rerender="dummyPanel" />
+                <apex:actionFunction name="ResetHPABrokerPACAtAction" status="loader-icon" action="{!ResetHPABrokerPAC}"  oncomplete="console.log('ResetHPABrokerPACAtAction');" rerender="dummyPanel" />
+                
+                <apex:actionFunction name="loadDataFromWSAtAction" status="loader-icon" action="{!loadDataFromWS}"  oncomplete="initDisplay();console.log('load all data from WS', Date.now());"
+                                     rerender="relatedAccountListPanel, relatedPolicyListByAccountPanel_cus, questionPanel, selectBankAccountForCusVFPPanel,selectBankAccountCusHeaderPanel,changeBankAccountPanel, AnswerClaimQuestionCusPanel, jSPanel, relatedPolicyListByAccountPanel_brk, selectBankAccountForBrkHasDDAVFPPanel, selectBankAccountForBrkNoDDAVFPPanel, selectBankAccountForBrkVFPPanel" />
+                <apex:actionFunction name="reloadJsPanel" status="loader-icon" reRender="jSPanel"/> <!-- action="{!dummyAction}" Zoe working in progress for broker performance tuning -->
+                
+                
+                <!-- e-signature -->
+                <!-- for sign on screen and no need to sign -->
+                <apex:actionFunction name="SubmitClaimRequestAtAction" status="loader-icon" action="{!SubmitClaimRequest}" reRender="errorMessage" oncomplete="nextStep();" />
+                <!-- for nextStep complete claim -->
+                <apex:actionFunction name="submitEsignature" status="loader-icon" action="{!submitEsignature}" rerender="false" oncomplete="getPHPersonBasic();"> <!-- Zoe updated on 0406 for performance tuning, previously, oncomplete="SubmitClaimRequestAtAction();"  -->
+                    <apex:param name="imgDataParam" assignTo="{!eSignature}" value=""/>
+                </apex:actionFunction>
+                <!-- for nextStep complete claim -->
+                <apex:actionFunction name="getPHPersonBasic" status="loader-icon" action="{!getPHPersonBasic}" rerender="false" oncomplete="SubmitClaimRequestAtAction();" />
+                <!-- for e-signature -->
+                <apex:actionFunction name="sendEmailSignature" rerender="false" reRender="errorMessage" status="loader-icon" action="{!sendESignatureEmail}" oncomplete="nextStep();">
+                    <apex:param name="esignatureEmail" assignTo="{!cList[0].Email_Address_to_send__c}" value=""/>
+                </apex:actionFunction>   
+                <apex:actionFunction name="refreshEsignature" status="loader-icon" action="{!refreshTCBrk}" reRender="eSignaturePanelBrk" oncomplete="Cigna.ESignatureComp.forceResizeCanvas();"/>                               
+            </apex:form>
+        </apex:outputPanel>
+        <script>
+            
+            var tmpEmailAddr = '';
+            
+            $(document).ready(function(){ 
+                loadDataFromWSAtAction();
+                console.log('start getting WS:', Date.now());
+            }); 
+            
+            function initDisplay(){
+               sforce.connection.serverUrl = "{!$Site.BaseUrl}/services/Soap/u/32.0"; 
+               console.log('********** steps: ' + {!steps});
+               console.log('********** isLoadOldClaim: ' + {!isLoadOldClaim});
+               if({!steps} == null || {!steps} ==0 || {!steps} ==1 || {!steps} ==''){
+                
+                    if ( {!!isCustomer}) {
+                        // broker part
+                        displayQuestion('brkSteps1');
+                    }else{
+                        // customer part
+                        console.log('PI allSsnNamePIMap: ' + '{!allSsnNamePIMap}');
+                        console.log('PICount input hidden: ' + $('#piCountInputHidden').val());
+                        
+                        // if only one PI, skip step 1
+                        // if ('{!PICount}' == 1){ 
+                        if ($('#piCountInputHidden').val() == 1){ 
+                            //SaveRecordCusPIAtAction(); //for performance tunning
+                            hideQuestion('cusSteps1');
+                            displayQuestion('cusSteps2');
+                            console.log('pi: ' + '{!cList[0].Person_s_Insured__c}');
+                        }
+                        else{
+                            displayQuestion('cusSteps1');
+                        }
+                        
+                    }
+                    
+                }else{
+                    // for customer
+                    if({!isCustomer}) {
+                        if({!steps} != ''){
+                            if ({!steps} == 11){
+                                Cigna.Util.navigateToVFP('MyClaimSubmitVFP');
+                            }
+                            else{
+                                displayQuestion('cusSteps{!steps}');
+                            }
+                            console.log('******displayQuestion cusSteps' + '{!steps}');
+                        }
+                        
+                        inactiveAllTab();
+                        if(parseInt('{!steps}') < 7)    $('#info').addClass('tab3_fontStyle').addClass('active');
+                        if(parseInt('{!steps}') == 7)    $('#detail').addClass('tab3_fontStyle').addClass('active');
+                        if(parseInt('{!steps}') == 8)    $('#att').addClass('tab3_fontStyle').addClass('active');
+                        if(parseInt('{!steps}') == 9)    $('#esign').addClass('tab3_fontStyle').addClass('active');
+                    }
+                    
+                    // for broker
+                    if({!!isCustomer}) {
+                        if({!steps} != ''){
+                            displayQuestion('brkSteps{!steps}');
+                            if (isBrokerIOSSF1()){
+                                $('.brk-sf1-content-step[data-step="{!steps}"]').show();
+                                // alert('hi' + $('.brk-sf1-content-step[data-step="2"]').is(":Visible"));
+                            }
+                        }
+                        if ({!steps} == 8)    refreshEsignature();
+                        if ({!steps} == 11){
+                            Cigna.Util.navigateToVFP('MyClaimSubmitVFP');
+                        }
+                        
+                        inactiveAllTab();
+                        console.log('******displayQuestion brkSteps' + '{!steps}');
+                        if(parseInt('{!steps}') < 6 || parseInt('{!steps}') == 40)    $('#info').addClass('tab3_fontStyle').addClass('active');
+                        if(parseInt('{!steps}') == 7)    $('#detail').addClass('tab3_fontStyle').addClass('active');
+                        if(parseInt('{!steps}') == 6)    $('#att').addClass('tab3_fontStyle').addClass('active');
+                        if(parseInt('{!steps}') == 8)    $('#esign').addClass('tab3_fontStyle').addClass('active');
+                    }
+                    
+                    
+                    //if({!if(cList.size>0 && cList[0].Cannot_Enter_Bank_Account_Information__c, true, false)})    skipSteps = 1;
+                    //else if({!if(cList.size>0 && !cList[0].Cannot_Enter_Bank_Account_Information__c, true, false)})      skipSteps = 0;
+                    // Rancho_HC234_20230719 - get saved value when init old data
+                    if({!isLoadOldClaim && cList[0].Making_other_insurance_claim__c}){claimFromOtherCompany = 1;}
+                    
+                    if({!isLoadOldClaim}){
+                        if(parseInt('{!steps}') <= 9 || parseInt('{!steps}') == 40)    displayQuestion('back');    //testing
+                        if((({!isCustomer} && parseInt('{!steps}') <= 8) || ({!!isCustomer} && (parseInt('{!steps}') <= 7 || parseInt('{!steps}') == 40))) && {!if(cList.size>0 && cList[0].Is_Displayed_For_Customer__c, true,false)}){
+                            displayQuestion('save');
+                        }
+                        if ({!isCustomer}){
+                            refreshDocPanel();
+                        }
+                    }
+                }
+                /**grey separator**/
+                greySeparatorStyle(); 
+                /* load onclick for single / multiple selection */
+                refreshBtnJS();
+                
+                if ({!isCustomer}){
+                    //for first load at ClaimAnswerClaimQuestionCusVFP
+                    reloadConditionFlag();
+                    reloadFirstTimeValidationForQuestion();
+                    //$('#ClaimAnswerClaimQuestionCusVFPDiv').hide();
+                    //$('#ClaimAnswerClaimQuestionCusVFPDiv').show();
+                }
+                
+                if ({!!isCustomer} && {!isLoadOldClaim}){
+                    refreshQuestionPanel();
+                    refreshBrkBankAccountPanel();
+                    //refreshAttlist();
+                    refreshAttlistWithoutDummy();
+                }
+            }
+            
+            /* AnswerClaimQuestionVFP */
+            function hideAfterwardQuestion(qNum){
+                console.log('to see hideAfterwardQuestion start at qNum:    ' + qNum);
+             
+                if(qNum.length >= 2){
+                    var qSeqNum = 0;
+                    
+                    if({!isCustomer}){
+                        var qNumStr = qNum.slice(1);
+                        qSeqNum = parseInt(qNumStr);
+
+                        //20210803 - Kirk - CR48  [seq <= 16 to seq <= 19]
+                        // Rancho_CR48_20210706
+                        var haveHideFlag=false;
+                        for(var seq = qSeqNum; seq <= 21; seq++){
+                            console.log('seq=',seq);
+                            if ((qSeqNum==11||qSeqNum==12||qSeqNum==13)&&(seq==13||seq==15)) {
+                                // jump this step
+                            }else{
+                                if ((qSeqNum==14||qSeqNum==15||qSeqNum==16)&&!haveHideFlag) {
+                                    haveHideFlag=true;
+                                    hideQuestion('q10');
+                                    hideQuestion('q11');
+                                    hideQuestion('q12');
+                                }else if (seq==18&&qSeqNum==18){
+                                    if (isSeparateCharge) {
+                                        hideQuestion('q11');
+                                        hideQuestion('q12');
+                                    }else{
+                                        hideQuestion('q12');
+                                    }
+                                }else if (seq==19&&qSeqNum==19){
+                                    hideQuestion('q12');
+                                }else if (seq==20&&qSeqNum==20){
+                                    hideQuestion('q19');
+                                }else if (seq==21&&qSeqNum==21){ // Rancho_CR48_20210706
+                                    hideQuestion('q20');
+                                }
+                                hideQuestion('q'+seq);
+                            }
+                        }
+                    }
+                    
+                    if({!!isCustomer}){
+                        var qNumStr;
+                        if (qNum.length == 2){
+                            qNumStr = qNum.slice(1);
+                            qSeqNum = parseInt(qNumStr);
+                        
+                            for(var seq = qSeqNum; seq <= 3; seq++){
+                                hideQuestion('c'+seq);
+                            }
+                        }
+                        else if (qNum.length == 3){
+                            qNumStr = qNum.slice(2);
+                            qSeqNum = parseInt(qNumStr);
+                            
+                            for(var seq = qSeqNum; seq <= 3; seq++){
+                                hideQuestion('cx'+seq);
+                            }
+                        }
+                        
+                    }
+                    //removeSelectedQuestionAtAction(qNum);
+                    hideNextBtn();
+                    hideNextBtnIn(7);
+                }
+            }
+
+            var isPass = false;
+            window.nextStep = function(evt){
+                //load currentStepNum by display div step param
+                var currentStepNum = $('.content-step:visible').data('step');
+                var nextStepNum = currentStepNum + 1;
+
+                steps = nextStepNum;
+                console.log('***** in nextStep current step: ' + currentStepNum);
+                
+                /** customer **/
+                if({!isCustomer}){
+                
+                    if(nextStepNum>1 && nextStepNum<10){
+                        displayQuestion('back');    //testing
+                    }
+                    
+                    if((nextStepNum>3 || {!if(cList.size>0 && cList[0].Is_Displayed_For_Customer__c, true,false)}) && nextStepNum<9){
+                        displayQuestion('save');
+                    }
+                
+                    console.log('to see steps at customer:    '+currentStepNum);
+                    if(currentStepNum == 1){
+                        hideNextBtn();    //do it first - for testing
+                        isPass = saveRecordCusPI();    /** load or save PI data **/
+                        console.log('pi: ' + '{!cList[0].Person_s_Insured__c}');
+                    }
+                    
+                    if(currentStepNum == 2){
+                        
+                        console.log('********* to see selectedPolicy: ' + $('input[type="hidden"][id$="selectedPolicy"]').val());
+                        console.log('--1--'+ new Date($.now()));
+                        if (performanceOption1){
+                            SaveRecordCusPIAtAction2(); //for performance tunning
+                        }
+                        //saveRecordCusPolicy();    /** save policy data **/
+                        console.log('--2--'+ new Date($.now()));
+                        //Raistlin - 20191030 - GS claim
+                        getSelectedPolicyListInfo();
+                        console.log('--3--'+ new Date($.now()));
+                        isPass = true;
+                    }
+                    
+                    if(currentStepNum == 3){
+                        console.log('********* to see hidden field: ' + $('#hiddenValue_cus_askIfMoreThanOneClaim').val());
+                        console.log('********* to see hidden field: ' + $('#hiddenValue_cus_allClaimRelatedToSameEvent').val());
+                        //saveRecordCusSubmitMoreThanOneQ1();
+                        //saveRecordCusSubmitMoreThanOneQ2();
+                        
+                        // skip step 4 if only one benefit type available
+                        if (skipOneBenefitForTestingJS && (availBenefitTypeCount == 1)){
+                            // select the only benefit type
+                            //CR-56_Link_20220214
+                            if( showHIF >= 0 || showHI >= 0 || showHPA >= 0 ){
+                                if (!$("#benefit_1").hasClass('fg-orange')){
+                                    $("#benefit_1").trigger("click");
+                                }
+                            }
+                            if( showHS >= 0 ){
+                                if (!$("#benefit_2").hasClass('fg-orange')){
+                                    $("#benefit_2").trigger("click");
+                                }
+                            }
+                            if( showOP >= 0 ){
+                                if (!$("#benefit_3").hasClass('fg-orange')){
+                                    $("#benefit_3").trigger("click");
+                                }
+                            }
+                            if( showMAT >= 0 ){
+                                if (!$("#benefit_4").hasClass('fg-orange')){
+                                    $("#benefit_4").trigger("click");
+                                }
+                            }
+                            if( showDIS >= 0 && (isTTD>0 || isDIS>0) ){
+                                if (!$("#benefit_5").hasClass('fg-orange')){
+                                    $("#benefit_5").trigger("click"); 
+                                }
+                            }
+                            if( showCI >= 0 ){
+                                if (!$("#benefit_6").hasClass('fg-orange')){
+                                    $("#benefit_6").trigger("click");
+                                }
+                            }
+                            if( showDIS >= 0  && isWP>0){
+                                if (!$("#benefit_7").hasClass('fg-orange')){
+                                    $("#benefit_7").trigger("click");
+                                }
+                            }
+                            //Added by minglei 2018.05.15 [add Wellness type to claim] start
+                            //if( showWL >= 0  && isWL>0){
+                            if( showWL >= 0){
+                                if (!$("#benefit_9").hasClass('fg-orange')){
+                                    $("#benefit_9").trigger("click");  
+                                }
+                            }
+                            //Added by minglei 2018.05.15 [add Wellness type to claim] end                       
+                            nextStepNum = 5;
+                            
+                            if(showUSCurrency == 1)    toggleOverlay_4();    //ask payment currency
+                            //load doc need to upload / download
+                            isPass = addBenefitTypeToClaimRecord(true);
+                        } else{
+                            isPass = true;
+                        }
+                    }
+                    
+                    if(currentStepNum == 4){
+                        if(showUSCurrency == 1)    toggleOverlay_4();    //ask payment currency
+                        //load doc need to upload / download
+                        isPass = addBenefitTypeToClaimRecord(true);
+                    }
+                    
+                    if(currentStepNum == 5){
+                        /** save selected bank account info **/
+                        if( skipSteps == 1){
+                            currentStepNum = 6;
+                            nextStepNum = 7;
+                        }
+                        saveRecordCusBankAccInfo();
+                        isPass = true;  
+                    }
+                    
+                    if(currentStepNum == 6){
+                        if(skipSteps == 1){
+                            isPass = true;
+                        }else{
+                            isPass = saveChangeBankAccount(evt);
+                        }
+                        inactiveAllTab();
+                        $('#detail').addClass('tab3_fontStyle').addClass('active');
+                        
+                    }
+                    if(currentStepNum == 7){
+                        isPass = saveClaimAnswerClaimQuestion(evt);
+                        console.log('after saveClaimAnswerClaimQuestion');
+                        inactiveAllTab();
+                        $('#att').addClass('tab3_fontStyle').addClass('active');
+                        $("#downloadForm").show();
+                        hideNextBtn();
+                    }
+                    
+                    if (currentStepNum == 8){
+                        console.log('to see isPass at step 8:    '+isPass);
+                        isPass = true;
+                        inactiveAllTab();
+                        $('#esign').addClass('tab3_fontStyle').addClass('active');
+                        hideNextBtn();
+                        hideQuestion('save');
+                    }
+                    
+                    if (currentStepNum == 9){
+                        console.log('to see load final btn');
+                        displayCallAction_AnotherClaim();
+                        isPass = true;
+                    }
+                    
+                    if (currentStepNum >=9){
+                        inactiveAllTab();
+                        hideQuestion('save');
+                        hideQuestion('back');
+                        redirectRestart();
+                    }
+                }
+                
+                
+                /** broker **/
+                if({!!isCustomer}){
+                    if(nextStepNum>1 && nextStepNum<9){
+                        displayQuestion('back');    //testing
+                    }
+                    
+                    if((nextStepNum>2 || {!if(cList.size>0 && cList[0].Is_Displayed_For_Customer__c, true,false)}) && nextStepNum<9){
+                        displayQuestion('save');
+                    }
+                    
+                    //call search
+                    if(currentStepNum == 1){
+                        //skip by component
+                    }
+                    
+                    if(currentStepNum == 2){
+                        console.log('****** before creating/saving record');
+                        CreateClaimRecordAtAction();    //do saveRecordBrkPolicy on complete - after create claim record at SF
+
+                        // skip step 3 if only one benefit type available
+                        if (skipOneBenefitForTestingBrokerJS && (availBenefitTypeCount == 1)){
+                            nextStepNum = 4;
+                            simulateSelectBenefitForBroker = true;
+                            isPass = true;
+                        }
+                        else{
+                            isPass = true;
+                        }
+                    }
+                    
+                    if(currentStepNum == 3){
+                        if(showUSCurrency == 1)    toggleOverlay_4();    //ask payment currency
+                        
+                        //load quesiton q4
+                        //load doc need to upload / download
+                        isPass = addBenefitTypeToClaimRecord(false);
+                        
+                    }
+                    
+                    if(currentStepNum == 4){
+
+                        /** save selected bank account info **/
+                        //20190624 - David Zhang - Align Claim Payment flow with CP
+                        if( skipSteps == 0){
+                            nextStepNum = 40;
+                        }
+
+                        saveRecordBrkBankAccInfo();
+                        rerenderBrkDocumentPanel();
+                        isPass = true;
+                        
+                    }
+
+                    //20190624 - David Zhang - Align Claim Payment flow with CP
+                    if(currentStepNum == 40){
+                        nextStepNum = 5;
+                        isPass = saveChangeBankAccount(evt);
+                        rerenderBrkDocumentPanel();                        
+                    }
+                    
+                    if(currentStepNum == 5){
+                        // 20200817 - minghua - Performance issue in claim flow Step 2
+                        performanceGetPersonBasic();
+                        
+                        /** ask if claim from other company **/
+                        isPass = true;
+                        inactiveAllTab();
+                        $('#att').addClass('tab3_fontStyle').addClass('active');
+                    }
+                    console.log('broker current step: '+currentStepNum);
+                    console.log('broker next step: '+nextStepNum);
+                    if(nextStepNum == 7){
+                        // for broker
+                        inactiveAllTab();
+                        $('#detail').addClass('tab3_fontStyle').addClass('active');
+                
+                        //for no question need to answer, skip this page
+                        if( 
+                           //HIF need to ask question only or HIF   
+                           !( showHIF >=1 && sj_HIF_a && showHI <= 0 && showHPA <= 0 && showHS <= 0 && showCI <= 0 && showDIS <= 0 && showOP <= 0 && showMAT <= 0)
+                           
+                        ){
+                           /** skip steps as no need to answer question**/
+                           console.log('skip question page as no need to answer question');
+                           currentStepNum += 1;
+                           nextStepNum += 1;
+                        }
+                        isPass = true;
+                    }
+                    
+                    if(nextStepNum >= 8 && nextStepNum != 40){
+                        inactiveAllTab();
+                        $('#esign').addClass('tab3_fontStyle').addClass('active');
+                        
+                        isPass = true;
+                        hideQuestion('save');
+                    }
+                    
+                    if (nextStepNum>=9 && nextStepNum!=40){
+                        inactiveAllTab();
+                        
+                        hideQuestion('save');
+                        hideQuestion('back');
+                        
+                        displayCallAction_AnotherClaim();
+                        isPass = true;
+                    }
+                    
+                    if (nextStepNum>=10){
+                        redirectRestart();
+                    }
+                
+                }
+                
+                console.log('to see isPass:    '+isPass);
+                console.log('***** in nextStep next step: ' + nextStepNum);
+                
+                //UI next step only
+                
+                /** step 1 select PI will not have next step here, instead do it at ClaimSelectPIForCusVFP **/
+                
+                //if( isPass && ((nextStepNum == 3)|| {!!isCustomer}) ){
+                if( isPass && nextStepNum == 3 &&  {!isCustomer}){
+                    console.log('--4--'+ new Date($.now()));
+                    if ($('.content-step[data-step="' + nextStepNum + '"]').length > 0) {
+                        $('.content-step:visible').fadeOut(function(){
+                            $('.content-step[data-step="' + nextStepNum + '"]').fadeIn(function(){
+                            });
+                        });
+                    }
+                    hideNextBtn();
+                    console.log('--5--'+ new Date($.now()));
+                    isPass = false;
+                    
+                }
+                
+                //if( isPass && ((nextStepNum != 2 && nextStepNum != 3  && currentStepNum != 4 && currentStepNum != 5  )|| {!!isCustomer}) ){    //do that at ClaimSelectPIForCusVFP - promise
+                if( isPass && nextStepNum != 2 && nextStepNum != 3  && currentStepNum != 4 && currentStepNum != 5 && currentStepNum != 6 && {!isCustomer} ){    //do that at ClaimSelectPIForCusVFP - promise
+                    if ($('.content-step[data-step="' + nextStepNum + '"]').length > 0) {
+                        $('.content-step:visible').fadeOut(function(){
+                            $('.content-step[data-step="' + nextStepNum + '"]').fadeIn(function(){
+                                
+                            });
+                        });
+                    }
+                        
+                    if({!isCustomer} && nextStepNum<10){    //10 is display acknowledgement
+                        NextStepsAtAction();
+                    }
+                    /**  hide next step btn and display only when last steps**/
+                    if({!!isCustomer} && nextStepNum<9)    hideNextBtn();
+                    if({!isCustomer} && nextStepNum<10)    hideNextBtn();
+                    isPass = false;
+                    
+                }
+                
+                // for broker
+                //20190624 - David Zhang - Align Claim Payment flow with CP
+                //if( isPass && (currentStepNum != 4 || $('#isBrkHasDDAInputHidden').val() == 'false') && {!!isCustomer} ){ 
+                if( isPass && currentStepNum != 4 && {!!isCustomer} ){ 
+                    if ($('.content-step[data-step="' + nextStepNum + '"]').length > 0) {
+                        if (isBrokerIOSSF1()) {    
+                            $('.brk-sf1-content-step:visible').hide();
+                        }
+                    
+                        $('.content-step:visible').fadeOut(function(){
+                            $('.content-step[data-step="' + nextStepNum + '"]').fadeIn(function(){
+                                if (isBrokerIOSSF1()) {
+                                    $('.brk-sf1-content-step[data-step="' + nextStepNum + '"]').show();
+                                }
+                                
+                                if (nextStepNum == 3){
+                                    if ($('#benefit_8').is(':visible')){
+                                        $('#save').hide();
+                                    }
+                                } else if (nextStepNum == 7){
+                                    if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                                        if ($('.nextStepBtnIn7').is(':visible')){
+                                           $('.nextStepBtnPaddingIn7').show();
+                                        }
+                                    }
+                                }
+                                else if (nextStepNum == 8){
+                                    refreshEsignature();
+                                }
+                            });
+                        });
+                    }   
+
+                    if(nextStepNum == 6){
+                        //NextStepsToSevenAtAction();
+                        // Zoe updated on 0412 - incorrect step saved
+                    }
+                    
+                    if({!!isCustomer} && nextStepNum == 9){    //9 is display acknowledgement
+                        console.log('********* before refresh acknowledgement');
+                        refreshAck();
+                    }
+                    /**  hide next step btn and display only when last steps**/
+                    hideNextBtn();
+                    isPass = false;
+                    
+                }
+                //scroll top
+                if({!isCustomer}){
+                    if(currentStepNum != 7){
+                        $(this).scrollTop(0);
+                    }
+                }else{
+                    $(this).scrollTop(0);
+                }
+            }
+            
+            window.previousStep = function(){
+                console.log('to see pass previousStep');
+                
+                var currentStepNum = $('.content-step:visible').data('step');
+                console.log('to see pass previousStep currentStepNum:    '+currentStepNum);
+                
+                /** customer **/
+                if({!isCustomer}){
+                    if (currentStepNum > 1){
+                        var previousStepNum = currentStepNum - 1;
+                        steps = previousStepNum ;
+                        if(previousStepNum>1){
+                            displayQuestion('save');
+                        }else{
+                            hideQuestion('save');
+                            
+                            // if ('{!PICount}' == 1){
+                            if ($('#piCountInputHidden').val() == 1){
+                                history.go(-1);
+                                return;
+                            }
+                        }
+                                                
+                        if (currentStepNum == 5){
+                            if (skipOneBenefitForTestingJS && (availBenefitTypeCount == 1)){
+                                previousStepNum = 3;
+                            }
+                        }
+                        
+                        if(currentStepNum == 7){
+                            if( skipSteps == 1){
+                                currentStepNum = 6;    // missing ; -- Zoe update
+                                previousStepNum = 5;
+                            }
+                        }
+                        
+                        
+                        if(previousStepNum < 7){
+                            inactiveAllTab();
+                            $('#info').addClass('tab3_fontStyle').addClass('active');
+                        }
+                        if(previousStepNum == 7){
+                            inactiveAllTab();
+                            $('#detail').addClass('tab3_fontStyle').addClass('active');
+                            
+                            
+                        }
+                        if(previousStepNum == 8 ){
+                            inactiveAllTab();
+                            $('#att').addClass('tab3_fontStyle').addClass('active');
+                            $("#downloadForm").show();
+                        }
+                        
+                        if(previousStepNum == 9){
+                            inactiveAllTab();
+                            $('#esign').addClass('tab3_fontStyle').addClass('active');
+                            
+                        }
+                        
+                        console.log('previous step: '+previousStepNum);
+                        if ($('.content-step[data-step="' + previousStepNum + '"]').length > 0) {
+                            $('.content-step:visible').fadeOut(function(){
+                                $('.content-step[data-step="' + previousStepNum + '"]').fadeIn(function(){
+                                    if ({!!isCustomer} || (previousStepNum != 7)){
+                                        
+                                        //Nicole_GS Claim_20200802
+                                        if(!includeGSClaim || previousStepNum!=5){
+                                            // Rancho_HKITSFDC115_20241105 - avoid missing bank info
+                                            // hide next button in select bank page directly if user select other bank
+                                            if (!includeGSClaim && previousStepNum == 5 && {!!cList[0].Cannot_Enter_Bank_Account_Information__c}) {
+                                                // do nothing
+                                            } else {
+                                                displayNextBtnIn(previousStepNum);
+                                            }
+                                        }
+                                    }
+                                    hideNextBtn(); // zoe working in progress
+                                });
+                            });
+                        }
+                          
+                        //save previous steps at salesforce
+                        if (availBenefitTypeCount == 1){
+                            PreviousStepsAtAction(true);
+                        }
+                        else {
+                            PreviousStepsAtAction(false);
+                        }
+                          
+                    }else{
+                        history.go(-1);
+                    }
+                    initDatePicker();
+                    //scroll top
+                    $(this).scrollTop(0);
+                }
+                
+                /** broker **/
+                if({!!isCustomer}){
+                    if (currentStepNum > 1){
+                        var previousStepNum = currentStepNum - 1;
+                        steps = previousStepNum ;
+                        if(previousStepNum>1){
+                            displayQuestion('save');
+                        }else{
+                            hideQuestion('save');
+                        }
+                        
+                        if (currentStepNum == 2){
+                            refreshSearch();    // Zoe working in progress
+                        }
+                        
+                        if (currentStepNum == 4){
+                            if (skipOneBenefitForTestingBrokerJS && (availBenefitTypeCount == 1)){
+                                previousStepNum = 2;
+                            }
+                        }
+
+                        //20190624 - David Zhang - Align Claim Payment flow with CP
+                        if (currentStepNum == 40){
+                            previousStepNum = 4;
+                        }
+
+                        if (currentStepNum == 5 && {!!cList[0].Cannot_Enter_Bank_Account_Information__c}){
+                            previousStepNum = 40;
+                        }
+                        
+                        if (currentStepNum == 6){
+                            hideQuestion('cx3_alert');
+                            $('#cx3_no').removeClass('fg-orange').addClass('fg-grey');
+                            $('#cx3_yes').removeClass('fg-grey').addClass('fg-orange');
+                        }
+                        
+                        if(currentStepNum == 8){
+                           //for no question need to answer, skip step 7
+                           if( 
+                               //HIF need to ask question only or HIF   
+                               !( showHIF >=1 && sj_HIF_a && showHI <= 0 && showHPA <= 0 && showHS <= 0 && showCI <= 0 && showDIS <= 0 && showOP <= 0 && showMAT <= 0)
+                               
+                           ){
+                               /** skip steps as no need to answer question**/
+                               currentStepNum = 7;
+                               previousStepNum = 6;
+                           }
+                        }
+                        
+                        
+                        if(previousStepNum < 5){
+                            inactiveAllTab();
+                            $('#info').addClass('tab3_fontStyle').addClass('active');
+                        }
+                        if(previousStepNum == 7){
+                            inactiveAllTab();
+                            $('#detail').addClass('tab3_fontStyle').addClass('active');
+                            
+                            
+                        }
+                        if(previousStepNum == 5 || previousStepNum == 6 ){
+                            inactiveAllTab();
+                            $('#att').addClass('tab3_fontStyle').addClass('active');
+                            $("#downloadForm").show();
+                        }
+                        
+                        if(previousStepNum == 8){
+                            inactiveAllTab();
+                            $('#esign').addClass('tab3_fontStyle').addClass('active');
+                            
+                            // displayCallAction_SubmitClaim();
+                        }
+                        
+                        if ($('.content-step[data-step="' + previousStepNum + '"]').length > 0) {
+                            if (isBrokerIOSSF1()) {
+                                $('.brk-sf1-content-step:visible').hide();
+                            }
+                            $('.content-step:visible').fadeOut(function(){
+                                $('.content-step[data-step="' + previousStepNum + '"]').fadeIn(function(){
+                                    displayNextBtnIn(previousStepNum);
+                                    
+                                    if (isBrokerIOSSF1()) {
+                                        $('.brk-sf1-content-step[data-step="' + previousStepNum + '"]').show();
+                                    }
+                                });
+                            });
+                        }
+                          
+                        //save previous steps at salesforce
+                        if (currentStepNum != 2){
+                            if (availBenefitTypeCount == 1){
+                                PreviousStepsAtAction(true);
+                            }
+                            else {
+                                PreviousStepsAtAction(false);
+                            }
+                        }
+                          
+                    }else{
+                        
+                        if (Cigna.Util.isSalesforce1()) {
+                            console.log('hererer');
+                            if(sessionStorage.getItem('policy-detail-back-url')) {
+                                console.log('herererininin');
+                                var backUrl = sessionStorage.getItem('policy-detail-back-url');
+                                console.log('backUrl:'+backUrl);
+                                sessionStorage.removeItem('policy-detail-back-url');
+                                Cigna.Util.navigateToVFP(backUrl);
+                            } else {
+                                Cigna.Util.navigateToVFP('MyClaimVFP');
+                            }
+                        } else {
+                            //add by jack for JR1840
+                            //history.go(-1);
+                            console.log('hererer');
+                            if(sessionStorage.getItem('policy-detail-back-url')) {
+                                console.log('herererininin');
+                                var backUrl = sessionStorage.getItem('policy-detail-back-url');
+                                console.log('backUrl:'+backUrl);
+                                sessionStorage.removeItem('policy-detail-back-url');
+                                Cigna.Util.navigateToVFP(backUrl);
+                            } else {
+                                Cigna.Util.navigateToVFP('MyClaimVFP');
+                            }
+                        }
+                        //add by jack for JR1840
+                    }
+                    initDatePicker();
+                    //scroll top
+                    $(this).scrollTop(0);
+                }
+            }
+            
+            function brkNextStepOnComplete(){
+                if ({!!isCustomer}){
+                    refreshAck();
+                }
+            }
+       </script>
+       <apex:outputPanel id="componentRefreshClaimId">
+           <script>    
+                //first step get data from component
+                function proceedToNextStep(){
+                    console.log('****** proceedToNextStep from component, cid: ' + '{!JSINHTMLENCODE(cid)}');
+                    var holderIdPassing = $("input[id*='holderIdPassNextPage']").val();
+                    var holderNamePassing = $("input[id*='holderNamePassNextPage']").val();
+                    //JR1840 jack add
+                    var encryptedSearchCriteria = $("input[id*='encryptedSearchCriteria']").val();
+                    if(encryptedSearchCriteria){
+                        encryptedSearchCriteria = '&FLTR='+ encryptedSearchCriteria;
+                        Cigna.Util.navigateToVFP('MyClaimSubmitVFP?phid='+ holderIdPassing + '&phname=' + holderNamePassing + '&pclist=true'+ '&cId=' +'{!JSINHTMLENCODE(cId)}' + encryptedSearchCriteria);
+                    }else{
+                        Cigna.Util.navigateToVFP('MyClaimSubmitVFP?phid='+ holderIdPassing + '&phname=' + holderNamePassing + '&pclist=true'+ '&cId=' +'{!JSINHTMLENCODE(cId)}' );
+                    }
+                    //JR1840 jack add
+                }
+                           
+            </script>
+        </apex:outputPanel>
+        
+        <div id="headeraction" class="bs header-action">
+            <div id="back" class="bs col-xs-6 col-sm-6" style="" >
+                <a onclick="previousStep();" class="bs cigna-fg-orange-medium pull-left onclick-pointer" style="margin-left: -10px;">
+                    <i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}
+                </a>
+            </div>
+            <div id="save" class="bs col-xs-6 col-sm-6" style="display:none; ">
+                <a onclick="saveRecord();" class="bs cigna-fg-orange-medium pull-right onclick-pointer" style="margin-right: -10px;" >
+                    {!$Label.Save} <i class="ci-hk-briefcase" aria-hidden="true" style="font-weight:bold;"></i> 
+                </a>
+            </div>
+        </div>
+        <div class="bs">
+            <!-- customer tab -->
+            <apex:outputPanel layout="inline" rendered="{!isCustomer}">
+                <div class="tab3_fontStyle cigna-progress-bar">
+                    <div class="tab3_fontStyle cigna-progress-bar-inner">
+                        <div id="info" class="tab3_fontStyle active">{!$Label.Information}</div>
+                        <div id="detail">{!$Label.Claim_Details}</div>
+                        <div id="att">{!$Label.Attachment}</div>
+                        <div id="esign">{!$Label.E_Signature}</div>
+                    </div>
+                </div>
+            </apex:outputPanel>
+            
+            <!-- broker tab -->
+            <apex:outputPanel layout="inline" rendered="{!!isCustomer}">
+                <div class="tab3_fontStyle cigna-progress-bar">
+                    <div class="tab3_fontStyle cigna-progress-bar-inner">
+                        <div id="info" class="tab3_fontStyle active">{!$Label.Information}</div>
+                        <div id="att">{!$Label.Attachment}</div>
+                        <div id="detail">{!$Label.Claim_Details}</div>
+                        <div id="esign">{!$Label.E_Signature}</div>
+                    </div>
+                </div>
+            </apex:outputPanel>
+        </div>    
+        
+        <!-- pop up -->
+        <!--
+        <div class="bs container">
+        -->
+        <div class="bs">
+            <!-- question -->
+            <div id="overlay_4" class="overlay" style="display:none;">
+                <div id="specialBox_4" class="specialBox">
+                    <div class="tccontent">
+                        <apex:outputPanel rendered="{!isCustomer}">
+                            {!$Label.Would_you_prefer_us_to_pay_your_USD_policy_ies_in_HKD_or_USD}
+                        </apex:outputPanel>
+                        
+                        <apex:outputPanel rendered="{!!isCustomer}">
+                            {!$Label.Which_currency_would_the_customer_like_to_receive_he_claim_payment_in}
+                        </apex:outputPanel>
+                        
+                    </div>
+                    
+                    <apex:form >
+                        <div style="width: 100%; height: 10%; bottom:0">
+                            <div style="width: 50%; float:left;" onclick="saveRecordBrkPaymentCurrency(this); toggleOverlay_4()">
+                                <a href="javascript:void(0);" class="onclick-pointer" >{!$Label.HKD}</a>
+                                <input type="hidden" name="param-str" value="HKD" />
+                            </div>
+                            <div style="width: 50%; float:left;" onclick="saveRecordBrkPaymentCurrency(this); toggleOverlay_4()">
+                                <a href="javascript:void(0);" class="onclick-pointer" >{!$Label.USD}</a>
+                                <input type="hidden" name="param-str" value="USD" />
+                            </div>
+                            <apex:inputHidden value="{!cList[0].Payment_Currency__c}" id="hiddenValue_overlay_4"/>
+                            <apex:actionFunction name="SaveRecordBrkPaymentCurrencyAtAction" status="loader-icon" action="{!SaveRecord}" reRender="hiddenValue_overlay_4" />
+                            <script>
+                                /** working **/
+                                function saveRecordBrkPaymentCurrency(item){
+                                    var params = $(item).children('input[type="hidden"][name="param-str"]').val();
+                                    $(item).siblings('input[type="hidden"]').val(params);
+                                    SaveRecordBrkPaymentCurrencyAtAction();
+                                }
+                            </script>
+                        </div>
+                    </apex:form>
+                    
+                </div>
+            </div>
+            <div id="overlay_CannotProvideDoc" class="overlay" style="display:none;">
+                <div id="specialBox_CannotProvideDoc" class="specialBox_sm">
+                    <div class="tccontent">
+                        {!$Label.We_will_save_the_claim_application_for_you_now_You_can_come_back_and_go_to_the}    
+                    </div>
+                    <div style="width: 100%; height: 10%; bottom:0">
+                        <a href="javascript:void(0);" class="onclick-pointer" ><div id="closeOverlay_ok" onclick="toggleOverlay_CannotProvideDoc();">{!$Label.OK}</div></a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- dummy panel for reRender -->
+            <apex:outputPanel id="dummyPanel">
+            </apex:outputPanel>
+            <apex:outputPanel id="jSPanel">
+                <script>
+                    console.log('refreshed!!!');
+                    finishSubmission();
+                    /** btn js **/
+                    refreshBtnJS();
+                    console.log('--6--'+ new Date($.now()));
+                    var All_Non_IPMI_policy__c = {!if(cList.size>0 && cList[0].All_Non_IPMI_policy__c, true, false)};
+                    var PI_without_any_Sen_Code_N6__c = {!if(cList.size>0 && cList[0].PI_without_any_Sen_Code_N6__c, true, false)};
+                    var cList_HIF__c = {!if(cList.size>0 && cList[0].HIF__c, true, false)};
+                    console.log('to see All_Non_IPMI_policy__c:    '+All_Non_IPMI_policy__c );
+                    console.log('to see PI_without_any_Sen_Code_N6__c :    '+PI_without_any_Sen_Code_N6__c );
+                    if(All_Non_IPMI_policy__c && PI_without_any_Sen_Code_N6__c){
+                        sj_HIF_a = true;
+                    }else{
+                        sj_HIF_a = false;
+                    }
+                    
+                    console.log('to see sj_HIF_a:    '+sj_HIF_a );
+                    
+                    {!if(cList[0].sj_OP_a__c, 'sj_OP_a = true;','sj_OP_a = false;')}
+                    // 20210803 - minghua - CR48
+                    // select only one group policy
+                    if(sj_OP_a){
+                        // group policy not equal to economist
+                        {!if(isEconomistPolicy,'notEqualEconomistPolicy=false;','notEqualEconomistPolicy=true;')}
+                        console.log('notEqualEconomistPolicy=',notEqualEconomistPolicy);
+                        // only selected claim type OP
+                        {!if(onlySelectedOP, 'onlySelectedOPClaimType = true;','onlySelectedOPClaimType = false;')}
+                        console.log('onlySelectedOPClaimType=',onlySelectedOPClaimType);
+                    }
+
+                    // Rancho_CR48_20210706
+                    var tempStr = '{!cList[0].What_would_you_like_to_claim_for__c}';
+                    tempStr = tempStr.trim();
+                    tempStr = tempStr.replaceAll(',','');
+                    if(tempStr=='A'){onlySelectedGP = true;}
+                    else{onlySelectedGP = false;}
+
+                    {!if(sj_OP_d, 'sj_OP_d = true;','sj_OP_d = false;')}
+                    //display bank account logic - group / bank account avaliable or enter bank account info
+                    
+                    {!if(cList.size>0 && cList[0].Is_Contain_Group_Policy__c && !cList[0].Is_Contain_Individual_Policy__c && !includeGSClaim, 'showGroupPolicyOnlyBankAccount();','')}
+                    {!if(cList.size>0 && (cList[0].Is_Contain_Individual_Policy__c && !cList[0].Is_Contain_Group_Policy__c) || includeGSClaim, 'showNotGroupPolicyOnlyBankAccount();','')}
+                    //{!if(cList.size>0 && cList[0].Is_Contain_Individual_Policy__c, 'showNotGroupPolicyOnlyBankAccount();','')}
+                    
+                    //currency logic
+                    showUSCurrency = {!if(cList.size>0 && cList[0].Is_Contain_US_Policy__c, '1', '0')};
+                    console.log('to see showUSCurrency:    '+showUSCurrency );
+                    
+                    //pass to backend
+                    if((IFHSPolicyLessThan3YrsOrBrokerPACPlanCode == 1 || isBrokerPAC) && ( IFHSPolicyLessThan3YrsOrBrokerPACPlanCode != IFHSPolicyLessThan3YrsOrBrokerPACPlanCode_old || isBrokerPAC != isBrokerPAC_old )){
+                        IFHSPolicyLessThan3YrsOrBrokerPACPlanCode_old = IFHSPolicyLessThan3YrsOrBrokerPACPlanCode;
+                        isBrokerPAC_old = isBrokerPAC;
+                        SelectHSBrokerPACAtAction();
+                    }else if(IfHPAPolicyLessThan2Yrs == 1 && IfHPAPolicyLessThan2Yrs!= IfHPAPolicyLessThan2Yrs_old){
+                        IfHPAPolicyLessThan2Yrs_old = IfHPAPolicyLessThan2Yrs;
+                        SelectHPABrokerPACAtAction();
+                    }else if((IFHSPolicyLessThan3YrsOrBrokerPACPlanCode == 0 || !isBrokerPAC) && ( IFHSPolicyLessThan3YrsOrBrokerPACPlanCode != IFHSPolicyLessThan3YrsOrBrokerPACPlanCode_old || isBrokerPAC != isBrokerPAC_old )){
+                        IFHSPolicyLessThan3YrsOrBrokerPACPlanCode_old = IFHSPolicyLessThan3YrsOrBrokerPACPlanCode;
+                        isBrokerPAC_old = isBrokerPAC;
+                        ResetHSBrokerPACAtAction();
+                    }else if(IfHPAPolicyLessThan2Yrs == 0 && IfHPAPolicyLessThan2Yrs!= IfHPAPolicyLessThan2Yrs_old){
+                        IfHPAPolicyLessThan2Yrs_old = IfHPAPolicyLessThan2Yrs;
+                        ResetHPABrokerPACAtAction();
+                    }
+                    
+                    // skip step 3 if only one benefit type available
+                    if ({!!isCustomer} && $('.content-step:visible').data('step') == 4)
+                    if (skipOneBenefitForTestingBrokerJS && (availBenefitTypeCount == 1) && simulateSelectBenefitForBroker){
+                        // select the only benefit type
+                        //CR-56_Link_20220214
+                        if( showHIF >= 0 || showHI >= 0 || showHPA >= 0 ){
+                            if (!$("#benefit_1").hasClass('fg-orange')){
+                                $("#benefit_1").trigger("click");
+                            }
+                        }
+                        if( showHS >= 0 ){
+                            if (!$("#benefit_2").hasClass('fg-orange')){
+                                $("#benefit_2").trigger("click");
+                            }
+                        }
+                        if( showOP >= 0 ){
+                            if (!$("#benefit_3").hasClass('fg-orange')){
+                                $("#benefit_3").trigger("click");
+                            }
+                        }
+                        if( showMAT >= 0 ){
+                            if (!$("#benefit_4").hasClass('fg-orange')){
+                                $("#benefit_4").trigger("click");
+                            }
+                        }
+                        if( showDIS >= 0 && (isTTD>0 || isDIS>0) ){
+                            if (!$("#benefit_5").hasClass('fg-orange')){
+                                $("#benefit_5").trigger("click");   
+                            }
+                        }
+                        if( showCI >= 0 ){
+                            if (!$("#benefit_6").hasClass('fg-orange')){
+                                $("#benefit_6").trigger("click");
+                            }
+                        }
+                        if( showDIS >= 0  && isWP>0){
+                            if (!$("#benefit_7").hasClass('fg-orange')){
+                                $("#benefit_7").trigger("click");
+                            }
+                        }
+                        //Added by minglei 2018.05.15 [add Wellness type to claim] start
+                        //if( showWL >= 0  && isWL>0){
+                        if( showWL >= 0){
+                            if (!$("#benefit_9").hasClass('fg-orange')){
+                                $("#benefit_9").trigger("click");
+                            }
+                        }
+                        //Added by minglei 2018.05.15 [add Wellness type to claim] end  
+                        if(showUSCurrency == 1)    toggleOverlay_4();    //ask payment currency
+                        //load doc need to upload / download
+                        addBenefitTypeToClaimRecord(true);
+                        simulateSelectBenefitForBroker = false;
+                    }
+                    console.log('--7--'+ new Date($.now()));
+                    /**
+                    if (isBrokerIOSSF1()) {
+                        $('html').css('position', 'fixed').css('overflow', 'hidden').css('width', '100%').css('height', '100%');
+                        $('body').css('position', 'fixed').css('overflow', 'hidden').css('width', '100%').css('height', '100%');
+                    }
+                    */
+                    
+                    //Nicole_GS Claim_20200921
+                    {!IF(includeGSClaim && employeeMember!=null && employeeMember.SSN!=userSsn,'$("#otherBankAcc").hide();','')}
+                </script>
+                
+            </apex:outputPanel>
+            
+            <apex:outputPanel id="customerPanel" rendered="{!isCustomer}">
+                <div id="cusSteps1" class="bs row content-step" data-step="1" style="display:none; padding-bottom:100px !important;">
+                    <apex:include pageName="ClaimSelectPIForCusVFP"/>
+                </div>
+                <div id="cusSteps2" class="bs row content-step" data-step="2" style="display: none;">
+                    <apex:include pageName="ClaimSelectPolicyForCusVFP" />
+                </div>
+                <div id="cusSteps3" class="bs row content-step" data-step="3" style="display: none;">
+                    <apex:include pageName="ClaimSubmitMoreThanOneVFP"/>
+                </div>
+                <div id="cusSteps4" class="bs row content-step" data-step="4" style="display: none;">
+                    <apex:include pageName="ClaimSelectBenefitTypeVFP"/>
+                </div>
+                <div id="cusSteps5" class="bs row content-step" data-step="5" style="display: none;">
+                    <apex:outputPanel id="bankAccCusPanel">
+                        <apex:include pageName="ClaimSelectBankAccountVFP"/>
+                    </apex:outputPanel>
+                </div>
+                <div id="cusSteps6" class="bs row content-step" data-step="6" style="display: none;">
+                    <apex:outputPanel id="changeBankAccPanel">
+                        <apex:include pageName="ClaimChangeBankAccountVFP"/>
+                    </apex:outputPanel>
+                </div>
+                <div id="cusSteps7" class="bs row content-step" data-step="7" style="display: none;">
+                    <apex:outputPanel id="answerAndQuestionPanel">
+                        <apex:include pageName="ClaimAnswerClaimQuestionCusVFP"/>
+                    </apex:outputPanel>
+                </div>
+                <div id="cusSteps8" class="bs row content-step" data-step="8" style="display: none;">
+                    <apex:outputPanel id="attSection_cus">
+                        <apex:include pageName="ClaimAskCanProvideDocVFP"/>
+                    </apex:outputPanel>
+                </div>
+                <div id="cusSteps9" class="bs row content-step" data-step="9" style="display: none;">
+                    <apex:include pageName="ClaimSignatureCusVFP"/>
+                </div>
+                <div id="cusSteps10" class="bs row content-step" data-step="10" style="display: none;">
+                    <apex:include pageName="ClaimDisplayAcknowledgementVFP"/>
+                </div>
+            </apex:outputPanel>
+            <!-- end customer part -->
+            
+            <!-- broker part -->
+            <apex:outputPanel id="brokerPanel" rendered="{!!isCustomer}">
+                <div id="brkSteps1" class="bs row content-step" data-step="1" style="display:none;">
+                    <apex:outputPanel id="brkSearchComp" layout="none" >
+                        <apex:outputPanel rendered="{!isLoadSearchComp}">
+                            <div class="bs row listcontent-header">
+                                <apex:outputText value="{!$Label.Claim_Instruction}" escape="false"></apex:outputText>
+                            </div>
+                            <div class="bs row listcontent-header">
+                                {!$Label.Which_customer_would_you_like_to_lodge_a_claim_for}
+                            </div>
+                            
+                            <c:CommonSearchComp pageTypeName="BrkMyClaimVFP"  /> 
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                </div>
+                <div id="brkSteps2" class="bs row content-step" data-step="2" style="display: none;">
+                    <apex:include pageName="ClaimSelectPolicyForBrkVFP"/>
+                </div>
+                <div id="brkSteps3" class="bs row content-step" data-step="3" style="display: none;">
+                    <apex:include pageName="ClaimSelectBenefitTypeVFP"/>
+                </div>
+                <div id="brkSteps4" class="bs row content-step" data-step="4" style="display: none;">
+                    <apex:outputPanel id="bankAccBrkPanel">
+                        <apex:include pageName="ClaimSelectBankAccountVFP"/>
+                    </apex:outputPanel>
+                </div>
+                <div id="brkSteps40" class="bs row content-step" data-step="40" style="display: none; ">
+                    <apex:include pageName="ClaimChangeBankAccountVFP"/> 
+                </div>
+                <div id="brkSteps5" class="bs row content-step" data-step="5" style="display: none;">
+                    <apex:outputPanel id="extraQuestion_brk">
+                        <apex:include pageName="ClaimAskIfClaimFromOtherCompanyVFP"/> 
+                    </apex:outputPanel>
+                </div>
+                <div id="brkSteps6" class="bs row content-step" data-step="6" style="display: none;">
+                    <apex:outputPanel id="attSection_brk">
+                        <apex:include pageName="ClaimAskCanProvideDocVFP"/> 
+                    </apex:outputPanel>
+                </div>
+                <div id="brkSteps7" class="bs row content-step" data-step="7" style="display: none;">
+                    <apex:include pageName="ClaimAnswerClaimQuestionBrkVFP"/>
+                </div>
+                <div id="brkSteps8" class="bs row content-step" data-step="8" style="display: none;">
+                    <apex:include pageName="ClaimSignatureBrkVFP"/>
+                </div>
+                <div id="brkSteps9" class="bs row content-step" data-step="9" style="display: none; padding-bottom:100px !important;">
+                    <apex:include pageName="ClaimDisplayAcknowledgementVFP"/>
+                </div>
+            </apex:outputPanel>
+            <!-- end broker part -->
+        </div>
+        
+        </apex:outputPanel>
+        
+    </apex:define>
+</apex:page>

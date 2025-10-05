@@ -1,0 +1,468 @@
+<apex:page showHeader="false" applyHtmlTag="false" renderAs="PDF" cache="true" controller="GOPPDFExportCTRL" >
+    <head>
+        <style >
+            @page {
+                padding-top: 90px;
+                margin-bottom: 90px;
+                
+                @top-center {
+                    content: element(header);
+                }
+                
+                @bottom-left {
+                    content: element(footer);
+                }
+            }
+            div.header {
+                font-size: 8pt;
+                display: block;
+                padding-top: 30px;
+                text-align: left;
+                position: running(header);
+                font-family: Arial Unicode MS;
+                //color:  #d3d3d3;
+                
+            }
+            div.footer {
+                
+                text-align: center;
+                padding: 0px;
+                font-size: 8pt;
+                font-family: Arial Unicode MS;
+                position: running(footer);
+            }
+            div.content{
+                font-family: Arial Unicode MS;
+                font-size: 8pt;
+                fill-opacity:.5; 
+                stroke:black; 
+                stroke-width:2;
+                /** does not work **/
+                word-wrap: break-word;
+                word-break: break-all;
+                /** does not work end **/
+            }
+            .pagenumber:before {
+                content: counter(page);
+            }
+            .pagecount:before {
+                content: counter(pages);
+            }
+            tr {
+                height:30px;
+            }
+            
+            .rTable { 
+                display: table; 
+                width: 100%;
+                float: left;
+                
+            }
+            .rTableRow { 
+                display: table-row;
+                border: 1px solid black;
+                border-top: 0px;
+            }
+            .rTableRow_title { 
+                display: table-row; 
+                background-color: rgb(24, 140, 204);
+                color:white;
+            }
+            
+            .rTableCell_header { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border: 1px solid black;
+                padding:10px;
+            }
+            
+            .rTableCell_title { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border-right: 1px solid black;
+                padding:10px;
+                width: 30%;
+                font-weight: bold;
+                vertical-align: top;
+                border-width: 0px 1px 1px 1px;
+                border-style: solid;
+                border-color: black;
+            }
+            
+            .rTableCell { 
+                display: table-cell; 
+                border-collapse: collapse;
+                padding:10px;
+                border-style: solid;
+                border-width: 0px 1px 1px 0px;
+                width: 70%;
+                vertical-align: middle;
+            }
+            #T_C_authorization{
+                {! IF( claim.Has_Credit_Card__c , '' , 'display: none;' ) }
+            }
+        </style>
+    </head>
+    <div class="header">
+        <div style="width:720px;">
+            <div style="width: 100%; float:left;">
+                <div style="width: 60%; float:left;">
+                    <apex:outputText value="Private & Confidential 私人及機密"></apex:outputText> 
+                </div>
+                <div style="width: 40%; float:left;">
+                    <div style="width: 40%; float:left;">
+                        <apex:image url="{!$Resource.Icon_For_Form}" width="60px" /> 
+                    </div>
+                    <div style="width: 60%; float:left;">
+                        <apex:outputText escape="false" value="{!$Label.Cigna_Address_en_2_line}"/><br/><br/>
+                        <!-- Jack - 20221013 - JOBR-184 - JOBR-198 GOP application form Company Name change -->
+                        {!IF(claim.Is_Contain_Life_Policy__c&&!claim.Is_Contain_GI_Policy__c,'Tel: 2560 1990','Tel: 2560 1990 Fax: 2560 3605')}<br/>
+                        www.cigna.com.hk
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <div style="width:720px;">
+            <div style="float:right;"  >
+                <apex:outputText ><span class="pagenumber"/> / <span class="pagecount"/></apex:outputText>
+            </div>
+        </div>
+    </div>
+    <div class="content">
+        <div style="width:720px;">
+            
+            <!-- page content -->
+            <div style="width:98%">
+                <div style="width:100%; float: left;">
+                    <div style="float:right; ">
+                        Ref. 參考:<apex:outputText value="&nbsp; &nbsp; &nbsp; &nbsp; " style="text-decoration: underline;" escape="false" />(for office use內部專用)  
+                    </div>
+                </div>
+                <div style="width:100%; float: left; font-size: 16px;">
+                    Guarantee of Payment for Hospitalization Application
+                </div>
+                <div style="width:100%; float: left; font-size: 16px;">
+                        住院付款保證申請 
+                </div>
+                <div style="width:100%; float: left; padding-top: 10px; padding-bottom: 10px;">
+                    <div style="width:10%; float: left; ">
+                        <apex:outputText value="Source  " />
+                        <apex:outputText value="來源：  " />
+                    </div>
+                    <div style="width:20%; float: left; ">
+                        <apex:image url="{!$Resource.CheckBox_Checked}" width="12" height="12" style="margin:0px 5px;"/>
+                        <apex:outputText style="width: 100px;" value="Customer Portal      " />
+                        <apex:outputText style="width: 100px;" value="客戶      " />
+                    </div>
+                    <div style="width:20%; float: left; ">
+                        <apex:image url="{!$Resource.CheckBox_NoChecked}" width="12" height="12" style="margin:0px 5px;"/>
+                        <apex:outputText style="width: 100px;" value="Broker Portal      " />
+                        <apex:outputText style="width: 100px;" value="經紀      " />
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            Personal Details - Policy Holder/Person Insured<br/>
+                            個人資料 – 保單持有人/受保人
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Submission Date<br/>
+                            申請日期<br/>
+                            (YYYY/MM/DD)
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                <apex:param value="{!IF(ISNULL(claim.Submission_Date__c), TODAY(), claim.Submission_Date__c)}" />
+                            </apex:outputText>
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Name of Policy Holder<br/>
+                            保單持有人姓名
+                        </div>
+                        <div class="rTableCell">
+                            {!claim.Policy_Holder_Name__c}
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Name of Person Insured<br/>
+                            受保人姓名
+                        </div>
+                        <div class="rTableCell">
+                            <!-- {!customerInfo.fullName} -->
+                            {!claim.Person_Insured_Name__c}
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Person Insured ID<br/>
+                            受保人身份證
+                        </div>
+                        <div class="rTableCell">
+                            {!claim.Person_s_Insured__c}
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Date of Birth<br/>
+                            出生日期<br/>
+                            (YYYY/MM/DD)
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                <!-- <apex:param value="{!DATEVALUE(customerInfo.birthDate)}" /> -->
+                                <apex:param value="{!DATEVALUE(claim.Person_Insured_Date_Of_Birth_Text__c)}" />
+                            </apex:outputText>
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Gender<br/>
+                            性別
+                        </div>
+                        <div class="rTableCell">
+                            <!-- {!customerInfo.gender} -->
+                            {!claim.Person_Insured_Gender__c}
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Policy No.<br/>
+                            保單編號
+                        </div>
+                        <div class="rTableCell">
+                            {!claim.Policy__c}
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Policy Holder Contact No.<br/>
+                            保單持有人聯絡電話
+                        </div>
+                        <div class="rTableCell">
+                            {!claim.Contact_No_Country_Code__c + ' ' + claim.Contact_No__c}
+                        </div>
+                    </div>
+                </div>
+                <div style="page-break-after:always;"/>
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            Claim Information<br/>
+                            索償資料
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Admission Note<br/>
+                            入院證明
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{!IF(claim.Upload_Admission_Note__c,'Yes<br/>有','No<br/>否')}"  escape="false" />
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Name of Attending Doctor<br/>
+                            主診醫生姓名
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{!claim.Attending_Dr_Name__c}"  escape="false" />
+                            <!--{!claim.Attending_Dr_Name__c} -->
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Contact number of the Hospital/ Clinic<br/>
+                            醫院/ 診所聯絡電話
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{!claim.Dr_or_Clinic_Phone_Number_Country_Code__c +' '+ claim.Dr_or_Clinic_Phone_Number__c}"  escape="false" />
+                            <!-- {!claim.Dr_or_Clinic_Phone_Number_Country_Code__c +' '+ claim.Dr_or_Clinic_Phone_Number__c} -->
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Name of Hospital<br/>
+                            醫院名稱
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{!claim.Hospital_Name__c}"  escape="false" />
+                            <!--{!claim.Hospital_Name__c}-->
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Anticipated Admission Date<br/>
+                            預計入院日期<br/>
+                            (YYYY/MM/DD)
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{0, date, yyyy/MM/dd}" escape="false">
+                                <apex:param value="{!claim.Admission_Date__c}" />
+                            </apex:outputText>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="rTable" style="margin-top:-1px;">
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            Payment Information<br/>
+                            付款資料
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Credit Card<br/>
+                            信用卡
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{!IF(claim.Has_Credit_Card__c,'Yes<br/>有','No<br/>否')}" escape="false"/>
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Cardholder’s name<br/>
+                            信用卡持有人姓名
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{!IF(claim.Has_Credit_Card__c,claim.Card_Holder_Name__c,'N/A<br/>不適用')}" escape="false"/>
+                            <!--{!claim.Card_Holder_Name__c}-->
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Credit Card Account No.<br/>
+                            信用卡號碼
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{!IF(claim.Has_Credit_Card__c,claim.Credit_Card_No__c,'N/A<br/>不適用')}" escape="false"/>
+                            <!--{!claim.Credit_Card_No__c} -->
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Credit Card Expiry Date<br/>
+                            信用卡有效期<br/>
+                            (MM/YYYY)
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{0}'/'{!TEXT(claim.Expiry_Date_of_Credit_Card_Year__c)}" rendered="{!claim.Has_Credit_Card__c}" escape="false">
+                                <apex:param value="{!IF(claim.Expiry_Date_of_Credit_Card_Month__c > 9,TEXT(claim.Expiry_Date_of_Credit_Card_Month__c),("0" + TEXT(claim.Expiry_Date_of_Credit_Card_Month__c)))}"/>
+                            </apex:outputText>
+                            <apex:outputText value="N/A<br/>不適用" rendered = "{!!claim.Has_Credit_Card__c}" escape="false"/>
+                            <!--{!IF(claim.Has_Credit_Card__c,TEXT(claim.Expiry_Date_of_Credit_Card_Month__c) +'/'+ TEXT(claim.Expiry_Date_of_Credit_Card_Year__c),'')} -->
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            HKID Card No. of Card Holder<br/>
+                            信用卡持有人香港身分證號碼
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{!IF(claim.Has_Credit_Card__c,claim.Card_Holder_HKID__c,'N/A<br/>不適用')}" escape="false"/>
+                            <!--{!claim.Card_Holder_HKID__c}-->
+                        </div>
+                    </div>
+                    <div style="page-break-after:always;"/>
+                </div>
+                
+                
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            <apex:outputText value="Declaration & Authorization" ></apex:outputText><br/>
+                            聲明及授權
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <!-- tnc -->
+                        <div class="rTableCell_title" style="width:100%;" >
+                            <!--Updated by Nicole for Encryption CR start-->
+                            <!--<apex:outputPanel rendered="{! OR(claim.Person_s_Insured__c == claim.Policy_Holder_ID__c,NOT(claim.Is_PI_Greater_Then_18__c) )}">
+                                <apex:include pageName="DisclaimerforGOPPHEqualPIFormsVFP"/>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{! AND(claim.Person_s_Insured__c != claim.Policy_Holder_ID__c,claim.Is_PI_Greater_Then_18__c )}">
+                                <apex:include pageName="DisclaimerforGOPPHNotEqualPIFormsVFP"/>
+                            </apex:outputPanel>-->
+                            <!-- Jack - 20221013 - JOBR-184 - JOBR-198 GOP application form Company Name change -->
+                            <apex:outputPanel rendered="{!claim.Is_Contain_Life_Policy__c&&!claim.Is_Contain_GI_Policy__c}">
+                                <apex:outputPanel rendered="{! OR(claim.Person_s_Insured__c == claim.Policy_Holder_ID__c,NOT(isPIGreaterThan18) )}">
+                                    <apex:include pageName="DisclaimerforGOPPHEqualPILifeFormsVFP"/>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{! AND(claim.Person_s_Insured__c != claim.Policy_Holder_ID__c,isPIGreaterThan18)}">
+                                    <apex:include pageName="DisclaimerforGOPPHNotEqualPILifeFormsVFP"/>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!!claim.Is_Contain_Life_Policy__c&&claim.Is_Contain_GI_Policy__c}">
+                                <apex:outputPanel rendered="{! OR(claim.Person_s_Insured__c == claim.Policy_Holder_ID__c,NOT(isPIGreaterThan18) )}">
+                                    <apex:include pageName="DisclaimerforGOPPHEqualPIGIFormsVFP"/>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{! AND(claim.Person_s_Insured__c != claim.Policy_Holder_ID__c,isPIGreaterThan18)}">
+                                    <apex:include pageName="DisclaimerforGOPPHNotEqualPIGIFormsVFP"/>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!claim.Is_Contain_GI_Policy__c&&claim.Is_Contain_Life_Policy__c}">
+                                <apex:outputPanel rendered="{! OR(claim.Person_s_Insured__c == claim.Policy_Holder_ID__c,NOT(isPIGreaterThan18) )}">
+                                    <apex:include pageName="DisclaimerforGOPPHEqualPIFormsVFP"/>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{! AND(claim.Person_s_Insured__c != claim.Policy_Holder_ID__c,isPIGreaterThan18)}">
+                                    <apex:include pageName="DisclaimerforGOPPHNotEqualPIFormsVFP"/>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                            <!-- <apex:outputPanel rendered="{! OR(claim.Person_s_Insured__c == claim.Policy_Holder_ID__c,NOT(isPIGreaterThan18) )}">
+                                <apex:include pageName="DisclaimerforGOPPHEqualPIFormsVFP"/>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{! AND(claim.Person_s_Insured__c != claim.Policy_Holder_ID__c,isPIGreaterThan18)}">
+                                <apex:include pageName="DisclaimerforGOPPHNotEqualPIFormsVFP"/>
+                            </apex:outputPanel> -->
+                            <!--Updated by Nicole for Encryption CR end-->
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable">
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title" >
+                            <div>
+                            Signature<br/>
+                            簽署
+                            </div>
+                        </div>
+                        <div class="rTableCell">
+                            <apex:repeat value="{!claim.Attachments}" var="attachment">
+                                <apex:image url="/servlet/servlet.FileDownload?file={!attachment.id}" width="200px"/>
+                            </apex:repeat>
+                            <br/>
+                            Name of Policy Holder 保單持有人姓名：{!claim.Policy_Holder_Name__c} <br/>
+                            Date Signed 簽署日期(YYYY/MM/DD)：
+                            <apex:outputText value="{0, date, yyyy/MM/dd}">
+                                <apex:param value="{!IF(ISNULL(claim.Submission_Date__c), TODAY(), claim.Submission_Date__c)}" />
+                            </apex:outputText> <br/>
+                            HKID/ Passport No. of Person Insured 受保人身份證/護照號碼:  {!hkId}
+                        </div>
+                    </div>
+                    
+                    
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+</apex:page>

@@ -1,0 +1,176 @@
+<apex:page controller="IgnoreBatchNumberVFController" sidebar="false" showHeader="false">
+    <style>
+        .tm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f4f6f9;
+            padding: 18px 24px 12px 24px;
+            border-radius: 8px 8px 0 0;
+            box-shadow: 0 2px 8px #e0e5ee;
+        }
+        .tm-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #2e2e2e;
+        }
+        .tm-label {
+                font-size: 28px;
+            font-weight: bold;
+            color: #0070d2;
+            background: #eaf6ff;
+            padding: 4px 16px;
+            border-radius: 16px;
+        }
+        .tm-section {
+            background: #fff;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 8px #e0e5ee;
+            margin-bottom: 24px;
+            padding: 24px;
+        }
+        .tm-heading {
+            font-size: 18px;
+            font-weight: bold;
+            color: #0070d2;
+            margin-bottom: 10px;
+        }
+        .tm-instructions {
+            font-size: 15px;
+            color: #444;
+            margin-bottom: 18px;
+        }
+        .tm-input-label {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .tm-textarea {
+            width: 100%;
+            font-size: 15px;
+            border-radius: 6px;
+            border: 1px solid #d8dde6;
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+        .tm-example {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 16px;
+        }
+        .tm-btn-large {
+            background: #0070d2;
+            color: #fff;
+            font-size: 20px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            padding: 16px 48px;
+            cursor: pointer;
+            margin-bottom: 16px;
+            transition: background 0.2s;
+        }
+        .tm-btn-large:hover {
+            background: #005fb2;
+        }
+        .tm-result-label {
+            font-size: 15px;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+        .tm-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+            padding: 2px 10px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 12px;
+            background: #eaf6ff;
+            color: #0070d2;
+            margin-left: 6px;
+        }
+        .tm-success {
+            color: green;
+            font-weight: bold;
+        }
+        .tm-error {
+            color: red;
+            font-weight: bold;
+        }
+        .tm-icon {
+            font-size: 18px;
+            margin-right: 6px;
+        }
+        @media (max-width: 600px) {
+            .tm-section, .tm-header {
+                padding: 8px;
+            }
+            .tm-title, .tm-label {
+                font-size: 16px;
+            }
+        }
+    </style>
+    <apex:form >
+        <div class="tm-header">
+                <div style="display: flex; flex-direction: column;">
+                    <span class="tm-title">SFDC - Expired Campaign Move Out</span>
+                    <span style="font-size:16px; color:#555; margin-top:4px;">Revolutionize the Way You Get IT Help — Self-Service Made Simple.</span>
+                </div>
+                <span class="tm-label">TM</span>
+        </div>
+        <div class="tm-section">
+            <div class="tm-heading">Instructions</div>
+            <apex:pageMessages />
+            <div class="tm-instructions">
+                <span class="tm-icon">📝</span>Enter email address and batch numbers (one per line) below.<br/>
+                <span class="tm-icon">➡️</span>Click <b>Submit</b>.<br/>
+                <span class="tm-icon">✅</span>Only new batch numbers will be added. You’ll see a summary after submitting.<br/>
+                <span class="tm-icon">🔄</span>All opportunity owners under the batch numbers will be updated to Amelia. You will receive an email once the update is complete.
+            </div>
+            <div class="tm-heading">Input</div>
+            <div style="display: flex; gap: 0; align-items: flex-start; border: 1px solid #e0e5ee; border-radius: 8px; background: #f8fafc; margin-bottom: 24px;">
+                <div style="flex: 0 0 350px; max-width: 350px; padding: 24px 24px 24px 24px;">
+                    <label class="tm-input-label" for="toAddress">To Address (Email):</label>
+                    <div style="font-size:13px; color:#888; margin-bottom:8px;">
+                        Enter multiple email addresses separated by commas.<br/>
+                        <b>Example:</b> ringo@cigna.com, linus@cigna.com
+                    </div>
+                    <apex:inputText value="{!toAddress}" id="toAddress" html-placeholder="Enter your email" styleClass="tm-textarea" style="width: 100%; min-width: 200px; max-width: 350px; margin-bottom:8px;"/>
+                    <label class="tm-input-label" for="ccAddress">CC Address (Email):</label>
+                    <apex:inputText value="{!ccAddress}" id="ccAddress" styleClass="tm-textarea" style="width: 100%; min-width: 200px; max-width: 350px; background:#f4f6f9; color:#888;" disabled="true"/>
+                </div>
+                <div style="width:1px; background:#e0e5ee; height:100%; margin:0 0 0 0;"></div>
+                <div style="flex: 1; max-width: 500px; padding: 24px 24px 24px 24px;">
+                    <label class="tm-input-label" for="batchInput">Enter batch numbers (one per line): <span title="Each batch number should be on a separate line.">ℹ️</span></label>
+                    <div style="font-size:13px; color:#888; margin-bottom:8px;">Paste or type batch numbers, one per line.</div>
+                        <div style="display: flex; align-items: flex-start; gap: 16px;">
+                            <apex:inputTextarea value="{!batchInput}" html-placeholder="Enter your batch numbers here..." id="batchInput" rows="12" styleClass="tm-textarea" style="width: 100%; min-width: 200px; max-width: 350px;"/>
+                            <div class="tm-example" style="margin-top: 0; min-width: 120px;">
+                                <b>Example:</b><br/>250270<br/>250271<br/>250272
+                            </div>
+                        </div>
+                </div>
+            </div>
+            <div style="text-align: center; margin-bottom: 24px;">
+                <apex:commandButton value="Submit" action="{!submit}" styleClass="tm-btn-large" />
+                <apex:commandButton value="Reset" action="{!resetInput}" styleClass="tm-btn-large" style="margin-left:18px;" />
+            </div>
+            <div class="tm-heading">Results</div>
+            <div class="tm-result-label" rendered="{!requested > 0}">
+                <div>Total entered:<span class="tm-badge">{!requested}</span></div>
+                <div>Already have completed policy (not added):<span class="tm-badge">{!skippedCompleted}</span></div>
+                <div>Already in ignore list (not added):<span class="tm-badge">{!skippedExisting}</span></div>
+                <div class="tm-success">Successfully added to ignore list:<span class="tm-badge">{!inserted}</span></div>
+                <div class="tm-success">Total Opportunities under the Batch No:<span class="tm-badge">{!oppsToUpdate}</span></div>
+                <div style="margin-top:12px; color:#444; font-size:15px;">
+                    <span class="tm-icon">⏳</span>
+                    The system has started updating <b><span class="tm-badge">{!oppsToUpdate}</span></b> opportunity owner(s) to Amelia. Because of the large number, this process may take 5–10 minutes. You will receive an email notification once the update is complete.
+                </div>
+                <div class="tm-error" rendered="{!LEN(errors) > 0}">{!errors}</div>
+            </div>
+        </div>
+    </apex:form>
+</apex:page>

@@ -1,0 +1,223 @@
+<apex:page Controller="MyClaimSubmitController" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+    <head>
+      <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+    </head>
+        
+    <div class="bs">
+        
+        <script>
+        
+            function selectClaimBen(){
+                console.log('--11--'+ new Date($.now()));
+                console.log('hidselectedPolicyClaimTypeStr input hidden: ' + $("[id$='hidden_ClaimTypeStr']").val());
+                console.log('hidselectedPolicyBenefitTypeStr input hidden: ' + $("[id$='hidden_BenefitTypeStr']").val());
+                console.log('selectedPolicy input hidden: '+$("[id$='hidden_selectPolicy']").val());
+                var polClaim;
+                polClaim = $('input[type="hidden"][id$="hidden_ClaimTypeStr"]').val();
+                //polClaim = $("[id$='hidden_ClaimTypeStr']").val();
+                var polBen;
+                polBen = $('input[type="hidden"][id$="hidden_BenefitTypeStr"]').val();
+                //polBen = $("[id$='hidden_BenefitTypeStr']").val();
+                //alert(polBen);
+                console.log('********* to see polClaim 2: ' + polClaim);
+                console.log('********* to see polBen 2: ' + polBen);
+                console.log('--12--'+ new Date($.now()));
+                selectPolicyToShowClaimTypeStr(polClaim);
+                $("#claimTypeOrganId").fSelect('destroy');
+                $("#claimTypeOrganId").fSelect('create');
+                console.log('--13--'+ new Date($.now()));
+                selectPolicyToShowBenefitStr(polBen);
+				
+                
+            }
+            
+            
+        </script>
+        
+        <apex:form >
+            <div class="bs form-field row content-choice-block" id="q1_disclaimer" >
+               <!--
+               <div class="bs col-sm-12">{!$Label.Do_you_have_more_than_1_claim_to_submit}</div>
+               -->
+               <div class="bs col-sm-12 col-xs-12 question-row">
+                   <div>
+                       <i class="ci-hk-checklist content-icon" aria-hidden="true" style="cursor:auto"></i>
+                   </div>
+                   <div>
+                       {!$Label.Do_you_have_more_than_1_claim_to_submit}
+                   </div>
+               </div>
+               <div id="moreThanOneClaim1" class="bs col-sm-12 col-xs-12">
+               <!--
+               <div id="moreThanOneClaim1" class="bs col-sm-12">
+               -->
+                    <!-- 20210803 - Kirk - CR48, add displayNextBtnIn -->
+                   <div class="bs col-sm-4 question-choice {!if(isLoadOldClaim && cList[0].Ask_If_More_Than_One_Claim__c, 'fg-orange','fg-grey')}" style="padding-left:40px;border-bottom: 0px;cursor: auto;" onclick="saveRecordCusSubmitMoreThanOneQ1(true);$('#q2_disclaimer_no_div').removeClass('fg-orange').addClass('fg-grey');hideNextBtnIn(3);displayNextBtnIn(3);" >
+                       <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                       {!$Label.Yes}
+                       <input type="hidden" name="param-str" value="true" />
+                   </div>
+                   <div class="bs col-sm-4 question-choice go-next-step {!if(isLoadOldClaim && !cList[0].Ask_If_More_Than_One_Claim__c, 'fg-orange','fg-grey')}" style="padding-left:40px;border-bottom: 0px;cursor: auto;" onclick="hideQuestion('q2_disclaimer');hideQuestion('moreThanOneClaim');saveRecordCusSubmitMoreThanOneQ1(false);">
+                       <i class="fa fa-times-circle-o content-icon " aria-hidden="true"></i>
+                       {!$Label.No}
+                       <input type="hidden" name="param-str" value="false" />
+                   </div>
+                   <!-- field to save data -->
+                   <apex:inputHidden id="hiddenValue_cus_askIfMoreThanOneClaim" value="{!cList[0].Ask_If_More_Than_One_Claim__c}" />
+                   <!-- save record data -->
+                   <apex:actionFunction status="loader-icon" name="SaveRecordCusSubmitMoreThanOneQ1AtAction" action="{!SaveRecord}" reRender="hiddenValue_cus_askIfMoreThanOneClaim" 
+                                        oncomplete="proceedOnComplete();">
+                       <apex:param name="CusSubmitMoreThanOneQ1Ans" value="" assignTo="{!cList[0].Ask_If_More_Than_One_Claim__c}"/>
+                   </apex:actionFunction>
+                   <script>
+                        /** working **/
+                        function saveRecordCusSubmitMoreThanOneQ1(ans){
+                            console.log('to see saveRecordCusSubmitMoreThanOneQ1');
+                            
+                            if (ans == true){
+                                proceedType = 2;
+                                //20210803 - Kirk - CR48
+                                displayItemName = '';
+                                nextBtnInStep = 3;
+                                var mention=document.getElementById("moreThanOneClaim");
+                                mention.style.display="block"; 
+
+                                //displayItemName = 'q2_disclaimer';
+                                //SaveRecordCusSubmitMoreThanOneQ1AtAction(true);
+                            }
+                            else if (ans == false){
+                                // Zoe updated on 0604 for performance tuning
+                                if (performanceOption1){
+                                    proceedType = 1;
+                                }
+                                if (performanceOption2){
+                                    proceedType = 4;
+                                }
+                                displayItemName = '';
+                                //SaveRecordCusSubmitMoreThanOneQ1AtAction(false);
+                            }
+                            SaveRecordCusSubmitMoreThanOneQ1AtAction(ans);
+                            
+                        }
+                   </script>
+                   <!-- end save record data -->
+                   
+               </div>
+               <!--20210803 - Kirk - CR48-->
+               <div id="moreThanOneClaim" class="bs col-sm-12 col-xs-12 fg-orange" style="display:none;">
+                   {!$Label.It_looks_like_you_want_to_make_a_claim_for_different_medical_conditions_Please}
+               </div>
+            </div>
+            <div class="bs form-field row content-choice-block" id="q2_disclaimer" style="display: none;">
+               <!--
+               <div class="bs col-sm-12">{!$Label.Are_the_claims_related_to_the_same_accident_or_illness}</div>
+               -->
+               <div class="bs col-sm-12 col-xs-12 question-row">
+                   <div>
+                       <i class="ci-hk-checklist content-icon" aria-hidden="true" style="cursor:auto"></i>
+                   </div>
+                   <div>
+                       {!$Label.Are_the_claims_related_to_the_same_accident_or_illness}
+                   </div>
+               </div>
+               <div id="moreThanOneClaim1" class="bs col-sm-12 col-xs-12">
+               <!--
+               <div class="bs col-sm-12">
+               -->
+                   <div class="bs col-sm-4 question-choice go-next-step {!if( isLoadOldClaim && cList[0].All_Claims_Related_To_Same_Event__c, 'fg-orange','fg-grey')}" style="padding-left:40px;border-bottom: 0px;cursor: auto;" onclick="hideNextBtn();hideQuestion('moreThanOneClaim');saveRecordCusSubmitMoreThanOneQ2(true);">
+                       <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                       {!$Label.Yes}
+                       <input type="hidden" name="param-str" value="true" />
+                   </div>
+                   <div id="q2_disclaimer_no_div" class="bs col-sm-4 question-choice display-next-button {!if(isLoadOldClaim && !cList[0].All_Claims_Related_To_Same_Event__c, 'fg-orange','fg-grey')}" style="padding-left:40px;border-bottom: 0px;cursor: auto;" onclick="hideNextBtn();displayQuestion('moreThanOneClaim');saveRecordCusSubmitMoreThanOneQ2(false);displayNextBtnIn(3);">
+                       <i class="fa fa-times-circle-o content-icon " aria-hidden="true"></i>
+                       {!$Label.No}
+                       <input type="hidden" name="param-str" value="false" />
+                   </div>
+                   <!-- field to save data -->
+                   <apex:inputHidden id="hiddenValue_cus_allClaimRelatedToSameEvent" value="{!cList[0].All_Claims_Related_To_Same_Event__c}" />
+                   <!-- save record data -->
+                   <apex:actionFunction status="loader-icon" name="SaveRecordCusSubmitMoreThanOneQ2AtAction" action="{!SaveRecord}" reRender="hiddenValue_cus_allClaimRelatedToSameEvent" 
+                                        oncomplete="proceedOnComplete();">
+                       <apex:param name="CusSubmitMoreThanOneQ2Ans" value="" assignTo="{!cList[0].All_Claims_Related_To_Same_Event__c}"/>
+                   </apex:actionFunction>
+                   <script>
+                        /** working **/
+                        function saveRecordCusSubmitMoreThanOneQ2(ans){
+                            console.log('to see saveRecordCusSubmitMoreThanOneQ2');
+                            if (ans == true){
+                                // Zoe updated on 0604 for performance tuning
+                                if (performanceOption1){
+                                    proceedType = 1;
+                                }
+                                if (performanceOption2){
+                                    proceedType = 4;
+                                }
+                                displayItemName = '';
+                                //SaveRecordCusSubmitMoreThanOneQ2AtAction(true);
+                            }
+                            else if (ans == false){
+                                proceedType = 3;
+                                displayItemName = '';
+                                nextBtnInStep = 3;
+                                //SaveRecordCusSubmitMoreThanOneQ2AtAction(false);
+                            }
+                            SaveRecordCusSubmitMoreThanOneQ2AtAction(ans);
+                            
+                        }
+                   </script>
+                   <!-- end save record data -->
+               </div>
+               <!--<div id="moreThanOneClaim" class="bs col-sm-12 col-xs-12 fg-orange" style="display:none;">
+                   {!$Label.It_looks_like_you_want_to_make_a_claim_for_different_medical_conditions_Please}
+               </div>-->
+            </div>
+            
+            <!-- next button -->
+            <!-- mobile -->
+            <div id="action-bar" class="bs action-bar hidden-sm hidden-md hidden-lg cigna-floating-bottom-panel nextStepBtnIn3" style="left:0px; display:none;" onclick="nextStep();">
+                <div id="callAction1" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                    <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</a>
+                </div>
+            </div>
+            
+            <!-- web -->
+            <div class="bs row hidden-xs nextStepBtnIn3" style="padding-top: 20px; padding-bottom: 20px; display:none;">
+                <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3 "></div>
+                <div id="callAction2" class="bs col-sm-6 col-md-6 col-xs-6 col-lg-6 onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn" onclick="nextStep();">
+                    {!$Label.Next}
+                </div>
+                <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3"></div>
+            </div>
+            
+            <apex:outputPanel id="benClaim">
+                <div>
+                    <apex:inputhidden value="{!selectedPolicyClaimTypeStr}" id="hidden_ClaimTypeStr"/>
+                    <apex:inputhidden value="{!selectedPolicyBenefitTypeStr}" id="hidden_BenefitTypeStr"/>
+                    <apex:inputhidden value="{!selectedPolicy}" id="hidden_selectPolicy"/>
+                </div>
+            </apex:outputPanel>
+            
+            
+            <apex:outputPanel rendered="{!if(isLoadOldClaim && cList[0].Ask_If_More_Than_One_Claim__c,'true','false')}">
+                <script>
+                    //20210803 - Kirk - CR48
+                    //displayQuestion('q2_disclaimer');
+                    
+                    displayNextBtnIn(3);
+                    if ({!isLoadOldClaim} && {!!cList[0].All_Claims_Related_To_Same_Event__c}){
+                        displayQuestion('moreThanOneClaim');
+                    }
+                </script>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!if(isLoadOldClaim && !cList[0].Ask_If_More_Than_One_Claim__c,'true','false')}">
+                <script>
+                    displayNextBtnIn(3);
+                </script>
+            </apex:outputPanel>
+        </apex:form>
+        
+    </div>
+
+
+</apex:page>

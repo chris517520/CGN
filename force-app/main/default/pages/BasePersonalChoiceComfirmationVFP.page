@@ -1,0 +1,1068 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" title="Get Protected" controller="PersonalChoiceComfirmationCtrl">
+    <head>
+        <style>
+            .bs input.cigna-question-text {
+                border: 0;
+                border-bottom: 1px solid #58595B;
+                background: transparent;
+                width: 100%;
+                box-shadow: none !important;
+                border-radius: 0;
+                //color: #58595B;
+                width: 50px;
+                text-align: left;
+                padding:12px;
+                outline: none;
+            }
+            .bs input.text-center{
+                text-align:center;
+            }
+            .bs input.cigna-question-text:focus {
+                box-shadow: none !important;
+                border-bottom: 1px solid #eac048 !important;
+            } 
+            .bs .cigna-quote-question {
+                padding-top: 20px;
+                padding-bottom: 20px;
+                border-top: 1px solid #D9D9D6;
+            }
+            .bs .cigna-answer-wrapper {
+                margin-top: 20px;
+                margin-left: 30px;    
+            }
+            .bs .cigna-answer-wrapper > p {
+                background: #fff;
+            }
+            .bs .cigna-answer-wrapper > p > label {
+                margin-left: 10px;
+                margin-top: 5px;
+                font-weight: normal;
+                padding: 5px;
+                width: 100%;
+            }
+            .bs .cigna-question-input-fake {
+                border-bottom: 1px solid #58595B !important;
+                min-width: 50px;
+                display: inline-block;
+            }
+            .bs .cigna-plan-bullet {
+                font-size: 0.9em;
+                line-height: 1.5;
+                margin-top: -20px;
+                z-index: -10;
+            }
+            @media (min-width: 768px) {
+                .bs .cigna-floating-bottom-panel {
+                    position: relative;
+                }
+            }
+            @media (max-width: 767px) {
+                .bs .cigna-floating-bottom-panel {
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                }
+            }
+            .bs .cigna-quote-summary {
+                width: 100%;
+                min-height: 50px;
+                background: #D9D9D6;
+                color: #58595B;
+                padding: 10px 0px;
+            }
+            .bs .cigna-quote-summaryTop {
+                width: 100%;
+                min-height: 50px;
+                background: #D9D9D6;
+                color: #58595B;
+                padding: 10px 0px;
+                position: fixed;
+                top: 50px;
+                height: 9999px;
+            }
+            .bs .cigna-quote-summary-desktop {
+                position: relative;
+                min-height: 50px;
+                background: #D9D9D6;
+                color: #58595B;
+                padding: 10px;
+                padding-bottom: 40px;
+            }
+            .bs .cigna-quote-amount {
+                margin: 0 !important;
+                display: table;
+                table-layout: fixed;
+                width: 100%;
+            }
+            .bs .cigna-quote-amount > div {
+                display: table-cell;
+                float: none !important;
+            }
+            .bs .cigna-quote-amount div{
+                font-size: 0.9em;
+                font-weight: bold;
+                vertical-align: text-top;
+            }
+            .bs .cigna-quote-amount span {
+                font-size: inherit;
+                font-weight: bold;
+                vertical-align: text-top;
+            }
+
+
+            .bs .cigna-answer-wrapper > p {
+                background: #fff;
+            }
+            .bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select, .bs span.form-control  {
+                border-top: 0 !important;
+                border-left: 0 !important;
+                border-right: 0 !important;
+                border-bottom: 1px solid #58595B !important;
+                background: transparent;
+                width: 100%;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                background-color:#FFF!important;
+            }
+            .bs .form-control {
+                display: block;
+                //width: 100%;
+                height: 34px;
+                padding: 6px 12px;
+                font-size: 14px;
+                line-height: 1.42857143;
+
+                color: #555;
+
+                border: 1px solid #ccc;
+                
+                transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+            }
+            .bs .form-control:focus {
+                box-shadow: none !important;
+                border-bottom: 1px solid #eac048 !important;
+            }
+            .bs .cigna-answer-wrapper > p > label {
+                margin-left: 10px;
+                margin-top: 5px;
+                font-weight: normal;
+                padding: 5px;
+                width: 100%;
+            }
+
+            .bs .cigna-answer-wrapper-same-address > p {
+                background: #fff;
+            }
+            .bs .cigna-answer-wrapper-same-address > p > label {
+
+                margin-top: 5px;
+                font-weight: normal;
+                padding: 5px 0px 5px 0px;
+                width: 100%;
+            }
+            .cigna-fg-gray-dark {
+               color: #58595B !important;
+           }
+           .bs .cigna-form-section-header {
+               background: #eee;
+               padding-top: 10px;
+               padding-bottom: 10px;
+               margin-bottom: 15px;
+           }
+           
+           .bs .cigna-plan-bullet {
+                padding:0 0 0 17px !important;
+                z-index: -10 !important;
+            }
+
+            /*CR-56_Link_20220214*/
+            .ui-tooltip {
+                background: black !important;
+                max-width: 250px !important;
+                width: 250px; 
+                min-width: 100px;
+                color: white !important;
+                z-index: 1070;
+                display: block;
+                text-align: center !important;
+                font-size: 12px !important;
+                border-radius: 5px !important;
+            }
+        </style>
+        <script type="text/javascript">
+            var Cigna = Cigna || {};
+            Cigna.Quote = function(){
+                function onRadioChangeTc(evt) {
+                    var val = $(this).val();
+                    var parent = $(this).parent();
+                    //$(parent).siblings('p').removeClass('cigna-bg-green-medium');
+                    //$(parent).addClass('cigna-bg-green-medium');
+                    $(parent).siblings('input[type="hidden"]').val(val).trigger('change');
+                    $("#errSelectPaymode").hide();
+                    AutoSave();
+                }
+                function onCheckboxChangeTC(evt) {
+                    var val = $(this).is(':checked');
+                    var parent = $(this).parent();
+                    $(parent).siblings('input[type="hidden"]').val(val).trigger('change');
+                    console.log('accept# ' + val);
+                    if(val == true) {
+                        $("#errCheckacceptTC").hide();
+                        $('input[type="hidden"][id$="PersonalChoice-select-accept-tc"]').val('true');
+                        console.log('accept22# ' + $('input[type="hidden"][id$="PersonalChoice-select-accept-tc"]').val());
+                    }else{
+                        $('input[type="hidden"][id$="PersonalChoice-select-accept-tc"]').val('');
+                        if($('input[type="hidden"][id$="PersonalChoice-select-accept-tc"]').val()==''){
+                            $("#errCheckacceptTC").show();
+                        //$('input[type="hidden"][id$="PersonalChoice-select-accept-tc"]').focus();
+                        //CR-56_Link_20220214
+                        $("#errCheckacceptTC").trigger("focus");
+                        }
+                    }
+                    AutoSave();
+
+                }
+                
+                function goBack(evt) {
+                    Cigna.Util.navigateToVFP("CusPersonalChoiceGetQuoteVFP?plan=PBT&tid={!txn.id}&lang={!$Label.Header_Language_Code_Current}", null, null,null,false);   
+                }
+                /*function checkHKID(value){
+                    // AutoSave();
+                    console.log('test lihao'+value);
+                    if(/^([a-zA-Z]{1,2}[0-9aA]{6}$)\b$/.test(value)) {
+                        return true;
+                    }
+                    return false;
+                }*/
+                function checkHKID(value){
+                    //only allow english character and numbers
+
+                    if(/^[0-9a-zA-Z]*$/.test(value)) {
+                        return true;
+                    }
+                    return false;
+                }
+                function checkChinese(value){
+                     // AutoSave();
+                    if(/.*[\u4e00-\u9fa5]+.*$/.test(value)) {
+                        return false;
+                    }
+                    return true;
+                }
+                function validateLength(value, len){
+                     // AutoSave();
+                    if(value.length > len){
+                        return false;
+                    }
+
+                    return true;
+                }
+                function validate() {
+                    $("input[id*='-HKID']").each(function(idx, elem){
+                    console.log('12121212121212'+$(elem).val());
+                    $(elem).rules("add", {
+                        required : true,
+                        checkHKID : true,
+                        validateLength10 : true
+                    });
+                });
+
+                $("input[id*='PH-Email-bk']").rules("add", {
+                    emailStrict: true,
+                    checkChinese : true,
+                    required: true,
+                    validateLength50 : true
+                });
+                $("input[id*='PI-Email-bk']").rules("add", {
+                    emailStrict: true,
+                    checkChinese : true,
+                    required: true,
+                    validateLength50 : true
+                });
+                $("input[id*='-Firstname']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        checkFirstCharacter : true,
+                        required: true,
+                        validateLength42 : true
+                    });
+                });
+                $("input[id*='-Lastname']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        checkFirstCharacter : true,
+                        required: true,
+                        validateLength42 : true
+                    });
+                });
+                $("input[id*='PH-CountryCode']").rules("add", {
+                    required: true
+                });
+                $("input[id*='PI-CountryCode']").rules("add", {
+                    required: true
+                });
+                $("input[id*='-ContactNo']").rules("add", {
+                    required: true,
+                    digits: true,
+                    checkContactNoLength : true
+                });
+                $("input[id*='PI-ContactNo']").rules("add", {
+                    required: true,
+                    digits: true,
+                    checkContactNoLength : true
+                });
+                    var questionsAnswered = $("form[id$='form']").validate().form();
+                    var isSuccess = questionsAnswered;
+                    return isSuccess;
+                }
+
+                function validate2(){
+                    var validateFlag = false;
+                    $("input[id*='-HKID']").each(function(idx, elem){
+                        $(elem).rules("remove");
+                        if($(elem).val()!=''&&$(elem).val()!=null){
+                            $(elem).rules("add", {
+                                checkHKID : true,
+                                validateLength10 : true
+                            });
+                        }
+                    console.log('12121212121212'+$(elem));
+                    
+                });
+                $("input[id*='PH-Email-bk']").rules("remove");    
+                if($("input[id*='PH-Email-bk']").val()!=''&&$("input[id*='PH-Email-bk']").val()!=null){
+                    $("input[id*='PH-Email-bk']").rules("add", {
+                    emailStrict: true,
+                    checkChinese : true,
+                    validateLength50 : true
+                    });
+                }
+                $("input[id*='PI-Email-bk']").rules("remove");
+                if($("input[id*='PI-Email-bk']").val()!=''&&$("input[id*='PI-Email-bk']").val()!=null){
+                    $("input[id*='PI-Email-bk']").rules("add", {
+                        emailStrict: true,
+                        checkChinese : true,
+                        validateLength50 : true
+                    });
+                }
+                
+                $("input[id*='-Firstname']").each(function(idx, elem){
+                    $(elem).rules("remove");
+                    if($(elem).val()!=''&&$(elem).val()!=null){
+                        $(elem).rules("add", {
+                            checkFirstCharacter : true,
+                            validateLength42 : true
+                        });
+                    }
+                });
+                $("input[id*='-Lastname']").each(function(idx, elem){
+                    $(elem).rules("remove");
+                    if($(elem).val()!=''&&$(elem).val()!=null){
+                        $(elem).rules("add", {
+                            checkFirstCharacter : true,
+                            validateLength42 : true
+                        });
+                    }
+                });
+                $("input[id*='-ContactNo']").rules("remove");
+                if($("input[id*='-ContactNo']").val()!=''&&$("input[id*='-ContactNo']").val()!=null){
+                    $("input[id*='-ContactNo']").rules("add", {
+                        digits: true,
+                        checkContactNoLength : true
+                    });
+                }
+                $("input[id*='PI-ContactNo']").rules("remove");
+                if($("input[id*='PI-ContactNo']").val()!=''&&$("input[id*='PI-ContactNo']").val()!=null){
+                    $("input[id*='PI-ContactNo']").rules("add", {
+                    digits: true,
+                    checkContactNoLength : true
+                });
+                }
+                    var questionsAnswered = $("form[id$='form']").validate().form();
+                    console.log('questionsAnswered'+questionsAnswered);
+                    return questionsAnswered;
+                } 
+                function next(){
+                    var paymodevalid = 1;
+                    var acceptTCvalid = 1;
+                    if($('input[type="hidden"][id$="PersonalChoice-payment-mode"]').val()==''){
+                        console.log('###test showPaymentMode222');
+                        $("#errSelectPaymode").show();
+                        //CR-56_Link_20220214
+                        $("#errSelectPaymode").trigger("focus");
+                        paymodevalid=0;
+                    }else{
+                        paymodevalid=1;
+                        $("#errSelectPaymode").hide();
+                    }
+
+                    if($('input[type="hidden"][id$="PersonalChoice-select-accept-tc"]').val()==''){
+                        console.log('###test showPaymentMode222');
+                        $("#errCheckacceptTC").show();
+                        //CR-56_Link_20220214
+                        $("#errCheckacceptTC").trigger("focus");
+                        acceptTCvalid=0;
+                    }else{
+                        acceptTCvalid=1;
+                        $("#errCheckacceptTC").hide();
+                    }
+                    if(validate()&&paymodevalid&&acceptTCvalid){
+                        nextStep();
+
+                    }
+                }
+                function filedChangeAutoSave(evt){
+                    var Id = evt.id;
+                    var val=$(evt).valid();
+                    if(val){
+                        AutoSave();
+                    }
+                   // AutoSave();
+                }
+                function checkFirstCharacter(value){
+                    // AutoSave();
+                    //the first character cannot be space and *
+                    if(value.indexOf('*') == 0 || value.indexOf(' ') == 0){
+                        return false;
+                    }
+                    return true;
+                }
+                function checkContactNoLength(value){
+                    // AutoSave();
+                    if(value.length > 20){
+                        return false;
+                    }
+                    return true;
+                }
+                function redirect(){
+                    Cigna.Util.navigateToVFP("CusPersonalChoicePaymentVFP?tid={!txn.id}&lang={!$Label.Header_Language_Code_Current}", null, null,null,false);
+                }
+
+                return {
+                    onCheckboxChangeTC:onCheckboxChangeTC,
+                    onRadioChangeTc:onRadioChangeTc,
+                    goBack:goBack,
+                    checkHKID:checkHKID,
+                    next:next,
+                    validate2:validate2,
+                    filedChangeAutoSave:filedChangeAutoSave,
+                    checkFirstCharacter:checkFirstCharacter,
+                    redirect:redirect,
+                    checkContactNoLength:checkContactNoLength,
+                    checkChinese:checkChinese,
+                    validateLength:validateLength
+                }
+
+            }();
+            $(document).ready(function(){
+                        
+                jQuery.extend(jQuery.validator.messages, {
+                    required: "{!$Label.ESales_Required_Field_Error_Message}"
+                });
+                jQuery.validator.addMethod("checkHKID", function(value, element) {
+                   return Cigna.Quote.checkHKID(value);
+               }, "{!$Label.eSales_Portable_HKID_Eng_Num}");
+                jQuery.validator.addMethod("emailStrict", function(value, element) {
+                    return this.optional(element) || Cigna.ValidationUtil.isValidEmail(value);
+                }, "{!$Label.eSales_Your_Email_Address_is_invalid}");
+                jQuery.validator.addMethod("checkChinese", function(value, element) {
+                   return Cigna.Quote.checkChinese(value);
+               }, "{!$Label.eSales_Cannot_input_Chinese}");
+                jQuery.validator.addMethod("validateLength50", function(value, element) {
+                   return Cigna.Quote.validateLength(value, 50);
+               }, "{!$Label.eSales_Exceed_Max_Length} 50 {!$Label.eSales_Exceed_Max_Length_2}");
+                jQuery.validator.addMethod("validateLength10", function(value, element) {
+                   return Cigna.Quote.validateLength(value, 10);
+               }, "{!$Label.eSales_Exceed_Max_Length} 10 {!$Label.eSales_Exceed_Max_Length_2}");
+                jQuery.validator.addMethod("checkFirstCharacter", function(value, element) {
+                   return Cigna.Quote.checkFirstCharacter(value);
+               }, "{!$Label.eSales_Cannot_space_in_first_Character}");
+                jQuery.validator.addMethod("validateLength42", function(value, element) {
+                   return Cigna.Quote.validateLength(value, 42);
+               }, "{!$Label.eSales_Exceed_Max_Length} 42 {!$Label.eSales_Exceed_Max_Length_2}");
+                jQuery.validator.addMethod("checkContactNoLength", function(value, element) {
+                   return Cigna.Quote.checkContactNoLength(value);
+               }, "{!$Label.eSales_Exceed_Max_Length} 20 {!$Label.eSales_Exceed_Max_Length_2}");
+                $("form[id$='form']").validate();
+                $("input[id*='-HKID']").each(function(idx, elem){
+                    console.log('12121212121212'+$(elem).val());
+                    $(elem).rules("add", {
+                        required : true,
+                        checkHKID : true,
+                        validateLength10 : true
+                    });
+                });
+
+                $("input[id*='PH-Email-bk']").rules("add", {
+                    emailStrict: true,
+                    checkChinese : true,
+                    required: true,
+                    validateLength50 : true
+                });
+                $("input[id*='PI-Email-bk']").rules("add", {
+                    emailStrict: true,
+                    checkChinese : true,
+                    required: true,
+                    validateLength50 : true
+                });
+                $("input[id*='-Firstname']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        checkFirstCharacter : true,
+                        required: true,
+                        validateLength42 : true
+                    });
+                });
+                $("input[id*='-Lastname']").each(function(idx, elem){
+                    $(elem).rules("add", {
+                        checkFirstCharacter : true,
+                        required: true,
+                        validateLength42 : true
+                    });
+                });
+                $("input[id*='PH-CountryCode']").rules("add", {
+                    required: true
+                });
+                $("input[id*='PI-CountryCode']").rules("add", {
+                    required: true
+                });
+                $("input[id*='-ContactNo']").rules("add", {
+                    required: true,
+                    digits: true,
+                    checkContactNoLength : true
+                });
+                $("input[id*='PI-ContactNo']").rules("add", {
+                    required: true,
+                    digits: true,
+                    checkContactNoLength : true
+                });
+               
+            });
+                    //setInterval("AutoSave()",30000);
+        </script>
+    </head>
+    <apex:define name="additionalLibraries">
+        <!-- CR-56_Link_20220214 -->
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+        <apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+            <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+        </apex:outputPanel>
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    </apex:define>
+
+    <apex:form id="form">
+        <apex:actionFunction action="{!saveTxn}" name="saveTxn" oncomplete="location.reload(true);"/>
+        <apex:actionFunction action="{!nextStep}" name="nextStep" oncomplete="Cigna.Quote.redirect();"/>
+        <apex:actionFunction action="{!goToBack}" name="goToBack" oncomplete="Cigna.Quote.goBack();"/>
+        <apex:actionFunction action="{!AutoSave}" name="AutoSave" oncomplete="return false;"/>
+        <apex:inputHidden id="personal-choice-click-save" value="{!clickSave}"/>
+        <apex:actionStatus id="loading">
+        <apex:facet name="start">
+            <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.75; z-index: 1000; background-color: black;">&nbsp;
+            </div>
+            <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 30% 50%">
+                <img class="bs" src="{!URLFOR($Resource.Spinners, 'slds_spinner.gif')}" width="80px" />
+            </div>
+        </apex:facet>
+        </apex:actionStatus>
+<!-- End of loading Page -->
+<!-- Start of back button -->
+        <apex:outputPanel layout="block" styleClass="bs row" id="quote-back-btn-div">
+            <div class="bs col-xs-12">
+                <p><a id="quote-back-btn" class="bs cigna-fg-orange-medium onclick-pointer" onclick="goToBack();"><i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a>
+                  <a style="float: right;" id="eSales-save-btn" onclick="clickSave();" class="bs cigna-fg-orange-medium onclick-pointer">{!$Label.Save} <i class="ci-hk-briefcase" aria-hidden="true"></i> </a></p>
+                  <script>
+                    function clickSave(){
+                        $("input[type='hidden'][id*='personal-choice-click-save']").val(true);
+                        if(Cigna.Quote.validate2()){
+                            saveTxn();
+                        }   
+                    }
+                </script>
+                <script>
+                    var val='?lang={!$Label.Header_Language_Code}&tid={!txn.id}';
+                    $('#isGuestuser-true-diasplay-lang-href > a').attr('href',val); 
+                    $('#isGuestuser-personalchoice-Header_Change_Language').attr('href',val);
+                    if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1()) {
+                        $('#action-bar').css('position', 'absolute');
+                        if (navigator.userAgent.toLowerCase().match(/(ipad)/i) == null) {
+                            $('#mobile-app-padding').css('display', 'block');
+                        }
+                    }
+                    if (Cigna.Util.isSalesforce1()) {
+                        $('#esales-extra-padding').css('display', 'none');
+                    }
+
+                    if (Cigna.Util.isIOS() && $(window).width() < 768) {
+                        //CR-56_Link_20220214
+                        $('.bs input[type="text"]').on("focus",function(evt){
+                            console.log('Input focus');
+                            if ($('#cigna-quote-summary-desktop').is(':visible')) {
+                                console.log('Input focus 1');
+                                $('#cigna-quote-summary-desktop').addClass('hidden-xs').removeClass('visible-xs');
+                            }
+                        });
+
+                        $('.bs input[type="text"]').on("blur",function(evt){
+                            console.log('Input blur');
+                            if ($('#cigna-quote-summary-desktop').hasClass('hidden-xs')) {
+                                console.log('Input blur 1');
+                                $('#cigna-quote-summary-desktop').addClass('visible-xs').removeClass('hidden-xs');
+                            }
+                        });
+                    }
+                </script>
+                <apex:outputLabel value="{!transField['Personal_Choice_Following_Instructions'][$Label.Header_Language_Code_Current]}" style="color: #58595B !important;padding: 10px 0px 10px 0px;"/>
+            </div>
+        </apex:outputPanel>
+
+        <apex:outputPanel layout="block" styleClass="bs row">
+            <apex:repeat value="{!peopleInfos}" var="person">
+                <div class="bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h4>{!person.name}, {!person.gender}, {!person.age}</h4></div>
+                <div class="bs col-xs-12 cigna-fg-gray-dark form-horizontal">
+                    <apex:outputPanel rendered="{!person.value=='01'}">
+                        <apex:outputPanel rendered="{!person.name==''}">
+                            <div class="bs form-group">
+                                <div class="bs col-sm-3">
+                                    <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Policy_Holder_First_Name__c.Label}" for="PH-Firstname"/>
+                                </div>
+                                <div class="bs col-sm-9">
+                                    <apex:inputText id="PH-Firstname" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.Policy_Holder_First_Name__c}" styleClass="bs form-control"/>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!person.name==''}">
+                            <div class="bs form-group">
+                                <div class="bs col-sm-3">
+                                    <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Policy_Holder_Last_Name__c.Label}" for="PH-Lastname"/>
+                                </div>
+                                <div class="bs col-sm-9">
+                                    <apex:inputText id="PH-Lastname" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.Policy_Holder_Last_Name__c}" styleClass="bs form-control"/>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        <div class="bs form-group">
+                            <div class="bs col-sm-3" style="padding-top: 25px;">
+                                <!--<apex:outputLabel value="{!IF(isCustomerPortal, $Label.HKID, $ObjectType.ESales_Transaction__c.Fields.HKID__c.Label)}" for="PH-HKID"/>-->
+                                <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.HKID__c.Label}" for="PH-HKID"/>
+                                <apex:outputPanel ><i class="fa fa-info-circle" data-toggle="tooltip" data-placement="right" title="{!$Label.Quotation_hkid_tooltip}" aria-hidden="true"></i></apex:outputPanel>
+                            </div>
+                            <script>
+                                $('[data-toggle="tooltip"]').tooltip();
+                            </script>
+                            <div id="input-ph-hkid" class="bs col-sm-9">
+                                <apex:inputText id="personal-01-PH-HKID" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.HKID__c}" styleClass="bs cigna-question-text" style="width:100%;"/>                  
+                            </div>
+                        </div>
+                        <div class="bs form-group">
+                            <div class="bs col-sm-3" style="padding-top: 25px;">
+                                <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Email_Address__c.Label}" for="PH-Email-bk"/>
+                            </div>
+                            <div class="bs col-sm-9">
+                                <apex:inputField id="PH-Email-bk" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.Email_Address__c}" styleClass="bs cigna-question-text" style="width:100%;"/>
+                            </div>
+                        </div>
+                        <div class="bs form-group">
+                            <div class="bs col-sm-3 col-xs-12" style="padding-top: 25px;">
+                                <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Contact_No__c.Label}" for="PH-ContactNo"/>
+                            </div>
+                            <div class="bs col-sm-2 col-xs-4">
+                                <apex:inputField id="PH-CountryCode" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.Country_Code__c}" styleClass="bs form-control"  html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Country_Code__c.Label}"
+                                />
+                                <script>
+                                   $("input[id*='PH-CountryCode']").val('+852');
+                               </script>
+                           </div>
+                           <div class="bs col-sm-7 col-xs-8">
+                            <apex:inputField id="PH-ContactNo" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.Contact_No__c}" styleClass="bs form-control" />
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    
+                    <apex:outputPanel rendered="{!person.value=='02'}">
+                        <apex:outputPanel rendered="{!person.name==''}">
+                        <div class="bs form-group">
+                            <div class="bs col-sm-3">
+                                <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.PI_First_Name__c.Label}" for="PI-Firstname"/>
+                            </div>
+                            <div class="bs col-sm-9">
+                                <apex:inputText id="PI-Firstname" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.PI_First_Name__c}" styleClass="bs cigna-question-text"/>
+                            </div>
+                        </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!person.name==''}">
+                        <div class="bs form-group">
+                            <div class="bs col-sm-3">
+                                <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Policy_Holder_Last_Name__c.Label}" for="PI-Lastname"/>
+                            </div>
+                            <div class="bs col-sm-9">
+                                <apex:inputText id="PI-Lastname" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.PI_Last_Name__c}" styleClass="bs form-control"/>
+                            </div>
+                        </div>
+                        </apex:outputPanel>
+                        <div class="bs form-group">
+                            <div class="bs col-sm-3" style="padding-top: 25px;">
+                                <!--<apex:outputLabel value="{!IF(isCustomerPortal, $Label.HKID, $ObjectType.ESales_Transaction__c.Fields.HKID__c.Label)}" for="PH-HKID"/>-->
+                                <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.HKID__c.Label}" for="Pi-HKID"/>
+                                <apex:outputPanel ><i class="fa fa-info-circle" data-toggle="tooltip" data-placement="right" title="{!$Label.Quotation_hkid_tooltip}" aria-hidden="true"></i></apex:outputPanel>
+                            </div>
+                            <script>
+                                $('[data-toggle="tooltip"]').tooltip();
+                            </script>
+                            <div id="input-pi-hkid" class="bs col-sm-9">
+                             <apex:inputText id="personal-02-PI-HKID" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.PI_HKID__c}" styleClass="bs cigna-question-text" style="width:100%;"/>
+                         </div>
+                        </div>
+                        <div class="bs form-group">
+                            <div class="bs col-sm-3" style="padding-top: 25px;">
+                                <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Email_Address__c.Label}" for="PI-Email-bk"/>
+                            </div>
+                            <div class="bs col-sm-9">
+                                <apex:inputField id="PI-Email-bk" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.PI_Email__c}" styleClass="bs cigna-question-text" style="width:100%;"/>
+                            </div>
+                        </div>
+                        <div class="bs form-group">
+                            <div class="bs col-sm-3 col-xs-12" style="padding-top: 25px;">
+                                <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Contact_No__c.Label}" for="PI-ContactNo"/>
+                            </div>
+                            <div class="bs col-sm-2 col-xs-4">
+                                <apex:inputField id="PI-CountryCode" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.Country_Code__c}" styleClass="bs cigna-question-text"  html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Country_Code__c.Label}"/>
+                                <script>
+                                    $("input[id*='PI-CountryCode']").val('+852');
+                                </script>
+                            </div>
+                            <div class="bs col-sm-7 col-xs-8">
+                                <apex:inputField id="PI-ContactNo" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.PI_Contact_No__c}" styleClass="bs cigna-question-text"/>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!person.value=='03'}">
+                        <apex:outputPanel rendered="{!person.name==''}">
+                        <div class="bs form-group">
+                            <div class="bs col-sm-3">
+                                <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Child_1_First_Name__c.Label}" for="ch1-Firstname"/>
+                            </div>
+                            <div class="bs col-sm-9">
+                                <apex:inputText id="ch1-Firstname" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.Child_1_First_Name__c}" styleClass="bs cigna-question-text"/>
+                            </div>
+                        </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!person.name==''}">
+                        <div class="bs form-group">
+                            <div class="bs col-sm-3">
+                                <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Child_1_Last_Name__c.Label}" for="ch1-Lastname"/>
+                            </div>
+                            <div class="bs col-sm-9">
+                                <apex:inputText id="ch1-Lastname" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.Child_1_Last_Name__c}" styleClass="bs cigna-question-text"/>
+                            </div>
+                        </div>
+                        </apex:outputPanel>
+                        <div class="bs form-group">
+                            <div class="bs col-sm-3" style="padding-top: 25px;">
+                                <!--<apex:outputLabel value="{!IF(isCustomerPortal, $Label.HKID, $ObjectType.ESales_Transaction__c.Fields.HKID__c.Label)}" for="PH-HKID"/>-->
+                                <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.HKID__c.Label}" for="PH-HKID"/>
+                                <apex:outputPanel ><i class="fa fa-info-circle" data-toggle="tooltip" data-placement="right" title="{!$Label.Quotation_hkid_tooltip}" aria-hidden="true"></i></apex:outputPanel>
+                            </div>
+                            <script>
+                                $('[data-toggle="tooltip"]').tooltip();
+                            </script>
+                            <div id="input-c1-hkid" class="bs col-sm-9">
+                                <apex:inputText id="personal-03-ch1-HKID" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.HKID_Child_1__c}" styleClass="bs cigna-question-text" style="width:100%;"/>                   
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!person.value=='04'}">
+                        <apex:outputPanel rendered="{!person.name==''}">
+                        <div class="bs form-group">
+                            <div class="bs col-sm-3">
+                                <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Child_2_First_Name__c.Label}" for="ch2-Firstname"/>
+                            </div>
+                            <div class="bs col-sm-9">
+                                <apex:inputText id="ch2-Firstname" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.Child_2_First_Name__c}" styleClass="bs form-control"/>
+                            </div>
+                        </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!person.name==''}">
+                        <div class="bs form-group">
+                            <div class="bs col-sm-3">
+                                <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Child_2_Last_Name__c.Label}" for="ch2-Lastname"/>
+                            </div>
+                            <div class="bs col-sm-9">
+                                <apex:inputText id="ch2-Lastname" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.Child_2_Last_Name__c}" styleClass="bs form-control"/>
+                            </div>
+                        </div>
+                        </apex:outputPanel>
+                        <div class="bs form-group">
+                            <div class="bs col-sm-3" style="padding-top: 25px;">
+                                <!--<apex:outputLabel value="{!IF(isCustomerPortal, $Label.HKID, $ObjectType.ESales_Transaction__c.Fields.HKID__c.Label)}" for="PH-HKID"/>-->
+                                <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.HKID__c.Label}" for="PH-HKID"/>
+                                <apex:outputPanel ><i class="fa fa-info-circle" data-toggle="tooltip" data-placement="right" title="{!$Label.Quotation_hkid_tooltip}" aria-hidden="true"></i></apex:outputPanel>
+                            </div>
+                            <script>
+                               $('[data-toggle="tooltip"]').tooltip();
+                            </script>
+                            <div id="input-c2-hkid" class="bs col-sm-9">
+                                <apex:inputText id="personal-04-ch2-HKID" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.HKID_Child_2__c}" styleClass="bs cigna-question-text" style="width:100%;"/>                   
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!person.value=='05'}">
+                        <apex:outputPanel rendered="{!person.name==''}">
+                            <div class="bs form-group">
+                                <div class="bs col-sm-3">
+                                    <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Child_3_First_Name__c.Label}" for="ch3-Firstname"/>
+                                </div>
+                                <div class="bs col-sm-9">
+                                    <apex:inputText id="ch3-Firstname" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.Child_3_First_Name__c}" styleClass="bs form-control"/>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!person.name==''}">
+                            <div class="bs form-group">
+                                <div class="bs col-sm-3">
+                                    <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Child_3_Last_Name__c.Label}" for="ch3-Lastname"/>
+                                </div>
+                                <div class="bs col-sm-9">
+                                    <apex:inputText id="ch3-Lastname" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.Child_3_Last_Name__c}" styleClass="bs form-control"/>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        <div class="bs form-group">
+                            <div class="bs col-sm-3" style="padding-top: 25px;">
+                                <!--<apex:outputLabel value="{!IF(isCustomerPortal, $Label.HKID, $ObjectType.ESales_Transaction__c.Fields.HKID__c.Label)}" for="PH-HKID"/>-->
+                                <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.HKID__c.Label}" for="PH-HKID"/>
+                                <apex:outputPanel ><i class="fa fa-info-circle" data-toggle="tooltip" data-placement="right" title="{!$Label.Quotation_hkid_tooltip}" aria-hidden="true"></i></apex:outputPanel>
+                            </div>
+                            <script>
+                                $('[data-toggle="tooltip"]').tooltip();
+                            </script>
+                            <div id="input-ch3-hkid" class="bs col-sm-9">
+                                <apex:inputText id="personal-05-ch3-HKID" onchange="Cigna.Quote.filedChangeAutoSave(this);" value="{!txn.HKID_Child_3__c}" styleClass="bs cigna-question-text" style="width:100%;"/>                   
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                </div>
+            </apex:repeat>
+        </apex:outputPanel>
+        
+    <!-- Start of question -->
+        <div class="bs row">
+            <div id="question-List">
+                <apex:outputPanel id="Payment_Confirmation">
+                    <apex:outputPanel >
+                        <apex:outputPanel styleClass="bs form-horizontal  cigna-quote-question cigna-fg-gray-dark col-xs-12">
+                            <div>
+                                <div class="bs form-group">
+                                   <div class="bs col-xs-12">
+                                       <p>{!$Label.Please_select_the_payment_mode}:</p>
+                                   </div>
+                                </div>
+                                <div class="bs form-group col-xs-12">
+                                    <div class="bs cigna-answer-wrapper">
+                                        <p>
+                                            <input type="radio" id="payment-mode-first-01" value="Monthly" name="payment-mode-first" class="bs cigna-question-radio" />
+                                            <apex:outputText >
+                                                <!--Nicole_Levy II_20200626-->
+                                                <!--<label for="payment-mode-first-01">{!$Label.Monthly} - {!$Label.HKD} {!txn.Quote_Amount_Monthly__c} (x2) </label>-->
+                                                <!-- Rancho_Levy_20201124 -->
+                                                <label for="payment-mode-first-01">{!transFieldLevy['Monthly_Total_Premium_Including_Levy'][$Label.Header_Language_Code_Current]} : </label>
+                                                <ul class="cigna-plan-bullet">
+                                                    <li class="bs col-sm-12 col-xs-12 no-border-input" >
+                                                        <apex:outputText styleClass="bs col-sm-1 col-xs-4 no-border-input" value="{!transFieldLevy['Premium'][$Label.Header_Language_Code_Current]}" />
+                                                        <div class="bs col-sm-11 col-xs-8 no-border-input">
+                                                            <apex:outputText escape="false" value=":&nbsp;&nbsp;{!$Label.HKD}&nbsp;" />
+                                                            <apex:outputText value="{!IF(BLANKVALUE(txn.Quote_Amount_Monthly__c, 0) > 0, '{0,number,##0.00}', '0.00')}" >
+                                                                <apex:param value="{!txn.Quote_Amount_Monthly__c}" />
+                                                            </apex:outputText>
+                                                            <apex:outputText >
+                                                                (x2)
+                                                            </apex:outputText>
+                                                        </div>
+                                                    </li>
+                                                    <li class="bs col-sm-12 col-xs-12 no-border-input" >
+                                                        <apex:outputText styleClass="bs col-sm-1 col-xs-4 no-border-input" value="{!transFieldLevy['Levy'][$Label.Header_Language_Code_Current]}" />
+                                                        <div class="bs col-sm-11 col-xs-8 no-border-input">
+                                                            <apex:outputText escape="false" value=":&nbsp;&nbsp;{!$Label.HKD}&nbsp;" />
+                                                            <apex:outputText value="{!IF(BLANKVALUE(txn.Levy_Monthly__c, 0) > 0, '{0,number,##0.00}', '0.00')}" >
+                                                                <apex:param value="{!txn.Levy_Monthly__c}" />
+                                                            </apex:outputText>
+                                                        </div>
+                                                    </li>
+                                                </ul> 
+                                            </apex:outputText>                         
+                                        </p>
+                                        <p>
+                                            <input type="radio" id="payment-mode-first-02" value="Annually" name="payment-mode-first" class="bs cigna-question-radio" />
+                                            <apex:outputText >                                          
+                                                <!--Nicole_Levy II_20200623-->
+                                                <!--<label for="payment-mode-first-02">{!$Label.Annually} - {!$Label.HKD} {!txn.Quote_Amount_Annually__c}</label>-->
+                                                <!-- Rancho_Levy_20201124 -->
+                                                <label for="payment-mode-first-02">{!transFieldLevy['Annually_Total_Premium_Including_Levy'][$Label.Header_Language_Code_Current]} : </label>
+                                                <ul class="cigna-plan-bullet">
+                                                    <li class="bs col-sm-12 col-xs-12 no-border-input" >
+                                                        <apex:outputText styleClass="bs col-sm-1 col-xs-4 no-border-input" value="{!transFieldLevy['Premium'][$Label.Header_Language_Code_Current]}" />
+                                                        <div class="bs col-sm-11 col-xs-8 no-border-input">
+                                                            <apex:outputText escape="false" value=":&nbsp;&nbsp;{!$Label.HKD}&nbsp;" />
+                                                            <apex:outputText value="{!IF(BLANKVALUE(txn.Quote_Amount_Annually__c, 0) > 0, '{0,number,##0.00}', '0.00')}" >
+                                                                <apex:param value="{!txn.Quote_Amount_Annually__c}" />
+                                                            </apex:outputText>
+                                                        </div>
+                                                    </li>
+                                                    <li class="bs col-sm-12 col-xs-12 no-border-input" >
+                                                        <apex:outputText styleClass="bs col-sm-1 col-xs-4 no-border-input" value="{!transFieldLevy['Levy'][$Label.Header_Language_Code_Current]}" />
+                                                        <div class="bs col-sm-11 col-xs-8 no-border-input">
+                                                            <apex:outputText escape="false" value=":&nbsp;&nbsp;{!$Label.HKD}&nbsp;" />
+                                                            <apex:outputText value="{!IF(BLANKVALUE(txn.Levy_Annually__c, 0) > 0, '{0,number,##0.00}', '0.00')}" >
+                                                                <apex:param value="{!txn.Levy_Annually__c}" />
+                                                            </apex:outputText>
+                                                        </div>
+                                                    </li>
+                                                </ul>
+                                            </apex:outputText>
+                                        </p>
+                                        
+                                        <!--Nicole_Levy II_20200630-->
+                                        <p>
+                                            <apex:outputText value="{!transFieldLevy['Payment_Levy_Note'][$Label.Header_Language_Code_Current]}" escape="false" />
+                                        </p>
+                   
+                                        <apex:inputHidden id="PersonalChoice-payment-mode" value="{!txn.Payment_Mode__c}" 
+                                        html-class="cigna-validation"
+                                        html-data-msg-required="{!$Label.Error_Please_choose_a_payment_method}" />
+                    
+                                        <div id="errSelectPaymode" role="alert" style="display:none;">
+                                            <span style="color:red;font-weight: bold;">{!$Label.Please_select_the_payment_mode}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <script>
+                                    //CR-56_Link_20220214
+                                    $('input[id*="payment-mode-first"]').on("change",Cigna.Quote.onRadioChangeTc);
+
+                                    var paymentmode = $('input[type="hidden"][id$="PersonalChoice-payment-mode"]').val();
+
+                                    if(paymentmode == 'Monthly'){
+                                        $("#payment-mode-first-01").prop("checked", true);
+                                        $("#payment-mode-first-02").prop("checked", false);
+                                    }else if(paymentmode == 'Annually'){
+                                        $("#payment-mode-first-01").prop("checked", false);
+                                        $("#payment-mode-first-02").prop("checked", true);
+                                    }else{
+                                        $("#payment-mode-first-01").prop("checked", false);
+                                        $("#payment-mode-first-02").prop("checked", false);
+                                        $('input[type="hidden"][id$="payment-mode"]').val('');
+                                    }
+                                </script>
+                            </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel id="showTCSelection">
+                            <apex:outputPanel styleClass="bs form-horizontal cigna-quote-question cigna-fg-gray-dark col-xs-12">
+                                <div class="bs form-group col-xs-12 form-horizontal">
+
+                                   <div class="bs cigna-answer-wrapper">
+                                       <p>
+                                           <input type="checkbox" id="accept-tc" name="payment-mode-Accept" class="bs cigna-question-checkbox" />
+                                           <label style="width:auto;" for="accept-tc">{!$Label.I_Accept_The} <a onclick="reallocationToggleOverlayESales();">{!$Label.ESales_Declaration_and_Authorization}</a>.</label>
+                                           <script>
+                                                function reallocationToggleOverlayESales(){
+
+                                                    var overlay = document.getElementById('reallocationOverlayESales');
+                                                    var specialBox = document.getElementById('reallocationSpecialBoxESales');
+                                                    overlay.style.opacity = .95;
+                                                    if(overlay.style.display == "block"){
+                                                       overlay.style.display = "none";
+                                                       specialBox.style.display = "none";
+                                                    } else {
+                                                       overlay.style.display = "block";
+                                                       specialBox.style.display = "block";
+                                                    }
+
+                                                }
+                                            </script>
+                                        </p>
+                                        <apex:inputHidden value="{!tandcChecker}" id="PersonalChoice-select-accept-tc" html-class="cigna-validation"
+                                        html-data-msg-required="{!$Label.ESales_Terms_and_Conditions_Warning}" />
+                                        <div id="errCheckacceptTC" role="alert" style="display:none;">
+                                         <span style="color:red;font-weight: bold;">{!$label.ESales_Terms_and_Conditions_Warning}</span>
+                                        </div>
+                                    </div>
+                                    <script>
+                                        //CR-56_Link_20220214
+                                        $('input#accept-tc').on("change",Cigna.Quote.onCheckboxChangeTC);
+
+                                        var acceptTC = $('input[type="hidden"][id$="Quote-select-accept-tc"]').val();
+
+                                        if(acceptTC == 'true'){
+                                            $("#accept-tc").prop("checked", true);
+                                        }else{
+                                            $("#accept-tc").prop("checked", false);
+                                        }
+                                    </script>
+                                    <div class="bs cigna-answer-wrapper">
+                                        <p>
+                                           <input type="checkbox"  id="accept-tc-1" name="payment-mode-Accept-1"  class="bs cigna-question-checkbox"/>
+                                           <label for="accept-tc-1">{!$Label.ESales_Term_and_Conditions}</label>
+                                           <apex:inputHidden value="{!personalDataAgreement}" id="personalDataAgreement" />
+                                        </p>
+
+                                    </div>
+                                    <script>
+                                       //CR-56_Link_20220214
+                                       $('input#accept-tc-1').on("change",Cigna.Quote.onCheckboxChangePayMent);
+                                    </script>
+                                </div>
+
+
+                                       <!-- Start Special Centered Box -->
+                                <div id="reallocationOverlayESales" style="display:none;">
+                                    <div id="reallocationSpecialBoxESales" >
+                                       <a><div id="reallocationCloseOverlayESales" class="glyphicon glyphicon-remove" onclick="reallocationToggleOverlayESales();" ></div></a>
+                                       <h4>{!$Label.Terms_and_Conditions}</h4>
+                                       <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                                       <apex:outputPanel >
+                                            <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'en_US'}">
+                                               <div id="reallocationtccontentESales" style="text-align:left">
+                                                <b>聲明及授權</b><br/><br/>
+                                                1.  本人聲明，據本人所知為本申請提供的陳述及答案, 均完全屬實無訛<br/><br/>
+                                                2.  本人確認本人及所有受保人士均為持有有效香港身份證及於香港居住。<br/><br/>
+                                                <!--Comment by Shengt for JOBR-235--> 
+                                                <!-- 3.  本人確認已閱讀及明白<a href="{!PersonalInformationCollectionStatement_chi}" target="_blank" style="text-decoration: underline;">信諾之個人資料收集聲明</a>及<a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!Privacy_statement_chi}" target="_blank" style="text-decoration: underline;">私隱聲明</a>。本人同意信諾可根據信諾之個人資料收集聲明，使用及/或披露本人(申請人)的個人資料。本人明白本人有權在空格上加上「✓」號或根據信諾之個人資料收集聲明，表示拒絕使用本人的個人資料作直接促銷用途。然而，本人也明白選擇拒絕使用本人的個人資料作直接促銷，即導致將來本人不能從信諾處收到任何針對性或特別優惠的直接促銷。<br/><br/> -->
+
+                                                3.  本人確認已閱讀及明白<a href="{!PersonalInformationCollectionStatement_chi}" target="_blank" style="text-decoration: underline;">信諾之個人資料收集聲明</a>及<a href="{!Privacy_statement_chi}" target="_blank" style="text-decoration: underline;">私隱聲明</a>。本人同意信諾可根據信諾之個人資料收集聲明，使用及/或披露本人(申請人)的個人資料。本人明白本人有權在空格上加上「✓」號或根據信諾之個人資料收集聲明，表示拒絕使用本人的個人資料作直接促銷用途。然而，本人也明白選擇拒絕使用本人的個人資料作直接促銷，即導致將來本人不能從信諾處收到任何針對性或特別優惠的直接促銷。<br/><br/>
+                                                4.  本人同意本保單之保障範圍，由保單承保表內所列之生效日起生效。<br/><br/>
+                                                5.  本人同意接受本申請而發出的任何保單即等於接納保單内的條款，同時追認信諾在保單上所作的任何更改。<br/><br/>
+                                                6.  本人授權，而且確認準受保人已授權，凡存有關本人或準受保人健康狀況任何紀錄或得悉此方面資料的任何持牌醫師、醫生、醫院、診所或者其他醫療或與相關的設施、保險公司或其他組織、機構或個人，可向信諾及其再保險公司提供有關資料，以評估本保險申請或日後根據本申請書簽發的本保單下提出任何的保險索償。此授權書的複印本與正本同樣有效。<br/><br/>
+                                                7.  <b>取消保單權利及發還保費：本人明白本人有權以書面通知取消保單並取回已繳保費。但是本人必須簽署該通知，並確保信諾環球保險有限公司(位於{!$Label.Cigna_Address_zh})於以下時段內直接收到該通知：保單交付本人或本人的代表後或《通知書》發予本人或本人的代表後起計的30日，以較先者為準。</b><br/><br/>
+                                                </div>
+                                            </apex:outputPanel> 
+                                            <apex:outputPanel rendered="{!$Label.Header_Language_Code == 'zh_TW'}">
+                                                <div id="reallocationtccontentESales" style="text-align:left">
+                                                    <b>Declaration and Authorization</b><br/><br/>
+                                                    1.  I declare that the above statements and answers provided for this application are true and complete to the best of my knowledge.<br/><br/>
+                                                    2.  I confirm that I and all the persons insured are Hong Kong residents with a valid Hong Kong Identity Card and residency in Hong Kong.<br/><br/>
+                                                    <!--Comment by Shengt for JOBR-235--> 
+                                                    <!-- 3.  I confirm that I have read and understood the <a href="{!PersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;">Personal Information Collection Statement</a> ("PICS") and <a href="{!$Setup.Portal_Settings__c.File_Download_URL__c}{!Privacy_statement_eng}" target="_blank" style="text-decoration: underline;">Privacy Statement</a> of Cigna. I agree that Cigna may use and/or disclose my (the Applicant's) personal information in accordance with the PICS. I understand that I have the right to opt out of the use of my personal information for direct marketing purposes by ticking the box below or in accordance with the PICS. I understand that opting out will mean that Cigna will not be able to send me any direct marketing, targeted or special offers in the future.<br/><br/> -->
+                                                    
+                                                    3.  I confirm that I have read and understood the <a href="{!PersonalInformationCollectionStatement_eng}" target="_blank" style="text-decoration: underline;">Personal Information Collection Statement</a> ("PICS") and <a href="{!Privacy_statement_eng}" target="_blank" style="text-decoration: underline;">Privacy Statement</a> of Cigna. I agree that Cigna may use and/or disclose my (the Applicant's) personal information in accordance with the PICS. I understand that I have the right to opt out of the use of my personal information for direct marketing purposes by ticking the box below or in accordance with the PICS. I understand that opting out will mean that Cigna will not be able to send me any direct marketing, targeted or special offers in the future.<br/><br/>
+                                                    4.  I agree that the insurance coverage applied for shall only take effect from the Commencement Date as specified in the Policy Schedule.<br/><br/>
+                                                    5.  I agree that acceptance of any policy issued on this application will constitute an agreement to its terms and condition as well as notifications of any changes specified by Cigna in this policy.<br/><br/>
+                                                    6.  I hereby authorize, and confirm that Proposed Person(s) Insured has / have authorized, any licensed physician, medical practitioner, hospital, clinic or other medical or medically related facility, insurance company or other organization, institution or person, that has any records or knowledge of my or the Proposed Person(s) Insured's health to give to Cigna and its reinsurers any such information for the purpose of assessment of this insurance proposal or subsequent assessment of any insurance claim under the policy that may be issued pursuant to this application. A photographic copy of this authorization shall be as valid as the original.<br/><br/>
+                                                    7.  <b>Cancellation Rights and Refund of Premium(s): I understand that I have the right to cancel and obtain a refund of any premium(s) paid by giving written notice. Such notice must be signed by me and received directly by Cigna Worldwide General Insurance Company Limited which is located at {!$Label.Cigna_Address_en} within 30 days after the delivery of the policy or issue of a Notice to the policyholder or the policyholder's representative, whichever is the earlier.</b><br/><br/>
+                                                </div>
+                                            </apex:outputPanel>
+                                        </apex:outputPanel>      
+                                    </div>
+                                </div>
+                                <div id="action-bar-desktop" class="bs row  text-center">    
+                                   <!-- <a class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" onclick="preventDefault(event);Cigna.GetProtected.contactMe();return false;">{!$Label.Contact_Me}</a> -->
+                                   <a href="#" id="customerGetQuoteDesktop" class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" onclick="Cigna.Quote.next();return false;">{!$Label.Next}</a>
+                               </div>
+                       <!-- End Special Centered Box -->
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                    </apex:outputPanel>       
+                </apex:outputPanel>
+            </div>
+        </div>      
+    </apex:form>
+</apex:page>

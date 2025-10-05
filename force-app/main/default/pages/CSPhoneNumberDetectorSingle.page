@@ -1,0 +1,81 @@
+<apex:page controller="CSPhoneNumberDetector">
+
+    <apex:includeScript value="/support/console/42.0/integration.js"/>
+    <apex:includescript value="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}" />
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            // Show Call Script console component, send phone number to component
+            sforce.console.fireEvent('call', '{!phoneNumber}');
+            
+            // Get Current Tab Id
+            sforce.console.getEnclosingPrimaryTabId(redirectCurrentTabToAccountRecord);
+        });
+    	
+    	// Redirect to account record
+		function redirectCurrentTabToAccountRecord(result) {
+            redirect(result.id);
+            closeRepeatTab();
+        }   
+        
+    	//Close repeat tab
+    	function closeRepeatTab(){
+        	sforce.console.getPrimaryTabIds(function(result){
+                let pageAccountList = new Array();
+                let callerIds = new Array();
+            	for( let i = 0,len = result.ids.length; i < len; i++ ){
+                	if(len === 1){ return }//if only one tab just return
+                	sforce.console.getPageInfo(result.ids[i],function(res){
+                    	let pageInfo = JSON.parse(res.pageInfo);
+                		if(pageInfo.objectId){
+                			let ct = new RemoteObjectModel.Account();
+							ct.retrieve({ where : { Id : { eq : pageInfo.objectId } } },function(err,records){
+                				if(err){ console.log('err' + err) }
+            					else{
+                                	for(let j=0;j<callerIds.length;j++){
+                                        if( isContains( callerIds ,records[0]._props.Phone)
+                                             ||isContains( callerIds ,records[0]._props.PersonAssistantPhone) 
+                                             ||isContains( callerIds ,records[0]._props.PersonHomePhone) 
+                                             ||isContains( callerIds ,records[0]._props.PersonMobilePhone)
+                                             ||isContains( callerIds ,records[0]._props.PersonOtherPhone)
+                                           	 ||isContains( callerIds ,records[0]._props.Office_Phone__c)
+                                             ||isContains( callerIds ,records[0]._props.Work_Phone__c)
+                                          )
+                                        {
+                                        	sforce.console.closeTab(result.ids[result.ids.length-1]);
+                                            sforce.console.focusPrimaryTabById(result.ids[i]);
+                                        }
+                                    }
+                                }
+            				});
+            			}
+                        else if(pageInfo.url.split('&')[0].split('=')[1]){
+                            let callerId = pageInfo.url.split('&')[0].split('=')[1];
+                            callerIds.push(callerId);
+                        }
+                    })
+                }    			
+            });
+        }
+    
+    	//判断数组是否包含某个值    
+        function isContains(arr,val){
+        	for(let i=0,len = arr.length;i < len;i++){
+                if(arr[i] === val){ return true }
+            }
+            return false
+        }
+    </script>
+    
+    <apex:form >
+        <apex:actionFunction action="{!redirectSingle}" name="redirect" reRender="">
+            <apex:param name="tabId" value="" />
+        </apex:actionFunction>
+    </apex:form>
+    <apex:remoteObjects jsNamespace="RemoteObjectModel">
+    	<apex:remoteObjectModel name="Account" fields="Name,Phone,Id,PersonAssistantPhone,PersonHomePhone,PersonMobilePhone,PersonOtherPhone">
+        	<apex:remoteObjectField name="Office_Phone__c"/>
+            <apex:remoteObjectField name="Work_Phone__c"/>
+        </apex:remoteObjectModel> 
+	</apex:remoteObjects>
+</apex:page>

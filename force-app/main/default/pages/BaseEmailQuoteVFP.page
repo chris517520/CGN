@@ -1,0 +1,269 @@
+<apex:page doctype="html-5.0" sidebar="false" showheader="false" title="Email Quote" controller="EmailQuoteCtrl">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+        <style>
+            <!-- additional inline css-->
+            
+            .bs .form-control:focus {
+                box-shadow: none !important;
+                border-bottom: 1px solid #eac048 !important;
+            }
+             
+            .bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs output[type="text"], .bs select, .bs span.form-control {
+                border-top: 0 !important;
+                border-left: 0 !important;
+                border-right: 0 !important;
+                border-bottom: 1px solid #58595B !important;
+                background: transparent;
+                width: 100%;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
+            
+            .outputText-format{
+                border-top: 0 !important;
+                border-left: 0 !important;
+                border-right: 0 !important;
+                border-bottom: 1px solid #58595B !important;
+                background: transparent;
+                width: 100%;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
+            
+        </style>
+        <script>
+
+             var changeLanguageWarningRequired = true;
+
+             var Cigna = Cigna || {};
+             Cigna.EmailQuote= function(){
+                
+                function validateForm() {
+                    return $("form[id*='EmailQuoteForm']").validate().form();
+                }
+                
+                function sendQuote(){
+                
+                    if(validateForm()){
+                    
+                        emailQuote();
+                        
+                    }else {
+                        if ($('form[id$="EmailQuoteForm"] input.error').length > 0) {
+                            $('form[id$="EmailQuoteForm"] input.error')[0].focus();
+                            if (typeof evt != undefined && evt) {
+                                evt.preventDefault();
+                            }
+                        }
+                        
+                    }
+                }
+
+                function goBack(evt) {
+                    if('{!paramSelectedProduct}'=='LHB'){
+                        Cigna.Util.navigateToVFP('GroupProductQuotationVFP?tid={!paramTxnId}&fromPage=SaveQuote', null, null, true)
+                    }
+                    else if('{!paramFromPage}'=='Esales'){
+                        Cigna.Util.navigateToVFP('EsalesVFP?tid={!paramTxnId}', null, null, true)
+                    }else if('{!paramFromPage}'=='PortableQuote' && '{!paramSelectedProduct}'=='PBT'){        //Nicole_LEVY-10_20201024
+                        Cigna.Util.navigateToVFP('PortableGetQuoteVFP?tid={!paramTxnId}&fromPage=SaveQuote', null, null, true)
+                    }else if('{!paramFromPage}'=='PortableQuote' && '{!paramSelectedProduct}'=='PBC'){        //Nicole_LEVY-10_20201024
+                        Cigna.Util.navigateToVFP('PortableConversionGetQuoteVFP?tid={!paramTxnId}&fromPage=SaveQuote', null, null, true)
+                    }else{
+                        Cigna.Util.navigateToVFP('GetQuoteVFP?tid={!paramTxnId}&fromPage=SaveQuote', null, null, true)
+                    }
+                    
+                }   
+
+                return {
+                    sendQuote : sendQuote,
+                    goBack : goBack
+                };
+            }();
+            
+        </script>
+          
+       
+    </head>
+    <apex:define name="additionalLibraries">
+        <!-- CR-56_Link_20220214 -->
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+        <apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+            <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+        </apex:outputPanel>
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    </apex:define>
+
+                                     
+    <apex:outputPanel layout="block" styleClass="bs row">
+        <div class="bs col-xs-12">
+            <p><a id="quote-back-btn" class="bs cigna-fg-orange-medium onclick-pointer" onclick="Cigna.EmailQuote.goBack();">
+            <i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a></p>
+        </div>
+    </apex:outputPanel>
+
+    <div class="bs row">
+        <div id="tab-new-cus" style="padding-bottom:20px" class="bs cigna-tab col-sm-offset-1 col-sm-10 col-xs-12 cigna-fg-gray-dark form-horizontal">
+            <apex:form id="EmailQuoteForm">
+                <apex:actionFunction action="{!emailQuote}" name="emailQuote" reRender="formDetail" oncomplete="Cigna.EmailQuote.goBack();"/>
+                
+                <apex:outputpanel id="formDetail">
+
+                    <div class="bs form-group">    
+                        <div class="bs col-xs-12 col-sm-4">
+                            <!--<apex:outputlabel value="{!$ObjectType.ESales_Transaction__c.Fields.Policy_Holder_First_Name__c.Label}" for="PH-Firstname" />-->
+                            <apex:outputlabel rendered="{!paramSelectedProduct != 'LHB'}" value="{!$Label.Quote_Given_Name_of_Policy_Holder}" for="PH-Firstname" />
+                            <apex:outputlabel rendered="{!paramSelectedProduct == 'LHB'}" value="{!$Label.Quote_Given_Name_of_Contact_Person}" for="PH-Firstname" />
+                        </div>
+                        <div class="bs col-xs-12 col-sm-8">
+                            <apex:inputField id="PH-Firstname" value="{!txn.Policy_Holder_First_Name__c}" styleclass="bs form-control"/>
+                        </div>
+                    </div>
+
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12 col-sm-4">
+                            <!--<apex:outputlabel value="{!$ObjectType.ESales_Transaction__c.Fields.Policy_Holder_Last_Name__c.Label}" for="PH-Lastname" />-->
+                            <apex:outputlabel rendered="{!paramSelectedProduct != 'LHB'}" value="{!$Label.Quote_Family_Name_of_Policy_Holder}" for="PH-Firstname" />
+                            <apex:outputlabel rendered="{!paramSelectedProduct == 'LHB'}" value="{!$Label.Quote_Family_Name_of_Contact_Person}" for="PH-Firstname" />
+                        </div>
+                       
+                        <div class="bs col-xs-12 col-sm-8" >
+                            <apex:inputField id="PH-Lastname" value="{!txn.Policy_Holder_Last_Name__c}" styleclass="bs form-control"/>
+                        </div>
+                    </div>    
+                    <!--
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12 col-sm-3">
+                            <apex:outputlabel value="{!$ObjectType.ESales_Transaction__c.Fields.Date_of_Birth_PH__c.Label}" for="PH-Birthday" />
+                        </div>
+                       
+                        <div class="bs col-xs-12 col-sm-9" >
+                            <apex:outputtext id="Val-DOB-Day-PH" value="{!paramDOBDay}"
+                                               html-maxlength="2" 
+                                               styleClass="bs form-control text-center dob-input dob-day question-kid-age"
+                                               style="display: inline; width: auto;"
+                                               html-placeholder="DD" 
+                                                                                      
+                            />
+                            <apex:outputtext id="Val-DOB-Month-PH" value="{!paramDOBMonth}" 
+                                                   html-maxlength="2" 
+                                                   styleClass="bs form-control text-center dob-input dob-month question-kid-age"
+                                                   style="display: inline; width: auto;"
+                                                   html-placeholder="MM"
+                            />
+                            <apex:outputtext id="Val-DOB-Year-PH"  value="{!paramDOBYear}" 
+                                                   html-maxlength="4" 
+                                                   styleClass="bs form-control text-center dob-input dob-year question-kid-age"
+                                                   style="display: inline; width: auto;"
+                                                   html-placeholder="YYYY"
+                                                   
+                            />
+                        </div>
+                    </div>    
+
+                    <div class="bs form-group">
+                        <div class="bs col-sm-3">
+                            <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Gender__c.Label}" for="PH-Gender"/>
+                        </div>
+                        <div class="bs col-sm-9">
+                            <div class="outputText-format" style="padding-left:7px;">
+                                &nbsp;
+                                <apex:outputField id="PH-Gender" value="{!txn.Gender__c}" styleClass="bs form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    -->
+                    
+                    <div class="bs form-group">
+                        <div class="bs col-sm-4">
+                            <apex:outputLabel value="{!$ObjectType.ESales_Transaction__c.Fields.Email_Address__c.Label}" for="PH-Email"/>
+                        </div>
+                        <div class="bs col-sm-8">
+                            <apex:inputField id="PH-Email" value="{!txn.Email_Address__c}" styleClass="bs form-control"  />
+                        </div>
+                    </div>
+                    <!-- 20210107 - Nicole - Language choice-->
+                    <!-- start -->
+                    <div class="bs form-group">
+                        <div class="bs col-sm-4">
+                            <apex:outputlabel value="{!$Label.Email_Quote_Quotation_Language}" for="PH-QuotationLanguage" />
+                        </div>
+                        <div class="bs col-sm-8">
+                           
+                            <apex:inputField value="{!txn.Quotation_Language__c}" styleClass="bs form-field-style-select inputFromClass"  />
+                        </div>
+                    </div>
+                    <!-- end -->
+                    <div class="bs col-sm-12 col-xs-12">
+                   
+                       <!--desktop action button-->
+                        <div id="emailquotedesk1" class="bs hidden-xs hidden-md col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer" onclick="Cigna.EmailQuote.sendQuote();">
+                            {!$Label.Email_Quote}
+                        </div>
+    
+                        <div id="emailquotedesk2" class="bs visible-md col-sm-4 col-sm-offset-4 cigna-fg-white cigna-bg-orange-dark desktop-action-btn onclick-pointer " style="padding-bottom: 20px;" onclick="Cigna.EmailQuote.sendQuote();">
+                            {!$Label.Email_Quote}
+                        </div>
+    
+                        
+                       <!--mobile action button-->    
+                        <div id="mobile-app-padding" class="bs row" style="display: none; padding-bottom: 100px;">
+                            <div class="bs col-xs-12"></div>
+                        </div>
+                    
+                        <!--<div id="action-bar" class="bs visible-xs cigna-floating-bottom-panel" style="left:0px;">
+                            <div id="emailquotemobile" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark onclick-pointer" onclick="Cigna.EmailQuote.sendQuote();">
+                                <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-envelope" aria-hidden="true"></span><br/><span id="eSignaturebtnxstext">{!$Label.Email_Quote}</span></a>
+                            </div>
+                        </div>-->
+                    </div>
+
+              </apex:outputpanel>
+              
+              
+            </apex:form>
+
+        </div>
+         
+    </div>
+  
+    <script>   
+        
+        jQuery.extend(jQuery.validator.messages, {
+            required: "{!$Label.ESales_Required_Field_Error_Message}"
+        });
+        
+        $("form[id*='EmailQuoteForm']").validate({
+            ignore: ':hidden:not(.cigna-validation)'
+        });
+            
+        jQuery.validator.addMethod("isInvalidEmail", function(value, element) {
+            return this.optional(element) || Cigna.ValidationUtil.isValidEmail(value);
+        }, "{!$Label.Error_Message_Email_Not_Valid}");
+        
+        $("form[id*='EmailQuoteForm'] input[id*='PH-Email']").each(function(idx, elem){
+            $(elem).rules("add", {
+                isInvalidEmail: true
+            });
+        });
+
+        $("form[id*='EmailQuoteForm'] input[id*='PH-']").each(function(idx, elem){
+            $(elem).rules("add", {
+                required: true,
+            });
+        });
+
+    </script>
+
+    <script>
+            if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+              
+                $('#mobile-app-padding').css('display', 'block');
+
+                /*$('html').css('position', 'fixed').css('overflow', 'auto').css('width', '100%').css('height', '100%');
+                $('body').css('position', 'fixed').css('overflow-x', 'scroll').css('width', '100%').css('height', '100%');*/
+            }
+    </script>
+</apex:page>

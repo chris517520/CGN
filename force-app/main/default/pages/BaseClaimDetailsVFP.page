@@ -1,0 +1,1021 @@
+<apex:page id="baseClaimDetails" Controller="ClaimDetailsController" sideBar="false" showHeader="false" title="Claim Details">
+
+  <head>
+      <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+      <apex:include pageName="CignaCommonCSS" />
+      <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+      <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+      <style>
+
+          .bs .table {
+              table-layout: fixed;
+              word-wrap: break-word;
+          }
+
+          .bs .grey-background {
+              background-color: rgb(242, 242, 242);
+          }
+
+          .bs .panel {
+              background: none;
+          }
+
+          .bs .table>tbody>tr>td,
+          .bs .table>tbody>tr>th,
+          .bs .table>tfoot>tr>td,
+          .bs .table>tfoot>tr>th,
+          .bs .table>thead>tr>td,
+          .bs .table>thead>tr>th {
+              border-top: 0px solid #ddd !important;
+          }
+          
+          .bs .two-column-table {
+              border: 0 !important;
+              border-radius: 0 !important;
+              -webkit-box-shadow: 0px 0px 0px !important;
+              box-shadow: 0px 0px 0px !important;
+          }
+
+          #claim-detail-table{
+              margin-left: -8px;
+              margin-right: -8px;
+              padding-top: 30px;
+          }
+          
+          .bs .field-label {
+          }
+
+          .bs .field-value {
+            font-weight: bold;
+          }
+          
+          .bs .two-column-table-body .row {
+              padding-top: 5px;
+              padding-bottom: 5px;
+          }
+          
+          @media (min-width: 768px) {
+
+          }
+
+          @media (max-width: 768px) {
+
+              .table-panel-body {
+                padding:0px !important;
+              }
+
+              .bs .field-label {
+                padding-left: 0px;            
+              }
+
+              .bs .field-value {
+                padding-left: 0px;
+              }
+
+              html, body
+              {
+                  width: 100%;  overflow: auto; -webkit-overflow-scrolling: touch;
+              }
+
+              .bs .no-padding {
+                  padding: 0px !important;
+              }
+          }
+
+          .bs .panel-heading {
+              padding-left: 0px;
+              padding-right: 0px;
+          }
+
+          .bs .panel {
+              padding: 0;
+              margin-bottom: 0px;
+          }
+
+          .bs .form-control {
+              margin-top: 10px;
+          }
+
+          .bs div {
+              word-wrap: break-word;
+          }
+
+          .bs .panel-heading{
+              background-color: transparent !important;
+              color: black !important;
+              border:none;
+              border-bottom: 1px solid #ddd;
+          }
+
+          .tab-pane {
+              padding:10px;
+          }
+
+          .bs .claim-title {
+              font-size: 1.5em;
+              font-weight: 700;
+              padding-top: 30px;
+          }
+
+          .bs .break-word {
+               white-space: pre-wrap;      /* CSS3 */   
+               white-space: -moz-pre-wrap; /* Firefox */    
+               white-space: -pre-wrap;     /* before Opera 7 */   
+               white-space: -o-pre-wrap;   /* Opera 7 */    
+               word-wrap: break-word;      /* IE */
+          }
+          
+          .table-header-row {
+            /*background-color:#EBEBEB;*/
+          }
+
+          .bs .claim-detail-body{
+              padding-left: 15px;
+              padding-right: 15px;
+          }
+
+      </style>
+  </head>
+
+  <apex:define name="additionalLibraries">
+  </apex:define>
+  
+  <script>
+
+      var Cigna = Cigna || {};
+      Cigna.ClaimDetail = function() {
+  
+        function backRequest() {
+          if(sessionStorage.getItem('policy-detail-back-url')) {
+              var backUrl = sessionStorage.getItem('policy-detail-back-url');
+              sessionStorage.removeItem('policy-detail-back-url');
+              console.log('backUrl:'+backUrl );
+              Cigna.Util.navigateToVFP(backUrl);
+          } else {
+              if (Cigna.Util.isBrokerPortal()) {
+                  Cigna.Util.navigateToVFP('CustomizeSearchPolicyPageVFP', null, null, true);
+              }
+              else {
+                  Cigna.Util.navigateToVFP('MyPolicyVFP', null, null, true);
+              }
+          }
+        }
+
+        function setRow(itemClassName){
+         //CR-56_Link_20220214
+         var totalItem = $('.'+itemClassName).length;
+
+          
+          if($(window).width() < 768){
+            for(var i = 0; i< totalItem; i++){
+              $('.'+itemClassName).slice(i,i+1).wrapAll('<div class="bs row"/>');
+            }
+            return;
+          }
+
+          if(totalItem > 1){
+            var pair = Math.ceil(totalItem / 2);
+            for(var i = 0; i< pair; i++){
+              if(i*2+2 < totalItem){
+                $('.'+itemClassName).slice(i*2,i*2+2).wrapAll('<div class="bs row"/>');
+              } else {
+                $('.'+itemClassName).slice(i*2).wrapAll('<div class="bs row"/>');
+              }
+            }
+          } else if(totalItem == 1) {
+            $('.'+itemClassName).wrapAll('<div class="bs row"/>');
+          }
+        }
+
+        function scrollToPanel(){
+          console.log('Here');
+          $('body').animate({
+              scrollTop: $("[id*=hgResultApex]").offset().top - $('#navtopbar').height() - 50
+          }, 100);
+        }
+
+        return {
+            backRequest: backRequest,
+            setRow : setRow,
+            scrollToPanel : scrollToPanel
+        }
+      }();
+ /*efulfillment enhanced added start*/
+            var wid = $(window).width();
+            function refreshFileName(){
+              //alert ('called');
+              $(".txt-filename").each(function(){  
+             //   $(this).text('abcdefghijklmnopqrstuvwxyz'); 
+             //   $(this).text('一二三四五六七八九十一'); 
+                var v = $(this).text();    
+                
+                if (Cigna.ValidationUtil.isEnglishOnly(v)){                        
+                  if (wid<768){
+                    if (v.length> 22 ){
+                      $(this).text(v.substring(0,19)+'...');
+                    }
+                  }else if (wid>1170){
+                    if (v.length> 21 ){
+                      $(this).text(v.substring(0,18)+'...');
+                    }
+                  }else{
+                    if (v.length> 19 ){
+                      $(this).text(v.substring(0,16)+'...');
+                    }
+                  }   
+                }else{
+                  if (wid<768){
+                    if (v.length> 11 ){
+                      $(this).text(v.substring(0,10)+'...');
+                    }
+                  }else if (wid>1170){
+                    if (v.length> 12 ){
+                      $(this).text(v.substring(0,11)+'...');
+                    }
+                  }else{
+                    if (v.length> 11 ){
+                      $(this).text(v.substring(0,10)+'...');
+                    }
+                  }  
+
+                }                             
+              });
+            }        
+/*efulfillment enhanced added end*/         
+      $(document).ready(function() {
+      
+          ClaimDetailsAF.getClaimDetails();
+
+/*efulfillment enhanced added start*/
+          $("#ClaimDocumentPanel").toggle( );
+          changeSection( $("#ClaimDocumentPanelHeader"));
+
+/*efulfillment enhanced added end*/
+         refreshFileName();
+      });
+
+
+  </script>
+  
+  <div class="bs">
+    <apex:define name="body">
+      <apex:form >
+<!-- efulfillment changed-->
+<!-- CR-56_Link_20220214 -->
+          <apex:actionFunction action="{!getClaimDetails}" 
+                    name="getClaimDetails" 
+                    reRender="ClaimDetailsApex"
+                    status="loader-icon"
+                    namespace="ClaimDetailsAF"  oncomplete="refreshFileName();$('#ClaimDocumentPanelHeader').trigger('click');"/> 
+        <apex:outputPanel id="ClaimDetailsApex">
+        <!--claim details -->
+          <div id="claim-detail-header" class="bs"> 
+              <!-- Back Button -->
+              <div class="bs row" style="padding-top:10px;">
+                  <!-- <apex:outputLink value="/apex/{!IF(isCustomerUser,'CusMyPolicyVFP','BrkCustomizeSearchPolicyPageVFP')}" styleClass="bs cigna-fg-orange-medium"> -->
+                  <div class="bs col-lg-12 cigna-fg-orange-medium onclick-pointer" onclick="Cigna.ClaimDetail.backRequest()">    
+                      <i class="ci-hk-arrow-29 ci-hk-sm" aria-hidden="true"></i> {!$Label.Back}
+                  </div>
+                  <!-- </apex:outputLink> -->
+              </div>
+              <!-- Back Button End -->
+
+              <!-- Claim Title start -->
+              <div class="bs row form-field">
+                  <div class="bs col-lg-12 claim-title">
+                      <apex:outputText value="{!targetClaim.claimNumber}"/>
+                  </div>
+              </div>  
+              <!-- Claim Title End --> 
+          </div>
+
+          <div class="bs claim-detail-body">
+              <apex:pageMessages id="pageMessage"></apex:pageMessages>
+              <div id="claimDetail" class=" bs tab-pane in active">
+                  <div class="bs tab-content">
+                      <!----Claim Details for Group Start---->
+                      <apex:outputPanel layout="none" rendered="{!isGroup}">
+                          <!-- New Table (Two-Column) -->
+                          <div class="bs panel two-column-table">
+                              <div class="bs panel-body two-column-table-body">
+                                  <apex:outputPanel layout="none">
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Claims No'][policyType]}">
+                                          <div class="bs claimDetailItem">
+                                              <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Claim_No}</div>
+                                              <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                                <apex:outputText value="{!targetClaim.claimNumber}"/>
+                                              </div>
+                                          </div>
+                                      </apex:outputPanel>
+
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Member Name'][policyType] && isBrokerUser }">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Member_Name}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                            <apex:outputText value="{!personInsuredNameStr}"/>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+                                      
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Member Cert. No'][policyType] && isBrokerUser }">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Member_Cert_No}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                            <apex:outputText value="{!targetClaim.certNumber}"/>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+                                      
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Claim type'][policyType]}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Claim_Type}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                            <apex:outputText value="{!targetClaim.claimTypeDisplay}"/>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+                                      
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Benefit Type'][policyType]}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Benefit_Type}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                            <apex:outputText value="{!targetClaim.benefitTypeDisplay}"/>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Benefit Item'][policyType] }">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Benefit_Item}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                            <apex:outputText value="{!targetClaim.benefitItemDescription}"/>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+
+                                      <!--
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Consultation Date'][policyType] && isOutpatient}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Consultation_Date}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                            <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                              <apex:Param value="{!targetClaim.consultationDateInDate}"/>
+                                            </apex:OutputText>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+                                      
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Admission Date'][policyType] && isInpatient}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Admission_Date}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                             <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                              <apex:Param value="{!targetClaim.admissionDateInDate}"/>
+                                            </apex:OutputText>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+                                      
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Discharge Date'][policyType] && isInpatient}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Discharge_Date}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value">
+                                            <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                              <apex:Param value="{!targetClaim.dischargeDateInDate}"/>
+                                            </apex:OutputText>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+                                      -->
+
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Admission Date'][policyType]}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Claim_Period_From}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                             <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                              <apex:Param value="{!targetClaim.consultationDateInDate}"/>
+                                            </apex:OutputText>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+                                      
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Discharge Date'][policyType]}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Claim_Period_To}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value">
+                                            <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                              <apex:Param value="{!targetClaim.dischargeDateInDate}"/>
+                                            </apex:OutputText>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Incurred Amount'][policyType] }">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Incurred_Amount}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                          <!-- IBM KOU PEI-78 20180615 Start -->
+<!--                                             <apex:outputText value="{!IF(targetClaim.incurredAmount == null ,'',targetClaim.currencySymbol)} {0, Number,###,##0.00}"> -->
+                                            <apex:outputText value="{!IF(targetClaim.incurredAmount == null ,'N/A',targetClaim.currencySymbol)} {0, Number,###,##0.00}">
+                                          <!-- IBM KOU PEI-78 20180615 End -->                                                                                        
+                                              <apex:param value="{!targetClaim.incurredAmount}"/>
+                                            </apex:outputText>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+                                      
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Paid Amount'][policyType]}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Paid_Amount}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                          <!-- IBM KOU PEI-78 20180615 Start -->
+
+<!--                                             <apex:outputText value="{!IF(targetClaim.paidAmount == null ,'',targetClaim.currencySymbol)} {0, Number,###,##0.00}"> -->
+                                            <apex:outputText value="{!IF(targetClaim.paidAmount == null ,'N/A',targetClaim.currencySymbol)} {0, Number,###,##0.00}">
+                                          <!-- IBM KOU PEI-78 20180615 End -->
+                                              <apex:param value="{!targetClaim.paidAmount}"/>
+                                            </apex:outputText>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Payment Date'][policyType]}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Payment_Date}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                            <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                              <apex:Param value="{!targetClaim.paymentDateInDate}"/>
+                                            </apex:OutputText>
+                                            
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+                                     
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Payment Method'][policyType]}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Payment_Method}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                            <apex:outputText value="{!targetClaim.paymentMethodDescription}"/>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+                                      
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Claims Status'][policyType]}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Claim_Status}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                            <apex:outputText value="{!targetClaim.claimStatusDescription}"/>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+                                      
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Branch'][policyType] && isBrokerUser}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Branch}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                            <apex:outputText value="{!targetClaim.branchDesc}"/>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+                                      
+                                  </apex:outputPanel>
+                              </div>
+                          </div>
+                      </apex:outputPanel>
+                      <!----Claim Details for Group End---->
+
+                      <!----Claim Details for Non Group Start---->
+                      <apex:outputPanel layout="none" rendered="{!!isGroup}">
+
+                          <!-- New Table (Two-Column) -->
+                          <div class="bs panel two-column-table">
+                              <div class="bs panel-body two-column-table-body">
+                                  <apex:outputPanel layout="none">
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Claims No'][policyType]}">
+                                          <div class="bs claimDetailItem">
+                                              <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Claim_No}</div>
+                                              <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                                <apex:outputText value="{!targetClaim.claimNumber}"/>
+                                              </div>
+                                          </div>
+                                      </apex:outputPanel>
+
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Received Date'][policyType]}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Received_Date}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                            <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                              <apex:Param value="{!targetClaim.submitDateInDate}"/>
+                                            </apex:OutputText>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+
+                                      <!--
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Consultation Date'][policyType] && isOutpatient}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Consultation_Date}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                          <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                              <apex:Param value="{!targetClaim.consultationDateinDate}"/>
+                                            </apex:OutputText>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+                                      
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Admission Date'][policyType] && isInpatient }">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Admission_Date}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value">
+                                            <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                              <apex:Param value="{!targetClaim.admissionDateinDate}"/>
+                                            </apex:OutputText>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+                                      
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Discharge Date'][policyType] && isInpatient}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Discharge_Date}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                             <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                              <apex:Param value="{!targetClaim.dischargeDateinDate}"/>
+                                            </apex:OutputText>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+                                      -->
+
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Admission Date'][policyType]}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Claim_Period_From}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                             <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                              <apex:Param value="{!targetClaim.consultationDateInDate}"/>
+                                            </apex:OutputText>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+                                      
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Discharge Date'][policyType]}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Claim_Period_To}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value">
+                                            <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                                              <apex:Param value="{!targetClaim.dischargeDateInDate}"/>
+                                            </apex:OutputText>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Person Insured'][policyType] }">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Person_Insured}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                            <apex:outputText value="{!personInsuredNameStr}"/>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+
+                                       <apex:outputPanel layout="none" rendered="{!hasType && fields2['Claims Status'][policyType]}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Claim_Status}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                            <apex:outputText value="{!targetClaim.claimStatusDescription}"/>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+                                     
+                                      <apex:outputPanel rendered="{!isPaidClaim}">
+                                        <apex:outputPanel layout="none" rendered="{!hasType && fields2['Payment Method'][policyType]}">
+                                          <div class="bs claimDetailItem">
+                                            <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Payment_Method}</div>
+                                            <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                              <apex:outputText value="{!targetClaim.paymentMethodDescription}"/>
+                                            </div>
+                                          </div>
+                                        </apex:outputPanel>
+
+                                        <apex:outputPanel layout="none" rendered="{!hasType && fields2['Incurred Amount'][policyType] }">
+                                          <div class="bs claimDetailItem">
+                                            <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Sum_Insured_Benefit_Amount}</div>
+                                            <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                              <apex:outputText value="{!IF(targetClaim.sumInsured == null,'',targetClaim.CurrencySymbol)} {0, Number,###,##0.00}">
+                                                <apex:param value="{!targetClaim.sumInsured}"/>
+                                              </apex:outputText>
+                                            </div>
+                                          </div>
+                                        </apex:outputPanel>
+
+                                        <apex:outputPanel layout="none" rendered="{!hasType && fields2['Payment Currency'][policyType]}">
+                                          <div class="bs claimDetailItem">
+                                            <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Payment_Currency}</div>
+                                            <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                              <apex:outputText value="{!targetClaim.paymentCurrencyDescription} "/>
+                                            </div>
+                                          </div>
+                                        </apex:outputPanel>
+
+                                        <apex:outputPanel layout="none" rendered="{!hasType && fields2['Paid Amount'][policyType]}">
+                                          <div class="bs claimDetailItem">
+                                            <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Paid_Amount}</div>
+                                            <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                              <apex:outputText value="{!IF(targetClaim.paidAmount == null,'',targetClaim.CurrencySymbol)} {0, Number,###,##0.00}">
+                                                <apex:param value="{!targetClaim.paidAmount}"/>
+                                              </apex:outputText>
+                                            </div>
+                                          </div>
+                                        </apex:outputPanel>
+                                        <!--
+                                        <apex:outputPanel layout="none" rendered="{!hasType && fields2['Payment To'][policyType]}">
+                                          <div class="bs claimDetailItem">
+                                            <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Payment_To}</div>
+                                            <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                              <apex:outputText value="{!targetClaim.paymentTo}"/>
+                                            </div>
+                                          </div>
+                                        </apex:outputPanel>
+                                        -->
+                                      </apex:outputPanel>
+                                      
+                                      
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['Remarks'][policyType]}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pol_Remarks}</div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                            <apex:outputText value="{!targetClaim.remarks} {!IF(ISBLANK(TRIM(targetClaim.rejectReason)),'','(Reject Reason)'+TRIM(targetClaim.rejectReason))}"/>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+
+                                      <apex:outputPanel layout="none" rendered="{!hasType && fields2['HG Remarks'][policyType] && isPaidClaim && showHGList}">
+                                        <div class="bs claimDetailItem">
+                                          <div class="bs col-xs-6 col-sm-3 field-label">
+                                            {!$Label.Pol_Health_Guard_Remarks}
+                                          </div>
+                                          <div class="bs col-xs-6 col-sm-3 field-value"> 
+                                            <apex:outputText value="{!targetClaim.hgRemarks}"/>
+                                          </div>
+                                        </div>
+                                      </apex:outputPanel>
+                                      
+                                  </apex:outputPanel>
+                              </div>
+                          </div>
+
+                          <!-- hide for day 1-->
+                          <apex:outputPanel id="hgResultApex" layout="block" rendered="{!isPaidClaim && showClaimBreakdown }">
+                            <apex:actionFunction action="{!hgPrevPage}" 
+                               name="hgPrevPage" 
+                               reRender="hgResult"
+                               status="loader-icon"
+                               oncomplete="Cigna.ClaimDetail.scrollToPanel();"/>
+                                 
+                             
+                            <apex:actionFunction action="{!hgNextPage}" 
+                               name="hgNextPage" 
+                               reRender="hgResult"
+                               status="loader-icon"
+                               oncomplete="Cigna.ClaimDetail.scrollToPanel();"/>
+                               
+                                <!--HKITSFDC-96 Start-->
+                             <!--<apex:outputPanel layout="block" id="hgResult">
+                                <div class="bs row" style="padding-top: 30px">
+                                    <div class="bs col-xs-12">
+                                      
+                                      <table class="bs table" id="claim-detail-table">
+                                            <tbody class="bs hidden-xs">
+                                                <tr class="bs table-header-row">
+                                                    <td class="bs field-label">{!$Label.Pol_Benefit}</td>
+                                                    <td class="bs field-label">{!$Label.Pol_Maximum_Amount}</td>
+                                                    <td class="bs field-label">{!$Label.Pol_Incurred_Amount}</td>
+                                                    <td class="bs field-label">{!$Label.Pol_Day_Class}</td>
+                                                    <td class="bs field-label">{!$Label.Pol_Paid_Amount}</td>
+                                                </tr>
+                                                
+                                                <apex:variable value="{!1}" var="rowNum" />
+                                                <apex:repeat value="{!hgMap[hgPage]}" var="c">
+                                                    <tr class="bs {!IF(MOD(rowNum,2)==1,'grey-background','')}">
+                                                      <apex:outputPanel layout="none">
+                                                          <td class="bs field-value">{!c.benefitName}</td>
+                                                          <td class="bs field-value">
+                                                              <apex:outputPanel rendered="{!IF(c.benefitLevel != null,'true','false')}">
+                                                                  <apex:outputText value="{!IF(c.benefitLevel == null,'',targetClaim.currencySymbol)} {0, Number,###,##0.00}">
+                                                                      <apex:param value="{!c.benefitLevel}"/>
+                                                                  </apex:outputText>
+                                                              </apex:outputPanel>--><!--HKITSFDC-96 End-->
+                                                              
+                                                              <!--Nicole_20200218_Customer Portal - Display Issue-->
+                                                            <!--HKITSFDC-96 Start-->
+                                                            <!--  <apex:outputPanel rendered="{!IF(c.benefitLevel == null,'true','false')}">
+                                                                  <apex:outputText value="{!c.benefitLevelonString}"/>
+                                                              </apex:outputPanel>
+                                                          </td>
+                                                          <td class="bs field-value">
+                                                              <apex:outputText value="{!IF(c.amountBilled == null,'',targetClaim.billingCurrencySymbol)} {0, Number,###,##0.00}">
+                                                                  <apex:param value="{!c.amountBilled}"/>
+                                                              </apex:outputText>
+                                                          </td>
+                                                          <td class="bs field-value">{!c.dayClass}</td>
+                                                          <td class="bs field-value">
+                                                              <apex:outputText value="{!IF(c.amountPayable == null,'',targetClaim.currencySymbol)} {0, Number,###,##0.00}">
+                                                                  <apex:param value="{!c.amountPayable}"/>
+                                                              </apex:outputText>
+                                                          </td>
+                                                      </apex:outputPanel>
+                                                    </tr>
+                                                    <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                                                </apex:repeat>
+                                            </tbody>
+
+                                            <tbody class="bs visible-xs">
+                                                <apex:variable value="{!1}" var="rowNum" />
+                                                <apex:repeat value="{!hgMap[hgPage]}" var="c">
+                                                    <tr class="bs table-header-row {!IF(MOD(rowNum,2)==1,'grey-background','')}" style="width: 100%">
+                                                        <td class="bs field-label">{!$Label.Pol_Benefit}</td>
+                                                        <td class="bs field-value">{!c.benefitName}</td>
+                                                    </tr>
+                                                    <tr class="bs {!IF(MOD(rowNum,2)==1,'grey-background','')}">
+                                                        <td class="bs field-label">{!$Label.Pol_Maximum_Amount}</td>
+                                                        <td class="bs field-value">
+                                                            <apex:outputText value="{!IF(c.benefitLevel == null,'',targetClaim.currencySymbol)} {0, Number,###,##0.00}">
+                                                                <apex:param value="{!c.benefitLevel}"/>
+                                                            </apex:outputText>
+                                                        </td>
+                                                    </tr>
+                                                    <tr class="bs {!IF(MOD(rowNum,2)==1,'grey-background','')}">
+                                                        <td class="bs field-label">{!$Label.Pol_Incurred_Amount}</td>
+                                                        <td class="bs field-value">
+                                                            <apex:outputText value="{!IF(c.amountBilled == null,'',targetClaim.billingCurrencySymbol)} {0, Number,###,##0.00}">
+                                                                <apex:param value="{!c.amountBilled}"/>
+                                                            </apex:outputText>
+                                                        </td>
+                                                    </tr>
+                                                    <tr class="bs {!IF(MOD(rowNum,2)==1,'grey-background','')}">
+                                                        <td class="bs field-label">{!$Label.Pol_Day_Class}</td>
+                                                        <td class="bs field-value">
+                                                            <apex:outputText value="{!c.dayClass}"/>
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr class="bs {!IF(MOD(rowNum,2)==1,'grey-background','')}">
+                                                        <td class="bs field-label">{!$Label.Pol_Paid_Amount}</td>
+                                                        <td class="bs field-value">
+                                                           <apex:outputText value="{!IF(c.amountPayable == null,'',targetClaim.currencySymbol)} {0, Number,###,##0.00}">
+                                                                <apex:param value="{!c.amountPayable}"/>
+                                                            </apex:outputText>
+                                                        </td>
+                                                    </tr>
+
+                                                    <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                                                </apex:repeat>
+                                            </tbody>
+                                      </table>
+
+                                    </div>
+
+                                    <div class="bs">
+                                      <div style="padding:20px;" class="bs col-sm-12 col-xs-12 text-center">
+                                        <apex:outputPanel rendered="{!If(hgTotalPage>1 && hghasPrev,true,false)}">
+                                        <div class="ci-hk-arrow-29 onclick-pointer cigna-fg-orange-dark" style="padding-right:10px;" aria-hidden="true" onclick="hgPrevPage();"/>
+                                        </apex:outputPanel>
+
+                                        <apex:outputText value="{!$Label.Page_0_of_1}" >
+                                          <apex:param value="{!hgPage}" />
+                                          <apex:param value="{!hgTotalPage}" />
+                                        </apex:outputText>
+
+                                        <apex:outputPanel rendered="{!If(hgTotalPage>1 && hghasNext,true,false)}">
+                                          <div class="ci-hk-arrow-31 onclick-pointer cigna-fg-orange-dark" style="padding-left:10px;" aria-hidden="true" onclick="hgNextPage()"/>
+                                        </apex:outputPanel>
+                                      </div>
+                                    </div>
+                                </div>
+                              </apex:outputPanel>-->
+                              
+                            <!--HKITSFDC 96 End-->
+                          </apex:outputPanel>  
+                      </apex:outputPanel>
+                      <!----Claim Details for Non Group End---->
+
+                      <!-- HKITSFDC-96 BEGIN -->
+                      <!--<apex:outputPanel layout="block" style="margin-top:20px;margin-bottom:20px;">
+                          <apex:outputText value="{!$Label.Refer_Settle_Advice}" style="font-style: italic; font-weight:bold;"/>
+                      </apex:outputPanel>-->
+                      
+                      <!-- HKITSFDC-96 END -->
+
+                      <!-- efulfillment start -->
+                          <!--<apex:outputPanel id="ClaimPanel" layout="block" rendered="{!isCustomerUser && claimDocList.size>0 && (showClaimDoc || fields2['Claim Correspondence'][policyType]  )}">--><!--HKITSFDC-46-->
+                          <apex:outputPanel id="ClaimPanel" layout="block" rendered="{!claimDocList.size>0 && (showClaimDoc || fields2['Claim Correspondence'][policyType]  )}"><!--HKITSFDC-46-->
+                            <div class="bs panel panel-default col-xs-12 two-column-table">
+                              
+                                  <div id="ClaimDocumentPanelHeader" class="bs panel-heading form-toggle-tab onclick-pointer ">
+                                      {!$Label.efulfillment_claim_correspondences}
+                                     <i aria-hidden="true" class="ci-hk-arrow-28 ci-hk-sm pull-right"></i>
+                                  </div>
+                                  <div id="ClaimDocumentPanel" class="bs col-xs-12 col-sm-12 collapse panel-body form-toggle-content" >
+                                    <apex:variable var="tmpIdx" value="{!0}" />
+                                    <apex:repeat id="claimDocList" value="{!claimDocList}" var="myList">
+                                      <div class='col-xs-11 col-sm-3 dy-col' style='padding:10px;'>
+                                            <div class="fileWrapper col-xs-12 col-sm-12 {!if(myList.isNew,'newFile','')}" data-atk="{!myList.attachmentKey}"  data-brkatt="{!tempAttList[tmpIdx]}"   >
+                                                    <div class="fw-icon">
+                                                      <img src="{!URLFOR($Resource.efulfillment, 'icon.png')}" style='width:100%'/>
+                                                    </div>
+                                                    <div class="fw-filename">
+                                                      <span class='txt-filename'>{!myList.Description}</span><br/>
+                                                      <span style='font-size: 12px !important;color:gray'>{!myList.createdDateStrDisp}</span>    
+                                                    </div>   
+                                            </div> 
+                                     </div>
+
+                                     <div style='display:none;'> 
+                                        <a id="dlink_{!tempAttList[tmpIdx]}" href="{!downloadSitePrefix}apex/ComFileDownLoadVFP?lang={!curLang}&attID={!tempAttList[tmpIdx]}&attKey={!myList.attachmentKey}&pol={!targetClaim.polNumber}&appName=CUSTOMER_PORTAL" target="_blank">down_load_pdf_hidden</a>
+                                      </div>
+                                       <apex:variable var="tmpIdx" value="{!tmpIdx+1}" />  
+                                    </apex:repeat>
+                                    
+                                  </div>
+                            </div>
+                          </apex:outputPanel>
+                          <apex:outputPanel id="dlvar" >
+                               <apex:inputHidden id="targetAttachmentKey" value="{!targetAttachmentKey}"/>
+                              <apex:inputHidden id="selectedAttID" value="{!selectedAttID}"/>
+                            
+                        </apex:outputPanel>
+                        <!--
+                          <apex:actionFunction namespace="ClaimDetailAF" name="getDocForMobile"  
+                        action="{!getDocForMobile}" status="loader-icon"  oncomplete="dlCompleted();" />
+                        -->
+                          <script>
+                            //CR-56_Link_20220214
+                            $("#ClaimDocumentPanelHeader").on("click",function() {
+                                $("#ClaimDocumentPanel").toggle(null, null,  changeSection(this));
+                            });
+
+                           
+                            $(".fileWrapper").on("click",function(){                               
+                                var atk = $(this).data("atk");
+                                var brkatt = $(this).data("brkatt");
+                                $("input[id$='targetAttachmentKey']").val(atk);
+                                $("input[id$='selectedAttID']").val(brkatt);                                
+                                var indid = "#dlink_"+ brkatt;
+                                // 20230921 - minghua - PI-129 Vulnerability follow up request - Pentest (FND-61951) High
+                                // Rancho_PI142_20231214 - fix user could not open doc in iPad/iPhone website
+                                var hrefBack=$(indid).attr("href");
+                                if (Cigna.Util.checkWebView()) {
+                                    var href=hrefBack.split("/apex/");
+                                    var param="/apex/"+href[1];
+                                    if (Cigna.Util.isIOS()) {
+                                        var openURL=openDownload(param);
+                                        $(indid).attr("href",openURL);
+                                    }else{
+                                        $(indid).removeAttr("target");
+                                        $(indid).attr("href","javascript:void(0);");
+                                        $(indid).attr("onclick",openDownload(param));
+                                    }
+                                }
+                                $(indid)[0].click();
+                                if (Cigna.Util.checkWebView()) {
+                                  $(indid).attr("href",hrefBack);
+                                }
+                              });
+ 
+                            function changeSection(section){
+                              var icon = $(section).find('i');
+
+                              if(icon.hasClass("ci-hk-arrow-28")){
+                                  console.log($(section));
+                                  icon.removeClass("ci-hk-arrow-28").addClass("ci-hk-arrow-27");
+                              }else if(icon.hasClass("ci-hk-arrow-27")){
+                                  icon.removeClass("ci-hk-arrow-27").addClass("ci-hk-arrow-28");
+                              }
+                            }
+                          </script>
+
+                          <style>
+                          
+                          @media (min-width:768px and max-width: 991px) {
+                            .bs .panel-heading {
+                                padding-left: 0px;
+                                padding-right: 0px;
+                            }
+                            .bs .panel-heading{
+                                background-color: transparent !important;
+                                color: black !important;
+                                border:none;
+                                border-bottom: 1px solid #ddd;
+                            }
+                          }
+                          @media (max-width: 768px) {
+
+                            .table-panel-body {
+                              padding:0px !important;
+                            }
+                          }
+                          
+                          .bs .panel-body{
+                            padding:0px;
+                            padding-top:10px;
+                          }
+                          .bs .two-column-table {
+                              border: 0 !important;
+                              border-radius: 0 !important;
+                              -webkit-box-shadow: 0px 0px 0px !important;
+                              box-shadow: 0px 0px 0px !important;
+                          }
+                          .bs .two-column-table-body .row {
+                              padding-top: 5px;
+                              padding-bottom: 5px;
+                          }
+
+                          @media (max-width:767px){
+               
+                          }
+                          @media (min-width:768px) and (max-width:1170px){
+                            .dy-col{   
+                              width:33.3% !important;             
+                            }
+                          }
+                          @media (min-width:1171px){
+                            .dy-col{    
+                              width:25% !important;                
+                            }
+                          }
+                          @media (max-width: 1170px) {
+                              .fw-filename{
+                                font-size: 12px;
+                                width:75%;
+                                padding:0px;
+                                margin:0px;
+                                text-align:center;
+                                vertical-align:middle !important;
+                                display: inline-block;
+                                padding-left: 6px;
+                                padding-right: 10px;
+                              }
+                            
+                          }
+                           @media (min-width: 1171px) {
+                            .fw-filename{
+                              font-size: 14px;
+                              width:75%;
+                              padding:0px;
+                              margin:0px;
+                              text-align:center;
+                              vertical-align:middle !important;
+                              display: inline-block;
+                              padding-left: 6px;
+                              padding-right: 11px;
+                            }
+                          }
+                          .fileWrapper {
+                              font-size:14px;
+                              font-weight: bold;
+                              padding-left: 0px;
+                              padding-right: 0px; 
+                              vertical-align: middle;          
+                              cursor:pointer;
+                              -moz-box-shadow:1px 3px 8px #919191; 
+                              -webkit-box-shadow:1px 3px 8px #919191; 
+                              box-shadow:1px 3px 8px #919191;
+                            }
+
+                          .newFile{
+                            background: url('{!URLFOR($Resource.eFulfillment, 'icon2.png')}') no-repeat;
+                            background-position:right top; 
+                            background-size: auto 40%;
+                          }
+                          .fw-icon{
+                            width:25%;
+                            padding:0px;
+                            margin:0px;
+                            text-align:center;                           
+                            padding:0px;
+                            display: inline-block;
+                            vertical-align: middle;
+                            background-color: #9BC93B;
+                          }
+
+                          </style>
+                          <!-- efulfillment end -->
+                  </div>
+              </div>
+          </div>
+
+          <script type="text/javascript">
+            Cigna.ClaimDetail.setRow('claimDetailItem');
+             
+            if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                //Ray's Updates
+                $('html').css('position', 'fixed').css('overflow', 'auto').css('width', '100%').css('height', '100%');
+                $('body').css('position', 'fixed').css('overflow-y', 'scroll').css('width', '100%').css('height', '100%');
+            }
+          </script>
+          
+        </apex:outputPanel>
+      </apex:form>
+    </apex:define>
+  </div>
+  <!-- End of the main body -->
+</apex:page>

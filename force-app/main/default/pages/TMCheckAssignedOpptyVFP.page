@@ -1,0 +1,155 @@
+<apex:page docType="html-5.0" id="CheckAssignedOppty" title="Check Assigned Opportunity" Controller="TMCheckAssignedOpptyCtrl">
+    <apex:includeScript value="/support/console/33.0/integration.js"/>
+    <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+    
+    <b><apex:outputLabel value="{!$Label.TM_Oppty_Reassignment_Title}" style="font-size:18px;"/></b>
+    
+    <apex:form id="checkAssignedOpp">
+        <apex:pagemessages />
+        <apex:actionStatus id="loader-icon">
+            <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                     &nbsp;
+                 </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                    </div>
+                 </div>
+            </apex:facet>
+        </apex:actionStatus>
+                         
+        <apex:actionFunction action="{!assignPrevPage}" 
+             name="assignPrevPage" 
+             reRender="AssignedOpptyTable"
+             status="loader-icon" />
+
+        <apex:actionFunction action="{!assignNextPage}" 
+             name="assignNextPage" 
+             reRender="AssignedOpptyTable"
+             status="loader-icon" />  
+
+        <apex:actionFunction action="{!AssignTo}" 
+             name="Assign" 
+             reRender="checkAssignedOpp"
+             status="loader-icon" />
+        
+        <br/><br/>
+        <div>
+            <div style="float:left; padding-left:30%;padding-top: 4px;padding-right: 5px;" >{!$Label.TM_Select_TMR}</div>
+            <apex:inputField style="float:left;" styleClass="TalUserDropDown" value="{!assignToOppty.Client_Manager__c}"  />
+            <input style="float:left;" class="btn" type="button" value="Assign" onclick="Assign();" />
+        </div>      
+            
+        <apex:pageBlock id="AssignedOpptyTable" title="{!$Label.TM_Assigned_Oppty}">
+            <div style='height:35px; float:left'>
+                <b>Sort by: </b> 
+                <apex:selectList value="{!selectedAssignTableColumn}" multiselect="false" size="1" label="Sort by: ">
+                <apex:selectOptions value="{!assignTableColumn}" />
+                <apex:actionSupport status="loader-icon" event="onchange" action="{!searchAssignOpp}" ReRender="AssignedOpptyTable" /></apex:selectList>
+            </div>
+            <div style='height:35px; float:left'>
+                <apex:selectList value="{!selectedAssignTableOrder}" multiselect="false" size="1" >
+                <apex:selectOptions value="{!assignTableOrder}" />
+                <apex:actionSupport status="loader-icon" event="onchange" action="{!searchAssignOpp}" ReRender="AssignedOpptyTable" /></apex:selectList>
+            </div>
+            <apex:pageblockTable value="{!assignedOpptyWrapper}" var="uo">
+                <apex:column >
+                    <apex:facet name="header"><input type="checkbox" id="AssignOpptyAllCheckbox"/></apex:facet>
+                    <apex:inputCheckbox id="assignedCheckbox" value="{!uo.isSelected}" />
+                </apex:column>
+                <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Name.Label}">
+                    <a href="javascript:void(0);" onclick="OpenSObject('{!uo.oppty.id}','{!uo.oppty.Name}')" >{!uo.oppty.Name}</a>
+                </apex:column>
+                <apex:column headerValue="{!$ObjectType.Account.Fields.Name.Label}">
+                    <a href="javascript:void(0);" onclick="OpenSObject('{!uo.oppty.Account.id}','{!uo.oppty.Account.Name}')" >{!uo.oppty.Account.Name}</a>
+                </apex:column>
+                <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Product_1__c.Label}">
+                    <a href="javascript:void(0);" onclick="OpenSObject('{!uo.oppty.Product_1__r.id}','{!uo.oppty.Product_1__r.name}')" >{!uo.oppty.Product_1__r.name}</a>
+                </apex:column>
+                <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Opportunity_ID__c.Label}">
+                    {!uo.oppty.Opportunity_ID__c}
+                </apex:column>
+                <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Segmentation__c.Label}">
+                    {!uo.oppty.Segmentation__c}
+                </apex:column>
+                <apex:column headerValue="{!$ObjectType.Opportunity.Fields.IPAS_Remarks1__c.Label}">
+                    {!uo.oppty.IPAS_Remarks1__c}
+                </apex:column>
+                <apex:column headerValue="{!$ObjectType.Opportunity.Fields.IPAS_Remarks2__c.Label}">
+                    {!uo.oppty.IPAS_Remarks2__c}
+                </apex:column>
+                <apex:column headerValue="{!$ObjectType.Opportunity.Fields.IPAS_Remarks3__c.Label}">
+                    {!uo.oppty.IPAS_Remarks3__c}
+                </apex:column>
+                <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Last_Called_Date__c.Label}">
+                    <apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">
+                        <apex:Param value="{!uo.oppty.Last_Called_Date__c}"/>
+                    </apex:OutputText>
+                </apex:column>
+                <apex:column headerValue="{!$ObjectType.Opportunity.Fields.Result__c.Label}">
+                    {!uo.oppty.Result__c}
+                </apex:column>
+                <apex:column headerValue="{!$ObjectType.Opportunity.Fields.No_of_Attempt__c.Label}">
+                    {!uo.oppty.No_of_Attempt__c}
+                </apex:column>
+                <apex:column headerValue="{!$Label.TM_TMR_Agent_ID}">
+                    {!uo.oppty.Owner.TM_Agent_ID__c}
+                </apex:column>
+            </apex:pageblockTable>
+            <table align="right" cellspacing="10">
+                <tr>
+                    <td>
+                        <apex:outputText rendered="{!If(AssignTotalPage>1 && AssignCurrentPage>1,true,false)}">    
+                            <a href="javascript:void(0);" onclick="assignPrevPage();">&lt;&lt; {!$Label.TM_Previous_Page}</a>
+                            <span>|</span>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <span> 
+                        <apex:outputText value=" {!$Label.TM_Page_0_of_1}" >
+                            <apex:param value="{!AssignCurrentPage}" />
+                            <apex:param value="{!AssignTotalPage}" />
+                        </apex:outputText>
+                        </span>
+                    </td>
+                    <td>
+                        <apex:outputText rendered="{!If(AssignTotalPage>1 && AssignCurrentPage < AssignTotalPage,true,false)}">
+                            <span>|</span>
+                            <a href="javascript:void(0);" onclick="assignNextPage();">{!$Label.TM_Next_Page} &gt;&gt;</a>
+                        </apex:outputText>
+                    </td>
+                </tr>
+            </table>
+        
+        </apex:pageBlock>
+        
+        
+  
+        <script type="text/javascript">
+            $(function() {
+                $('div.TalUserDropDown select').each(function(index) {
+                    $(this).hide();
+                });
+                
+                $("#AssignOpptyAllCheckbox").click(function() {
+                
+                    $('input[id$="assignedCheckbox"]').prop("checked", this.checked); 
+                });
+            });
+            
+            function OpenSObject(id,TabName){
+                if(id!=null && id!=''){
+                    if (sforce.console.isInConsole()) {
+                        var rnd = Math.floor(Math.random() * 1000000000000);
+                        sforce.console.openPrimaryTab(null, '/' + id, true, TabName, null, TabName);
+                        sforce.console.setCustomConsoleComponentVisible(false);      
+                    } else {
+                        window.open('/' + id, '_blank');
+                    }
+                } 
+            }
+        </script>
+    </apex:form>
+</apex:page>

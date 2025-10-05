@@ -1,0 +1,431 @@
+<apex:page showHeader="true" docType="html-5.0" sidebar="false" controller="TMReportCICAPSuccessOrderUIPCtrl" id="TMReportCICAPSuccessOrderUIPVFP" title="TM_Report_CICAP_SuccessOrder_UIP" tabStyle="report"  >
+<head>
+<style>
+.headRow {width:700px; display:block;}
+.tbRowData {width:700px; display:block; text-align: center;}
+.blockElement {display:inline-block;}
+.rowtb {border: 1px solid black;}
+.rowtb tr td:first-of-type {padding-left: 5px;}
+.rowtb tr td {padding-top: 5px;padding-bottom: 5px;}
+.rowtbHeader th {border-right: 1px solid black;word-wrap:break-word;white-space: normal;}
+.rowtbHeader th:last-child  {border-right: 0px solid black;}
+.bordertopnone {  border-top:none !important;}
+.borderrightnone {  border-right:none !important;}
+.topRow th{ border-top:none !important;}
+.data tr td strong {min-width:50px;text-align: right;}
+.data tr td:last-child {border-right: none;}
+.data tr td {border-right: 1px solid black;border-top: 1px solid black; text-align: left;}
+.detail tr:first-of-type td {border-top: none;}
+.options tr td {border: none;}
+ 
+.lineTable {text-align: center; margin: 0 20px;border: 1px solid black;}
+h3 {    padding: 2px 24px;}
+body {font-size: 11px;  }
+</style>
+<script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+<script>
+    $(document).ready(function(){
+        $("input[id $='Start']").blur();
+        //alert('a');
+    });
+</script>
+</head>
+<body>
+<div style="width:auto">
+<apex:form id="mainPage">  
+<apex:actionStatus id="loader-icon">
+            <apex:facet name="start">
+                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                         &nbsp;
+                     </div>
+                    <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                        <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                            <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                            <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                        </div>
+                     </div>
+                </apex:facet>
+            </apex:actionStatus>
+
+<apex:actionFunction action="{!refreshData}" name="refreshData" reRender="dataPanel,actionPanel" status="loader-icon"/>
+
+<apex:pageBlock >
+    <div class="headRow" style="margin-left: 20px;">
+<input id="hiddenElement" type="hidden" />
+        <table id="filterTable" style="display: block;"  >            
+            <tr>
+                <th><label>Start Date:</label></th>
+                <th><apex:inputField value="{!filter.Start_Date__c}" label="Start Date" id="Start"/></th>
+            </tr>
+            <tr>
+                <th><label>End Date:</label></th>
+                <th><apex:inputField value="{!filter.End_Date__c}" label="End Date" id="end"/></th>
+            </tr>
+            <tr>
+                <td >
+                    <span id="btnRefresh" class="btn" style="text-decoration:none !important;" onclick="refreshData();">Refresh</span>
+                </td>
+                <td>                    
+                    <apex:outputPanel layout="block" id="actionPanel">
+                        <apex:commandLink action="{!downloadPDF}" target="_blank"  id="cmdLink" style="text-decoration:none !important;">
+                          <span class="btn" style="text-decoration:none !important;">Export PDF</span>
+                        </apex:commandLink>
+                    </apex:outputPanel>
+                </td>
+            </tr>
+        </table> 
+    </div> 
+</apex:pageBlock>
+
+<apex:outputPanel id="dataPanel" layout="block">
+
+<apex:outputPanel styleclass="headRow" rendered="{!dataList!=null && dataList.size>0}" layout="block">
+    <div style="width:100%;">
+        <div class="blockElement" style="width:23%; height: 85px;  text-align: center; vertical-align: bottom;">
+            <apex:image id="cignaLogo" styleClass="cignaLogo" value="{!URLFOR($Resource.Cigna_Logo_png)}" style="height: 80px" />
+        </div>
+        <div class="blockElement" style="width:50%;  height: 85px; text-align: center;   border: 1px solid black; vertical-align: bottom;
+            background-color: lightgray;"><br/><span style="font-size: 14px;">SFDC Successful Order Details</span> <br/><br/>
+            <apex:outputText value="{!$Label.TM_Report_ReportDate}"/><apex:outputText value="{0,date,dd MMM yyyy}">
+                <apex:Param value="{!Now()}"/>
+            </apex:outputText>
+        </div>
+        <div class="blockElement"  style="width:25%;  height: 85px; "> 
+            <div style="padding-top: 65px ;text-align: right;">
+            <apex:outputText value="{!$Label.TM_Report_PrintDate}"/><apex:outputText value="{0,date,dd MMM yyyy}">
+                <apex:Param value="{!Now()}"/>
+            </apex:outputText>
+            </div>
+        </div>
+    </div>
+    <div style="padding-left: 10%;color: #3c78d8;width:100%;">
+        <span style='font-weight: bold;text-decoration: underline;'>GN16</span><br/>
+        o   Elderly age on or above 65<br/>
+        o   Low education level: Primary or below<br/>
+        o   No income group: Housewife, Retired &amp; Unemployed<br/>
+        o   Customers with limited or no regular source of income: Private piano teacher, freelance job worker<br/>
+    </div>
+</apex:outputPanel>
+
+<div>
+<apex:repeat value="{!dataList}" var="data">
+
+<div class="pdfDataSheet">
+
+    <div class="tbRowData" style="margin: 2px 20px;">
+        <table class="rowtb" style="padding: 5px; width:100%;">
+            <tr >
+            <th>SFDC Policy No.: </th><td>&nbsp;<apex:outputField value="{!data.Policy_No__c}"/>&nbsp;</td>
+            <th>Opportunity ID:</th><td>&nbsp;<apex:outputField value="{!data.Opportunity__r.Opportunity_ID__c}"/>&nbsp;</td>
+            <th>AML High risk:</th><td>{!data.AML_High_Risk_Ind__c} &nbsp;</td>
+            </tr>
+        </table>
+    </div>
+    <div class="tbRowData" style="margin: 2px 20px;">
+        <table class="rowtb" style="padding: 5px; width:100%;">
+            <tr>
+            <th>Campaign No.: </th><td>&nbsp;<apex:outputField value="{!data.Policy_Transaction__r.Selected_Campaign__r.IPAS_Campaign_Code__c}"/>&nbsp;</td>
+            <th>Type:</th><td>&nbsp;<apex:outputField value="{!data.Policy_Transaction__r.Selected_Campaign__r.Campaign_Type__r.Name}"/>&nbsp;</td>
+            <th>System: </th><td>IPAS&nbsp;</td>
+            <th>Seller ID: </th><td>&nbsp;<apex:outputField value="{!data.TMR_Seller_ID__c}"/>&nbsp;</td>
+            <th>Order Date: </th><td><apex:outputText value="{0,date,dd MMM yyyy}">
+            <apex:Param value="{!data.Policy_Effective_Date__c}"/></apex:outputText>&nbsp;</td>
+            </tr>
+        </table>
+    </div>
+    <apex:repeat value="{!data.Person_Insureds__r}" var="PI">
+    <div class="tbRowData" style="margin: 2px 20px;">
+        <table class="rowtb" style="padding: 5px; width:100%;">
+            <tr>
+            <th>Eligibility: </th><td>&nbsp;<apex:outputText value="{!PI.Insured_Type__c}"/>&nbsp;</td>
+            <th>UW Status:</th><td>&nbsp;<apex:outputField value="{!data.UW_Result__c}"/>&nbsp;</td>
+            <th>Master Pol:</th><td>&nbsp;<apex:outputField value="{!data.Master_Policy_No__c}"/> &nbsp;</td>
+            <th>Relationship Code:</th><td>&nbsp;<apex:outputText value="{!PI.Insured_Type__c}"/>&nbsp;</td>
+            <th>Policy Currency:</th><td>&nbsp;<apex:outputField value="{!data.Product__r.Currency__c}"/>&nbsp;</td></tr>
+        </table>
+    </div>
+    </apex:repeat>
+
+    <h3>PolicyHolder Information</h3>
+    <div class="tbRowData" style="margin: 2px 20px;">
+        <table class="rowtb" style="width:100%;">
+            <tbody class="data detail">
+                <tr  >
+                    <td width="40%" class="bordertopnone"><strong> First Name:</strong> &nbsp;<apex:outputField value="{!data.Policy_Holder_First_Name__c}"/>&nbsp;</td>
+                    <td class="bordertopnone"><strong>Last Name: </strong> &nbsp;<apex:outputField value="{!data.Policy_Holder_Last_Name__c}"/>&nbsp;</td>                    
+                    <td  class="bordertopnone borderrightnone"><strong></strong>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td ><strong>ID Num: </strong> &nbsp;<apex:outputField value="{!data.Personal_ID__c}"/>&nbsp;<strong>EXP: </strong> <apex:outputText value="{0,date,yyyy-MM-dd}">
+                        <apex:Param value="{!data.ID_Expiry_Date__c}"/></apex:outputText>&nbsp;</td>
+                    <td><strong>DOB: </strong> <apex:outputText value="{0,date,dd MMM yyyy}">
+                        <apex:Param value="{!data.Date_of_Birth__c}"/></apex:outputText>&nbsp;</td>
+                    <td  class="  borderrightnone"><strong>Sex:</strong> &nbsp;<apex:outputField value="{!data.Gender__c}"/>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td><strong> ID Type:</strong> &nbsp;<apex:outputField value="{!data.ID_Type__c}"/>&nbsp;</td>
+                    <td colspan="2"  class="  borderrightnone"><strong>Nationality: </strong> &nbsp;<apex:outputField value="{!data.Nationality__c}"/>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td><strong> Tax payer number:</strong></td>
+                    <td colspan="2"  class="  borderrightnone"><strong>Place of Birth: </strong> &nbsp;<apex:outputField value="{!data.Place_of_Birth__c}"/>&nbsp;</td>
+                </tr>
+            </tbody>
+        </table>
+        <table class="rowtb" style="width:100%;">
+            <tbody class="data detail">
+                <tr >
+                    <td class="bordertopnone"><strong> {!$ObjectType.New_Policy__c.Fields.Home_Phone__c.Label}:</strong> &nbsp;<apex:outputField value="{!data.Home_Phone__c}"/>&nbsp;</td>
+                    <td colspan="2" class="bordertopnone"><strong>{!$ObjectType.New_Policy__c.Fields.Office_Phone__c.Label}: </strong> &nbsp;<apex:outputField value="{!data.Office_Phone__c}"/>&nbsp;</td>
+                    <td colspan="2"  class="bordertopnone borderrightnone"><strong>{!$ObjectType.New_Policy__c.Fields.Mobile_Phone__c.Label}: </strong> &nbsp;<apex:outputField value="{!data.Mobile_Phone__c}"/>&nbsp;</td>
+                </tr>
+            </tbody>
+        </table>
+        <table class="rowtb" style="width:100%;">
+            <tbody class="data detail">
+                <tr>                     
+                    <td colspan="2" class="bordertopnone borderrightnone"  ><strong>Residential Address: </strong> <apex:outputPanel layout="none" rendered="{!data.product__r.Is_Life__c}">
+                        &nbsp;<apex:outputField value="{!data.Residential_Address_1__c}"/>&nbsp;&nbsp;<apex:outputField value="{!data.Residential_Address_2__c}"/>&nbsp; &nbsp;<apex:outputField value="{!data.Residential_Address_3__c}"/>&nbsp;&nbsp;<apex:outputField value="{!data.Residential_Address_4__c}"/>&nbsp; &nbsp;<apex:outputField value="{!data.Residential_Address_Country__c}"/>&nbsp;
+                    </apex:outputPanel>
+                    </td>
+                </tr>
+                <tr>
+                    <td  class="borderrightnone"  colspan="2">
+                        <strong>Permanent Address:</strong> 
+                        <apex:outputPanel layout="none" rendered="false">
+                        &nbsp;<apex:outputField value="{!data.Permanent_Address_1__c}"/>&nbsp;&nbsp;<apex:outputField value="{!data.Permanent_Address_2__c}"/>&nbsp; &nbsp;<apex:outputField value="{!data.Permanent_Address_3__c}"/>&nbsp;&nbsp;<apex:outputField value="{!data.Permanent_Address_4__c}"/>&nbsp; &nbsp;<apex:outputField value="{!data.Permanent_Address_Country__c}"/>&nbsp;
+                        </apex:outputPanel>
+                    </td>
+                </tr>
+                <tr>
+                    <td  class="borderrightnone"  colspan="2">
+                        <strong>Corresponding Address:</strong> 
+                        &nbsp;<apex:outputField value="{!data.Corresponding_Address_1__c}"/>&nbsp;&nbsp;<apex:outputField value="{!data.Corresponding_Address_2__c}"/>&nbsp; &nbsp;<apex:outputField value="{!data.Corresponding_Address_3__c}"/>&nbsp;&nbsp;<apex:outputField value="{!data.Corresponding_Address_4__c}"/>&nbsp; &nbsp;<apex:outputField value="{!data.Corresponding_Address_Country__c}"/>&nbsp;
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <table  class="rowtb" style="width:100%;">
+            <tbody class="data detail">
+                <tr>
+                    <td class="bordertopnone"><strong> {!$ObjectType.New_Policy__c.Fields.Business_Nature__c.Label}:</strong> &nbsp;<apex:outputField value="{!data.Business_Nature__c}"/>&nbsp;</td>
+                    <td colspan="2" class="bordertopnone"><strong>{!$ObjectType.New_Policy__c.Fields.Position__c.Label}: </strong> &nbsp;<apex:outputField value="{!data.Position__c}"/>&nbsp;</td>
+                    <td colspan="2" class="bordertopnone borderrightnone"><strong>{!$ObjectType.New_Policy__c.Fields.Company__c.Label}: </strong> &nbsp;<apex:outputField value="{!data.Company__c}"/>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td colspan="5" class="  borderrightnone"><strong> Company Address (Country Only):</strong> &nbsp;<apex:outputField value="{!data.Country__c}"/>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td colspan="5" class="borderrightnone">
+                        <table style="border:none;"><tr><td class="bordertopnone borderrightnone" style="width:15%;vertical-align: top !important;">
+                            <strong >Source of Fund:</strong>
+                        </td><td class="bordertopnone borderrightnone">
+                            <table style="border:none;"><tr>
+                                <td  class="bordertopnone borderrightnone"></td>
+                                <apex:repeat value="{!Items}" var="itm">                            
+                                        <td style="border:none !important;">
+                                            <img src="/img/checkbox_{!IF(itm.value == data.Source_of_Fund__c, '', 'un')}checked.gif" />
+                                            <label >{!itm.label}</label>                                           
+                                        </td>                            
+                                </apex:repeat>
+                                <td>{!data.Other_Source_of_Fund__c}</td>
+                            </tr></table>
+                        
+                        &nbsp;
+                        </td></tr></table>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <table  class="rowtb" style=" width:100%;">
+            <tbody class="data detail">
+                <tr>
+                    <td  class="bordertopnone" width="50%"><strong> {!$ObjectType.New_Policy__c.Fields.Education_Level__c.Label}:</strong> &nbsp;<apex:outputField value="{!data.Education_Level__c}"/>&nbsp;</td>
+                    <td   class="bordertopnone borderrightnone" width="50%"><apex:outputField value="{!data.Education_Level_Additional_Information__c}"/>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td><strong>{!$ObjectType.New_Policy__c.Fields.Means_of_Income__c.Label}: </strong> &nbsp;<apex:outputField value="{!data.Means_of_Income__c}"/>&nbsp;</td>
+                    <td  class=" borderrightnone"><apex:outputField value="{!data.Means_of_Income_Additional_Information__c}"/>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td><strong>Single Premium: </strong> &nbsp;<apex:outputField value="{!data.account__r.Reference2__pc  }"/>&nbsp;</td>
+                    <td class="borderrightnone"><strong>Maturity Policy Number: </strong> &nbsp;<apex:outputField value="{!data.account__r.Maturity_Policy_Number__c  }"/>&nbsp;</td>
+                </tr>
+
+              
+                <tr>
+                    <td><strong>{!$ObjectType.New_Policy__c.Fields.Tax_Residence_1__c.Label}: </strong> &nbsp;<apex:outputField value="{!data.Tax_Residence_1__c}"/>&nbsp;</td>
+                    <td class="  borderrightnone"><strong>TIN - 1:  </strong> &nbsp;<apex:outputField value="{!data.Tax_Num_1__c}"/>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td><strong>{!$ObjectType.New_Policy__c.Fields.Tax_Residence_2__c.Label}: </strong> &nbsp;<apex:outputField value="{!data.Tax_Residence_2__c}"/>&nbsp;</td>
+                    <td  class="  borderrightnone"><strong>TIN - 2:  </strong> &nbsp;<apex:outputField value="{!data.Tax_Num_2__c}"/>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td><strong>{!$ObjectType.New_Policy__c.Fields.Tax_Residence_3__c.Label}: </strong> &nbsp;<apex:outputField value="{!data.Tax_Residence_3__c}"/>&nbsp;</td>
+                    <td  class="  borderrightnone"><strong>TIN - 3:  </strong> &nbsp;<apex:outputField value="{!data.Tax_Num_3__c}"/>&nbsp;</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Insured Information</h3>
+    <apex:repeat value="{!data.Person_Insureds__r}" var="PI">
+    <div class="tbRowData" style="margin: 2px 20px;">
+        <table  class="rowtb" style=" width:100%;">
+            <tbody class="data detail">
+                <tr>
+                    <td class="bordertopnone  "><strong>{!$ObjectType.Person_Insured__c.Fields.Insured_First_Name__c.Label}:</strong> &nbsp;<apex:outputField value="{!PI.Insured_First_Name__c}"/>&nbsp;</td>
+                    <td class="bordertopnone  "><strong>{!$ObjectType.Person_Insured__c.Fields.Insured_Last_Name__c.Label}: </strong> &nbsp;<apex:outputField value="{!PI.Insured_Last_Name__c}"/>&nbsp;</td>
+                    <td class="bordertopnone borderrightnone"><strong>{!$ObjectType.Person_Insured__c.Fields.Smoker__c.Label}: </strong> &nbsp;{!if(PI.Smoker__c=='yes','S','NS')} &nbsp;</td>
+                </tr>
+                <tr>
+                    <td><strong> {!$ObjectType.Person_Insured__c.Fields.Personal_ID__c.Label}:</strong> &nbsp;<apex:outputField value="{!PI.Personal_ID__c}"/>&nbsp;</td>
+                    <td colspan="2"  class="  borderrightnone"><strong>{!$ObjectType.Person_Insured__c.Fields.Date_of_Birth__c.Label}: </strong> <apex:outputText value="{0,date,dd MMM yyyy}">        <apex:Param value="{!PI.Date_of_Birth__c}"/></apex:outputText>&nbsp;<strong>{!$ObjectType.Person_Insured__c.Fields.Gender__c.Label}: </strong> &nbsp;<apex:outputField value="{!PI.Gender__c}"/>&nbsp;</td>
+                </tr>
+            </tbody>
+        </table>
+        <table  class="rowtb" style=" width:100%;">
+            <tbody class="data detail">
+                <tr>
+                    <td class="bordertopnone borderrightnone"><strong>{!$ObjectType.Person_Insured__c.Fields.Home_Phone__c.Label}:</strong> &nbsp;<apex:outputField value="{!PI.Home_Phone__c}"/>&nbsp;</td>
+                    <td class="bordertopnone borderrightnone"><strong>{!$ObjectType.Person_Insured__c.Fields.Office_Phone__c.Label}: </strong> &nbsp;<apex:outputField value="{!PI.Office_Phone__c}"/>&nbsp;</td>
+                    <td class="bordertopnone borderrightnone"><strong>{!$ObjectType.Person_Insured__c.Fields.Mobile_Phone__c.Label}: </strong> &nbsp;<apex:outputField value="{!PI.Mobile_Phone__c}"/>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td colspan="4"  class="  borderrightnone"><strong> Residential Address:</strong> &nbsp;<apex:outputField value="{!PI.Residential_Address_1__c}"/>&nbsp;&nbsp;<apex:outputField value="{!PI.Residential_Address_2__c}"/>&nbsp; &nbsp;<apex:outputField value="{!PI.Residential_Address_3__c}"/>&nbsp;&nbsp;<apex:outputField value="{!PI.Residential_Address_4__c}"/>&nbsp;<apex:outputField value="{!PI.Residential_Address_Country__c}"/></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    </apex:repeat>
+    <apex:variable var="pi" value="{!data.Person_Insureds__r[0]}" />
+    <h3 style="padding-bottom: 5px;">Plan Information<br/></h3>
+    <h3 style="padding-bottom: 5px;">&nbsp;Base Plan: {!data.product__r.License__c}</h3>
+    <div class="tbRowData" style="margin: 2px 20px;">
+        <table  class="rowtb" style=" width:100%;">
+            <tbody class="data detail">
+                <tr class="rowtbHeader">
+                    <th style="max-width:8%;">Insured Type</th>
+                    <th style="max-width:8%;">Plan Code</th>
+                    <th style="max-width:8%;">{!$ObjectType.Plan_Quote__c.Fields.Plan_Level__c.Label}</th>
+                    <th style="max-width:10%;">{!$ObjectType.Plan_Quote__c.Fields.Benefit_amount__c.Label}</th>
+                    <th style="max-width:10%;">{!$ObjectType.Plan_Quote__c.Fields.Premium__c.Label}</th>
+                    <th style="max-width:7%;">{!$ObjectType.Plan_Quote__c.Fields.Flat__c.Label}</th>
+                    <th style="max-width:7%;">{!$ObjectType.Plan_Quote__c.Fields.Duration_Flat__c.Label}</th>
+                    <th style="max-width:7%;">{!$ObjectType.Plan_Quote__c.Fields.Rate__c.Label}</th>
+                    <th style="max-width:7%;">{!$ObjectType.Plan_Quote__c.Fields.Duration_Rate__c.Label}</th>
+                    <th style="max-width:7%;">Disc1</th>
+                    <th style="max-width:7%;">{!$ObjectType.Plan_Quote__c.Fields.Duration_Discount1__c.Label}</th>
+                    <th style="max-width:7%;">Disc2</th>
+                    <th style="max-width:7%;"  class="  borderrightnone">{!$ObjectType.Plan_Quote__c.Fields.Duration_Discount2__c.Label}</th>
+                </tr>
+                <apex:repeat value="{!data.Plan_Quote__r}" var="quote">
+                    <apex:outputPanel rendered="{!!quote.Is_Rider__c || quote.Is_Mandatory_Rider__c}" layout="none">
+                        <tr>
+                            <td><apex:outputText value="{!pi.Insured_type__c}"/></td>
+                            <td>&nbsp;{!quote.Product_Code_for_report__c }</td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Plan_Level__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Benefit_amount__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Premium__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Flat__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Duration_Flat__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Rate__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Duration_Rate__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Discount_1__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Duration_Discount1__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Discount_2__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Duration_Discount2__c}"/></td>
+                        </tr>
+                    </apex:outputPanel>
+                </apex:repeat>
+            </tbody>
+        </table>
+    </div>
+    <h3>&nbsp;Optional Rider Plan</h3>
+    <div class="tbRowData" style="margin: 2px 20px;">
+        <table  class="rowtb" style=" width:100%;">
+            <tbody class="data detail">
+                <tr class="rowtbHeader">
+                    <th style="max-width:8%;">Insured Type</th>
+                    <th style="max-width:8%;">Plan Code</th>
+                    <th style="max-width:8%;">{!$ObjectType.Plan_Quote__c.Fields.Plan_Level__c.Label}</th>
+                    <th style="max-width:10%;">{!$ObjectType.Plan_Quote__c.Fields.Benefit_amount__c.Label}</th>
+                    <th style="max-width:10%;">{!$ObjectType.Plan_Quote__c.Fields.Premium__c.Label}</th>
+                    <th style="max-width:7%;">{!$ObjectType.Plan_Quote__c.Fields.Flat__c.Label}</th>
+                    <th style="max-width:7%;">{!$ObjectType.Plan_Quote__c.Fields.Duration_Flat__c.Label}</th>
+                    <th style="max-width:7%;">{!$ObjectType.Plan_Quote__c.Fields.Rate__c.Label}</th>
+                    <th style="max-width:7%;">{!$ObjectType.Plan_Quote__c.Fields.Duration_Rate__c.Label}</th>
+                    <th style="max-width:7%;">Disc1</th>
+                    <th style="max-width:7%;">{!$ObjectType.Plan_Quote__c.Fields.Duration_Discount1__c.Label}</th>
+                    <th style="max-width:7%;">Disc2</th>
+                    <th style="max-width:7%;"  class="  borderrightnone">{!$ObjectType.Plan_Quote__c.Fields.Duration_Discount2__c.Label}</th>
+                </tr>
+                <apex:repeat value="{!data.Plan_Quote__r}" var="quote">
+                    <apex:outputPanel rendered="{!quote.Is_Rider__c && !quote.Is_Mandatory_Rider__c}" layout="none">
+                         <tr>
+                            <td><apex:outputText value="{!pi.Insured_type__c}"/></td>
+                            <td>&nbsp;{!quote.Product_Code_for_report__c }</td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Plan_Level__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Benefit_amount__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Premium__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Flat__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Duration_Flat__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Rate__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Duration_Rate__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Discount_1__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Duration_Discount1__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Discount_2__c}"/></td>
+                            <td>&nbsp;<apex:outputField value="{!quote.Duration_Discount2__c}"/></td>
+                        </tr>
+                    </apex:outputPanel>
+                </apex:repeat>
+            </tbody>
+        </table>
+    </div>
+    <h3>&nbsp;Payment Details</h3>
+    <div class="tbRowData" style="margin: 2px 20px;">
+        <table  class="rowtb" style=" width:100%;">
+            <tbody class="data detail">
+                <tr>
+                    <td  class="bordertopnone  "><strong> {!$ObjectType.Business_Partner__C.Fields.IPAS_Sponsor_Code__c.Label}:</strong> &nbsp;<apex:outputField value="{!data.Core_Campaign__r.Business_Partner__r.IPAS_Sponsor_Code__c}"/>&nbsp;</td>
+                    <td  class="bordertopnone borderrightnone"><apex:outputPanel rendered="{!data.Payment_Type__c == 'Initial Billing'}"><strong>Credit Card Initial Billing</strong></apex:outputPanel>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td><strong> {!$ObjectType.New_Policy__c.Fields.Payment_Frequency__c.Label}:</strong> &nbsp;<apex:outputField value="{!data.Payment_Frequency__c}"/>&nbsp;</td>
+                    <td  class="  borderrightnone"><strong> {!$ObjectType.New_Policy__c.Fields.Payment_Type__c.Label}:</strong> &nbsp;<apex:outputField value="{!data.Payment_Type__c}"/>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td><strong> Bank / CRCAT:</strong> &nbsp;<apex:outputField value="{!data.Bank_Code__c}"/>&nbsp;</td>
+                    <td  class="  borderrightnone"><strong> {!$ObjectType.New_Policy__c.Fields.Account_No__c.Label}:</strong>
+                     &nbsp;{!if (data.Payment_Type__c='Bank', data.Bank_Account_No__c, '' )}
+                            {!if (data.Payment_Type__c='Credit Card', data.Credit_Card_Number__c, '' )}
+                            {!if (data.Payment_Type__c='Direct Bill', '', '' )}
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong> {!$ObjectType.New_Policy__c.Fields.Bank_Name__c.Label}:</strong> &nbsp;<apex:outputField value="{!data.Bank_Name__c}"/>&nbsp;{!data.Name_of_Card_Issuing_Bank__c}</td>
+                    <td  class="  borderrightnone"><strong> {!$ObjectType.New_Policy__c.Fields.Card_Expiry_Date__c.Label}:</strong> <apex:outputText value="{0,date,yyyy-MM-dd}">
+                        <apex:Param value="{!data.Card_Expiry_Date__c}"/></apex:outputText>&nbsp;</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="tbRowData" style="margin: 2px 20px;">
+        <table  class="rowtb" style=" width:100%;">
+            <tr>
+            <th style="text-align: left"> Total Premium:</th><td style="text-align: left">&nbsp;<apex:outputField value="{!data.Actual_Premium__c}"/>&nbsp;</td><td width="50%"></td>
+            </tr>
+        </table>
+    </div>
+</div>
+<br/><br/><br/><br/>
+</apex:repeat>
+
+</div>
+
+</apex:outputPanel>
+</apex:form>
+</div>
+</body>
+</apex:page>

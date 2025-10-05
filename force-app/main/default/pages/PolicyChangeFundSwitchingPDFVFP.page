@@ -1,0 +1,510 @@
+<apex:page showHeader="false" applyHtmlTag="false" renderAs="PDF" cache="true" controller="PolicyChangeFundManagementPDFCTRL" language="en_US">
+    <head>
+        <style >
+            @page {
+                padding-top: 90px;
+                margin-bottom: 90px;
+                
+                @top-center {
+                    content: element(header);
+                }
+                
+                @bottom-left {
+                    content: element(footer);
+                }
+            }
+            div.header {
+                font-size: 8pt;
+                display: block;
+                padding-top: 30px;
+                text-align: left;
+                position: running(header);
+                font-family: Arial Unicode MS;
+                //color:  #d3d3d3;
+                
+            }
+            div.footer {
+                
+                text-align: center;
+                padding: 0px;
+                font-size: 8pt;
+                font-family: Arial Unicode MS;
+                position: running(footer);
+            }
+            div.content{
+                font-family: Arial Unicode MS;
+                font-size: 8pt;
+                fill-opacity:.5; 
+                stroke:black; 
+                stroke-width:2;
+                /** does not work **/
+                word-wrap: break-word;
+                word-break: break-all;
+                /** does not work end **/
+            }
+            .pagenumber:before {
+                content: counter(page);
+            }
+            .pagecount:before {
+                content: counter(pages);
+            }
+            tr {
+                height:30px;
+            }
+            
+            .rTable { 
+                display: table; 
+                width: 100%;
+                float: left;
+                margin-bottom: -1px;
+            }
+            .rTableRow { 
+                display: table-row;
+                border: 1px solid black;
+                border-top: 0px;
+            }
+            .rTableRow_title { 
+                display: table-row; 
+                background-color: rgb(24, 140, 204);
+                color:white;
+            }
+            
+            .rTableCell_header { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border: 1px solid black;
+                padding:10px;
+            }
+            
+            .rTableCell_title { 
+                display: table-cell; 
+                border-collapse: collapse;
+                border-right: 1px solid black;
+                padding:10px;
+                width: 35%;
+                font-weight: bold;
+                vertical-align: top;
+                border-width: 0px 1px 1px 1px;
+                border-style: solid;
+                border-color: black;
+            }
+            
+            .rTableCell { 
+                display: table-cell; 
+                border-collapse: collapse;
+                padding:10px;
+                border-style: solid;
+                border-width: 0px 1px 1px 0px;
+                width: 65%;
+                vertical-align: middle;
+            }
+            .sourceOptionsDiv *{
+                vertical-align: middle;
+            }
+            
+            .fund_to_buy_table{
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .fund_to_buy_table th{
+                width: 25%;
+            }
+            .fund_to_buy_table th, .fund_to_buy_table td{
+                border: 1px solid black;
+                border-collapse: collapse;
+                padding: 10px;
+                display: table-cell;
+            }
+            
+            
+        </style>
+    </head>
+    <div class="header">
+        <div style="width:720px;">
+            <div style="width: 100%; float:left;">
+                <div style="width: 60%; float:left;">
+                    <apex:outputText value="Private & Confidential 私人及機密"></apex:outputText> 
+                </div>
+                <div style="width: 40%; float:left;">
+                    <div style="width: 40%; float:left;">
+                        <apex:image url="{!$Resource.Icon_For_Form}" width="60px" /> 
+                    </div>
+                    <div style="width: 60%; float:left;">
+                        <apex:outputText escape="false" value="{!$Label.Cigna_Address_en_2_line}"/><br/><br/>
+                        Tel: 2560 1990 Fax: 2560 3605 <br/>
+                        www.cigna.com.hk
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <div style="width:720px;">
+            <div style="float:right;"  >
+                <apex:outputText ><span class="pagenumber"/> / <span class="pagecount"/></apex:outputText>
+            </div>
+        </div>
+    </div>
+    <div class="content">
+        <div style="width:720px;">
+            
+            <!-- page content -->
+            <div style="width:98%">
+                <div style="width:100%; float: left;">
+                    <div style="float:right; ">
+                        Ref. 參考:<apex:outputText value="&nbsp; &nbsp; &nbsp; &nbsp; " style="text-decoration: underline;" escape="false" />(for office use內部專用)  
+                    </div>
+                </div>
+                <div style="width:100%; float: left; font-size: 16px;">
+                    Policy Change Form – Fund Switching
+                </div>
+                <div style="width:100%; float: left; font-size: 16px;">
+                    保單更改–基金轉移
+                </div>
+                <div style="width:100%; float: left; padding-top: 10px; padding-bottom: 10px;" class="sourceOptionsDiv">
+                    <div style="width:10%; float: left; ">
+                        <apex:outputText value="Source  " />
+                        <apex:outputText value="來源：  " />
+                    </div>
+                    <div style="width:20%; float: left;">
+                        <apex:image url="{!IF(request.Site_Prefix__c == '/customer',$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12" style="margin:0px 5px;"/>
+                        <apex:outputText style="width: 100px;" value="Customer Portal      " />
+                        <apex:outputText style="width: 100px;" value="客戶      " />
+                    </div>
+                    <div style="width:20%; float: left;">
+                        <apex:image url="{!IF(contains(LOWER(request.Site_Prefix__c) , '/broker'),$Resource.CheckBox_Checked,$Resource.CheckBox_NoChecked)}" width="12" height="12" style="margin:0px 5px;"/>
+                        <apex:outputText style="width: 100px;" value="Broker Portal      " />
+                        <apex:outputText style="width: 100px;" value="經紀      " />
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            Personal Particulars<br/>
+                            個人資料
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Submission Date<br/>
+                            申請日期<br/>
+                            (YYYY/MM/DD)
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{0,date, yyyy/MM/dd}">
+                                <apex:param value="{!TODAY()}" />
+                            </apex:outputText>
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Name of Policy Holder<br/>
+                            保單持有人姓名
+                        </div>
+                        <div class="rTableCell">
+                            {!request.Policy_Holder_Name__c}
+                        </div>
+                    </div>
+
+                    <!-- 20200306 - minghua - ILAS -->
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            RPQ Status<br/>
+                            投資風險取向程度
+                        </div>
+                        <div class="rTableCell">
+                            {!latestRPQStatus}
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            RPQ Effective Date<br/>
+                            投資風險取向問卷有效日期
+                        </div>
+                        <div class="rTableCell">
+                            <apex:outputText value="{0,date, yyyy/MM/dd}">
+                                <apex:param value="{!rpqEffectiveDate}" />
+                            </apex:outputText>
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Written ACK<br/>
+                            書面確認
+                        </div>
+                        <div class="rTableCell">
+                            {!IF(request.Reason_checkbox__c,'YES','No')}
+                        </div>
+                    </div>
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Written ACK Content<br/>
+                            書面確認內容
+                        </div>
+                        <div class="rTableCell">
+                            {!request.Reason_content__c}
+                        </div>
+                    </div>
+
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Policy No.<br/>
+                            保單編號
+                        </div>
+                        <div class="rTableCell">
+                            {!request.Policy_No__c}
+                        </div>
+                    </div>
+                    <apex:outputPanel rendered="{! contains(LOWER(request.Site_Prefix__c) , '/broker') }">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Broker Name<br/>
+                                經紀公司
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Broker_Name__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Financial Consultant Name<br/>
+                                財務顧問姓名
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Financial_Consultant_Name__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Financial Consultant Code<br/>
+                                財務顧問編號
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Financial_Consultant_Code__c}
+                            </div>
+                        </div>
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title">
+                                Financial Consultant Contact No.<br/>
+                                財務顧問聯絡電話                        
+                            </div>
+                            <div class="rTableCell">
+                                {!request.Financial_Consultant_Contact_No__c}
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    
+                </div>
+                
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            <apex:outputText value="Fund Switching Out Information" ></apex:outputText><br/>
+                            基金資料
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title">
+                            Selected Existing Plan<br/>
+                            已選擇之現有計劃
+                        </div>
+                        <div class="rTableCell">
+                            {!request.Selected_Fund_Plan__c}<br/>
+                            {! translationMap[request.Selected_Fund_Plan__c]}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="rTable" >  
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title" style="width:100%;padding:0px;" >
+                            <table class="fund_to_buy_table">
+                                <tr style="background: #eee;">
+                                    <th>
+                                        Fund to Sell<br/>
+                                        賣出基金
+                                    </th>
+                                    <th>
+                                        Amount<br/>
+                                        數量
+                                    </th>
+                                </tr>
+                                <apex:repeat value="{! fundToSellList}" var="fund">
+                                    <tr>
+                                        <th>
+                                            {!fund.Fund_Name__c}
+                                        </th>
+                                        <th>
+                                            {!fund.Request_Fund_Amount__c}
+                                        </th>
+                                    </tr>
+                                </apex:repeat>
+                            </table>
+                        </div>
+                    </div>  
+                </div>
+                <div class="rTable" >  
+                    <div class="rTableRow" >
+                        <div class="rTableCell_title" style="width:100%;padding:0px;" >
+                            <table class="fund_to_buy_table">
+                                <tr style="background: #eee;">
+                                    <th>
+                                        Fund to Buy<br/>
+                                        買入基金
+                                    </th>
+                                    <th>
+                                        Amount<br/>
+                                        數量
+                                    </th>
+                                </tr>
+                                <apex:repeat value="{!fundToBuyList}" var="fund">
+                                    <tr>
+                                        <th>
+                                            {!fund.Fund_Name__c}
+                                        </th>
+                                        <th>
+                                            {!fund.Request_Fund_Amount__c}
+                                        </th>
+                                    </tr>
+                                </apex:repeat>
+                            </table>
+                        </div>
+                    </div>  
+                </div>
+                
+                <div class="rTable" >
+                    <div class="rTableRow_title" >
+                        <div class="rTableCell_header">
+                            <apex:outputText value="Investment Choice Switching" ></apex:outputText><br/>
+                            投資選項轉換
+                        </div>
+                    </div>
+                </div>
+                <div class="rTable" >
+                    <div class="rTableRow" >
+                        <!-- tnc -->
+                        <div class="rTableCell_title" style="width:100%;" >
+                            <p>
+                                This instruction will change the Investment Choices, being invested in, allocated under your Policy Account.  Appropriate investment Units<br/> 
+                                allocated under your Policy Account will be sold in accordance with your instruction in order to buy the designated investment Units.  <br/>
+                                The premium allocation instruction will remain unchanged.<br/><br/>
+                                
+                                By providing this service, Cigna Worldwide Life Insurance Company Limited ("Cigna") is not inviting or recommending any person or <br/>
+                                entity to invest. The information on this website should not be construed as a prospectus for the purchase or sale of such investment. <br/><br/>
+                                
+                                Please refer to the Terms of our online services.  By accessing this website and/or using the services offered through this website, you shall<br/> 
+                                be deemed to have read and agree to the related terms. <br/><br/>
+                                
+                                Investment involves risks and that the value of the investments and the yield from our investment linked assurance schemes may go down<br/>
+                                as well as up as a consequence of the general nature of varied investments and possible exchange or interest rate fluctuations. Past <br/>
+                                performance is not indicative of future performance.<br/><br/>
+                                
+                                Your request will be processed on the next business day if it is submitted on or before 6:00 pm on a business day, Hong Kong Time.  <br/> 
+                                Any request submitted after 6:00 pm on a business day, Hong Kong Time, will be processed on the business day after next.  If your request<br/>  
+                                is submitted on a Saturday or a holiday, your request will be processed on the business day after next. <br/><br/>
+                                
+                                Subject to the terms and conditions of the policy provisions, investment choice switching orders will be processed, after Cigna has received and <br/>
+                                approved your application.  We will sell your specified number of units in the old investment choice(s) on the following valuation date and <br/>
+                                deduct the fund switching charge (if any) from the sale proceeds; and we will buy specified number of units in the new investment choice(s) on <br/>
+                                the following valuation date with the sale proceeds (net of any fund switching charge). <br/><br/>
+                                
+                                Subject to our Company’s approval process, a) we will review your Investment Choice Switching instructions as soon as possible, and b) the <br/>
+                                switching process will be subsequent to the completion of all relevant transactions. <br/><br/>
+                                
+                                However, Cigna shall not be liable for any delay in processing any instruction. 
+                                
+                                Note: You can enjoy up to 5 times free switching per policy year.  Any subsequent switching is subject to switching fee which is USD35 or <br/>
+                                HKD280 each time.  <br/><br/>
+                                
+                                Pursuant to the anti-money laundering and counter-terrorist financing law and regulations, we are required to verify customer’s identity <br/>
+                                and address and ensure the customer information remains up-to-date and relevant.<br/><br/>
+                                
+                                (1)Please submit certified true copies* of the Policyholder’s (i) valid identity document and (ii) proof of residential address and permanent<br/>
+                                address, if different from residential address, issued in the last 3 months, unless submitted before.<br/><br/>
+                                
+                                (2)Please notify us of any change in customer identification information.  We should treat your information as remaining unchanged from our <br/>
+                                latest record unless we receive your notice of change.<br/><br/>
+                                
+                                * Certified by suitable certifiers (e.g. authorized insurance brokers, appointed insurance agents or other professional third parties)<br/><br/>
+                                
+                                Means of submission:<br/>
+                                -Email to dochk@cigna.com (only for collecting copies of identify document and address proof);<br/>
+                                -Fax to 2967 3515;<br/>
+                                -Submit by post or by hand to our office at {!$Label.Cigna_Address_en} (Office hours: 9:00am - 5:30pm from Monday to 
+                                <br/> Friday except Public Holiday)<br/><br/>
+                                
+                                是項指示將更改閣下保單賬戶內已投資的投資選項之分配方式。本公司將按照閣下的指示，沽售閣下保單賬戶內現有單位，並購入指定<br/>
+                                的投資選項。保費分配指示將維持不變。<br/><br/>
+                                
+                                信諾環球人壽保險有限公司（「信諾」）提供此服務，並不代表信諾邀請或作出任何投資建議。本網站的資料不應作為買賣有關投資的<br/>
+                                產品說明書。<br/><br/>
+                                
+                                請參閱本公司的網上服務條款。閣下進入本網站及／或使用本網站提供的服務，即被視為已閱讀及同意相關條款。<br/><br/>
+                                
+                                投資涉及風險。基於各類投資的一般性質，以及匯率或利率可能出現波動，相關投資相連壽險計劃的投資價值及收益可升可跌。過去表<br/>
+                                現並非未來業績的指標。<br/><br/>
+                                
+                                閣下於營業日香港時間下午6時或之前提交的申請，將於下一營業日處理。於營業日香港時間下午6時之後提交的申請，將於下一營業日<br/>
+                                之後的營業日處理。閣下於星期六或假日提交的申請，將於下一營業日之後的營業日處理。<br/><br/>
+                                
+                                信諾收到及審批閣下的申請後，將在遵守保單條文的條款及細則的情況下，處理有關投資選項轉換的指令。本公司會於下一估值日，出<br/>
+                                售閣下指定的舊投資選項單位數目，並從出售所得款項扣除基金調配費用（如有），並於下一估值日以出售所得款項（已扣除任何基金<br/>
+                                調配費用）購入閣下指定的新投資選項單位數目。<br/><br/>
+                                
+                                在本公司的審批過程中，a)本公司將儘快審閱閣下的投資選項轉換指示，以及b)有關轉換將於完成所有相關基金交易後進行。<br/><br/>
+                                
+                                然而，信諾不會就處理指示而產生之任何延誤承擔任何責任。<br/><br/>
+                                
+                                請注意: 在每個保單年度，您可享多達5次的免費轉換服務。隨後作投資選項轉換須繳付轉換費用，每次為35美元或港元280。 <br/><br/> 
+                                
+                                根據打擊洗錢及恐怖分子資金籌集的法律及規則，本公司需要核實客戶的身分及地址，並確保客戶資料仍然反映現況及相關。<br/><br/>
+                                
+                                請以郵寄、傳真或電郵遞交保單持有人的 (i) 身分證明文件及 (ii) 在最近3個月發出的住址證明及永久地址證明 (如與住址不同) <br/>
+                                之認證複本* (如已遞交則除外) 。<br/><br/>
+                                
+                                如閣下的身分識別資料有所更改，請儘快通知本公司。倘若本公司未有收到閣下之通知，有關的資料將視作與本公司最近之紀錄維持不變。<br/><br/>
+                                
+                                *必須由適合的證明人認證 (例如獲授權保險經紀、獲委任保險代理人或其他專業第三者)<br/><br/>
+                                
+                                遞交方法：電郵至dochk@cigna.com（只供收集身分證明文件及地址證明副本之用途）；傳真至2967 3515<br/><br/>
+                                以郵遞或親臨本公司地址：{!$Label.Cigna_Address_zh}（辦公時間：星期一至星期五上午九時正至下午五時半，公眾假期除外）。<br/><br/>
+                                
+
+                            </p>
+                            
+                        </div>
+                    </div>
+                </div>
+                <apex:outputPanel rendered="{! contains(LOWER(request.Site_Prefix__c) , '/broker') }">
+                    <div class="rTable">
+                        <div class="rTableRow" >
+                            <div class="rTableCell_title" >
+                                <div>
+                                Signature<br/>
+                                簽署
+                                </div>
+                            </div>
+                            <div class="rTableCell">
+                                <apex:outputPanel rendered="{! ph_esignature != null }">
+                                    <apex:image url="{!URLFOR($Action.Attachment.Download, ph_esignature.id)}" width="450px"/>
+                                </apex:outputPanel>
+                                <br/>
+                                Name of Policy Holder 保單持有人姓名： {!request.Policy_Holder_Name__c}<br/>
+                                Date Signed 簽署日期(YYYY/MM/DD)：
+                                <apex:outputText value="{0,date, yyyy/MM/dd}">
+                                    <apex:param value="{!TODAY()}" />
+                                </apex:outputText>
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+            </div>
+            
+        </div>
+    </div>
+    
+</apex:page>

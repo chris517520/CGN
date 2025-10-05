@@ -1,0 +1,2113 @@
+<apex:page Controller="MyClaimSubmitController" showHeader="false" sidebar="false" docType="html-5.0" cache="false">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+        <!-- 20210803 - minghua - CR48 -->
+        <script type="text/javascript" src="{!URLFOR($Resource.claimSelect, 'multiSelect.js')}"></script>
+    </head>
+    <div id="ClaimAnswerClaimQuestionCusVFPDiv" class="bs">
+        <style>
+            .question-row {
+                display: flex; /* equal height of the children */
+            }
+            
+            @media 
+            only screen and (min-width: 768px){
+                #ui-datepicker-div{
+                    /*position: absolute !important;*/
+                }
+            }
+            /*20210803 - minghua - CR48*/
+            .fs-wrap {
+                position: relative;
+                display: inline-block;
+                width: 100%;
+                line-height: 2;
+                font-family: "Gotham SSm A", "Gotham SSm B", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+                font-style: normal;
+                font-weight: 400;
+                font-size: 16px;
+            }
+            .fs-label-wrap {
+                position: relative;
+                border: 1px solid #ddd;
+                cursor: default;
+            }
+            .fs-label-wrap,
+            .fs-dropdown {
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+            .fs-label-wrap .fs-label {
+                padding: 4px 22px 4px 8px;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                overflow: hidden;
+            }
+            .fs-arrow {
+                width: 0;
+                height: 0;
+                border-left: 6px solid transparent;
+                border-right: 6px solid transparent;
+                border-top: 6px solid #000;
+                position: absolute;
+                top: 0;
+                right: 5px;
+                bottom: 0;
+                margin: auto;
+            }
+            .fs-dropdown {
+                position: absolute;
+                background-color: #fff;
+                border: 1px solid #ccc;
+                margin-top: 5px;
+                width: 100%;
+                z-index: 1000;
+            }
+            .fs-dropdown .fs-options {
+                max-height: 200px;
+                overflow: auto;
+            }
+            .fs-option {
+                cursor: pointer;
+            }
+            .fs-wrap.multiple .fs-option {
+                position: relative;
+                padding-left: 6px;
+            }
+            .fs-wrap .fs-option:hover {
+                background-color: #f5f5f5;
+            }
+            .hidden {
+                display: none;
+            }
+            .visibility-hidden{
+                display:block;
+                visibility: hidden;
+                position:absolute;
+                top:0;
+            }
+            .fs-wrap{position:relative}
+            .fs-label-wrap .fs-label{
+                padding: 0;
+                height: 30px;
+                line-height: 30px;
+                -webkit-box-sizing: border-box;
+                -moz-box-sizing: border-box;
+                box-sizing: border-box;
+                padding-left:6px;
+                padding-right:10px;
+            }
+            .fs-dropdown{
+                margin-top: 0px;
+                box-shadow: 4px 4px 4px #ddd;
+            }
+            .fs-yellow{
+                color:#F68621 !important;
+            }
+        </style>
+        <!-- for download as pdf part -->
+        <apex:outputPanel layout="inline">
+            <apex:outputPanel rendered="{!if(cList.size > 0, true, false)}">
+                <apex:form id="frmAnswerClaimQuestionCus" >
+                    
+                    <apex:actionFunction name="reloadClaimRecordForDatePicker" status="loader-icon" action="{!reloadClaimRecord}" oncomplete="reloadDatePickerPanelValue();" />
+                    <apex:actionFunction name="reloadQ4" status="loader-icon" reRender="q4Panel" oncomplete="initDatePicker();q4Validation();"/>
+                    <apex:actionFunction name="reloadQ8" status="loader-icon" reRender="q8Panel" oncomplete="initDatePicker();q8Validation();"/>
+                    
+                    <apex:actionFunction name="loadFirstConsultationDate" status="loader-icon" action="{!loadFirstConsultationDate}"  oncomplete="questionDisplayLogic('q4');reloadQ4();"/>
+                    <apex:actionFunction name="loadDateToStopWorkDate" status="loader-icon" action="{!loadDateToStopWorkDate}"  oncomplete="questionDisplayLogic('q8');reloadQ8();"/>
+                    
+                    <apex:actionFunction name="clearFirstConsultationDateTimestamp" status="loader-icon" action="{!clearFirstConsultationDateTimestamp}" oncomplete="reloadQ4();"/>
+                    <apex:actionFunction name="clearStopToWorkDateTimestamp" status="loader-icon" action="{!clearStopToWorkDateTimestamp}" oncomplete="reloadQ8();"/>
+                    <script>
+                        /**
+                        function reloadDatePickerPanel(){
+                            console.log('pass reloadDatePickerPanel');
+                            if($("#q4").is(":visible")){
+                                reloadClaimRecordForDatePicker();
+                            }
+                        }
+                        **/
+                        
+                        function reloadDatePickerPanelValue(){
+                            if(isResetAdmissionDateAndDischargeDateFlag){
+                                clearwAdmittedAndDischargedFromHospitalList();
+                                isResetAdmissionDateAndDischargeDateFlag = false;
+                            }
+                            loadValidationOnlyWhenFillAllDate();                
+                            
+                            if(isResetVisitDateFlag ){
+                                clearwVisitDateStrList();
+                                isResetVisitDateFlag = false;
+                            }
+                            
+                            if(isResetInfoFromOtherCompanyFlag){
+                                clearwInfoFromOtherCompanyList();
+                                isResetInfoFromOtherCompanyFlag = false;
+                            }
+                            
+                            reloadConditionFlag();    
+                                   
+                            if($("#q4").is(":visible")){
+                                //reloadQ4();
+                            }
+                            
+                            if($("#q8").is(":visible")){
+                                //reloadQ8();
+                            }
+                            
+                        }
+                        
+                        function reloadConditionFlag(){
+                            if($("#q2").is(":visible")){
+                                sj_HIF_b = true;
+                            }else{
+                                sj_HIF_b = false;
+                            }
+                               
+                            if($("#q3").is(":visible")){
+                                sj_HIF_c = true;
+                            }else{
+                                sj_HIF_c = false;
+                            }
+                        }
+                        
+                        function reloadFirstTimeValidationForQuestion(){
+                            
+                            $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-date']").each(function(idx, elem){
+                                $(elem).datepicker( "option", "disabled", true );  
+                                //CR-56_Link_20220214
+                                $(elem).trigger("blur");
+                                $(elem).trigger("focus");
+                                $(elem).datepicker( "option", "disabled", false );  
+                            });
+                            getClericalManualValue();
+                            //170309
+                            $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-question-cus-percent']").each(function(idx, elem){
+                                $(elem).valid();
+                            });
+                        
+                        }
+                    </script>
+                    
+                    <div class="bs form-field row visible-lg" id="cusQuestionRemarks" >
+                       <div class="bs col-xs-12 cigna-fg-blue-medium">
+                           <label id="cusQuestionRemarksLabel">
+                               {!$Label.Please_press_Enter_to_proceed_to_the_next_question}
+                           </label>
+                       </div>
+                       <script>
+                           if (isIE){
+                               $('#cusQuestionRemarksLabel').text('{!$Label.Please_press_Tab_to_proceed_to_the_next_question}');
+                           }
+                       </script>
+                    </div>
+                    <apex:outputPanel id="AnswerClaimQuestionCusPanel">
+                    
+                        <!--Nicole_20200317_GS Claim-->
+                        <apex:outputPanel rendered="{!includeGSClaim}">
+                            <script>
+                                setIncludeGSClaim(true);
+                            </script>
+                        </apex:outputPanel>
+                        
+                        <div class="bs form-field row content-choice-block" id="q1" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'\"q1\"') ,'','display: none;')}">
+                           <div class="bs col-sm-12 col-xs-12 question-row">
+                               <div>
+                                   <i class="ci-hk-checklist content-icon" aria-hidden="true"></i>
+                               </div>
+                               <div>
+                                   {!$Label.Do_you_stay_at_hospital}
+                               </div>
+                           </div>
+                           <div class="bs col-sm-12 col-xs-12">
+                               <script>
+                               function hideQ2(){
+                                    sj_HIF_b = false;
+                                    questionDisplayLogic('q1');
+                               }
+                                
+                               function displayQ2(){
+                                    sj_HIF_b = true;
+                                    questionDisplayLogic('q1');
+                               }
+                               </script>
+                               <div class="bs col-sm-4 question-choice {!if((isLoadOldClaim || isPassQuestionPart) && cList[0].Do_you_stay_in_hospital__c,'fg-orange','fg-grey')}" style="padding-left:40px;border-bottom: 0px;" onclick="displayQ2();">
+                                   <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>{!$Label.Yes}
+                                   <!-- hidden input -->
+                                   <input type="hidden" name="param-str" value="true" />
+                               </div>
+                               <div class="bs col-sm-4 question-choice {!if((isLoadOldClaim || isPassQuestionPart) && !cList[0].Do_you_stay_in_hospital__c,'fg-orange','fg-grey')}" style="padding-left:40px;border-bottom: 0px;" onclick="hideQ2();">
+                                   <i class="fa fa-times-circle-o content-icon " aria-hidden="true"></i>{!$Label.No}
+                                   <!-- hidden input -->
+                                   <input type="hidden" name="param-str" value="false" />
+                               </div>
+                               <!-- field to save data -->
+                               <apex:inputHidden value="{!cList[0].Do_you_stay_in_hospital__c}" id="hiddenValue_cus_q1" html-class="cigna-validation" />
+                           </div>
+                        </div>
+                         
+                        <!-- Rancho_CR48_20210706: avoid display q2 when selected q20 -->
+                        <!-- <div class="bs form-field row content-choice-block" id="q2" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'q2') ,'','display: none;')}"> -->
+                        <div class="bs form-field row content-choice-block" id="q2" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'\"q2\"') ,'','display: none;')}">
+                           <div class="bs col-sm-12 col-xs-12 question-row">
+                               <div>
+                                   <i class="ci-hk-checklist content-icon" aria-hidden="true"></i>
+                               </div>
+                               <div>
+                                   {!$Label.Is_there_any_room_charge}
+                               </div>
+                           </div>
+                           <div class="bs col-sm-12 col-xs-12">
+                               <script>
+                                   function hideQ3(){
+                                        clearwAdmittedAndDischargedFromHospitalList();
+                                        sj_HIF_c = false;
+                                        questionDisplayLogic('q2');
+                                   }
+                                    
+                                   function displayQ3(){
+                                        clearwAdmittedAndDischargedFromHospitalList();
+                                        sj_HIF_c = true;
+                                        questionDisplayLogic('q2');
+                                   }
+                               </script>
+                               <div class="bs col-sm-4 question-choice {!if((isLoadOldClaim || isPassQuestionPart) &&  cList[0].Is_there_any_room_charge__c,'fg-orange','fg-grey')}" style="padding-left:40px;border-bottom: 0px;" onclick="displayQ3();">
+                                   <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>{!$Label.Yes}
+                                   <!-- hidden input -->
+                                   <input type="hidden" name="param-str" value="true" />
+                               </div>
+                               <div class="bs col-sm-4 question-choice {!if((isLoadOldClaim || isPassQuestionPart) &&  !cList[0].Is_there_any_room_charge__c,'fg-orange','fg-grey')}" style="padding-left:40px;border-bottom: 0px;" onclick="hideQ3();">
+                                   <i class="fa fa-times-circle-o content-icon " aria-hidden="true"></i>{!$Label.No}
+                                   <!-- hidden input -->
+                                   <input type="hidden" name="param-str" value="false" />
+                               </div>
+                               <!-- field to save data -->
+                               <apex:inputHidden value="{!cList[0].Is_there_any_room_charge__c}" id="hiddenValue_cus_q2" html-class="cigna-validation"/>
+                           </div>
+                        </div>
+                                  
+                        <div class="bs form-field row content-choice-block" id="q3" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'q3') ,'','display: none;')}">
+                           <div class="bs col-sm-12 col-xs-12 question-row" style="padding-bottom: 10px;">
+                               <div >
+                                   <i class="ci-hk-callendar content-icon" aria-hidden="true"></i>
+                               </div>
+                               <div>
+                                   {!$Label.When_were_you_admitted_and_discharged_from_hospital}
+                               </div>
+                           </div>
+                           <apex:outputPanel id="admissionAndDischargeDatePanel">
+                               <script>
+                                   admissionAndDischargeDateItemFilled = 0;
+                                   admissionAndDischargeDateItem = {!wAdmittedAndDischargedFromHospitalList.size*2}
+                               </script>
+                               <apex:variable value="{!0}" var="idx_admissionAndDischargeDate"/>
+                               <!-- item --> 
+                               <apex:repeat value="{!wAdmittedAndDischargedFromHospitalList}" var="wItem">
+                                   <div id="addmissionAndDischargeDateCus{!idx_admissionAndDischargeDate}" class="bs col-sm-12 col-xs-12">
+                                        <div style="border-radius: 10px; margin-top: 10px;" class="bs col-sm-10 col-xs-10 form-note">      
+                                           <div class="bs row form-field" >
+                                               <div class="bs col-xs-12 col-sm-6" >{!$Label.Admission_Date}</div>
+                                               <div class="bs col-xs-12 col-sm-6" >
+                                                    <input type="text" id="admission-answer-date-cus-q3a-date-format-{!idx_admissionAndDischargeDate}" class="form-field-style "
+                                                       disabled="true" data-date-yyyy-mm-dd="{!wItem.admissionDate}" data-altField-id="admissionDate-datepicker-hidden" 
+                                                       onchange="CalculationForAddmissionAndDischargedDateAtAction();" />
+                                                    <apex:inputHidden id="admissionDate-datepicker-hidden"  value="{!wItem.admissionDateTimestamp}" />
+                                               </div>
+                                               <div class="bs col-xs-12 col-sm-12" style="padding-bottom:10px; "></div>
+                                               <div class="bs col-xs-12 col-sm-6" >{!$Label.Discharge_Date}</div>
+                                               <div class="bs col-xs-12 col-sm-6" >
+                                                   <input type="text" id="answer-date-cus-q3a-date-format-{!idx_admissionAndDischargeDate}" class="form-field-style"
+                                                       disabled="true" data-date-yyyy-mm-dd="{!wItem.dischargeDate}" data-altField-id="dischargeDate-datepicker-hidden" onchange="CalculationForAddmissionAndDischargedDateAtAction();"  />
+                                                   <apex:inputHidden id="dischargeDate-datepicker-hidden" value="{!wItem.dischargeDateTimestamp}" />
+                                               </div>
+                                            </div>
+                                        </div>
+                                        <div id="addmissionAndDischargeDateCusPlusIcon{!idx_admissionAndDischargeDate}" class="bs col-xs-2 col-sm-2" style="padding-top: 60px; {!IF(wAdmittedAndDischargedFromHospitalList.size == 1, 'display:none;', 'display:block;')}" >
+                                            <i class="glyphicon glyphicon-minus-sign content-icon " aria-hidden="true" onclick="RemoveAdmissionAndDischargeDate({!idx_admissionAndDischargeDate})" ></i>
+                                        </div>
+                                   </div>
+                                   <apex:variable var="idx_admissionAndDischargeDate" value="{!idx_admissionAndDischargeDate + 1}"/> 
+                                
+                                    <script>
+                                        if({!if(wItem.admissionDate != null, true, false)}){
+                                            admissionAndDischargeDateItemFilled +=1;
+                                        }
+                                        
+                                        if({!if(wItem.dischargeDate != null, true, false)}){
+                                            admissionAndDischargeDateItemFilled +=1;
+                                        }
+                                    </script>
+                                </apex:repeat>
+                                
+                                <script>
+                                    
+                                    function loadQuestionlogicWhenFillAllDate(){
+                                        if(admissionAndDischargeDateItemFilled >0)    q3Validation_single();
+                                        if(admissionAndDischargeDateItem == admissionAndDischargeDateItemFilled && admissionAndDischargeDateItemFilled >0){
+                                            q3Validation_pair();
+                                            var isFailQ3 = false;    //multiple
+                                            $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-date-cus-q3a-date-format-']").each(function(idx, elem){
+                                                $(elem).datepicker( "option", "disabled", true );  
+                                                if(!$(elem).valid())    isFailQ3 = true;
+                                                $(elem).datepicker( "option", "disabled", false );  
+                                            });
+                                            if(!isFailQ3 )    questionDisplayLogic('q3');
+                                            else{
+                                                hideAfterwardQuestion('q4');
+                                            }
+                                            
+                                            $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-date-cus-q3a-date-format-']").each(function(idx, elem){
+                                                $(elem).datepicker( "option", "disabled", true );  
+                                                //CR-56_Link_20220214
+                                                $(elem).trigger("blur");
+                                                $(elem).trigger("focus");
+                                                $(elem).datepicker( "option", "disabled", false );  
+                                            });
+                                        }
+                                        
+                                        
+                                    }
+                                    
+                                    function loadValidationOnlyWhenFillAllDate(){
+                                        if(admissionAndDischargeDateItem == admissionAndDischargeDateItemFilled && admissionAndDischargeDateItemFilled >0){
+                                            q3Validation_pair();
+                                        }
+                                        if(admissionAndDischargeDateItemFilled >0)    q3Validation_single();
+                                        
+                                    }
+                                    
+                                </script>
+                                <div class="bs col-sm-offset-10 col-sm-2 col-xs-offset-10 col-xs-2">
+                                    <span class="glyphicon glyphicon-plus-sign fa-lg onclick-pointer" onclick="AddAdmissionAndDischargeDate()"/>
+                                </div>
+                            
+                                <apex:actionFunction status="loader-icon" action="{!calculationForAddmissionAndDischargedDate}" name="CalculationForAddmissionAndDischargedDateAtAction" reRender="jSPanel,admissionAndDischargeDatePanel,q3_fastTrackLogicPanel" />  
+                                <apex:actionFunction name="AddAdmissionAndDischargeDate" action="{!AddAdmissionAndDischargeDate}" status="loader-icon" rerender="admissionAndDischargeDatePanel" oncomplete="hideAfterwardQuestion('q4');loadQuestionlogicWhenFillAllDate();" />
+                                <apex:actionFunction name="RemoveAdmissionAndDischargeDate" action="{!RemoveAdmissionAndDischargeDate}" status="loader-icon" rerender="admissionAndDischargeDatePanel" oncomplete="CalculationForAddmissionAndDischargedDateAtAction();" >
+                                    <apex:param name="idx_admissionAndDischargeDate" value="{!idx_admissionAndDischargeDate}" assignTo="{!idx_admissionAndDischargeDate}"/>
+                                </apex:actionFunction>
+                                <!--
+                                <apex:actionFunction name="clearwAdmittedAndDischargedFromHospitalList" status="loader-icon" action="{!clearwAdmittedAndDischargedFromHospitalList}" rerender="admissionAndDischargeDatePanel" oncomplete="loadQuestionlogicWhenFillAllDate();"/>
+                                -->
+                                <apex:actionFunction name="clearwAdmittedAndDischargedFromHospitalList" status="loader-icon" action="{!clearwAdmittedAndDischargedFromHospitalList}" rerender="admissionAndDischargeDatePanel" oncomplete="loadQuestionlogicWhenFillAllDate();"/>
+                                <script>
+                                   initDatePicker();
+                                   
+                               </script>
+                           </apex:outputPanel>
+                           
+                           <apex:outputPanel id="q3_fastTrackLogicPanel">
+                               <script>
+                                   /** calculate fast track logic **/
+                                   var currentStepNum = $('.content-step:visible').data('step');
+                                   var sj_HIF_d_old = sj_HIF_d;
+                                   if( currentStepNum  == 7 && {!cList[0].HIF__c} && $('#q3').is(":visible") ){
+                                        sj_HIF_d = {!sj_HIF_d}; 
+                                        loadQuestionlogicWhenFillAllDate();
+                                   }else if(currentStepNum  == 7 && {!cList[0].HIF__c} && $('#q3').is(":hidden")){
+                                        sj_HIF_d = false; 
+                                        if(sj_HIF_d_old != sj_HIF_d){
+                                            loadQuestionlogicWhenFillAllDate();
+                                        }
+                                   }                                   
+                                   /** end calculate fast track logic **/
+                                   
+                               </script>
+                           </apex:outputPanel>
+                        </div>
+                        <div class="bs form-field row content-choice-block" id="q4" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'q4') ,'','display: none;')}">
+                           <div class="bs col-sm-6 col-xs-12 question-row">
+                               <div>
+                                   <i class="ci-hk-callendar content-icon" aria-hidden="true" style="cursor:auto;" ></i>
+                               </div>
+                               <div>
+                                   {!$Label.What_is_your_1st_consultation_date}
+                               </div>
+                           </div>
+                           <div class="bs col-sm-6 col-xs-12">
+                               <apex:outputPanel id="q4Panel">
+                                   <input type="text" id="answer-date-cus-q4-date-format" class="form-field-style"
+                                           disabled="true" data-date-yyyy-mm-dd="{!cList[0].What_is_your_1st_consultation_date__c}" data-altField-id="firstConsultation-datepicker-hidden" 
+                                           onchange="loadFirstConsultationDate();"/>
+                                   <apex:inputHidden id="firstConsultation-datepicker-hidden" value="{!firstConsultationDateTimestamp}" />
+                               </apex:outputPanel>
+                           </div>
+                           
+                        </div> 
+                        <div class="bs form-field row content-choice-block" id="q5" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'q5') ,'','display: none;')}">
+                           <div class="bs col-sm-6 col-xs-12 question-row">
+                               <div>
+                                   <i class="ci-hk-stethoscope content-icon" aria-hidden="true" style="cursor:auto;"></i>
+                               </div>
+                               <div>
+                                   {!$Label.What_is_the_hospital_doctor_name}
+                               </div>
+                           </div>
+                           <div class="bs col-sm-6 col-xs-12">
+                               <apex:inputField id="answer-question-cus-q5" value="{!cList[0].What_is_the_hospital_doctor_name__c}" styleclass="form-field-style"
+                                                onchange="questionDisplayLogic('q5');"/>
+                           </div>
+                        </div>
+                        <div class="bs form-field row content-choice-block" id="q6" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'q6') ,'','display: none;')}">
+                           <div class="bs col-sm-6 col-xs-12 question-row">
+                               <div>
+                                   <i class="ci-hk-stethoscope content-icon" aria-hidden="true" style="cursor:auto;"></i>
+                               </div>
+                               <div>
+                                   {!$Label.What_is_the_contact_number_of_the_doctor}
+                               </div>
+                           </div>
+                           <div class="bs col-sm-6 col-xs-12">
+                               <apex:inputField id="answer-question-cus-phone-q6" value="{!cList[0].What_is_the_phone_of_hospital_doctor__c}" styleclass="form-field-style"
+                                                onchange="questionDisplayLogic('q6'); " />
+                           </div>
+                        </div>
+                        <div class="bs form-field row content-choice-block" id="q7" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'q7') ,'','display: none;')}">
+                           <div class="bs col-sm-12 col-xs-12 question-row">
+                               <div>
+                                   <i class="ci-hk-stethoscope content-icon" aria-hidden="true" style="cursor:auto;"></i>
+                               </div>
+                               <div>
+                                   {!$Label.What_is_the_percentage_of_your_work_allocation}
+                               </div>
+                           </div>
+                           <div class="bs col-sm-12 col-xs-12">
+                               
+                               <apex:actionFunction name="clearClericalManualValue" action="{!clearClericalManualValue}" reRender="q7Panel" status="loader-icon" />
+                               <apex:actionFunction name="changeManualValue" action="{!changeManualValue}" reRender="q7Panel" status="loader-icon" oncomplete="questionDisplayLogic('q7');getClericalManualValue();"/>
+                               <apex:outputPanel id="q7Panel">
+                                   <div class="bs col-sm-6">
+                                       <div class="content-display" style="border-bottom: 0px;">
+                                        <script>
+                                        function pressEnterOrTab(e){
+                                            if(e.keyCode === 9){
+                                                getClericalManualValue(); 
+                                                changeManualValue();
+                                            }
+                                            if(e.keyCode === 13){
+                                                getClericalManualValue(); 
+                                                changeManualValue();
+                                            }
+                                        }
+                                        </script>
+                                           <div>
+                                               <div style="display: table-cell; vertical-align: middle;" class="q7Label" >
+                                                   {!$Label.Clerical}
+                                               </div>
+                                               <div style="display: table-cell; vertical-align: middle;" class="q7Label">
+                                               <!--
+                                                   <apex:inputField id="question-cus-percent-q7a-check" value="{!cList[0].What_is_of_work_allocation_Clerical__c}" styleclass="form-field-style" onblur="getClericalManualValue(); changeManualValue();" />
+                                               -->
+                                                   <apex:inputField id="question-cus-percent-q7a-check" value="{!cList[0].What_is_of_work_allocation_Clerical__c}" styleclass="form-field-style" onkeydown="pressEnterOrTab(event);" onblur="getClericalManualValue(); changeManualValue();" />
+                                               </div>
+                                               <div style="display: table-cell; vertical-align: middle;" class="q7Label">
+                                                   %
+                                               </div>
+                                           </div>
+                                       </div>
+                                       <apex:inputText id="answer-question-cus-percent-q7a" style="height:0px; width:0px; border:0px !important; color:#fff ; -webkit-appearance: none" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                                   </div>
+                                   <div class="bs col-sm-6">
+                                       <div class="content-display" style="border-bottom: 0px;">
+                                           <div>
+                                               <div style="display: table-cell; vertical-align: middle;" class="q7Label">
+                                                   {!$Label.Manual}
+                                               </div>
+                                               <div style="display: table-cell; vertical-align: middle;" class="q7Label">
+                                                   <apex:inputText disabled="true" html-placeholder="{!cList[0].What_is_of_work_allocation_Manual__c}" styleClass="form-control" />
+                                               </div>
+                                               <div style="display: table-cell; vertical-align: middle;" class="q7Label">
+                                                   %
+                                               </div>
+                                           </div>
+                                       </div>
+                                       <!--
+                                       <apex:inputText id="answer-question-cus-percent-q7b" style="height:0px; width:0px; border:0px !important; color:#fff ; -webkit-appearance: none" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                                       -->
+                                   </div>
+                                   <!--
+                                   <div class="bs col-sm-12 col-xs-12">
+                                       <apex:inputText id="percent-check100" style="height:0px; width:0px; border:0px !important; color:#fff ; -webkit-appearance: none" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                                   </div>
+                                   -->
+                                   <script>
+                                    var highestBox = 0;
+                                    $('.q7Label').each(function() {
+                                        if ($(this).height() > highestBox) {
+                                            highestBox = $(this).height();
+                                        }
+                                    });
+                                    $('.q7Label').height(highestBox);
+                                    </script>
+                               </apex:outputPanel>
+                               
+                           </div>
+                           <!--
+                           <div class="bs col-sm-12 col-xs-12" onchange="questionDisplayLogic('q7');">
+                               <div class="bs col-sm-6">
+                                   <div class="content-display" style="border-bottom: 0px;">
+                                       {!$Label.Clerical}
+                                       <apex:inputField id="question-cus-percent-q7a-check" value="{!cList[0].What_is_of_work_allocation_Clerical__c}" style="width:30%" styleclass="form-field-style" onblur="getClericalManualValue()" />
+                                       %
+                                   </div>
+                                   <apex:inputText id="answer-question-cus-percent-q7a" style="height:0px; width:0px; border:0px !important; color:#fff ; -webkit-appearance: none" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                               </div>
+                               <div class="bs col-sm-6">
+                                   <div class="content-display" style="border-bottom: 0px;">
+                                       {!$Label.Manual}
+                                       <apex:inputField id="question-cus-percent-q7b-check" value="{!cList[0].What_is_of_work_allocation_Manual__c}"  style="width:30%" styleclass="form-field-style" onblur="getClericalManualValue()" />
+                                       %
+                                   </div>
+                                   <apex:inputText id="answer-question-cus-percent-q7b" style="height:0px; width:0px; border:0px !important; color:#fff ; -webkit-appearance: none" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                               </div>
+                               <div class="bs col-sm-12 col-xs-12">
+                                   <apex:inputText id="percent-check100" style="height:0px; width:0px; border:0px !important; color:#fff ; -webkit-appearance: none" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                               </div>
+                           </div>
+                           -->
+                        </div>
+                        <div class="bs form-field row content-choice-block" id="q8" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'q8') ,'','display: none;')}">
+                             <div class="bs col-sm-6 col-xs-12 question-row">
+                                 <div>
+                                     <i class="ci-hk-callendar content-icon" aria-hidden="true"></i>
+                                 </div>
+                                 <div>
+                                     {!$Label.When_did_you_stop_working_due_to_this_disability}
+                                 </div>
+                             </div>
+                             <!--
+                             <apex:outputPanel id="q8Panel">
+                                 <div class="bs col-sm-6 col-xs-12">
+                                     <input type="text" id="answer-date-cus-q8-date-format" class="form-field-style"
+                                           disabled="true" data-date-yyyy-mm-dd="{!cList[0].Date_of_stop_working_due_to_disability__c}" data-altField-id="dateToStopWork-datepicker-hidden" 
+                                           onchange="questionDisplayLogic('q8');" onblur="checkRequiredq8()" />
+                                     <apex:inputHidden id="dateToStopWork-datepicker-hidden" value="{!dateToStopWorkDateTimestamp}" />
+                                 </div>
+                                 <div class="bs col-sm-offset-6 col-sm-6 col-xs-12" >
+                                     <apex:inputText id="checkq8" style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                                 </div>
+                             </apex:outputPanel>
+                             -->
+                            <apex:outputPanel id="q8Panel">
+                                <div class="bs col-sm-6 col-xs-12">
+                                  
+                                    <input type="text" id="answer-date-cus-q8-date-format" class="form-field-style"
+                                        disabled="true" data-date-yyyy-mm-dd="{!cList[0].Date_of_stop_working_due_to_disability__c}" data-altField-id="dateToStopWork-datepicker-hidden" 
+                                        onchange="loadDateToStopWorkDate();"/>
+                                    <apex:inputHidden id="dateToStopWork-datepicker-hidden" value="{!dateToStopWorkDateTimestamp}" />
+                                </div>
+                            </apex:outputPanel>
+                               
+                        </div>
+
+                        <div class="bs form-field row content-choice-block" id="q9" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'q9') ,'','display: none;')}">
+                            <div class="bs col-sm-12 col-xs-12 question-row">
+                                <div>
+                                    <i class="ci-hk-checklist content-icon" aria-hidden="true"></i>
+                                </div>
+                                <div>
+                                    {!$Label.Are_you_still_on_sick_leave_admitted_by_the_employer}
+                                </div>
+                            </div>
+                            <div class="bs col-sm-12 col-xs-12">
+                               <div id="q9-yes" class="bs col-sm-4 question-choice {!if((isLoadOldClaim || isPassQuestionPart) &&  cList[0].Still_on_sick_leave__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px;" onclick="saveSickLeaveAnswer(true); "> <!-- questionDisplayLogic('q9');  -->
+                                   <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>{!$Label.Yes}
+                                   <!-- hidden input -->
+                                   <input type="hidden" name="param-str" value="true" />
+                               </div>
+                               <div id="q9-no" class="bs col-sm-4 question-choice {!if((isLoadOldClaim || isPassQuestionPart) && !cList[0].Still_on_sick_leave__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px;" onclick="saveSickLeaveAnswer(false); "> <!-- questionDisplayLogic('q9');  -->
+                                   <i class="fa fa-times-circle-o content-icon " aria-hidden="true"></i>{!$Label.No}
+                                   <!-- hidden input -->
+                                   <input type="hidden" name="param-str" value="false" />
+                               </div>
+                               <!-- field to save data -->
+                               <apex:inputHidden value="{!cList[0].Still_on_sick_leave__c}" id="hiddenValue_cus_q9"/>
+                            </div>
+                            <apex:actionFunction name="saveSickLeaveAnswer" action="{!DummyAction}" oncomplete="questionDisplayLogic('q9'); ">
+                                <apex:param name="CusQ9SickLeaveAns" value="" assignTo="{!cList[0].Still_on_sick_leave__c}"/>
+                            </apex:actionFunction>
+                        </div>
+
+                        <!-- 20210803 - minghua - CR48, adjust display sequence -->
+                        <div class="bs form-field row content-choice-block" id="q13" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'q13') ,'','display: none;')}">
+                           <div class="bs col-sm-12 col-xs-12 question-row">
+                               <div>
+                                   <i class="ci-hk-checklist content-icon" aria-hidden="true"></i>
+                               </div>
+                               <div>
+                                   {!$Label.Do_you_receive_any_reimbursement_from_other_insurance_companies_for_the_incident}
+                               </div>
+                           </div>
+                           <div class="bs col-sm-12 col-xs-12" >
+                              <!-- 20191219-minghua-JR1811 -->
+                               <div class="bs col-sm-4 question-choice {!if((isLoadOldClaim || isPassQuestionPart) && cList[0].Receive_reimbursement_from_other_comp__c && !cList[0].Making_other_insurance_claim__c, 'fg-orange', 'fg-grey')}" style="padding-left:40px; border-bottom: 0px;cursor:auto;" onclick="saveCusReceiveReimbursement(this);displayQ14();questionDisplayLogic('q13');" >
+                                   <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>{!$Label.YES_Primary}
+                                   <!-- hidden input -->
+                                   <input type="hidden" name="param-str" value="true" />
+                               </div>
+                               <div class="bs col-sm-4 question-choice {!if((isLoadOldClaim || isPassQuestionPart) && cList[0].Making_other_insurance_claim__c, 'fg-orange', 'fg-grey')}" style="padding-left:40px; border-bottom: 0px;cursor:auto;" onclick="saveCusReceiveReimbursement(this);displayQ14();questionDisplayLogic('q13');" >
+                                   <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>{!$Label.YES_second}
+                                   <!-- hidden input -->
+                                   <input id="otherInsurance" type="hidden" name="param-str" value="true" />
+                                   <apex:inputHidden value="{!cList[0].Making_other_insurance_claim__c}" id="hiddenValue_cus_q13_y_2"/>
+                               </div>
+                               <!-- 20210803 - minghua - CR48, add JS function incurredCountryChange -->
+                               <div class="bs col-sm-4 question-choice {!if((isLoadOldClaim || isPassQuestionPart) && !(cList[0].Receive_reimbursement_from_other_comp__c || cList[0].Making_other_insurance_claim__c), 'fg-orange', 'fg-grey')}" style="padding-left:40px; border-bottom: 0px;cursor:auto;" onclick="saveCusReceiveReimbursement(this);hideQ14();questionDisplayLogic('q13');incurredCountryChange();">
+                                   <i class="fa fa-times-circle-o content-icon " aria-hidden="true"></i>{!$Label.No}
+                                   <!-- hidden input -->
+                                   <input type="hidden" name="param-str" value="false" />
+                               </div>
+                               <!-- field to save data -->
+                               <apex:inputHidden value="{!cList[0].Receive_reimbursement_from_other_comp__c}" id="hiddenValue_cus_q13"/>
+                           </div>
+                            <!-- 20211209 - minghua - pro issue, display next question -->
+                            <script>
+                                var selectedQues='{!cList[0].Selected_Question_s__c}';
+                                console.log('q13 selected question:',selectedQues);
+                                if (selectedQues!=undefined&&selectedQues!=''&&selectedQues=='"q13"') {
+                                    $('#q13').find('.fg-orange').removeClass('fg-orange').addClass('fg-grey');
+                                }
+
+                                // Rancho_HC234_20230719 - save selected value
+                                function saveCusReceiveReimbursement(item){
+                                    var params = $(item).children('input[type="hidden"][name="param-str"]').val();
+                                    
+                                    var id = $(item).children('input[type="hidden"][name="param-str"]').attr('id');
+                                    if (id != undefined && id != null && id != '' && id == 'otherInsurance') {
+                                        $(item).siblings('input[type="hidden"]').val(params);
+                                        $('input[type="hidden"][id*="hiddenValue_cus_q13_y_2"]').val(params);
+                                    }else{
+                                        $(item).siblings('input[type="hidden"]').val(params);
+                                        var q13hidden = $('input[type="hidden"][id*="hiddenValue_cus_q13_y_2"]');
+                                        if (q13hidden != undefined && q13hidden != null && q13hidden != '') {
+                                            q13hidden.val('false');
+                                        }
+                                    }
+                                }
+                            </script>
+                        </div>
+                        
+                        <div class="bs form-field row content-choice-block" id="q14" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'q14') ,'','display: none;')}">
+                           <div class="bs col-sm-12 col-xs-12 question-row" style="padding-bottom: 10px;">
+                               <div>
+                                   <i class="ci-hk-checklist content-icon" aria-hidden="true"></i>
+                               </div>
+                               <div>
+                                   {!$Label.Please_provide_the_following_information}
+                               </div>
+                           </div>
+                           <apex:outputPanel id="infoFromOtherCompanyPanel"> 
+                               <script>
+                                   otherCompanyInfoItemFilled = 0;
+                                   otherCompanyInfoItem = {!wInfoFromOtherCompanyList.size*2}
+                               </script>
+                                                  
+                                <apex:variable value="{!0}" var="idx_infoFromOtherCompany"/>
+                                <!-- item --> 
+                                <apex:repeat value="{!wInfoFromOtherCompanyList}" var="wItem">
+                                   <div id="infoFromOtherCompanyCus{!idx_infoFromOtherCompany}" class="bs col-sm-12 col-xs-12">
+                                       <div class="bs col-sm-12 col-xs-12">
+                                           <div style="border-radius: 10px; margin-top: 10px;" class="bs col-sm-10 col-xs-10 form-note">
+                                               <div class="bs row form-field" >
+                                                   <div class="bs col-xs-12 col-sm-6" >{!$Label.Name_of_Insurer}</div>
+                                                   <div class="bs col-xs-12 col-sm-6" >
+                                                   <!--
+                                                       <apex:inputText id="answer-question-cus-q14a"  value="{!wItem.nameOfInsurer}" styleclass="form-field-style " onchange="questionDisplayLogic('q14');" />
+                                                   -->
+                                                       <apex:inputText id="answer-question-cus-q14a"  value="{!wItem.nameOfInsurer}" styleclass="form-field-style " onchange="loadQuestionlogicWhenFillOtherCompanyInfo();" />
+                                                   
+                                                   </div>
+                                                   <div class="bs col-xs-12 col-sm-12" style="padding-bottom:10px; "></div>
+                                                   <div class="bs col-xs-12 col-sm-6" >{!$Label.Policy_No}</div>
+                                                   <div class="bs col-xs-12 col-sm-6" >
+                                                       <!--
+                                                       <apex:inputText id="answer-question-cus-q14b" value="{!wItem.policyNum}" styleclass="form-field-style " onchange="questionDisplayLogic('q14');"/>
+                                                       -->
+                                                       <apex:inputText id="answer-question-cus-q14b" value="{!wItem.policyNum}" styleclass="form-field-style " onchange="loadQuestionlogicWhenFillOtherCompanyInfo();"/>
+                                                       
+                                                   </div>
+                                                </div>
+                                           </div>
+                                           <div id="infoFromOtherCompanyCusPlusIcon{!idx_infoFromOtherCompany}" class="bs col-xs-2 col-sm-2" style="padding-top: 60px; {!IF(wInfoFromOtherCompanyList.size == 1, 'display:none;', 'display:block;')}" >
+                                               <i class="glyphicon glyphicon-minus-sign content-icon " aria-hidden="true" onclick="removeInfoFromOtherComp({!idx_infoFromOtherCompany})" ></i>
+                                           </div>
+                                       </div>
+                                   </div>
+                                   <apex:variable var="idx_infoFromOtherCompany" value="{!idx_infoFromOtherCompany + 1}"/> 
+                                   <!--
+                                   <script>
+                                        if({!if(wItem.nameOfInsurer != null, true, false)}){
+                                            otherCompanyInfoItemFilled +=1;
+                                        }
+                                        
+                                        if({!if(wItem.policyNum != null, true, false)}){
+                                            otherCompanyInfoItemFilled +=1;
+                                        }
+                                    </script>
+                                    -->
+                                </apex:repeat>
+                                
+                                <div class="bs col-sm-offset-10 col-sm-2 col-xs-offset-10 col-xs-2">
+                                    <span class="glyphicon glyphicon-plus-sign fa-lg onclick-pointer" style="left:-10px;" onclick="addInfoFromOtherComp()"/>
+                                </div>
+                                
+                                <apex:actionFunction name="addInfoFromOtherComp" status="loader-icon" action="{!AddInfoFromOtherComp}" rerender="infoFromOtherCompanyPanel" oncomplete="loadQuestionlogicWhenFillOtherCompanyInfo();" />
+                                <apex:actionFunction name="removeInfoFromOtherComp" status="loader-icon" action="{!RemoveInfoFromOtherComp}" rerender="infoFromOtherCompanyPanel" oncomplete="loadQuestionlogicWhenFillOtherCompanyInfo();" >
+                                      <apex:param name="idx_infoFromOtherCompany" value="{!idx_infoFromOtherCompany}" assignTo="{!idx_infoFromOtherCompany}"/>
+                                </apex:actionFunction>
+                                <apex:actionFunction name="clearwInfoFromOtherCompanyList" status="loader-icon" action="{!clearwInfoFromOtherCompanyList}" rerender="infoFromOtherCompanyPanel" oncomplete="loadQuestionlogicWhenFillOtherCompanyInfo();"/>
+                                
+                            </apex:outputPanel>
+                            <script>
+                                function loadQuestionlogicWhenFillOtherCompanyInfo(){
+                                    if($("#q14").is(":visible")){
+                                        var itemFilled = 0;
+                                        $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-question-cus-q14']").each(function(idx, elem){
+                                            var str = $(elem).val();
+                                            if(!isBlank(str))    itemFilled += 1;
+                                        });
+                                        otherCompanyInfoItemFilled = itemFilled;
+                                        if(otherCompanyInfoItem == otherCompanyInfoItemFilled && otherCompanyInfoItemFilled>0){
+                                            questionDisplayLogic('q14');
+                                        }else{
+                                            hideAfterwardQuestion('q15');    //although no question, hide next btn
+                                        }
+                                    }
+                                }
+                                
+                            </script>
+                            
+
+                           <!-- call function add extra text -->
+                        </div>
+
+                        <!-- Rancho_CR48_20210706 remove includeGSClaim -->
+                        <div class="bs form-field row content-choice-block" id="q15" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'q15'),'','display: none;')}">
+                           <div class="bs col-sm-6 col-xs-12 question-row">
+                              <div>
+                                <i class="ci-hk-stethoscope content-icon" aria-hidden="true"></i>
+                              </div>
+                              <div>
+                                <apex:outputText value="{!transField['QuestionIncurredCountry'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~QuestionIncurredCountry~"), true,false)}" />
+                              </div>
+                           </div>
+                           <!-- Rancho_CR48_20210706: add padding -->
+                           <div class="bs col-sm-6 col-xs-12" style="padding-left:65px;" >
+                              <!-- Rancho_CR48_20210706 remove includeGSClaim -->
+                              <apex:selectList id="incurred-country" styleClass="bs form-field-style-select cigna-validation answer-validation sign-info-select" size="1" onchange="incurredCountryChange()" value="{!cList[0].Incurred_Country_Code__c}">
+                                  <apex:selectOptions value="{!incurredCountryList}"/>
+                              </apex:selectList>
+                           </div>
+                        </div>
+
+                        <!-- 20210803 - minghua - CR48, adjust display sequence -->
+                        <div class="bs form-field row content-choice-block" id="q10" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'q10') ,'','display: none;')}">
+                            <!-- 20210803 - minghua - CR48 -->
+                           <!-- <div class="bs col-sm-12 col-xs-12 question-row"> -->
+                           <div class="bs col-sm-6 col-xs-12 question-row">
+                               <div>
+                                   <i class="ci-hk-callendar content-icon" aria-hidden="true" style="cursor:auto"></i>
+                               </div>
+                               <!-- Rancho_CR48_20210706: add escape to recognize the html tag in custom label -->
+                               <!-- <div>
+                                   {!$Label.What_would_you_like_to_claim_for}
+                               </div> -->
+                               <apex:outputText value="{!$Label.What_would_you_like_to_claim_for}" escape="false"/>
+                           </div>
+                            <!-- 20210803 - minghua - CR48 -->
+                            <!-- Rancho_CR48_20210706: add padding -->
+                            <div class="bs col-sm-6 col-xs-12 question-row" style="padding-left:65px;">
+                                <apex:inputHidden value="{!cList[0].What_would_you_like_to_claim_for__c}" id="hiddenValue_cus_q10" />
+                                <select id="claimTypeOrganId" name="claimTypeOrganId" multiple="multiple">
+                                    <option value="A" id='cus_claim_type_A' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_A__c,'selected','')}" style="display: none;">{!$Label.A_General_Practitioner}</option>
+                                    <option value="B" id='cus_claim_type_B' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_B__c,'selected','')}" style="display: none;">{!$Label.B_Specialist_Practitioner}</option>
+                                    <option value="C" id='cus_claim_type_C' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_C__c,'selected','')}" style="display: none;">{!$Label.C_Laboratory_Testing_X_Ray}</option>
+                                    <option value="D" id='cus_claim_type_D' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_D__c,'selected','')}" style="display: none;">{!$Label.D_Chinese_Herbalist_Bonesetter_Acupuncture_Practitioner}</option>
+                                    <option value="E" id='cus_claim_type_E' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_E__c,'selected','')}" style="display: none;">{!$Label.E_Physiotherapy_Chiropractic}</option>
+                                    <option value="F" id='cus_claim_type_F' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_F__c,'selected','')}" style="display: none;">{!$Label.F_Long_Term_Prescribed_Medicine}</option>
+                                    <option value="G" id='cus_claim_type_G' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_G__c,'selected','')}" style="display: none;">{!$Label.G_Medical_Check_Up}</option>
+                                    <option value="H" id='cus_claim_type_H' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_H__c,'selected','')}" style="display: none;">{!$Label.H_Dental}</option>
+                                    <option value="I" id='cus_claim_type_I' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_I__c,'selected','')}" style="display: none;">{!$Label.I_I}</option>
+                                    <option value="J" id='cus_claim_type_J' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_J__c,'selected','')}" style="display: none;">{!$Label.J_J}</option>
+                                    <option value="K" id='cus_claim_type_K' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_K__c,'selected','')}" style="display: none;">{!$Label.K_K}</option>
+                                    <option value="L" id='cus_claim_type_L' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_L__c,'selected','')}" style="display: none;">{!$Label.L_L}</option>
+                                    <option value="M" id='cus_claim_type_M' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_M__c,'selected','')}" style="display: none;">{!$Label.M_M}</option>
+                                    <option value="N" id='cus_claim_type_N' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_N__c,'selected','')}" style="display: none;">{!$Label.N_N}</option>
+                                    <option value="O" id='cus_claim_type_O' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_O__c,'selected','')}" style="display: none;">{!$Label.O_O}</option>
+                                    <option value="P" id='cus_claim_type_P' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_P__c,'selected','')}" style="display: none;">{!$Label.P_P}</option>
+                                    <option value="Q" id='cus_claim_type_Q' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_Q__c,'selected','')}" style="display: none;">{!$Label.Q_Q}</option>
+                                    <option value="R" id='cus_claim_type_R' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_R__c,'selected','')}" style="display: none;">{!$Label.R_R}</option>
+                                    <option value="S" id='cus_claim_type_S' class="question-dropdown-multi-choice {!if(cList[0].Is_Selected_S__c,'selected','')}" style="display: none;">{!$Label.S_S}</option>
+                                </select>
+                                <script>
+                                    if( showA == 0 ){
+                                        $("#cus_claim_type_A").show();
+                                    }
+                                    if( showB == 0 ){
+                                        $("#cus_claim_type_B").show();
+                                    }
+                                    if( showC == 0 ){
+                                        $("#cus_claim_type_C").show();
+                                    }
+                                    if( showD == 0 ){
+                                        $("#cus_claim_type_D").show();
+                                    }
+                                    if( showE == 0 ){
+                                        $("#cus_claim_type_E").show();
+                                    }
+                                    if( showF == 0 ){
+                                        $("#cus_claim_type_F").show();
+                                    }
+                                    if( showG == 0 ){
+                                        $("#cus_claim_type_G").show(); 
+                                    }
+                                    if( showH == 0 ){
+                                        $("#cus_claim_type_H").show(); 
+                                    }
+                                    if( showI == 0 ){
+                                        $("#cus_claim_type_I").show(); 
+                                    }
+                                    if( showJ == 0 ){
+                                        $("#cus_claim_type_J").show(); 
+                                    }               
+                                    if( showK == 0 ){
+                                        $("#cus_claim_type_K").show(); 
+                                    }
+                                    if( showL == 0 ){
+                                        $("#cus_claim_type_L").show(); 
+                                    }
+                                    if( showM == 0 ){
+                                        $("#cus_claim_type_M").show(); 
+                                    }
+                                    if( showN == 0 ){
+                                        $("#cus_claim_type_N").show(); 
+                                    }
+                                    if( showO == 0 ){
+                                        $("#cus_claim_type_O").show(); 
+                                    }
+                                    if( showP == 0 ){
+                                        $("#cus_claim_type_P").show(); 
+                                    }
+                                    if( showQ == 0 ){
+                                        $("#cus_claim_type_Q").show(); 
+                                    }
+                                    if( showR == 0 ){
+                                        $("#cus_claim_type_R").show(); 
+                                    }
+                                    if( showS == 0 ){
+                                        $("#cus_claim_type_S").show(); 
+                                    }
+                                    var selectedQues='{!cList[0].Selected_Question_s__c}';
+                                    console.log('Selected Question:',selectedQues);
+                                    if (selectedQues.indexOf('q10')>-1) {
+                                        if({!cList[0].Is_Selected_A__c})    $('#cus_claim_type_A').removeClass('selected').addClass('selected');
+                                        if({!cList[0].Is_Selected_B__c})    $('#cus_claim_type_B').removeClass('selected').addClass('selected');
+                                        if({!cList[0].Is_Selected_C__c})    $('#cus_claim_type_C').removeClass('selected').addClass('selected');       
+                                        if({!cList[0].Is_Selected_D__c})    $('#cus_claim_type_D').removeClass('selected').addClass('selected');       
+                                        if({!cList[0].Is_Selected_E__c})    $('#cus_claim_type_E').removeClass('selected').addClass('selected');       
+                                        if({!cList[0].Is_Selected_F__c})    $('#cus_claim_type_F').removeClass('selected').addClass('selected');       
+                                        if({!cList[0].Is_Selected_G__c})    $('#cus_claim_type_G').removeClass('selected').addClass('selected');       
+                                        if({!cList[0].Is_Selected_H__c})    $('#cus_claim_type_H').removeClass('selected').addClass('selected');       
+                                        if({!cList[0].Is_Selected_I__c})    $('#cus_claim_type_I').removeClass('selected').addClass('selected');
+                                        if({!cList[0].Is_Selected_J__c})    $('#cus_claim_type_J').removeClass('selected').addClass('selected');
+                                        if({!cList[0].Is_Selected_K__c})    $('#cus_claim_type_K').removeClass('selected').addClass('selected');
+                                        if({!cList[0].Is_Selected_L__c})    $('#cus_claim_type_L').removeClass('selected').addClass('selected');
+                                        if({!cList[0].Is_Selected_M__c})    $('#cus_claim_type_M').removeClass('selected').addClass('selected');
+                                        if({!cList[0].Is_Selected_N__c})    $('#cus_claim_type_N').removeClass('selected').addClass('selected');
+                                        if({!cList[0].Is_Selected_O__c})    $('#cus_claim_type_O').removeClass('selected').addClass('selected');
+                                        if({!cList[0].Is_Selected_P__c})    $('#cus_claim_type_P').removeClass('selected').addClass('selected');
+                                        if({!cList[0].Is_Selected_Q__c})    $('#cus_claim_type_Q').removeClass('selected').addClass('selected');
+                                        if({!cList[0].Is_Selected_R__c})    $('#cus_claim_type_R').removeClass('selected').addClass('selected');
+                                        if({!cList[0].Is_Selected_S__c})    $('#cus_claim_type_S').removeClass('selected').addClass('selected');
+                                    }else{
+                                        console.log('reset claimTypeFlagOptionReset');
+                                        claimTypeFlagOptionReset();
+                                    }
+
+                                    $("#claimTypeOrganId").fSelect({numDisplayed:0,showSearch:false,callback:selectedTypeOfOP,placeholder:'{!$Label.Please_Select}',overflowText:'{!$Label.selectedItem}'});
+                                    // 20210803 - Kirk - CR48 
+                                    isEntitledBenefit={!isEntitledBenefit};
+                                  
+                                    function selectedTypeOfOP(typeStr){
+                                        //20210803 - minghua - CR48
+                                        allTypeStr=$('input[id$=hiddenValue_cus_q10]').val();
+                                        console.log('all selected value:',allTypeStr);
+                                        allTypeStr.trim();
+                                        // 20211209 - minghua - pro issue
+                                        // allTypeStr = allTypeStr.replaceAll(',','');
+                                        allTypeStr = allTypeStr.replace(/,/g,'');
+                                        // Rancho_CR48_20210706
+                                        if(allTypeStr=='A'){
+                                            onlySelectedGP=true;
+                                        }else{
+                                            onlySelectedGP=false;
+                                        }
+                                        console.log('onlySelectedGP: ',onlySelectedGP);
+                                        if(allTypeStr.length == 0){
+                                            sj_OP_b = false;
+                                            hideAfterwardQuestion('q11');
+                                        // Rancho_CR48_20210706: add showOP
+                                        }else if(allTypeStr.length == 1 && (showOP>=1||showOPF>=1)&&(allTypeStr.includes('A')||allTypeStr.includes('D') || allTypeStr.includes('E')|| allTypeStr.includes('F'))){
+                                            console.log('fast track selected option:',allTypeStr);
+                                            if(allTypeStr.includes('A')){
+                                                console.log('isEntitledBenefit:'+isEntitledBenefit);
+                                                if (isEntitledBenefit&&sj_OP_a) {
+                                                    sj_OP_b = true;
+                                                    hideAfterwardQuestion('q11');
+                                                    questionDisplayLogic('q16');
+                                                }else{
+                                                    sj_OP_b = true;
+                                                    hideAfterwardQuestion('q11');
+                                                    questionDisplayLogic('q10');
+                                                }
+                                            }else{
+                                                sj_OP_b = true;
+                                                hideAfterwardQuestion('q11');
+                                                questionDisplayLogic('q10');
+                                            }
+                                        }else{
+                                            sj_OP_b = false;
+                                            hideAfterwardQuestion('q11');
+                                            questionDisplayLogic('q20');
+                                        }
+                                    }
+                               </script>
+                            </div>
+                            <!-- 20210803 - minghua - CR48 -->
+                           <!-- <div class="bs col-sm-12 col-xs-12" >
+                                
+                               <div id="cus_claim_type_A" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_A__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'A') ,'','display: none;')}" onclick="selectedTypeOfOP('A');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.A_General_Practitioner}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="A" />
+                               </div>
+                               <div id="cus_claim_type_B" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_B__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'B') ,'','display: none;')}" onclick="selectedTypeOfOP('B');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.B_Specialist_Practitioner}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="B" />
+                               </div>
+                               <div id="cus_claim_type_C" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_C__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'C') ,'','display: none;')}" onclick="selectedTypeOfOP('C');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.C_Laboratory_Testing_X_Ray}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="C" />
+                               </div>
+                               <div id="cus_claim_type_D" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_D__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'D') ,'','display: none;')}" onclick="selectedTypeOfOP('D');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.D_Chinese_Herbalist_Bonesetter_Acupuncture_Practitioner}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="D" />
+                               </div>
+                               <div id="cus_claim_type_E" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_E__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'E') ,'','display: none;')}" onclick="selectedTypeOfOP('E');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.E_Physiotherapy_Chiropractic}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="E" />
+                               </div>
+                               <div id="cus_claim_type_F" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_F__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'F') ,'','display: none;')}" onclick="selectedTypeOfOP('F');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.F_Long_Term_Prescribed_Medicine}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="F" />
+                               </div>
+                               <div id="cus_claim_type_G" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_G__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'G') ,'','display: none;')}" onclick="selectedTypeOfOP('G');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.G_Medical_Check_Up}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="G" />
+                               </div>
+                               <div id="cus_claim_type_H" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_H__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'H') ,'','display: none;')}" onclick="selectedTypeOfOP('H');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.H_Dental}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="H" />
+                               </div>
+                               <div id="cus_claim_type_I" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_I__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'I') ,'','display: none;')}" onclick="selectedTypeOfOP('I');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.I_I}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="I" />
+                               </div>
+                               <div id="cus_claim_type_J" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_J__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'J') ,'','display: none;')}" onclick="selectedTypeOfOP('J');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.J_J}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="J" />
+                               </div>
+                               <div id="cus_claim_type_K" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_K__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'K') ,'','display: none;')}" onclick="selectedTypeOfOP('K');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.K_K}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="K" />
+                               </div>
+                               <div id="cus_claim_type_L" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_L__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'L') ,'','display: none;')}" onclick="selectedTypeOfOP('L');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.L_L}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="L" />
+                               </div>
+                               <div id="cus_claim_type_M" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_M__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'M') ,'','display: none;')}" onclick="selectedTypeOfOP('M');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.M_M}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="M" />
+                               </div>
+                               <div id="cus_claim_type_N" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_N__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'N') ,'','display: none;')}" onclick="selectedTypeOfOP('N');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.N_N}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="N" />
+                               </div>
+                               <div id="cus_claim_type_O" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_O__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'O') ,'','display: none;')}" onclick="selectedTypeOfOP('O');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.O_O}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="O" />
+                               </div>
+                               <div id="cus_claim_type_P" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_P__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'P') ,'','display: none;')}" onclick="selectedTypeOfOP('P');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.P_P}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="P" />
+                               </div>
+                               <div id="cus_claim_type_Q" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_Q__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'Q') ,'','display: none;')}" onclick="selectedTypeOfOP('Q');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.Q_Q}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="Q" />
+                               </div>
+                               <div id="cus_claim_type_R" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_R__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'R') ,'','display: none;')}" onclick="selectedTypeOfOP('R');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.R_R}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="R" />
+                               </div>
+                               <div id="cus_claim_type_S" class="bs col-sm-12 question-multi-choice {!if(cList[0].Is_Selected_S__c,'fg-orange','fg-grey')}" style="padding-left:40px; border-bottom: 0px; {!if(CONTAINS(cList[0].Allow_Types_Of_Doctor_To_Claim__c,'S') ,'','display: none;')}" onclick="selectedTypeOfOP('S');">
+                                   <div>
+                                        <div style="float: left;">
+                                            <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                        </div>
+                                        <div style="padding-left:50px; word-wrap: break-word;">
+                                            {!$Label.S_S}
+                                        </div>
+                                   </div>
+                                   <input type="hidden" name="param-str" value="S" />
+                               </div>
+                                     
+                               <script>
+                                    var selectedQues='{!cList[0].Selected_Question_s__c}';
+                                    if (selectedQues.indexOf('q10')>-1) {
+                                        if({!cList[0].Is_Selected_A__c})    $('#cus_claim_type_A').removeClass('fg-grey').addClass('fg-orange');       
+                                        if({!cList[0].Is_Selected_B__c})    $('#cus_claim_type_B').removeClass('fg-grey').addClass('fg-orange');       
+                                        if({!cList[0].Is_Selected_C__c})    $('#cus_claim_type_C').removeClass('fg-grey').addClass('fg-orange');       
+                                        if({!cList[0].Is_Selected_D__c})    $('#cus_claim_type_D').removeClass('fg-grey').addClass('fg-orange');       
+                                        if({!cList[0].Is_Selected_E__c})    $('#cus_claim_type_E').removeClass('fg-grey').addClass('fg-orange');       
+                                        if({!cList[0].Is_Selected_F__c})    $('#cus_claim_type_F').removeClass('fg-grey').addClass('fg-orange');       
+                                        if({!cList[0].Is_Selected_G__c})    $('#cus_claim_type_G').removeClass('fg-grey').addClass('fg-orange');       
+                                        if({!cList[0].Is_Selected_H__c})    $('#cus_claim_type_H').removeClass('fg-grey').addClass('fg-orange');       
+                                        if({!cList[0].Is_Selected_I__c})    $('#cus_claim_type_I').removeClass('fg-grey').addClass('fg-orange');     
+                                        // Added by minglei add Wellness type to claim start 
+                                        if({!cList[0].Is_Selected_J__c})    $('#cus_claim_type_J').removeClass('fg-grey').addClass('fg-orange');
+                                        // Added by minglei add Wellness type to claim end
+                                        // 20210803 - Kirk - CR48  START
+                                        if({!cList[0].Is_Selected_K__c})    $('#cus_claim_type_K').removeClass('fg-grey').addClass('fg-orange');
+                                        if({!cList[0].Is_Selected_L__c})    $('#cus_claim_type_L').removeClass('fg-grey').addClass('fg-orange');
+                                        if({!cList[0].Is_Selected_M__c})    $('#cus_claim_type_M').removeClass('fg-grey').addClass('fg-orange');
+                                        if({!cList[0].Is_Selected_N__c})    $('#cus_claim_type_N').removeClass('fg-grey').addClass('fg-orange');
+                                        if({!cList[0].Is_Selected_O__c})    $('#cus_claim_type_O').removeClass('fg-grey').addClass('fg-orange');
+                                        if({!cList[0].Is_Selected_P__c})    $('#cus_claim_type_P').removeClass('fg-grey').addClass('fg-orange');
+                                        if({!cList[0].Is_Selected_Q__c})    $('#cus_claim_type_Q').removeClass('fg-grey').addClass('fg-orange');
+                                        if({!cList[0].Is_Selected_R__c})    $('#cus_claim_type_R').removeClass('fg-grey').addClass('fg-orange');
+                                        if({!cList[0].Is_Selected_S__c})    $('#cus_claim_type_S').removeClass('fg-grey').addClass('fg-orange');
+                                        // 20210803 - Kirk - CR48 - TuiNa removed - 20210917
+                                        
+                                    }else{
+                                        claimTypeFlagOptionReset();
+                                    }
+                                    
+                                    // 20210803 - Kirk - CR48 
+                                    isEntitledBenefit={!isEntitledBenefit};
+                                  
+                                    function selectedTypeOfOP(typeStr){
+                                        //20210803 - minghua - CR48
+                                        allTypeStr=$('input[id$=hiddenValue_cus_q10]').val();
+                                        console.log('all selected value:',allTypeStr);
+                                        allTypeStr.trim();
+                                        allTypeStr = allTypeStr.replaceAll(',','');
+                                        if(allTypeStr.length == 0){
+                                            sj_OP_b = false;
+                                            hideAfterwardQuestion('q11');
+                                        }else if(allTypeStr.length == 1 && showOPF>=1&&(allTypeStr.includes('A')||allTypeStr.includes('D') || allTypeStr.includes('E')|| allTypeStr.includes('F'))){
+                                            console.log('fast track selected option:',allTypeStr);
+                                            if(allTypeStr.includes('A')){
+                                                console.log('isEntitledBenefit:'+isEntitledBenefit);
+                                                if (isEntitledBenefit&&sj_OP_a) {
+                                                    sj_OP_b = true;
+                                                    hideAfterwardQuestion('q11');
+                                                    questionDisplayLogic('q16');
+                                                }else{
+                                                    sj_OP_b = true;
+                                                    hideAfterwardQuestion('q11');
+                                                    questionDisplayLogic('q10');
+                                                }
+                                            }else{
+                                                sj_OP_b = true;
+                                                hideAfterwardQuestion('q11');
+                                                questionDisplayLogic('q10');
+                                            }
+                                        }else{
+                                            sj_OP_b = false;
+                                            hideAfterwardQuestion('q11');
+                                            questionDisplayLogic('q20');
+                                        }
+                                    }
+                               </script>
+                           </div> -->
+                        </div>
+                        <!-- 20210803 - Kirk - CR48 add Q17-->
+                        <div class="bs form-field row content-choice-block" id="q17" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'q17') ,'','display: none;')}" >
+              
+                           <div class="bs col-sm-12 col-xs-12 question-row">
+                               <div>
+                                   <i class="ci-hk-checklist content-icon" aria-hidden="true" style="cursor:auto"></i>
+                               </div>
+                               <div>
+                                   {!$Label.Does_Your_Receipt_Include_Separate_Medication_Charge}
+                               </div>
+                           </div>
+                           <div id="separateMedicationCharge" class="bs col-sm-12 col-xs-12">
+                               <div class="bs col-sm-4 question-choice {!if(cList[0].Ask_If_Include_Separate_Medication__c, 'fg-orange','fg-grey')}" style="padding-left:40px;border-bottom: 0px;cursor: auto;" onclick="saveRecordSeparateMedication(true);" >
+                                   <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                   {!$Label.Yes}
+                                   <input type="hidden" name="param-str" value="true" />
+                               </div>
+                               <div class="bs col-sm-4 question-choice go-next-step {!if(!cList[0].Ask_If_Include_Separate_Medication__c, 'fg-orange','fg-grey')}" style="padding-left:40px;border-bottom: 0px;cursor: auto;" onclick="saveRecordSeparateMedication(false);">
+                                   <i class="fa fa-times-circle-o content-icon " aria-hidden="true"></i>
+                                   {!$Label.No}
+                                   <input type="hidden" name="param-str" value="false" />
+                               </div>
+                               <!-- field to save data -->
+                               <apex:inputHidden id="hiddenValue_SeparateMedication" value="{!cList[0].Ask_If_Include_Separate_Medication__c}" />
+                               <!-- save record data -->
+                               <apex:actionFunction status="loader-icon" name="SaveRecordSeparateMedicationAtAction" action="{!SaveRecord}" reRender="hiddenValue_SeparateMedication">
+                                   <apex:param name="SeparateMedicationAns" value="" assignTo="{!cList[0].Ask_If_Include_Separate_Medication__c}"/>
+                               </apex:actionFunction>
+                               <script>
+                                    function saveRecordSeparateMedication(ans){
+                                        console.log('to see separate medication charge');
+                                        if (ans == true){
+                                            console.log('Please input the amount of');
+                                            isSeparateCharge=true;
+                                        }else if (ans == false){
+                                            console.log('incurred-country-amount');
+                                            isSeparateCharge=false;
+                                        }
+                                        hideAfterwardQuestion('q18');
+                                        questionDisplayLogic('q17');
+                                        // SaveRecordSeparateMedicationAtAction(ans);
+                                    }
+                               </script>
+                            </div>
+                        </div>
+
+                        <div class="bs form-field row content-choice-block question-row" id="q11" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'q11') ,'','display: none;')}">
+                           <div class="bs col-sm-5 col-xs-12 question-row"><!--20210803 - Kirk - CR48 -->
+                               <div>
+                                   <i class="ci-hk-dollars content-icon" aria-hidden="true"></i>
+                               </div>
+                               <!--<div id="amountChangeText">
+                                   {!$Label.Please_input_the_amount_of_charge_HKD}
+                               </div> 20210803 - Kirk - CR48 --> 
+                               <div id="amountChangeTextForGS"><!--20210803 - Kirk - CR48 --> 
+                                  <apex:outputText value="{!transField['QuestionAmountCurrency'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~QuestionAmountCurrency~"), true,false)}" />
+                               </div>
+                           </div>
+                           <!--
+                           <div class="bs col-sm-6 col-xs-12" onchange="questionDisplayLogic('q11');">
+                           -->
+                           <div class="bs col-sm-7 col-xs-12 question-row" ><!--20210803 - Kirk - CR48  --> 
+                                 <!-- 20210803 - Kirk - CR48 - hide IncurredCurrency - 20210917-->
+                                <apex:selectList id="incurredCurrency" style="display: none;" styleClass="bs  form-field-style-select cigna-validation answer-validation sign-info-select" size="1"  value="{!cList[0].Incurred_Currency_Code__c}" onchange="checkIfUnder800();" ><!--20210803 - Kirk - CR48 --> 
+                                    <apex:selectOptions value="{!currencyList}"/>
+                                </apex:selectList>
+                                <!-- 20210803 - Kirk - CR48 - hide IncurredCurrency - remove sm xs - 20210917-->
+                                <div style="padding-left:50px;">
+                                    <apex:inputField id="answer-question-cus-digits-q11" styleClass="bs form-field-style" value="{!cList[0].Please_input_the_amount_of_charge_HKD__c}" onchange="checkIfUnder800();"/>
+
+                                    <script>
+                                      function checkIfUnder800(){
+                                            if($("#q11").is(":visible")){
+                                                var amt_checkIfUnder800 =  $("input[id$='answer-question-cus-digits-q11']").val();
+                                                console.log('amt_checkIfUnder800=',amt_checkIfUnder800);
+                                                //20210803 - Kirk - CR48
+                                                var amt_checkCurrencyCode =  $("select[id$='incurredCurrency']").val(); 
+                                                if (amt_checkIfUnder800 > 0) {
+                                                    if(amt_checkCurrencyCode == 'HKD' && amt_checkIfUnder800 > 0 && amt_checkIfUnder800 <= 800){
+                                                        sj_OP_c = true;
+                                                        if (allTypeStr.includes('A')) {
+                                                            hideAfterwardQuestion('q18');
+                                                        }else{
+                                                            hideAfterwardQuestion('q12');
+                                                        }
+                                                        questionDisplayLogic('q11');
+                                                    }else{
+                                                        sj_OP_c = false;
+                                                        if (allTypeStr.includes('A')) {
+                                                            hideAfterwardQuestion('q18');
+                                                        }else{
+                                                            hideAfterwardQuestion('q12');
+                                                        }
+                                                        questionDisplayLogic('q20');
+                                                    }
+                                                }else{
+                                                    sj_OP_c = false;
+                                                    if (allTypeStr.includes('A')) {
+                                                        hideAfterwardQuestion('q18');
+                                                    }else{
+                                                        hideAfterwardQuestion('q17');
+                                                    }
+                                                    hideNextBtnIn(7);
+                                                }
+                                            }
+                                      }                             
+                                    </script>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 20210803 - Kirk - CR48 Add Q18-->
+                        <div class="bs form-field row content-choice-block" id="q18" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'q18') ,'','display: none;')}">
+                            <!-- 20210803 - Kirk - CR48 - hide IncurredCurrency - 20210917-->
+                            <div class="bs col-sm-6 col-xs-12 question-row" style="display: none;">
+                               <div>
+                                   <i class="ci-hk-dollars content-icon" aria-hidden="true"></i>
+                               </div>
+                               <div>
+                                  <apex:outputText value="{!transField['IncurredCurrency'][$Label.Header_Language_Code_Current]}" rendered="{!IF(contains(transKey, "~IncurredCurrency~"), true,false)}" />
+                               </div>
+                            </div>
+                            <!-- 20210803 - Kirk - CR48 - hide IncurredCurrency - 20210917-->
+                            <div class="bs col-sm-6 col-xs-12 question-row" style="display: none;" >
+                                <apex:selectList id="incurredCurrency-1" styleClass="bs col-sm-6 col-xs-12 form-field-style-select cigna-validation answer-validation sign-info-select" size="1"  value="{!cList[0].Consultation_Currency_Code__c}" onchange="checkIfUnder800s();" > 
+                                    <apex:selectOptions value="{!currencyList}"/>
+                                </apex:selectList>
+                            </div>
+
+                            <div class="bs col-sm-12 col-xs-12 question-row">
+                                <div>
+                                    <i class="ci-hk-dollars content-icon" aria-hidden="true"></i>
+                                </div>
+                                <div id="amountChangeText">
+                                   {!$Label.Please_Input_The_Amount_Of}
+                                </div>
+                            </div>
+                            <div class="bs col-sm-12 col-xs-12">
+                                <div class="col-sm-6 col-xs-12" style="padding-left:63px;">
+                                    <div id="consultationText" style="line-height:40px">
+                                       {!$Label.Consultation_Fee}
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-xs-12">
+                                    <div id="consultationAns" class="question-row" style="line-height:45px">
+                                        <div style="padding-left:50px;">
+                                            <!-- 20210803 - Kirk - CR48 add placeholder 20211005-->
+                                            <apex:inputField id="answer-question-cus-digits-q18-1" 
+                                            html-placeholder="{!transField['Required'][$Label.Header_Language_Code_Current]}" styleClass="bs col-sm-8 col-xs-8 form-field-style form-control" style="border: none;border-bottom: 1px solid black; border-radius: 0px" value="{!cList[0].Please_input_the_amount_of_charge_Con__c}" onchange="checkIfUnder800s();"/>
+                                            <script>
+                                                function removeFormRule(){
+                                                    $("input[id$=answer-question-cus-digits-q18-3]").each(
+                                                    function(idx, elem){
+                                                        console.log('checkIfUnder800s remove');
+                                                        $(elem).rules("remove");
+                                                    });
+                                                }
+                                                function checkIfUnder800s(){
+                                                    if($("#q18").is(":visible")){
+                                                        var amt_checkIfUnder800_1 =  $("input[id$='answer-question-cus-digits-q18-1']").val();
+                                                        var amt_checkIfUnder800_2 =  $("input[id$='answer-question-cus-digits-q18-2']").val();
+                                                        var amt_checkIfUnder800_3 =  $("input[id$='answer-question-cus-digits-q18-3']").val();
+                                                        var amt_checkCurrencyCode_1 =  $("select[id$='incurredCurrency-1']").val();
+                                                        hideAfterwardQuestion('q19');
+                                                        if (!(amt_checkIfUnder800_1>0)) {
+                                                            console.log('Please check Consultation fee');
+                                                            return;
+                                                        }
+                                                        if (!(amt_checkIfUnder800_2>0)) {
+                                                            console.log('Please check Medication/Treatment Fee');
+                                                            return;
+                                                        }
+                                                        if (amt_checkIfUnder800_3!=undefined &&amt_checkIfUnder800_3!=null&& amt_checkIfUnder800_3!='') {
+                                                            if (!(amt_checkIfUnder800_3>=0)) {
+                                                                loadPartialRules();
+                                                                console.log('Please check Others Fee');
+                                                                return;
+                                                            }
+                                                        }
+                                                        
+                                                        if (amt_checkCurrencyCode_1 == 'HKD') {
+                                                            sj_OP_c = false;
+                                                            var check1and2 =  parseFloat(amt_checkIfUnder800_1) +parseFloat(amt_checkIfUnder800_2);
+                                                            if(amt_checkIfUnder800_3 > 0){
+                                                                questionDisplayLogic('q20');
+                                                            }else if(check1and2 <= 800){
+                                                                sj_OP_c = true;
+                                                                questionDisplayLogic('q18');
+                                                            }else if(check1and2 > 800){
+                                                                questionDisplayLogic('q20');
+                                                            }
+                                                        }else{
+                                                            questionDisplayLogic('q20');
+                                                        }
+                                                    }
+                                                }                             
+                                            </script>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bs col-sm-12 col-xs-12">
+                                <div class="col-sm-6 col-xs-12" style="padding-left:63px;">
+                                    <div id="medicationText" style="line-height:40px">
+                                       {!$Label.Medication_Fee}
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-xs-12">
+                                    <div id="medicationAns" class="question-row" style="line-height:45px">
+                                        <!-- 20210803 - Kirk - CR48 add placeholder 20211005-->
+                                        <div style="padding-left:50px;">
+                                            <apex:inputField id="answer-question-cus-digits-q18-2" html-placeholder="{!transField['Required'][$Label.Header_Language_Code_Current]}" styleClass="bs col-sm-8 col-xs-8 form-field-style form-control" style="border: none;border-bottom: 1px solid black; border-radius: 0px" value="{!cList[0].Please_input_the_amount_of_charge_Med__c}" onchange="checkIfUnder800s();"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bs col-sm-12 col-xs-12">
+                                <div class="col-sm-6 col-xs-12" style="padding-left:63px;">
+                                    <div id="othersText" style="line-height:40px">
+                                       {!$Label.Others_Claim}
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-xs-12">
+                                    <div id="othersAns" class="question-row" style="line-height:45px">
+                                        <div style="padding-left:50px;">
+                                            <!-- 20210803 - Kirk - CR48 add placeholder 20211005-->
+                                            <apex:inputField id="answer-question-cus-digits-q18-3" styleClass="bs col-sm-8 col-xs-8 form-field-style form-control" style="border: none;border-bottom: 1px solid black; border-radius: 0px"  value="{!cList[0].Please_input_the_amount_of_charge_Oth__c}" onfocus="removeFormRule();" onchange="checkIfUnder800s();" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div> 
+                        </div>
+                        <!-- 20210803 - Kirk - CR48 Move Q12 to here-->
+                        <div class="bs form-field row content-choice-block" id="q12" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'q12') ,'','display: none;')}">
+                           <div class="bs col-sm-6 col-xs-12 question-row">
+                               <div>
+                                   <i class="ci-hk-callendar content-icon" aria-hidden="true"></i>
+                               </div>
+                               <div>
+                                   {!$Label.When_did_you_visit_the_Dr}
+                               </div>
+                           </div>
+                           <!-- start repeat item -->
+                           <apex:outputPanel id="multipleVisitDatePanel">
+                               <script>
+                                   visitDateItemFilled = 0;
+                                   visitDateItem = {!wVisitDateStrList.size}
+                               </script>
+                               <apex:variable value="{!0}" var="idx_visitDate"/>
+                               <!-- item --> 
+                               <apex:repeat value="{!wVisitDateStrList}" var="wItem" >
+                                    <div id="visitDateCus{!idx_visitDate}" class="bs col-sm-12 col-xs-12">
+                                       <div style="border-radius: 10px; margin-top: 10px;" class="bs col-sm-10 col-xs-10 form-note"> 
+                                           <div class="bs row form-field" >
+                                               <div class="bs col-xs-12 col-sm-6" >{!$Label.Visit_Date}</div>
+                                               <div class="bs col-xs-12 col-sm-6"  >
+                                                   <input type="text" id="answer-date-cus-q12a-{!idx_visitDate}-date-format" class="form-field-style "
+                                                       disabled="true" data-date-yyyy-mm-dd="{!wItem.visitDate}" data-altField-id="visitDate-datepicker-hidden"
+                                                       onchange="CalculationForVisitDateAtAction();" />
+                                                   <apex:inputHidden id="visitDate-datepicker-hidden"  value="{!wItem.visitDateTimestamp}" />
+                                               </div>
+                                            </div>
+                                       </div>
+
+                                      <div id="visitDateCusMinusIcon{!idx_visitDate}" class="bs col-xs-2 col-sm-2" style="padding-top: 50px; {!IF(wvisitDateStrList.size == 1, 'display:none;', 'display:block;')}" >
+                                           <i class="glyphicon glyphicon-minus-sign content-icon " aria-hidden="true" onclick="RemoveVisitDate({!idx_visitDate})"></i>
+                                       </div>
+                                    </div>
+                                   <apex:variable var="idx_visitDate" value="{!idx_visitDate + 1}"/>
+                                   <script>
+                                        if({!if(wItem.visitDate!= null, true, false)}){
+                                            visitDateItemFilled +=1;
+                                        }
+                                    </script>
+                                </apex:repeat>
+                                
+                                <div class="bs col-sm-offset-10 col-sm-2 col-xs-offset-10 col-xs-2" style="{!IF(wvisitDateStrList.size > 0, 'display:block;', 'display:none;')}">
+                                    <!-- 20210803 - minghua - CR48, hideAfterwardQuestion from 13 to 19 -->
+                                    <span class="glyphicon glyphicon-plus-sign fa-lg onclick-pointer" onclick="AddVisitDate();hideAfterwardQuestion('q20');"/>
+                                </div>
+                                <!-- 20210803 - minghua - CR48, refresh refreshBtnJS -->
+                                <apex:actionFunction name="ReloadVisitDatePanel" action="{!DummyAction}" status="loader-icon" oncomplete="q12aValidation(); loadQuestionlogicWhenFillVisitDate();refreshBtnJS();" rerender="multipleVisitDatePanel" />
+                                <apex:actionFunction name="AddVisitDate" status="loader-icon" action="{!AddVisitDate}"  oncomplete="ReloadVisitDatePanel();" />
+                                <apex:actionFunction name="RemoveVisitDate" status="loader-icon" action="{!RemoveVisitDate}" oncomplete="ReloadVisitDatePanel();">
+                                    <apex:param name="idx_visitDate" value="{!idx_visitDate}" assignTo="{!idx_visitDate}"/>
+                                </apex:actionFunction>
+                                <!-- 170312
+                                <apex:actionFunction name="clearwVisitDateStrList" status="loader-icon" action="{!clearwVisitDateStrList}" oncomplete="ReloadVisitDatePanel();" />
+                                -->
+                                <apex:actionFunction name="clearwVisitDateStrList" status="loader-icon" action="{!clearwVisitDateStrList}" rerender="multipleVisitDatePanel" oncomplete="q12aValidation(); loadQuestionlogicWhenFillVisitDate();" />
+                                
+                               <!--For refreshing multipleVisitDatePanel and then calculate Visit Date-->
+                               <!-- 20210803 - minghua - CR48, rerender symptomeDiagnosis -->
+                               <apex:actionFunction action="{!calculationForVisitDate}" status="loader-icon" name="CalculationForVisitDateAtAction" oncomplete="ReloadVisitDatePanel();" reRender="symptomeDiagnosis"/> <!-- jSPanel, -->
+                               <script>
+                                   initDatePicker();
+                               </script>
+                                
+                           </apex:outputPanel>
+                            <script>
+                                function loadQuestionlogicWhenFillVisitDate(){
+                                    if($("#q12").is(":visible")){
+                                        if(visitDateItem == visitDateItemFilled && visitDateItemFilled >0){
+                                            // 20210803 - minghua - CR48
+                                            q19SymptomReset();
+                                            questionDisplayLogic('q12');
+                                        }
+                                    }
+                                }
+                            </script>
+                           <!-- end repeat item -->     
+                        </div>
+
+                        <!--20210803 - Kirk - CR48 -->
+                        <apex:outputPanel id="symptomeDiagnosis">
+                            <div class="bs form-field row content-choice-block" id="q19" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'q19') ,'','display: none;')}">
+                                <div class="bs col-sm-12 col-xs-12 question-row">
+                                    <div>
+                                        <i class="ci-hk-callendar content-icon" aria-hidden="true" style="cursor:auto"></i>
+                                    </div>
+                                    <div>
+                                        {!$Label.What_Are_Your_Symptoms_And_Diagnosis}
+                                    </div>
+                                </div>
+                                <div>
+                                    <p id="limitOption" style="padding-left:280px;color:red;display:none;">{!$Label.Claim_Symptoms_Only_Select_3_Options}</p>
+                                </div>
+                                <div class="bs col-sm-12 col-xs-12" >
+                                    <apex:variable value="{!0}" var="rowNum"/>
+                                    <apex:repeat value="{!claimSDList}" var="symptomItem">
+                                        <!-- Rancho_CR48_20210706: add symptoms-and-diagnosis-item for setting row -->
+                                        <div id="q19_{!symptomItem.sDCode}" class="bs col-sm-6 col-xs-6 question-multi-choice symptoms-and-diagnosis-item {!IF(CONTAINS(cList[0].Selected_Question_s__c,'q19') ,IF(contains(cList[0].What_Are_Your_Symptoms_And_Diagnosis__c,symptomItem.sDCode), 'fg-orange','fg-grey'),'fg-grey')}" style="border-bottom: 0px;padding: 15px;padding-bottom: 0px;" onclick="selectedTypeOfSymptoms('{!symptomItem.sDCode},');">
+                                            <div style="height:auto;">
+                                                <div style="float: left;">
+                                                    <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                                </div>
+                                                <div  style="padding-left:50px;word-wrap: break-word; {!IF($Label.Header_Language_Code_Current=='en_US','','display:none;')} ">
+                                                    <!-- Rancho_CR48_20210706: wrap texts into separate line -->
+                                                    <!-- {!symptomItem.sDDscpEN} -->
+                                                    <apex:outputText value="{!symptomItem.sDDscpEN}" escape="false" />
+                                                </div>
+                                                <div style="padding-left:50px;word-wrap: break-word; {!IF($Label.Header_Language_Code_Current=='zh_TW','','display:none;')}">
+                                                    <!-- Rancho_CR48_20210706: wrap texts into separate line -->
+                                                    <!-- {!symptomItem.sDDscpTC} -->
+                                                    <apex:outputText value="{!symptomItem.sDDscpTC}" escape="false" />
+                                                </div>
+                                            </div>
+                                            <input type="hidden" name="param-str" value="{!symptomItem.sDCode}" />
+                                        </div>
+                                    </apex:repeat>
+                                    <apex:inputHidden value="{!cList[0].What_Are_Your_Symptoms_And_Diagnosis__c}" id="hiddenValue_cus_q19" />
+                                    <script>
+                                        // Rancho_CR48_20210706: wrap 2 items in 1 row
+                                        allowGovernmentHospitalVisit={!allowGovernmentHospitalVisit};
+                                        setRow('symptoms-and-diagnosis-item');
+                                        function setRow(itemClassName){
+                                            //CR-56_Link_20220214
+                                            var totalItem = $('.'+itemClassName).length;
+                                            var sp = 768;
+                                            console.log('totalItem: '+totalItem);
+                                            // if($(window).width() < sp){
+                                            //     for(var i = 0; i< totalItem; i++){
+                                            //         $('.'+itemClassName).slice(i,i+1).wrapAll('<div class="bs row"/>');
+                                            //     }
+                                            //     return;
+                                            // }
+
+                                            if(totalItem > 1){
+                                                var pair = Math.ceil(totalItem / 2);
+                                                for(var i = 0; i< pair; i++){
+                                                    if(i*2+2 < totalItem){
+                                                        $('.'+itemClassName).slice(i*2,i*2+2).wrapAll('<div class="bs row"/>');
+                                                    } else {
+                                                        $('.'+itemClassName).slice(i*2).wrapAll('<div class="bs row"/>');
+                                                    }
+                                                }
+                                            } else if(totalItem == 1) {
+                                                $('.'+itemClassName).wrapAll('<div class="bs row"/>');
+                                            }
+                                        }
+
+                                        function checkSelectedFirst(){
+                                            var selectedQues='{!cList[0].Selected_Question_s__c}';
+                                            if (selectedQues.indexOf('q19')<0) {
+                                                $('input[id$=hiddenValue_cus_q19]').val('');
+                                            }
+                                            allSymptomStr=$('input[id$=hiddenValue_cus_q19]').val();
+                                            var selectCount = allSymptomStr.split(',').length;
+                                            if (selectCount>4) {
+                                                $('#limitOption').show();
+                                                hideNextBtnIn(7);
+                                            }
+                                        }
+                                        checkSelectedFirst();
+                                        function selectedTypeOfSymptoms(typeStr){
+                                            allSymptomStr=$('input[id$=hiddenValue_cus_q19]').val();
+                                            console.log('select Symptom values:'+typeStr);
+                                            console.log('all selected Symptom values:'+allSymptomStr);
+                                            var selectCount = allSymptomStr.split(',').length;
+                                            if (selectCount==1) {
+                                                $('#limitOption').hide();
+                                                hideAfterwardQuestion('q21'); // Rancho_CR48_20210706
+                                                hideNextBtnIn(7);
+                                            }else if (selectCount>4) {
+                                                $('#limitOption').show();
+                                                hideAfterwardQuestion('q21'); // Rancho_CR48_20210706
+                                                hideNextBtnIn(7);
+                                            }else{
+                                                $('#limitOption').hide();
+                                                // Rancho_CR48_20210706
+                                                // questionDisplayLogic('q20');
+                                                if(allSymptomStr.indexOf('others')>0){
+                                                    hideAfterwardQuestion('q21');
+                                                    questionDisplayLogic('q20');
+                                                }else{
+                                                    hideAfterwardQuestion('q21');
+                                                    questionDisplayLogic('q21');
+                                                }
+                                            }
+                                        }
+                                    </script>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+
+                        <!-- Rancho_CR48_20210706: display q20 -->
+                        <apex:outputPanel id="isPublicHospital">
+                            <div class="bs form-field row content-choice-block" id="q20" style="{!if(CONTAINS(cList[0].Selected_Question_s__c,'q20') ,'','display: none;')}" >
+              
+                           <div class="bs col-sm-12 col-xs-12 question-row">
+                               <div>
+                                   <i class="ci-hk-checklist content-icon" aria-hidden="true" style="cursor:auto"></i>
+                               </div>
+                               <div>
+                                   {!$Label.Did_your_consultation_or_treatment_take_place_at_a_Hong_Kong_goverment_hospital}
+                               </div>
+                           </div>
+                           <div id="public-hospital-option" class="bs col-sm-12 col-xs-12">
+                               <div class="bs col-sm-4 question-choice {!if(cList[0].Is_Public_Hospital__c && CONTAINS(cList[0].Selected_Question_s__c,'next'), 'fg-orange','fg-grey')}" style="padding-left:40px;border-bottom: 0px;cursor: auto;" onclick="saveRecordPublicHospital();" >
+                                   <i class="fa fa-check-circle-o content-icon " aria-hidden="true"></i>
+                                   {!$Label.Yes}
+                                   <input type="hidden" name="param-str" value="true" />
+                               </div>
+                               <div class="bs col-sm-4 question-choice go-next-step {!if(!cList[0].Is_Public_Hospital__c && CONTAINS(cList[0].Selected_Question_s__c,'next'), 'fg-orange','fg-grey')}" style="padding-left:40px;border-bottom: 0px;cursor: auto;" onclick="saveRecordPublicHospital();">
+                                   <i class="fa fa-times-circle-o content-icon " aria-hidden="true"></i>
+                                   {!$Label.No}
+                                   <input type="hidden" name="param-str" value="false" />
+                               </div>
+                               <!-- field to save data -->
+                               <apex:inputHidden id="hiddenValue_PublicHospital" value="{!cList[0].Is_Public_Hospital__c}" />
+                               <script>
+                                    function saveRecordPublicHospital(){
+                                        questionDisplayLogic('q20');
+                                    }
+                               </script>
+                            </div>
+                        </div>
+                        </apex:outputPanel>
+
+                        <script>
+                          function incurredCountryChange() {
+                            if($("#q15").is(":visible")){
+                              var countrySelected = $("[id$='incurred-country']").find(":selected");
+                              var countryCode = countrySelected.val();
+                              console.log('countryCode '+countryCode);
+                              $("#claimTypeOrganId").fSelect('clearAllSelect');
+                              if (null==countryCode||''==countryCode) {
+                                hideAfterwardQuestion('q16');
+                              }else if (parseInt(countryCode)==parseInt({!hKCode})) { // 20210803 - minghua - CR48
+                                allTypeStr='';
+                                hideAfterwardQuestion('q11');
+-                               loadAndDisplayQuestion('q10');
+                                console.log('Choosed HK');
+                              }else{
+                                hideAfterwardQuestion('q16'); // 20210803 - minghua - CR48
+                                questionDisplayLogic('q15');
+                              }
+                            }
+                          }
+                        </script>
+
+                        <!-- padding for ipad only -->
+                        <div class="bs col-sm-12 col-xs-12 hidden-md hidden-lg" style="padding-bottom: 80px;" >
+                              
+                        </div>
+                        <!-- website and mobile -->
+                        <div style="padding-bottom: 100px;" >
+                              
+                        </div>
+                        
+                        <!-- next button -->
+                        <!-- mobile -->
+                        <div id="action-bar" class="bs action-bar hidden-sm hidden-md hidden-lg cigna-floating-bottom-panel nextStepBtnIn7" style="left:0px; {!if(CONTAINS(cList[0].Selected_Question_s__c,'next') ,'','display: none;')}" onclick="nextStep();">
+                            <div id="callAction1" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                                <a class="action-btn cigna-fg-white" role="button"><span class="ci-hk-arrow-31" aria-hidden="true"></span><br/>{!$Label.Next}</a>
+                            </div>
+                        </div>
+                        
+                        <!-- web -->
+                        <div class="bs row hidden-xs nextStepBtnIn7" style="padding-top: 20px; padding-bottom: 20px; {!if(CONTAINS(cList[0].Selected_Question_s__c,'next') ,'','display: none;')}">
+                            <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3 "></div>
+                            <div id="callAction2" class="bs col-sm-6 col-md-6 col-xs-6 col-lg-6 onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn" onclick="nextStep();">
+                                {!$Label.Next}
+                            </div>
+                            <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3"></div>
+                        </div>
+                        
+                    </apex:outputPanel>
+                    <!--
+                    <apex:actionFunction name="reloadClaimRecordAtAction" status="loader-icon" action="{!reloadClaimRecord}" reRender="AnswerClaimQuestionCusPanel" />
+                    -->
+                    <!--
+                    <apex:actionFunction name="saveClaimAnswerClaimQuestionCusAtAction" status="loader-icon" action="{!saveRecord}" reRender="AnswerClaimQuestionCusPanel" />
+                    -->
+
+                    <!-- 20191126 - minghua - For Speed optimization -->
+                    <!-- 20200221 - minghua - SPS-388 -->
+                    <apex:actionFunction action="{!saveSelectedQuestion}" status="loader-icon" oncomplete="Cigna.Util.navigateToVFP('MyClaimVFP');" name="saveRecordSaveBtn7AtAction" reRender="dummyPanel" >
+                        <apex:param name="id" value="" assignTo="{!currentSelectedQuestionId}" />
+                    </apex:actionFunction>
+
+                    <!-- 20200817 - minghua - Performance issue in claim flow Step 2 -->
+                    <apex:actionFunction action="{!performanceGetPersonBasic}" status="loader-icon" name="performanceGetPersonBasicCus" reRender="jSPanel,uploadDocResult,changeBankAccountPanel" oncomplete="saveClaimAnswerClaimQuestionCusAtAction()" />
+                    
+                    <apex:actionFunction name="saveClaimAnswerClaimQuestionCusAtAction" status="loader-icon" action="{!saveRecord}" reRender="false" oncomplete="refreshAttlist();" />
+                    
+                    <apex:actionFunction name="saveSelectedQuestionAtAction" status="loader-icon" action="{!saveSelectedQuestion}" reRender="jsPanel" oncomplete="reloadDatePickerPanelValue();" >
+                         <apex:param name="id" value="" assignTo="{!currentSelectedQuestionId}" />
+                    </apex:actionFunction>
+                    <apex:actionFunction name="removeSelectedQuestionAtAction" status="loader-icon" action="{!removeSelectedQuestion}" reRender="jsPanel" >
+                         <apex:param name="id" value="" assignTo="{!removeSelectedQuestionId}" />
+                    </apex:actionFunction>
+                    <script>
+                        jQuery.validator.addMethod("money", function(value, element) {
+                            if ((value.indexOf("-") < 0 && parseFloat(value)>0) || value.length==0){
+                                return true;
+                            }
+                            return false;
+                        }, "{!$Label.Please_enter_positive_number}");
+                        
+                        jQuery.validator.addMethod("noLaterThanToday", function(value, element) {
+                            var curDate = new Date();
+                            var inputDate = new Date(value);
+                            curDate.setDate(curDate.getDate());
+                            if ( value =='' || value == undefined || inputDate < curDate){
+                                return true;
+                            }
+                            return false;
+                        }, "{!$Label.Enter_date_cannot_later_than_today}"); 
+                        
+                        jQuery.validator.addMethod("noLaterThanAdmissionDate", function(value, element) {
+                            var curDate = new Date();
+                            var inputDate = new Date(value);
+                            
+                            var dischargeDateId = $(element).attr('id');
+                            
+                            var admissionDateId = 'admission-'+dischargeDateId ; 
+                            var admissionDateValue = $('#'+admissionDateId ).val();
+                            
+                            if (admissionDateValue == undefined || admissionDateValue == '' || value == undefined || value == '' || value >= admissionDateValue ){
+                                return true;
+                            }
+                            return false;
+                        }, "{!$Label.Admssion_Date_Cannot_Later_Than_Discharge_Date}"); 
+                        
+                        jQuery.validator.addMethod("zerotohundred", function(value, element) {
+                            if ( value == '' || (value != undefined && value != '' && parseFloat(value)<=100 && parseFloat(value)>=0)){
+                                return true;
+                            }
+                            return false;
+                        }, "{!$Label.Err_Msg_add_to_100}");
+                        
+                        
+                        jQuery.validator.addMethod("belowSum100percentage", function(value, element) {
+                            return checkSumBelow100percentage(value, element);
+                        }, "{!$Label.Err_Msg_add_to_100}");
+                        
+                        function checkSumBelow100percentage(value, element){
+                            var pass = false;
+                            var str_checkClerical =  $("input[id$='answer-question-cus-percent-q7a']").val();
+                            var str_checkManual =  $("input[id$='answer-question-cus-percent-q7b']").val();
+                            var amt_checkClerical =  0;
+                            var amt_checkManual =  0;
+                            
+                            if(str_checkClerical != '')    amt_checkClerical = parseInt(str_checkClerical);
+                            if(str_checkManual != '')    amt_checkManual = parseInt(str_checkManual);
+                            
+                            if (amt_checkClerical+amt_checkManual ==100){
+                                pass = true;
+                                
+                            }else{
+                                console.log('to see fail to pass equal 100');
+                            }
+                            
+                            return pass;
+                        }
+                        
+                        
+                        function hiddenonblur(input){
+                            var InputId = input.id;
+                            //CR-56_Link_20220214
+                            $("input[id*='" + InputId + "']").trigger("blur");
+                        }
+                        
+                        function getClericalManualValue(){
+                            var cval = $("input[id*='question-cus-percent-q7a-check']").val(); 
+                            $("input[id*='answer-question-cus-percent-q7a']").val(cval);
+                            //CR-56_Link_20220214
+                            $("input[id*='answer-question-cus-percent-q7a']").trigger("focus");
+
+                            
+                            var mval = $("input[id*='question-cus-percent-q7b-check']").val();
+                            $("input[id*='answer-question-cus-percent-q7b']").val(mval); 
+                            //CR-56_Link_20220214
+                            $("input[id*='answer-question-cus-percent-q7b']").trigger("focus");
+                        
+                            /**
+                            if($("input[id*='question-cus-percent-q7a']").val() != '' && $("input[id*='question-cus-percent-q7b']").val() != ''){
+                                var currentValue = parseInt($("input[id*='question-cus-percent-q7a']").val()) + parseInt($("input[id*='question-cus-percent-q7b']").val());
+                                $("input[id*='percent-check100']").val(currentValue);
+                                
+                                $("form[id*='frmAnswerClaimQuestionCus'] input[id*='percent-check100']").blur();
+                                $("form[id*='frmAnswerClaimQuestionCus'] input[id*='percent-check100']").focus();
+                            }
+                            **/
+                        }
+                        
+                       function q3Validation_single(){
+                            $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-date-cus-q3a-date-format-']").each(function(idx, elem){
+                                $(elem).rules("remove", "required");
+                                $(elem).rules("add", {
+                                    noLaterThanToday: true,
+                                });
+                                $(elem).datepicker( "option", "disabled", true );  
+                                //CR-56_Link_20220214
+                                $(elem).trigger("blur");
+                                $(elem).trigger("focus");
+                                $(elem).datepicker( "option", "disabled", false );  
+                            });
+                        
+                        }
+
+                        // 20210803 - Kirk - CR48
+                        function q18Validation_single(){
+                            $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-question-cus-digits-q18-3']").each(function(idx, elem){
+                                $(elem).rules("remove", "required");
+                                var amt3=$(elem).val();
+                                if (amt3!=undefined &&amt3!=null&& amt3!='') {
+                                    if (amt3==0) {
+                                        $(elem).rules("remove");
+                                        console.log('q18Validation_single remove');
+                                    }
+                                }
+                            });
+                        
+                        }
+                        
+                        function q3Validation_pair(){
+                            $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-date-cus-q3a-date-format-']").each(function(idx, elem){
+                                $(elem).rules("remove", "required");
+                                
+                                $(elem).rules("add", {
+                                    noLaterThanAdmissionDate: true
+                                });
+                                $(elem).datepicker( "option", "disabled", true );  
+                                //CR-56_Link_20220214
+                                $(elem).trigger("blur");
+                                $(elem).trigger("focus");
+                                $(elem).datepicker( "option", "disabled", false );  
+                            });
+                        
+                        }
+                        
+                        function q4Validation(){
+                            
+                            $("form[id*='frmAnswerClaimQuestionCus'] input[id^='answer-date-cus-q4-date-format']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    noLaterThanToday: true
+                                });
+                                $(elem).datepicker( "option", "disabled", true );  
+                                //CR-56_Link_20220214
+                                $(elem).trigger("blur");
+                                $(elem).trigger("focus");
+                                $(elem).datepicker( "option", "disabled", false );  
+                                
+                                
+                            });
+                        }  
+                        
+                        function q8Validation(){
+                            
+                            $("form[id*='frmAnswerClaimQuestionCus'] input[id^='answer-date-cus-q8-date-format']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    noLaterThanToday: true
+                                });
+                                $(elem).datepicker( "option", "disabled", true );  
+                                //CR-56_Link_20220214
+                                $(elem).trigger("blur");
+                                $(elem).trigger("focus");
+                                $(elem).datepicker( "option", "disabled", false);  
+                                
+                                
+                            });
+                        }  
+                        
+                        function q12aValidation(){
+                            $("form[id*='frmAnswerClaimQuestionCus'] input[id^='answer-date-cus-q12a']").each(function(idx, elem){
+                                $(elem).rules("remove", "required");
+                                $(elem).rules("add", {
+                                    noLaterThanToday: true
+                                });
+                                $(elem).datepicker( "option", "disabled", true );  
+                                //CR-56_Link_20220214
+                                $(elem).trigger("blur");
+                                $(elem).trigger("focus");
+                                $(elem).datepicker( "option", "disabled", false );  
+                            });
+                            
+                        }
+                        
+                        function loadAllRules(){
+                            getClericalManualValue();
+                            
+                            /**
+                            $("form[id*='frmAnswerClaimQuestionCus'] input[id*='percent-check100']").rules("add", {
+                                belowSum100percentage: true
+                            });
+                            **/
+                            
+                            $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-question']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    required: true
+                                });
+                            });
+                            
+                            $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-question-cus-digits']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    number: true,
+                                    money: true
+                                });
+                            });
+                            
+                            $("form[id*='frmAnswerClaimQuestionCus']").validate();
+      
+                            q4Validation();
+                            q8Validation();
+                        }
+                        
+                        function loadPartialRules(){
+                            $("form[id*='frmAnswerClaimQuestionCus']").validate();
+                            
+                            $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-question-cus-digits']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    number: true,
+                                    money: true
+                                });
+                            });
+                            
+                            //$("form[id*='frmAnswerClaimQuestionCus'] input[id*='percent-check100']").rules("remove");
+                            
+                            $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-question-cus-percent']").each(function(idx, elem){
+                                $(elem).rules("remove");
+                                $(elem).rules("add", {
+                                    digits: true,
+                                    minlength: 1,
+                                    maxlength: 3,
+                                    zerotohundred: true
+                                });
+                            });
+                            
+                            q4Validation();
+                            q8Validation();
+                            
+                            //170309
+                            $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-question-cus-percent']").each(function(idx, elem){
+                                $(elem).valid();
+                            });
+                        }
+                        
+                        
+                        loadPartialRules();
+                        
+                        function saveClaimAnswerClaimQuestion(evt){
+                            loadAllRules();
+                            q3Validation_single();
+                            q3Validation_pair();
+                            q12aValidation();
+                            q18Validation_single();// 20210803 - Kirk - CR48
+                            $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-date']").each(function(idx, elem){
+                                $(elem).rules("add", {
+                                    required: true
+                                });
+                                $(elem).datepicker( "option", "disabled", true );  
+                                //CR-56_Link_20220214
+                                $(elem).trigger("blur");
+                                $(elem).trigger("focus");
+                                $(elem).datepicker( "option", "disabled", false );  
+                            });
+                            
+                            var isFailValidation = false;
+                            $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-date']").each(function(idx, elem){
+                                $(elem).datepicker( "hide" );  
+                            });
+                            $("form[id*='frmAnswerClaimQuestionCus'] input[id*='answer-']").each(function(idx, elem){
+                                if(!$(elem).valid()){
+                                    //focus first error
+                                    //CR-56_Link_20220214
+                                    if(!isFailValidation)    $(elem).trigger("focus");
+                                    isFailValidation = true;
+                                }
+                            });
+                            
+                            //for 100 percent checking
+                            /**
+                            $("form[id*='frmAnswerClaimQuestionCus'] input[id*='percent-check100']").each(function(idx, elem){
+                                if(!$(elem).valid()){
+                                    //focus first error
+                                    if(!isFailValidation)    $(elem).focus();
+                                    isFailValidation = true;
+                                }
+                            });
+                            **/
+                                
+                            if( !isFailValidation ){
+                                // 20200817 - minghua - Performance issue in claim flow Step 2
+                                // saveClaimAnswerClaimQuestionCusAtAction();
+                                performanceGetPersonBasicCus();
+
+                                $('#ui-datepicker-div').hide();
+                                $(this).scrollTop(0);
+                                return true;
+                            }else{
+                                if (typeof evt != undefined && evt) {
+                                    evt.preventDefault();
+                                    return false;
+                                }
+                                
+                                return false;
+                            }
+                            
+                        }
+                        
+                    </script>
+                    
+                    
+                    
+                </apex:form>
+            
+            </apex:outputPanel>
+        </apex:outputPanel>
+    </div>
+</apex:page>

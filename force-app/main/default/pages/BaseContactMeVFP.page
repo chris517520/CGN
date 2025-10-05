@@ -1,0 +1,424 @@
+<!--Please change apex page title-->
+<apex:page doctype="html-5.0" sidebar="false" showheader="false" title="Contact Me" controller="CustomerContactMeCtrl">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover" />
+        <style>
+            <!-- additional inline css-->
+
+            .bs .form-control:focus {
+                box-shadow: none !important;
+                border-bottom: 1px solid #eac048 !important;
+            }
+
+            .bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select, .bs span.form-control {
+                border-top: 0 !important;
+                border-left: 0 !important;
+                border-right: 0 !important;
+                border-bottom: 1px solid #58595B !important;
+                background: transparent;
+                width: 100%;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
+            . inputFromClass{
+            }
+            
+        </style>
+
+        <!-- HKITSFDC-80 BEGIN -->
+        <script src="https://www.google.com/recaptcha/api.js"/>
+        <!-- HKITSFDC-80 END -->
+        <script>
+             var siteKey = '{!siteKey}'; //HKITSFDC-40
+            
+             var changeLanguageWarningRequired = true;
+
+             var Cigna = Cigna || {};
+             Cigna.ContactMe= function(){
+                console.log("contact me");
+                function contactMe(){
+                        ServerContactMe.contactMe();
+                    }
+
+
+
+                function goBack(evt) {
+                    if('{!JSINHTMLENCODE(paramFromPage)}'=='Esales'){
+                        Cigna.Util.navigateToVFP('EsalesVFP?tid={!JSINHTMLENCODE(paramTxnId)}', null, null, true)
+                    }else{
+                        Cigna.Util.navigateToVFP("GetProtectedVFP", null, null, true);
+                    }
+                }   
+
+                  return {
+                    ContactMe : contactMe,
+                    goBack : goBack
+                };
+            }();
+            
+            function validateSupportEmail(){
+                  var supportE = $("input[id*='PH-Email']").val();
+                  if(supportE ==null || supportE ==''){
+                      return true;
+                  }else{
+                      return isValidEmail(supportE);
+                  }
+                  return true;
+            }
+
+            function isValidPhone() {
+               var patt = /^[0-9]{1,12}$/i;
+               var phone = $("input[id*='PH-ContactNo']").val();
+               if(patt.exec(phone)==null){
+                   return false;
+               }
+               
+               var len = phone.toString().length;
+               var countryCode = $("input[id*='PH-CountryCode']").val();
+               if((countryCode=='+852' || countryCode=='') && len!=8){
+                   return false;
+               }
+               if(countryCode=='+86' && len!=11){
+                   return false;
+               }
+               return true;
+            }
+            
+            function validateEmail(){
+                  var email = $("input[id*='PH-Email']").val();
+                  if(email ==null || email ==''){
+                      return true;
+                  }else{
+                      return isValidEmail(email);
+                  }
+                  return true;
+            }
+
+            //$('#quote-back-btn')[0].onclick=Cigna.ContactMe.goBack;
+            // Rancho_JR1858_20201116
+            // $(document).ready(function(){     
+            //     ServerContactMe.getCustomerBasic();
+            // });
+            
+            // HKITSFDC-80 BEGIN
+            function reinitRecaptcha(){
+                var recaptchaElement = document.getElementById('recaptchaElement');
+                if(recaptchaElement){
+                    grecaptcha.render('recaptchaElement',{'sitekey':siteKey});
+                }
+            }
+            // HKITSFDC-80 END
+
+        </script>
+          
+       
+    </head>
+    <apex:define name="additionalLibraries">
+        <!-- CR-56_Link_20220214, update by minghua, update jquery.validate.min -->
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+        <apex:outputpanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+            <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+        </apex:outputpanel>
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    </apex:define>
+
+                                     
+    <apex:outputPanel layout="block" styleClass="bs row">
+        <div class="bs col-xs-12">
+            <p><a id="quote-back-btn" href="#"  class="bs cigna-fg-orange-medium">
+            <i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a></p>
+        </div>
+    </apex:outputPanel>
+
+    <div class="bs row">
+        <div id="tab-new-cus" class="bs cigna-tab col-sm-offset-1 col-sm-10 col-xs-12 cigna-fg-gray-dark form-horizontal">
+            <apex:form id="mainPage">
+                <!-- HKITSFDC-80 BEGIN -->
+                <!-- <apex:actionfunction action="{!contactMe}" namespace="ServerContactMe" name="contactMe" rerender="mainPage"/>  -->
+                <apex:actionfunction action="{!contactMe}" namespace="ServerContactMe" name="contactMe" rerender="mainPage" oncomplete="reinitRecaptcha();"/> 
+                <!-- HKITSFDC-80 END -->
+
+                <apex:actionfunction action="{!getCustomerBasic}" namespace="ServerContactMe" name="getCustomerBasic" rerender="mainPage"/> 
+                <!--<apex:outputpanel id="panelQuote">-->
+                    <!--<input type="hidden" id="param-str" value="{!params}" />-->
+               <!-- </apex:outputpanel>-->
+                <apex:pagemessages id="errorMsg" />
+                
+                <apex:outputpanel rendered="{!showForm}" id="formDetail">
+                    <div class="bs form-group">
+                        <div class="bs  col-xs-12 col-sm-3">
+                            <apex:outputlabel value="{!$Label.Title}" for="PH-Title" />
+                        </div>
+                        <div class="bs  col-xs-12 col-sm-9">
+                            <apex:selectlist id="PH-Title" value="{!paramTitle}" styleClass="bs form-field-style-select inputFromClass"  html-placeholder="{!$Label.Family_Name}" multiselect="false" size="1" >
+                                <apex:selectoption itemvalue="" itemlabel="{!$Label.Select_a_title}" />
+                                <apex:selectoption itemvalue="Mr." itemlabel="{!$Label.M}" />
+                                <apex:selectoption itemvalue="Mrs." itemlabel="{!$Label.Mrs}" />
+                                <apex:selectoption itemvalue="Miss." itemlabel="{!$Label.Miss}" />
+                                <apex:selectoption itemvalue="Ms." itemlabel="{!$Label.Ms}" />
+                            </apex:selectlist>
+                        </div>
+                    </div>
+                    
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12 col-sm-3">
+                            <apex:outputlabel value="{!$Label.Family_Name}" for="PH-Lastname" />
+                        </div>
+                       
+                        <div class="bs col-xs-12 col-sm-9" >
+                            <apex:inputtext id="PH-Lastname" value="{!paramLastname}" styleclass="bs form-control"
+                                            html-placeholder="{!$Label.Family_Name}"  />
+                        </div>
+                    </div>    
+                    <div class="bs form-group">    
+                        <div class="bs col-xs-12 col-sm-3">
+                            <apex:outputlabel value="{!$Label.Given_Name}" for="PH-Firstname" />
+                        </div>
+                        <div class="bs col-xs-12 col-sm-9">
+                            <apex:inputtext id="PH-Firstname" value="{!paramFirstname}" styleclass="bs form-control" 
+                                            html-placeholder="{!$Label.Given_Name}" />
+                        </div>
+                    </div>
+                    <div class="bs form-group">
+                        <div class="bs col-sm-3 col-xs-12">
+                            <apex:outputlabel value="{!$Label.Contact_Number}" for="PH-ContactNo" />
+                        </div>
+                        <div class="bs col-sm-2 col-xs-4">
+                            <apex:inputtext id="PH-CountryCode" value="{!paramCountryCode}" styleclass="bs form-control"
+                                            html-placeholder="+852" />
+                        </div>
+                        <div class="bs col-sm-7 col-xs-8">
+                            <apex:input type="tel" id="PH-ContactNo" value="{!paramMobileNo}" styleclass="bs form-control"
+                                        html-placeholder="{!$Label.Contact_Number}" />
+                        </div>
+                    </div>
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12 col-sm-3">
+                            <apex:outputlabel value="{!$Label.Contact_Email}" for="PH-Mail" />
+                        </div>
+                        <div class="bs col-xs-12 col-sm-9">
+                            <apex:inputtext id="PH-Email" value="{!paramEmail}" styleclass="bs form-control"
+                                            html-placeholder="{!$Label.Contact_Email}" />
+                        </div>
+                    </div>
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12 col-sm-3">
+                            <apex:outputlabel value="{!$Label.Preferred_Time}" for="PH-Prefertime" />
+                        </div>
+                        <div class="bs col-xs-12 col-sm-9">
+                             
+                            <apex:selectlist id="PH-Prefertime" value="{!paramPreferTime}" styleClass="bs form-field-style-select" multiselect="false" size="1" >
+    
+                                <apex:selectoption itemvalue="anytime" itemlabel="{!$Label.Anytime}" />
+    
+                                <apex:selectoption itemvalue="10:00am - 1:00pm" itemlabel="10:00{!$Label.Am} - 1:00{!$Label.Pm}" />
+    
+                                <apex:selectoption itemvalue="1:00pm - 6:30pm" itemlabel="1:00{!$Label.Pm} - 6:30{!$Label.Pm}" />
+                                <apex:selectoption itemvalue="6:30pm - 9:00pm" itemlabel="6:30{!$Label.Pm} - 9:00{!$Label.Pm}" />
+    
+                            </apex:selectlist>
+    
+                        </div>
+                    </div>
+                    <!-- HKITSFDC-80 BEGIN -->
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <div id="recaptchaElement" class="g-recaptcha" data-sitekey="{!siteKey}"></div>
+                        </div>
+                    </div>
+                    <!-- HKITSFDC-80 END -->
+              </apex:outputpanel>
+              
+              <apex:outputpanel rendered="{!submitResult}" id="submitResult"  style="display:block;margin:0 auto;text-align:center; color:green;" >
+                <div style="padding-top:100px;font-size:16px;">
+                    <!--Your message have been submitted.-->
+                    {!$Label.Contact_Me_Submitted}
+                </div>
+            </apex:outputpanel>
+            
+            <apex:outputpanel rendered="{!showForm}" id="submitform">
+                <div id="action-bar" class="bs row cigna-floating-bottom-panel visible-xs">
+                    <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark">
+                        <a href=""  class="action-btn cigna-fg-white" role="button" onclick="submitfunction(); ">
+                            <span class="ci-hk-document-send" aria-hidden="true"></span><br/>{!$Label.Submit}</a>
+                    </div>
+                </div>
+                <div id="action-bar-desktop" class="bs col-xs-12 hidden-xs text-center">
+                    <div class="bs col-xs-12 text-center" style="margin-top: 15px;">
+                        <a href="" class="bs btn cigna-btn-desktop cigna-fg-white cigna-bg-orange-dark" onclick="submitfunction();">{!$Label.Submit}</a>
+                    </div>
+                </div>
+            </apex:outputpanel>
+            </apex:form>
+
+        </div>
+         
+    </div>
+  
+    <script>
+               function checkall(){
+                   //CR-56_Link_20220214
+                   return ($('.inputFromClass').trigger("blur") && $("input[id*='PH-']").trigger("blur") && $("select[id*='PH-']").trigger("blur"));
+
+
+               }
+
+             function checkEmail(resour){
+              var errorEmail=false;
+              var b=resour.parentNode;
+              var a=b.getElementsByClassName('checkERR')[0];
+
+              if(!a){
+                  var index= resour.value.toString().search(/^\w+((-\w+)|(\.\w+))*\@[A-Za-z0-9]+((\.|-)[A-Za-z0-9]+)*\.[A-Za-z0-9]+$/);     
+                  if(index != -1||resour.value==''){
+                     
+                      }else{                     
+                       errorEmail=true;
+                      }      
+
+                      if(errorEmail && NOT(isEditParam)){
+                        var a=document.createElement('label');  
+                        a.innerHTML='Please enter a valid Email.';
+                        a.className='checkERR';
+                        a.style.color="red";
+                        var b=resour.parentNode;
+                        b.appendChild(a);
+                      }
+                  }else{
+
+                    var index= resour.value.toString().search(/^\w+((-\w+)|(\.\w+))*\@[A-Za-z0-9]+((\.|-)[A-Za-z0-9]+)*\.[A-Za-z0-9]+$/);     
+                    if(index != -1||resour.value==''){
+                    if(a){
+                     b.removeChild(a);}
+                      } else{
+
+                      }    
+
+                      
+
+                  }
+
+             }
+
+
+             function checkERRmes(resour){
+                    console.log('checkResult');
+                    var b=resour.parentNode;
+                    var a=b.getElementsByClassName('checkERR')[0];
+                    if(!a){
+                        if(resour.value==''||resour.value==null||resour.value==undefined){
+                            var a=document.createElement('label');  
+                            
+                            if(resour.id.match('PH-Title'))
+                            a.innerHTML='This field is required.';  
+                            if(resour.id.match('PH-Lastname'))                          
+                            a.innerHTML='This field is required.';
+                            if(resour.id.match('PH-Firstname'))
+                            a.innerHTML='This field is required.';    
+                            if(resour.id.match('PH-CountryCode'))
+                            a.innerHTML='This field is required.';                             
+                            if(resour.id.match('PH-ContactNo'))
+                            a.innerHTML='This field is required.'; 
+                            a.className='checkERR';
+                            a.style.color="red";
+                            var b=resour.parentNode;
+                            b.appendChild(a);
+                            return false;
+                        }
+                        else{
+                            var b=resour.parentNode;
+                            var a=b.getElementsByClassName('checkERR')[0];
+                            if(a){
+                            b.removeChild(a);}
+                            return true;
+                            }
+                        }else if(resour.value!=''&&resour.value!=null&&resour.value!=undefined){ 
+                            var b=resour.parentNode;
+                            var a=b.getElementsByClassName('checkERR')[0];
+                            if(a){
+                            b.removeChild(a);}
+                            return true;
+                        }
+              }
+
+        function submitfunction(){
+            if(validateForm_mainPage()){
+                //submitInfoApex();
+                Cigna.ContactMe.ContactMe();
+            }
+        }
+
+        function validateForm_mainPage(){
+            jQuery.validator.addMethod("isInvalidPhone", function(value, element) {
+                return isValidPhone();
+            }, "{!$Label.Error_Message_Contact_Number_Not_Valid}");
+
+            jQuery.validator.addMethod("isInvalidEmail", function(value, element) {
+                return this.optional(element) || Cigna.ValidationUtil.isValidEmail(value);
+            }, "{!$Label.Error_Message_Email_Not_Valid}");
+
+           $("form[id*='mainPage']").validate({
+                errorPlacement: function(label, element) {
+                    label.addClass('errorDiv');
+                    label.insertAfter(element);
+                },
+                wrapper: 'div'
+            });
+            
+            $('.inputFromClass').each(function(idx, elem){
+                $(elem).rules("add", {
+                    required: true
+                });
+            });
+            $("form[id*='mainPage'] input[id*='PH-Lastname']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    required: true
+                });
+            });
+            $("form[id*='mainPage'] input[id*='PH-Firstname']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    required: true
+                });
+            });
+            $("form[id*='mainPage'] input[id*='PH-CountryCode']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    required: true
+                });
+            });
+            $("form[id*='mainPage'] input[id*='PH-ContactNo']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    required: true
+                });
+            });        
+
+            $("form[id*='mainPage'] input[id*='PH-Email']").each(function(idx, elem){
+                $(elem).rules("add", {
+                    required: true,
+                    isInvalidEmail: true
+                });
+            });
+            return $("form[id*='mainPage']").validate().form();
+        }            
+    </script>
+    <script>
+         jQuery.validator.addMethod("emailStrict", function(value, element) {
+                return this.optional(element) || Cigna.ValidationUtil.isValidEmail(value);
+            }, "Your Email Address is invalid");
+         //CR-56_Link_20220214
+         $('#quote-back-btn').on("click",Cigna.ContactMe.goBack);
+
+
+    </script>
+    <script>
+            if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+              
+                $('#mobile-app-padding').css('display', 'block');
+
+                
+
+                $('html').css('position', 'fixed').css('overflow', 'auto').css('width', '100%').css('height', '100%');
+                $('body').css('position', 'fixed').css('overflow-x', 'scroll').css('width', '100%').css('height', '100%');
+            }
+    </script>
+</apex:page>

@@ -1,0 +1,413 @@
+<apex:page Controller="RPQFormController" showHeader="false" sidebar="false" docType="html-5.0" cache="false" action="{!initSignatureAndEmail}">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <apex:include pageName="ClaimUtilJS"/>
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}" />
+    </head>
+    
+    <style>
+    /** pop up dialog style **/
+        
+        
+        .bs input[type="checkbox"].cigna-question-checkbox-single {
+            display: none;
+        }
+        
+        .bs input[type="checkbox"].cigna-question-checkbox-single ~ label {
+            cursor: pointer;
+        }
+        .bs input[type="checkbox"].cigna-question-checkbox-single + label:before {
+            font: normal normal normal 14px/1 FontAwesome;
+            display: inline-block;
+            content: "\f058";
+            height: 20px;
+            margin: 0 .25em 0 0;
+            padding: 0;
+            vertical-align: top;
+            width: 20px;
+            color: #C8C9C7;
+            font-size: 1.2em !important;
+        }
+        
+        .bs input[type="checkbox"].cigna-question-checkbox-single:checked + label:before {
+            color: #39B54A;
+            font: normal normal normal 14px/1 FontAwesome;
+            content: "\f058";
+            font-size: 1.2em !important;
+        }
+        
+        .bs input[type="checkbox"].cigna-question-checkbox-single:checked + label:before {
+            font-weight: bold;
+        }
+        
+        div#overlay, div#overlayPIC{
+            display: none;
+            z-index: 10;
+            background: #D9D9D6;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0px;
+            left: 0px;
+            text-align: left;
+        }
+        
+        div#specialBox, div#specialBoxPIC {
+            display: none;
+            position: absolute;
+            z-index: 11;
+            margin: 150px auto 0px auto;
+            width: 80%;
+            height: 50%;
+            background: #FFF;
+            color: #000;
+            left: 10%;
+            padding:20px;
+            border-radius:5px;
+        }
+        
+        #closeOverlay, #closeOverlayPIC {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        
+        #tccontent {
+            padding:5px;
+            color:#000;
+            font-size:12px;
+            width: 100%;
+            height: 90%;
+            overflow-y:auto;
+        } 
+        
+        #PICcontent {
+            padding:5px;
+            color:#000;
+            font-size:12px;
+            width: 100%;
+            height: 85%;
+            overflow-y:auto;
+        } 
+        
+        .fontWeightNormal label{
+            font-weight: normal;
+        }
+        /** end pop up dialog style **/
+
+        /** signature style **/
+        .signature-pad {
+            width: 95%;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            margin-bottom: 60px;
+        }
+        
+        .signature-pad-body {
+            width: 100%;
+            height: 300px;
+        }
+        
+        .signature-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .signature-pad-footer {
+            width: 100%;
+            height: 40px;
+        }
+        /** end signature style **/
+
+        
+        @media (min-width: 768px) {
+            .signature-pad-body {
+                max-width: 1088px;
+                height: 300px;
+            }
+            .signature-pad {
+                max-width: 1088px;
+                background-color: #fff;
+                border: 1px solid #ddd;
+            }
+         }
+         
+         @media (max-width: 767px) {
+            .signature-pad-body {
+                width: 100%;
+                height: 300px;
+            }
+            
+            .signature-pad {
+                width: 95%;
+                height: 300px;
+                background-color: #fff;
+                border: 1px solid #ddd;
+            }
+         }
+
+        
+        .signature-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .signature-pad-footer {
+            width: 100%;
+            height: 40px;
+        }
+        .cusbtn{
+            width: 280px;
+        }
+    </style>
+    
+        <apex:define name="additionalLibraries">
+            <!-- CR-56_Link_20220214 -->
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap3.4.1.css')}" />
+
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+            
+            <!-- Bootstrap Core CSS -->
+            <!-- CR-56_Link_20220214 -->
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery-3.6.0.min.js')}"/>
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap3.4.1.min.js')}"/>
+            <apex:include pageName="CignaUtilJS"/>
+        </apex:define>
+        
+            <apex:includeScript value="{!URLFOR($Resource.signature_pad_1_5)}" />
+            <apex:form >
+                <apex:actionFunction name="submitEsignature" status="loader-icon" action="{!submitEsignature}" rerender="resultPannel" oncomplete="nextStep();"> <!-- Zoe updated on 0406 for performance tuning, previously, oncomplete="SubmitClaimRequestAtAction();"  -->
+                    <apex:param name="imgDataParam" assignTo="{!eSignature}" value=""/>
+                </apex:actionFunction>
+                <apex:actionFunction name="sendEmailSignature" rerender="resultPannel" status="loader-icon" action="{!sendESignatureEmail}" oncomplete="nextStep();console.log('oncomplete is running');">
+                    <apex:param name="esignatureEmail" assignTo="{!esignatureEmail}" value=""/>
+                </apex:actionFunction> 
+                <div class="bs container" style="padding-bottom:40px;">
+                    <div id="overlay" style="display:none;">
+                        <div id="specialBox">
+                            <a href="javascript:void(0);" class="onclick-pointer" ><div id="closeOverlay" class="glyphicon glyphicon-remove" onclick="toggleOverlay();"></div></a>
+                            <h4>{!$Label.Terms_And_Conditions}</h4>
+                            <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                            <div id="tccontent">
+                                TBC            
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Start PIC Box -->
+                    <div id="overlayPIC" style="display:none;">
+                        <div id="specialBoxPIC">
+                            <a href="javascript:void(0);" class="onclick-pointer" ><div id="closeOverlayPIC" class="glyphicon glyphicon-remove" onclick="toggleOverlayPIC();"></div></a>
+                            <h4>{!$Label.Personal_Information_Collection_Statement}</h4>
+                            <div style="padding-bottom:10px; border-top: 1px solid #f2f2f2;"></div>
+                            <div id="PICcontent">
+                                <apex:outputText value="{!picString}" escape="false"/>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End PIC Box -->
+                    
+                    <!-- Error Message Start -->
+                    <div id="errEmptySignature" class="bs alert alert-danger" role="alert" style="display:none;">
+                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                        {!$Label.e_signature_empty_err_msg}
+                    </div>
+                    <div id="errNotAcceptTNC" class="bs alert alert-danger" role="alert" style="display:none;">
+                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                        {!$Label.e_signature_tc_err_msg}
+                    </div>
+                    <div id="errNotValidEmail" class="bs alert alert-danger" role="alert" style="display:none;">
+                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                        {!$Label.Error_Message_Email_Not_Valid}
+                    </div>
+                    <!-- Error Messgae End -->
+                    <apex:outputPanel rendered="{!isCustomer}">
+                        <c:RPQeSignatureCompOriginal emailAddress="{!esignatureEmail}"
+                                              displayPICS="false"
+                                              displayTC="true"
+                                              PICSLink="{!picLink}" 
+                                              /> 
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!NOT(isCustomer)}">
+                    <c:RPQeSignatureCompOriginal emailAddress="{!esignatureEmail}" 
+                                          displayPICS="false"
+                                          displayTC="true"
+                                          isBroker="true"
+                                          PICSLink="{!picLink}" 
+                                          signNow="false" 
+                                          NeedBrkClaimPaymentACK="false"    />
+                        </apex:outputPanel>
+                </div>
+                <script type="text/javascript">
+                
+               
+        
+            
+        
+        
+        /** pop up dialog**/
+        function toggleOverlay(){
+            var overlay = document.getElementById('overlay');
+            var specialBox = document.getElementById('specialBox');
+            overlay.style.opacity = .95;
+            if(overlay.style.display == "block"){
+                overlay.style.display = "none";
+                specialBox.style.display = "none";
+            } else {
+                overlay.style.display = "block";
+                specialBox.style.display = "block";
+            }
+        }
+        
+        Cigna.ESignatureComp.forceResizeCanvas();        
+                
+        function nextStepSection(tabId){
+            if (tabId == 'esignature-sign-div') {
+                $('.choice-question-no').removeClass('cigna-fg-orange-dark').addClass('cigna-fg-gray-dark');
+                $('.choice-question-yes').removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                $('#esignature-email-div').hide();
+                $('#errNotValidEmail').hide();
+                $('#esignature-sign-div').show();
+                /**for mobile btn**/
+                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                    $('#mobile-submit').show();
+                    $('#mobile-sendEmail').hide();
+                    $('#mobile-esignature-sendEmail').hide();
+                    $('#mobile-esignature-submit').hide();
+                }
+            }else{
+                $('.choice-question-yes').removeClass('cigna-fg-orange-dark').addClass('cigna-fg-gray-dark');
+                $('.choice-question-no').removeClass('cigna-fg-gray-dark').addClass('cigna-fg-orange-dark');
+                $('#esignature-sign-div').hide();
+                $('#errEmptySignature').hide();
+                $('#errNotAcceptTNC').hide();
+                $('#esignature-email-div').show();
+                /**for mobile btn**/
+                if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+                    $('#mobile-sendEmail').show();
+                    $('#mobile-submit').hide();
+                    $('#mobile-esignature-sendEmail').hide();
+                    $('#mobile-esignature-submit').hide();
+                }
+            }
+            Cigna.ESignatureComp.forceResizeCanvas();
+            
+        }      
+        
+        
+        /*
+         * Override two functions please and copy the validation
+        Cigna.ESignatureComp.sendEmail = function(){
+            alert('test');
+            
+            $("form[id*='esignature-form']").validate();
+
+            jQuery.validator.addMethod("emailStrict", function(value, element) {
+                return this.optional(element) || Cigna.ValidationUtil.isValidEmail(value);
+            }, "{!$Label.Your_Email_Address_is_invalid}");
+            
+            $("[id$='esignature-email']").rules("add", {
+                required : true,
+                emailStrict : true
+            });
+            
+            if(($("form[id*='esignature-form']")).validate().form()){
+                sendEmailSignature(Cigna.ESignatureComp.getEmailAddress());
+            }
+        }
+        Cigna.ESignatureComp.saveSignature = function(){
+            alert('test');
+        }
+
+        */
+        Cigna.ESignatureComp.saveSignature = function(){
+                    console.log('to see saveSignature ');
+                    chooseSignOnScreen();
+                    
+                    $("#errNotValidEmail").hide();
+                    $("#errEmptySignature").hide();
+                    $("#errNotAcceptTNC").hide();
+                    
+                    if($('#esignature-sign-div #esignature-pics').is(':checked') == false){
+                        $("#errNotAcceptTNC").show();
+                        /**
+                        $("html,body").animate(
+                            { scrollTop: $("#errNotAcceptTNC").offset().top },
+                            "slow",
+                            function(){
+                                $("#errNotAcceptTNC").focus();
+                            }
+                        );
+                        */
+                        scrollTopFocus('#errNotAcceptTNC');
+                        
+                        return;
+                    } else {
+                        $("#errNotAcceptTNC").hide();
+                    }
+                    
+                    if(Cigna.ESignatureComp.isEmptyCanvas(1)){
+                        $("#errEmptySignature").show();
+                        scrollTopFocus('#errEmptySignature');
+                        return;
+                    } else {
+                        $("#errEmptySignature").hide();
+                    }
+                    
+                    //Heather update for prevent double click before
+                        if($(".btn").hasClass("disabledBtn")){
+                            console.log("prevent double click");
+                            return;
+                        }
+                        $(".btn").attr("disabled", "disabled");
+                        $(".btn").attr("readonly", "readonly");
+                        $(".btn").addClass("disabledBtn");
+                        console.log("disable button before ajax");
+            
+                    submitEsignature(Cigna.ESignatureComp.getSignatureImage());
+            
+            //Heather update for prevent double click after
+                        setTimeout(function() {
+                            $(".disabledBtn").removeAttr("disabled", "disabled");
+                            $(".disabledBtn").removeAttr("readonly", "readonly");
+                            $(".disabledBtn").removeClass("disabledBtn");
+                            console.log("recover button before ajax");
+                        },3000);
+                }
+        /** Send Email button */
+        Cigna.ESignatureComp.sendEmail = function(){
+            chooseEsignature();
+            console.log('to see sendEmail ');
+            
+            $("#errEmptySignature").hide();
+            $("#errNotAcceptTNC").hide();
+            
+            console.log('enter send email');
+            if (Cigna.ESignatureComp.getEmailAddress() == '' || Cigna.ESignatureComp.getEmailAddress() == null 
+                || !Cigna.ValidationUtil.isValidEmail(Cigna.ESignatureComp.getEmailAddress())){
+                $("#errNotValidEmail").show();
+                scrollTopFocus('#errNotValidEmail');
+                return;
+            }
+            else{
+                $("#errNotValidEmail").hide();
+            }
+            sendEmailSignature(Cigna.ESignatureComp.getEmailAddress());
+            console.log('EmailAddress:' + Cigna.ESignatureComp.getEmailAddress());
+            console.log('RPQESignatureVFP.sendEmail is finished');
+        }
+        
+        /** end override component function **/ 
+        
+        if (Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+            $('.nextStepBtnPaddingIn8').show();
+        }
+        
+        
+        
+        if (Cigna.Util.isIOS() && Cigna.Util.isSalesforce1() && Cigna.Util.isBrokerPortal()) {
+            $("a").attr("target","");
+        }
+        </script>
+        </apex:form>
+</apex:page>

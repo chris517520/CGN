@@ -1,0 +1,836 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" title="Get Protected" controller="ESalesApplicationPortableCtrl">
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+
+    </head>
+
+    <div class="bs">
+    <apex:form id="frmThirdParty">
+    <apex:outputPanel id="third-party-payment" rendered="{!currentStep == STEP_THIRD_PARTY_PAYMENT}" styleClass="bs row" layout="block">
+        <div class="bs col-xs-12 cigna-fg-gray-dark form-horizontal">
+
+            <div class="bs form-group">
+                <div class="bs col-xs-12">
+                    <apex:outputText escape="false" value="{!$Label.Esales_Third_Party_First_Payment}"/>
+                </div>
+            </div>
+            <div class="bs col-xs-12 cigna-answer-wrapper">
+                <p>
+                <div class="bs col-sm-6 cigna-answer-wrapper">
+                
+                    <input type="radio" id="making-payment-first-yes" value="Yes" name="making-payment-first" class="bs cigna-question-radio" />
+                    <label for="making-payment-first-yes">{!$Label.Yes}</label>
+                
+                </div>
+                <div class="bs col-sm-6 cigna-answer-wrapper">
+                
+                    <input type="radio" id="making-payment-first-no" value="No" name="making-payment-first" class="bs cigna-question-radio" />
+                    <label for="making-payment-first-no">{!$Label.No}</label>
+                
+                </div>
+                </p>
+                <apex:inputHidden value="{!txn.Is_Making_1st_Payment__c}" id="ThirdParty-IsMaking1stPayment"/>
+                <hr/>
+            </div>
+            
+            <!-- update by David 20/10/2017 for ThirdPartyPayment CR start -->
+            <div style="display: none;">
+                <div class="bs form-group">
+                    <div class="bs col-xs-12">
+                        <apex:outputText escape="false" value="{!$Label.Esales_Third_Party_subsequent_Payment}"/>
+                    </div>
+                </div>
+                <div class="bs col-xs-12 cigna-answer-wrapper">
+                    <p>
+                    <div class="bs col-sm-6 cigna-answer-wrapper">
+                    
+                        <input type="radio" id="making-payment-subsequent-yes" value="Yes" name="making-payment-subsequent" class="bs cigna-question-radio" />
+                        <label for="making-payment-subsequent-yes">{!$Label.Yes}</label>
+                    
+                    </div>
+                    <div class="bs col-sm-6 cigna-answer-wrapper">
+                    
+                        <input type="radio" id="making-payment-subsequent-no" value="No" name="making-payment-subsequent" class="bs cigna-question-radio" />
+                        <label for="making-payment-subsequent-no">{!$Label.No}</label>
+                    
+                    </div>
+                    </p>
+                    <apex:inputHidden value="{!txn.Is_Paying_Subsequent_Payment__c}" id="ThirdParty-IsMakingSubsequentPayment"/>
+                    <hr/>
+                </div>
+            </div>
+            <!-- update by David 20/10/2017 for ThirdPartyPayment CR  end-->
+
+
+        </div>
+
+        <div id="thirdPartyForm" style="display:none">
+            
+            <div class="bs col-xs-12 form-horizontal">
+                <br/>
+                <br/>
+                <div class="bs" style="padding-bottom: 20px;">
+                    <h4 class="bs cigna-fg-blue-medium">{!$Label.Esales_Third_party_Payment_Form}</h4>
+                    <hr/>
+                </div>
+                
+                <div class="bs form-group">
+                    <div class="bs col-xs-12">
+                        <apex:outputText escape="false" value="{!$Label.Esales_Third_Party_Payment_Reason}"/>
+                    </div>
+                
+                    <div id="ThirdPartyReason-List" class="bs col-xs-12 cigna-answer-wrapper">
+                        <apex:repeat value="{!ThirdPartyReasonList}" var="r">
+                            <p id="Third-party-pay-reason-{!r.description}-wrapper">
+                                <input type="checkbox" value="{!r.value}" id="Third-party-pay-reason-{!r.description}" name="Third-party-pay-reason-{!r.description}" class="bs cigna-question-checkbox"/>
+                                <label for="Third-party-pay-reason-{!r.description}">{!r.label}</label>
+                                <apex:inputHidden value="{!r.isSelected}" id="reasonselection"/>
+                            </p>
+                        </apex:repeat>
+                        <apex:inputText id="reason-others" value="{!firstPaymentOther}" styleClass="bs form-control" html-placeholder="{!$Label.ESales_Required_Field_Error_Message}"
+                            />
+                    </div>
+                </div>
+
+                <div class="bs form-group">
+                    <div class="bs col-xs-12">
+                        <br/>
+                        <apex:outputText escape="false" value="{!$Label.Esales_Third_Party_Fund_Source}"/>
+                    </div>
+                
+                    <div id="FundSource-List" class="bs col-xs-12 cigna-answer-wrapper">
+                        <apex:repeat value="{!FundSourceList}" var="f">
+                            <p id="Third-party-pay-source-{!f.description}-wrapper">
+                                <input type="checkbox" value="{!f.value}" id="Third-party-pay-source-{!f.description}" name="Third-party-pay-source-{!f.description}" class="bs cigna-question-checkbox"/>
+                                <label for="Third-party-pay-source-{!f.description}">{!f.label}</label>
+                                <apex:inputHidden value="{!f.isSelected}" id="sourceselection"/>
+                            </p>
+                        </apex:repeat>
+                        <apex:inputText id="fund-others" value="{!fundSourceOther}" styleClass="bs form-control" html-placeholder="{!$Label.ESales_Required_Field_Error_Message}"
+                            />
+                    </div>
+                </div>
+
+                <div class="bs form-group">
+                    <div class="bs col-xs-12">
+                        <br/>
+                        <apex:outputText escape="false" value="{!$Label.Esales_Third_Party_Payer}"/>
+                    </div>
+                
+                    <div class="bs col-xs-12 cigna-answer-wrapper">
+                        <p>
+                        <div class="bs col-sm-6">
+                        
+                            <input type="radio" id="Third-party-payer-Ind" value="Individual" name="Third-party-payer" class="bs cigna-question-radio" />
+                            <label for="Third-party-payer-Ind" style="font-weight: normal;">{!$Label.Esales_Third_Party_Individual}</label>
+                        
+                        </div>
+                        <div class="bs col-sm-6">
+                        
+                            <input type="radio" id="Third-party-payer-Company" value="Company Institute" name="Third-party-payer" class="bs cigna-question-radio" />
+                            <label for="Third-party-payer-Company" style="font-weight: normal;">{!$Label.Esales_Third_Party_Company_Institute}</label>
+                        
+                        </div>
+                        </p>
+                        <apex:inputHidden value="{!txn.Third_Party_Payer__c}" id="ThirdParty-Payer"/>
+                        <br/>
+                    </div>
+                </div>
+
+                <!---questions for payer is individual start-->
+                <div id="PayerIsIndividual" style="display:none">
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <apex:outputText value="{!$Label.Esales_Third_Party_Relationship}" />
+                        </div>
+                    
+                        <div class="bs col-xs-12">
+                            <apex:selectList id="ThirdParty-PayerRelationship" value="{!txn.Third_Party_Relationship__c}" size="1" styleClass="bs form-field-style-select">
+                                <apex:selectOptions value="{!ThirdPartyRelationshipList}"/>
+                            </apex:selectList>
+                        </div>
+                    </div>
+
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputLabel value="{!$Label.Esales_Third_Party_Payer_Information}"/>
+                        </div>
+                    </div>
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Third_Party_Payer_Full_Name__c.Label}"/>
+                        </div>
+                    
+                        <div class="bs col-xs-12">
+                            <apex:inputField value="{!txn.Third_Party_Payer_Full_Name__c}" id="ThirdParty-PayerFullName" styleClass="bs form-control"/>
+                        </div>
+                    </div>
+
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Third_Party_Payer_HKID__c.Label}"/>
+                        </div>
+                    
+                        <div class="bs col-xs-12">
+                            <apex:inputField value="{!txn.Third_Party_Payer_HKID__c}" id="ThirdParty-PayerHKID" styleClass="bs form-control"/>
+                        </div>
+                    </div>
+
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Third_Party_Payer_Contact_No__c.Label}" />
+                        </div>
+                    
+                        <div class="bs col-xs-12">
+                            <apex:inputField value="{!txn.Third_Party_Payer_Contact_No__c}" id="ThirdParty-ContactNo-Payer" styleClass="bs form-control"/>
+
+                        </div>
+                    </div>
+
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Third_Party_Payer_Nationality__c.Label}"/>
+                        </div>
+                    
+                        <div class="bs col-xs-12">
+                            <!-- Rancho_IA_AML_Inspection_20211005: update nationality field to use ws list -->
+                            <!-- <apex:inputField value="{!txn.Third_Party_Payer_Nationality__c}" id="ThirdParty-PayerNationality" styleClass="bs form-control"/> -->
+                            <apex:selectList id="ThirdParty-PayerNationality" value="{!txn.Third_Party_Payer_Nationality_Code__c}" size="1" styleClass="bs form-field-style-select">
+                                <apex:selectOptions value="{!nationalityList}"/>
+                            </apex:selectList>
+                        </div>
+                    </div>
+
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Third_Party_Payer_Date_of_Birth__c.Label}"/>
+                        </div>
+                    
+                        <div class="bs col-xs-12">
+
+                            <apex:input id="Val-DOB-Day-Payer" type="tel" value="{!payerDOBDay}" 
+                                                   html-maxlength="2" 
+                                                   styleClass="bs form-control text-center dob-input dob-day question-kid-age"
+                                                   size="5"
+                                                   style="display: inline; width: auto;"
+                                                   html-placeholder="{!$Label.DD}" 
+                                                   onblur="getCheckDOB('Payer day',this)"    
+                            />
+                            <apex:input id="Val-DOB-Month-Payer" type="tel" value="{!payerDOBMonth}" 
+                                                   html-maxlength="2" 
+                                                   styleClass="bs form-control text-center dob-input dob-month question-kid-age"
+                                                   size="5"
+                                                   style="display: inline; width: auto;"
+                                                   html-placeholder="{!$Label.MM}"
+                                                   onblur="getCheckDOB('Payer month',this)"  
+                            />
+                            <apex:input id="Val-DOB-Year-Payer" type="tel" value="{!payerDOBYear}" 
+                                                   html-maxlength="4" 
+                                                   styleClass="bs form-control text-center dob-input dob-year question-kid-age"
+                                                   size="7"
+                                                   style="display: inline; width: auto;"
+                                                   html-placeholder="{!$Label.YYYY}"
+                                                   onblur="getCheckDOB('Payer year',this)"
+                            />
+                           
+                        </div>
+                        <div class="bs col-xs-12" >
+                            <apex:inputText id="Payer-Day-DOB-Check" value="{!payerDOB}" Styleclass="hidden-input-field" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" onfocus="hiddenonblur(this)" />
+                            <apex:inputText id="Third-Party-DOB-Payer" style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none;" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                        </div> 
+
+                    </div>
+
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputText value="{!$Label.Esales_Third_Party_Residential_Address}"/>
+                        </div>
+                    
+                        <div class="bs col-xs-12">
+                            <apex:inputField value="{!txn.ThirdParty_Payer_Residential_Address_1__c}" id="ThirdParty-PayerResAddress1" styleClass="bs form-control" 
+                                       html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Payer_Residential_Address_1__c.Label}"/>
+                            <apex:inputField value="{!txn.ThirdParty_Payer_Residential_Address_2__c}" id="ThirdParty-PayerResAddress2" styleClass="bs form-control" 
+                                       html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Payer_Residential_Address_2__c.Label}"/>
+                            <apex:inputField value="{!txn.ThirdParty_Payer_Residential_Address_3__c}" id="ThirdParty-PayerResAddress3" styleClass="bs form-control" 
+                                       html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Payer_Residential_Address_3__c.Label}"/>
+                            <apex:inputField value="{!txn.ThirdParty_Payer_Residential_Address_4__c}" id="ThirdParty-PayerResAddress4" styleClass="bs form-control" 
+                                       html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Payer_Residential_Address_4__c.Label}"/>
+
+                        </div>
+                    </div>
+                    <!--remove permanent address
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputText value="{!$Label.Esales_Third_Party_Permanent_Address}"/>
+                        </div>
+                    
+                        <div class="bs col-xs-12 cigna-answer-wrapper">
+                            <apex:inputField value="{!txn.ThirdParty_Payer_Permanent_Address_1__c}" id="ThirdParty-PayerPerAddress1" styleClass="bs form-control" 
+                                       html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Payer_Permanent_Address_1__c.Label}"/>
+                            <apex:inputField value="{!txn.ThirdParty_Payer_Permanent_Address_2__c}" id="ThirdParty-PayerPerAddress2" styleClass="bs form-control" 
+                                       html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Payer_Permanent_Address_2__c.Label}"/>
+                            <apex:inputField value="{!txn.ThirdParty_Payer_Permanent_Address_3__c}" id="ThirdParty-PayerPerAddress3" styleClass="bs form-control" 
+                                       html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Payer_Permanent_Address_3__c.Label}"/>
+                            <apex:inputField value="{!txn.ThirdParty_Payer_Permanent_Address_4__c}" id="ThirdParty-PayerPerAddress4" styleClass="bs form-control" 
+                                       html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Payer_Permanent_Address_4__c.Label}"/>
+
+                        </div>
+                    </div>
+                    -->
+                </div>
+                <!---questions for payer is individual end-->
+
+                <!---questions for payer is company start-->
+                <div id="PayerIsCompany" style="display:none">
+
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputLabel value="{!$Label.Esales_Third_Party_Payer_Information}"/>
+                        </div>
+                    </div>
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Name_of_Company__c.Label}"/>
+                        </div>
+                    
+                        <div class="bs col-xs-12">
+                            <apex:inputField value="{!txn.ThirdParty_Name_of_Company__c}" id="ThirdParty-PayerCompanyName" styleClass="bs form-control"/>
+                        </div>
+                    </div>
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Company_Contact_No__c.Label}"/>
+                        </div>
+                    
+                        <div class="bs col-xs-12">
+                            <apex:inputField value="{!txn.ThirdParty_Company_Contact_No__c}" id="ThirdParty-ContactNo-Company" styleClass="bs form-control"/>
+                        </div>
+                    </div>
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputText value="{!$Label.Business_Registration_Incorporation_Number}"/>
+                        </div>
+                    
+                        <div class="bs col-xs-12">
+                            <apex:inputField value="{!txn.Business_Registration_Incorporation_No__c}" id="ThirdParty-CompanyResNo" styleClass="bs form-control"/>
+                        </div>
+                    </div>
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Date_of_Incorporation__c.Label}"/>
+                        </div>
+                    
+                        <div class="bs col-xs-12">
+                            <!--<apex:inputField value="{!txn.Date_of_Incorporation__c}" id="ThirdParty-CompanyDOI" styleClass="bs form-control"/>-->
+
+                            <apex:input id="Val-DOI-Day" type="tel" value="{!companyDOIDay}" 
+                                                   html-maxlength="2" 
+                                                   styleClass="bs form-control text-center dob-input dob-day question-kid-age"
+                                                   size="5"
+                                                   style="display: inline; width: auto;"
+                                                   html-placeholder="{!$Label.DD}" 
+                                                   onblur="getCheckDOB('com day',this)"    
+                                                                                          
+                            />
+                            <apex:input id="Val-DOI-Month" type="tel" value="{!companyDOIMonth}" 
+                                                   html-maxlength="2" 
+                                                   styleClass="bs form-control text-center dob-input dob-month question-kid-age"
+                                                   size="5"
+                                                   style="display: inline; width: auto;"
+                                                   html-placeholder="{!$Label.MM}"
+                                                   onblur="getCheckDOB('com month',this)"  
+                            />
+                            <apex:input id="Val-DOI-Year" type="tel" value="{!companyDOIYear}" 
+                                                   html-maxlength="4" 
+                                                   styleClass="bs form-control text-center dob-input dob-year question-kid-age"
+                                                   size="7"
+                                                   style="display: inline; width: auto;"
+                                                   html-placeholder="{!$Label.YYYY}"
+                                                   onblur="getCheckDOB('com year',this)"
+                                                   
+                            />
+                           
+                        </div>
+                        <div class="bs col-xs-12" >
+                            <apex:inputText id="Day-DOI-Check" value="{!companyDOI}" Styleclass="hidden-input-field" Style="height:0px;width:0px;border:0px !important;webkit-appearance: none;" tabindex="-1" onfocus="hiddenonblur(this)" />
+                            <apex:inputText id="Third-Party-DOB-com" style="height:1px; width:1px; border:0px !important; color:#fff ; -webkit-appearance: none;" onfocus="hiddenonblur(this)" tabindex="-1"/>
+                        </div> 
+
+                    </div>
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Place_of_Incorporation__c.Label}"/>
+                        </div>
+                        <div class="bs col-xs-12">
+                            <apex:inputField value="{!txn.Place_of_Incorporation__c}" id="ThirdParty-CompanyPlace" styleClass="bs form-control"/>
+                        </div>
+                    </div>
+
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputText value="{!$Label.Esales_Third_Party_Registered_Office_Address}"/>
+                        </div>
+                    
+                        <div class="bs col-xs-12">
+                            <apex:inputField value="{!txn.Registered_Office_Address_1__c}" id="ThirdParty-CompanyAddress1" styleClass="bs form-control" html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Registered_Office_Address_1__c.Label}"/>
+
+                            <apex:inputField value="{!txn.Registered_Office_Address_2__c}" id="ThirdParty-CompanyAddress2" styleClass="bs form-control" html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Registered_Office_Address_2__c.Label}"/>
+
+                            <apex:inputField value="{!txn.Registered_Office_Address_3__c}" id="ThirdParty-CompanyAddress3" styleClass="bs form-control" html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Registered_Office_Address_3__c.Label}"/>
+
+                            <apex:inputField value="{!txn.Registered_Office_Address_4__c}" id="ThirdParty-CompanyAddress4" styleClass="bs form-control" html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Registered_Office_Address_4__c.Label}"/>
+                        </div>
+                        
+                    </div>
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputText value="{!$Label.Esales_Third_Party_Business_Address}"/>
+                        </div>
+                    
+                        <div class="bs col-xs-12">
+                            <apex:inputField value="{!txn.Business_Address_1__c}" id="ThirdParty-CompanyBusAddress1" styleClass="bs form-control" html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Business_Address_1__c.Label}"/>
+
+                            <apex:inputField value="{!txn.Business_Address_2__c}" id="ThirdParty-CompanyBusAddress2" styleClass="bs form-control" html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Business_Address_2__c.Label}"/>
+
+                            <apex:inputField value="{!txn.Business_Address_3__c}" id="ThirdParty-CompanyBusAddress3" styleClass="bs form-control" html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Business_Address_3__c.Label}"/>
+
+                            <apex:inputField value="{!txn.Business_Address_4__c}" id="ThirdParty-CompanyBusAddress4" styleClass="bs form-control" html-placeholder="{!$ObjectType.ESales_Transaction__c.Fields.Business_Address_4__c.Label}"/>
+                        </div>
+                        
+                    </div>
+                    <br/>
+
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputText value="{!$Label.Name_of_person_acting_on_behalf_of_the_company_institution}"/>
+                        </div>
+                    
+                        <div class="bs col-xs-12">
+                            <apex:inputField value="{!txn.Name_of_person_on_behalf__c}" id="ThirdParty-PersonOnBehalf" styleClass="bs form-control"/>
+                        </div>
+                    </div>
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Person_HKID_Passport__c.Label}"/>
+                        </div>
+                        <div class="bs col-xs-12">
+                            <apex:inputField value="{!txn.ThirdParty_Person_HKID_Passport__c}" id="ThirdParty-PersonHKID" styleClass="bs form-control"/>
+                        </div>
+                    </div>
+
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.Designation__c.Label}"/>
+                        </div>
+                        <div class="bs col-xs-12">
+                            <apex:inputField value="{!txn.Designation__c}" id="ThirdParty-PersonDesignation" styleClass="bs form-control"/>
+                        </div>
+                    </div>
+                    <div class="bs form-group">
+                        <div class="bs col-xs-12">
+                            <br/>
+                            <apex:outputText value="{!$ObjectType.ESales_Transaction__c.Fields.ThirdParty_Person_Contact_Number__c.Label}"/>
+                        </div>
+                        <div class="bs col-xs-12">
+                            <apex:inputField value="{!txn.ThirdParty_Person_Contact_Number__c}" id="ThirdParty-ContactNo-Person" styleClass="bs form-control"/>
+                        </div>
+                    </div>
+
+                </div>
+                <!---questions for payer is company end-->
+
+                <apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}">
+                    <div id="showDeclaration" class="bs col-xs-12" style="padding-left: 0px;font-size: 0.8em;padding-top: 50px;font-weight: normal;">
+                        <b>聲明書</b><br/><br/>
+                        本人(吾等)，作為保單持有人/申請人及第三者付款人，謹此共同及個別地作出以下聲明: <br/><br/>
+                        (1)有關此聲明書之作答及陳述，不論由本人(吾等)親筆書寫與否，據本人(吾等)所知及所信，均屬完整及屬實無訛；
+                        (2)倘若以第三者付款方式繳付保費，應付保費已獲保單持有人/申請人的同意並且付款人純粹代表保單持有人/申請人繳付上述保單/投保申請之保費，而付款人就是項繳款並沒有獲委任何利益或合法權益亦沒有因作為第三者付款人而獲委任何利益或合法權益；<br/><br/>
+                        (3)用以繳付上述所列保單及/或投保申請之應付保費款項根據香港法例或任何其他司法管轄權之法例是從合法途徑獲得；及<br/><br/>
+                        (4)本人(吾等)同意信諾可根據其上述有關個人資料收集的聲明使用及/或披露本人(吾等)之個人資料。本人(吾等)確認已閱讀及明白此聲明之內容。<br/><br/>
+                    </div>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!$Label.User_Language == 'en'}">
+                    <div id="showDeclaration" class="bs col-xs-12" style="padding-left: 0px;font-size: 0.8em;padding-top: 50px;font-weight: normal;">
+                        <b>Declaration</b><br/><br/>
+                        I (We), the Policyholder / Applicant and the Payor, hereby jointly and severally declare that:<br/><br/>
+                        (1) The information given by me (us) in this declaration form, whether or not written by my (our) own hand, is true and accurate to the best of my (our) knowledge;<br/><br/>
+                        (2) Where the payment is made by a third-party, the consent has been given by the Policyholder / Applicant to the third-party payment and such payment is being made by the payer solely for and on behalf of the Policyholder /Applicant for payment of premium of the aforementioned policy / application number(s) stated and no interest and/or any legal right is vested or will be vested to the Payer as a result of such third-party payment made by the Payer;<br/><br/>
+                        (3) The sums payable for the premium of the aforementioned policy(ies) and/or application(s) are from legitimate source(s) under the laws of Hong Kong or any other jurisdiction; and<br/><br/>
+                        (4) I (we) agree that Cigna may use and/or disclose my (our) personal information in accordance with the above statement in relation to personal information collection and I (we) acknowledge that I (we) have read and understood the content thereof.<br/><br/>
+                    </div>
+                </apex:outputPanel>
+
+            </div>
+
+        </div>
+    </apex:outputPanel>
+        <apex:actionFunction action="{!nextStep}" name="nextStep" namespace="ServerESales" 
+                         reRender="wrapper,wrapperApp" oncomplete="refreshEsignature();retrieveAUWURL_JS();Cigna.ESales.finishLoading();" status="loader-icon"
+        />
+        <apex:actionFunction action="{!prevStep}" name="prevStep" namespace="ServerESales" 
+                             reRender="wrapper,wrapperApp" oncomplete="Cigna.ESales.finishLoading();" status="loader-icon"
+        />
+        <apex:actionFunction action="{!saveRecord}" name="saveRecord" namespace="ServerESales" 
+                             reRender="wrapper,wrapperApp" status="loader-icon"
+        />
+    </apex:form>
+
+        <script>
+            $(document).ready(function(){
+                
+            });
+
+            if($("input[id$='ThirdParty-IsMaking1stPayment']").val() == 'Yes'){
+                $("#making-payment-first-yes").attr('checked','checked');
+            } else if ($("input[id$='ThirdParty-IsMaking1stPayment']").val() == 'No'){
+                $("#making-payment-first-no").attr('checked','checked');
+            }
+            if($("input[id$='ThirdParty-IsMakingSubsequentPayment']").val() == 'Yes'){
+                $("#making-payment-subsequent-yes").attr('checked','checked');
+            } else if ($("input[id$='ThirdParty-IsMakingSubsequentPayment']").val() == 'No'){
+                $("#making-payment-subsequent-no").attr('checked','checked');
+            }
+
+            //CR-56_Link_20220214
+            $('input.cigna-question-radio').on("change",Cigna.ESales.onRadioChange);
+            $('input.cigna-question-checkbox').on("change",Cigna.ESales.onCheckboxChange);
+
+            var question1 = $('input[type="hidden"][id$="ThirdParty-IsMaking1stPayment"]').val();
+            var question2 = $('input[type="hidden"][id$="ThirdParty-IsMakingSubsequentPayment"]').val();
+            if(question1 == 'No' || question2 == 'No'){
+                $('#thirdPartyForm').show();
+            }else{
+                $('#thirdPartyForm').hide();
+            }
+
+            $('#ThirdPartyReason-List input[type="hidden"]').each(function(idx, elem){
+                var selected = $(this).val();
+                if (selected == 'true') {
+                    $(this).siblings('input').attr('checked', 'checked');
+                }
+            });
+            $('#FundSource-List input[type="hidden"]').each(function(idx, elem){
+                var selected = $(this).val();
+                if (selected == 'true') {
+                    $(this).siblings('input').attr('checked', 'checked');
+                }
+            });
+
+            var payer = $('input[type="hidden"][id$="ThirdParty-Payer"]').val();
+            if(payer == 'Individual'){
+                $("#Third-party-payer-Ind").attr('checked','checked');
+                $('#PayerIsIndividual').show();
+
+            }else if(payer == 'Company Institute'){
+                $("#Third-party-payer-Company").attr('checked','checked');
+                $('#PayerIsCompany').show();
+            }
+
+            function validateDate(resour){
+            
+                var checkId = resour.getAttribute("id");
+                
+                var day = $("input[id*='Val-DOI-Day']").val();
+                console.log('validateDate: day:' + day);
+                var month = $("input[id*='Val-DOI-Month']").val();
+                console.log('validateDate: month:' + month);
+                var year = $("input[id*='Val-DOI-Year']").val();
+                console.log('validateDate: year:' + year);
+                
+                if(day!='' && month!='' && year!='' ){
+                    if(day==0 || day>31){
+                         return false;
+                    }
+                    
+                    if(month==2){
+                        if(day>29) return false;
+                        if(day == 29){
+                            console.log('Feb'+year%4);
+                            if(year%4!=0) return false;
+                        }
+                    }
+                    
+                    if(month==4 || month==6 || month==9 || month==11){
+                        if(day>30) return false;
+                    }else{
+                        if(day>31) return false;
+                    }
+                    
+                    if(month==0 || month>12){
+                         return false;
+                    }
+                                        
+                    var adate=new Date(year,month-1,day);   
+                    console.log('adate'+adate);
+                    var thedate=new Date();
+                    
+                    var nowYear=thedate.getFullYear();
+                    var nowMonth=thedate.getMonth()+1;
+                    var nowday=thedate.getDate();
+                    
+                    if(year<1900){
+                         return false;
+                    }
+                }
+                return true;
+            }
+
+            function getCheckDOB(datetype , input){
+                var InputId = input.id;
+                var InputVal = $("input[id*='" + InputId  + "']").val();
+                
+                var oncheckRole = 'Payer';
+                if(datetype.indexOf("com") >= 0 ) oncheckRole = 'com';
+                
+                $("input[id*='" + oncheckRole + "-Day-DOB-Check']").val('');
+                var DOBDate = $("input[id*='Val-DOB-Day-" + oncheckRole + "']").val();
+                var DOBMonth = $("input[id*='Val-DOB-Month-" + oncheckRole + "']").val();
+                var DOBYear = $("input[id*='Val-DOB-Year-" + oncheckRole + "']").val();
+                if((DOBDate!=null && DOBDate!='')
+                    && (DOBMonth!=null && DOBMonth!='')
+                    && (DOBYear!=null && DOBYear!='')){
+                        $("input[id*='" + oncheckRole + "-Day-DOB-Check']").val(DOBDate+'/'+DOBMonth+'/'+DOBYear);
+                        //CR-56_Link_20220214
+                        $("input[id*='" + oncheckRole + "-Day-DOB-Check']").trigger("focus");
+                }
+
+                ThirdPartyPayment.Validate.checkDOBRequired(datetype , input);
+                //CR-56_Link_20220214
+                $("input[id*='Third-Party-DOB-" + oncheckRole + "']").trigger("focus");
+            }
+
+            function validateThirdPartyDOB(resour){
+            
+                var checkId = resour.getAttribute("id");
+                var onCheckRole = 'Payer';
+                if(checkId.indexOf("com") >= 0 )  onCheckRole = 'com';
+                
+                var day = $("input[id*='Val-DOB-Day-" + onCheckRole + "']").val();
+                console.log('validateDOB: day:' + day);
+                var month = $("input[id*='Val-DOB-Month-" + onCheckRole + "']").val();
+                console.log('validateDOB: month:' + month);
+                var year = $("input[id*='Val-DOB-Year-" + onCheckRole + "']").val();
+                console.log('validateDOB: year:' + year);
+                
+                if(day!='' && month!='' && year!='' ){
+                    if(day==0 || day>31){
+                         return false;
+                    }
+                    
+                    if(month==2){
+                        if(day>29) return false;
+                        if(day == 29){
+                            console.log('Feb'+year%4);
+                            if(year%4!=0) return false;
+                        }
+                    }
+                    
+                    if(month==4 || month==6 || month==9 || month==11){
+                        if(day>30) return false;
+                    }
+                    
+                    if(month==0 || month>12){
+                         return false;
+                    }
+                                        
+                    var adate=new Date(year,month-1,day);   
+                    console.log('adate'+adate);
+                    var thedate=new Date();
+                    
+                    var nowYear=thedate.getFullYear();
+                    var nowMonth=thedate.getMonth()+1;
+                    var nowday=thedate.getDate();
+                    
+                    if(year<1900 || year>nowYear){
+                         return false;
+                    }
+                    
+                    var age=nowYear-year;
+                    if(nowMonth<=month){
+                        if(nowMonth==month.value){
+                            if(nowday<day.value){
+                                age--;
+                            }
+                        }else{
+                            age--;
+                        }
+                    }
+                    console.log(age);
+                    var dis=thedate-adate;
+                    var vday = parseInt(dis/1000 / 3600 / 24);
+                    console.log('vday'+vday);
+                    console.log('onCheckRole'+onCheckRole );
+                    if(age<18){
+                            console.log("age<18");
+                            return false;
+                        
+                    }
+                    
+                }
+                return true;
+            }
+
+            var ThirdPartyPayment = ThirdPartyPayment || {};
+            ThirdPartyPayment.Validate = function(){
+        
+                function formValidation(){
+                    $("input[id*='ThirdParty-']").each(function(idx, elem){
+                        if (elem.id.indexOf('Address2') > -1 || elem.id.indexOf('Address3') > -1 ||
+                            elem.id.indexOf('Address4') > -1 || elem.id.indexOf('ThirdParty-CompanyBusAddress') > -1
+                            || elem.id.indexOf('ThirdParty-PayerPerAddress') > -1) {
+                            //do nothing
+                        }else{
+                            $(elem).rules("add", {
+                                required: true
+                            });
+                        }
+                        
+                    });
+
+                    $("input[id*='Third-Party-DOB-']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            required : true
+                        });
+                    });
+                }
+
+                function OnChangeValidation(){
+                    $("form[id*='frmThirdParty']").validate();
+
+                    jQuery.validator.addMethod("validateThirdPartyDOB", function(value, element) {
+                           return validateThirdPartyDOB(element);
+                    }, "{!$Label.ESales_Invalid_DOB}");
+                    jQuery.validator.addMethod("validateDate", function(value, element) {
+                           return validateDate(element);
+                    }, "{!$Label.ESales_Invalid_Date}");
+
+                    $("input[id*='ThirdParty-ContactNo']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            digits: true
+                        });
+                    });
+
+                    $("input[id*='DOB-Check']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            validateThirdPartyDOB : true
+                        });
+                    });
+
+                    $("input[id*='Day-DOI-Check']").each(function(idx, elem){
+                        $(elem).rules("add", {
+                            validateDate : true
+                        });
+                    });
+
+                    if ($("#Third-Party-DOB-Payer").css('visibility') == 'visible'){
+                        $("input[id*='Third-Party-DOB-Payer']").rules("add", {
+                            digits: true
+                        });
+                    }
+                    if ($("#Third-Party-DOB-com").css('visibility') == 'visible'){
+                        $("input[id*='Third-Party-DOB-com']").rules("add", {
+                            digits: true
+                        });
+                    }
+
+                }
+
+                function checkDOBRequired(){
+
+                    $("input[id*='Third-Party-DOB-Payer']").val('');
+                    $("input[id*='Third-Party-DOB-com']").val('');
+
+                    var payerDOB =''; 
+                    if ( $("input[id*='Val-DOB-Day-Payer']").val()!='' &&
+                         $("input[id*='Val-DOB-Month-Payer']").val()!=''&&
+                         $("input[id*='Val-DOB-Year-Payer']").val()!=''){
+                         
+                         payerDOB = $("input[id*='Val-DOB-Day-Payer']").val()+
+                               $("input[id*='Val-DOB-Month-Payer']").val()+
+                               $("input[id*='Val-DOB-Year-Payer']").val();
+                               
+                         $("input[id*='Third-Party-DOB-Payer']").val(payerDOB);
+
+                    }
+                    var comDOB =''; 
+                    if ( $("input[id*='Val-DOB-Day-com']").val()!='' &&
+                         $("input[id*='Val-DOB-Month-com']").val()!=''&&
+                         $("input[id*='Val-DOB-Year-com']").val()!=''){
+                         
+                         comDOB = $("input[id*='Val-DOB-Day-com']").val()+
+                               $("input[id*='Val-DOB-Month-com']").val()+
+                               $("input[id*='Val-DOB-Year-com']").val();
+                               
+                         $("input[id*='Third-Party-DOB-com']").val(comDOB);
+
+                    }
+
+                }
+
+            return {
+                        formValidation : formValidation,
+                        OnChangeValidation : OnChangeValidation,
+                        checkDOBRequired : checkDOBRequired
+                    }
+            }();
+                
+            ThirdPartyPayment.Validate.OnChangeValidation();
+
+
+        </script>
+    </div>
+    <!-- Link_IA_AML_Inspection_20220119 -->
+    <script>
+        function checkNationality(value){
+            var codeList = {!isSanctionCodeListNa};
+            var count = 0;
+            console.log("value:"+value);
+            console.log("codeList:"+codeList);
+            codeList.forEach((data)=>{
+                if(value == data.toString()){
+                    count++;
+                }
+            });
+            if(count>0){
+                return false;
+            }
+            return true;
+        }
+        
+        jQuery.validator.addMethod("validateNationality", function(value, element) {
+            return checkNationality(value);
+        }, "{!$Label.Sanctioned_Jurisdiction_Message_Nationality}");
+        
+        $("[id*='ThirdParty-PayerNationality']").each(function(idx, elem){
+            $(elem).rules("add", {
+                validateNationality:true
+            });
+        });
+
+        $("[id*='ThirdParty-PayerNationality']").each(function(idx, elem){
+            $(elem).rules("add", {
+                required: true
+            });
+        });
+    </script>
+
+</apex:page>

@@ -1,0 +1,1235 @@
+<apex:page id="basePrescriptionDetails" Controller="PrescriptionDetailsController" sideBar="false" showHeader="false" title="Prescription Details">
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover" />
+        <apex:include pageName="CignaCommonCSS" />
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+        <link rel="stylesheet" type="text/css" href="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+        <apex:includeScript value="{!URLFOR($Resource.signature_pad_1_5)}" />
+        <apex:includeScript value="{!$Resource.modernizr}" />
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+        <link rel="stylesheet" href="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/jquery-ui.min.css')}" />
+        <!--CR-56_Link_20220214-->
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/jquery-ui-1.13.min.js')}"></script>
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/datepicker-zh-TW.js')}"></script>
+        <script type="text/javascript" src="https://maps.google.com/maps/api/js?key={!$Label.Doctor_List_Google_Key}"></script>
+        <!-- CR-56_Link_20220214 -->
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+        <script type="text/javascript" src="{!URLFOR($Resource.App_Link_JS, 'js/applink.js')}"></script>
+        <apex:outputPanel rendered="{!lang == 'zh'}" layout="none">
+            <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+        </apex:outputPanel>
+        <style>
+            select::-ms-expand {
+                display: none;
+            }
+            #map-wrapper {
+                /*margin-bottom: 50px;*/
+            }
+            @media (max-width: 767px) {
+
+                .dl-mobile-padding {
+                    padding-bottom: 20px;
+                }
+
+                #wwSearchPanel {
+                    padding-top: 30px;
+                }
+
+                 #map-wrapper {
+                     /*position: fixed;*/
+                     top: 50px;
+                     width: 100%;
+                     right: 0px;
+                     margin-left: -15px;
+                     padding: 0px;
+                 }
+                #map {
+                    height: 200px;
+                }
+                #ListView {
+                    padding-top: 10px;
+                }
+                #HKList, #WWList {
+                    padding: 0 20px
+                }
+
+                .bs .detail-font {
+                    font-size: 0.8em;
+                }
+
+                .bs #list-back {
+                    /*position: fixed;*/
+                    top: 210px;
+                    width: 100%;
+                    z-index: 7;
+                    background: white;
+                }
+
+            }
+            .bs .table {
+                table-layout: fixed;
+                word-wrap: break-word;
+            }
+
+            .bs .grey-background {
+                background-color: rgb(242, 242, 242);
+            }
+
+            .bs .panel {
+                background: none;
+            }
+
+            .bs .table>tbody>tr>td,
+            .bs .table>tbody>tr>th,
+            .bs .table>tfoot>tr>td,
+            .bs .table>tfoot>tr>th,
+            .bs .table>thead>tr>td,
+            .bs .table>thead>tr>th {
+                border-top: 0px solid #ddd !important;
+            }
+
+            .bs .two-column-table {
+                border: 0 !important;
+                border-radius: 0 !important;
+                -webkit-box-shadow: 0px 0px 0px !important;
+                box-shadow: 0px 0px 0px !important;
+            }
+
+            #Prescription-detail-table{
+                margin-left: -8px;
+                margin-right: -8px;
+                padding-top: 30px;
+            }
+
+            .bs .field-label {
+            }
+
+            .bs .field-value {
+                font-weight: bold;
+            }
+
+            .bs .two-column-table-body .row {
+                padding-top: 5px;
+                padding-bottom: 5px;
+            }
+
+            @media screen and (min-width: 768px) {
+               /* #wwSearchPanel {
+                    padding-top: 10px;
+                }*/
+
+                #mapPanel {
+                    padding: 0 60px;
+                }
+
+                .modal:before {
+                    /*display: inline-block;*/
+                    vertical-align: middle;
+                    height: 100%;
+                }
+                .modal-dialog {
+                    /*display: inline-block;*/
+                    text-align: left;
+                    vertical-align: middle;
+                }
+                #map {
+                    font-family: Arial;
+                    font-size: 12px;
+                    line-height: normal !important;
+                    height: 400px;
+                    //width: 100%;
+                    background: transparent;
+                }
+                #ListView {
+                    max-height: 400px;
+                    /*min-height: 400px;*/
+                    /*margin-bottom: 50px;*/
+                    overflow: auto;
+                }
+               /* #map-wrapper {
+                    margin-top: 50px;
+                }*/
+                /*#clinic-done {
+                    margin-bottom: 50px;
+                }*/
+                .bs .detail-font {
+                    font-size: 0.9em;
+                }
+               /* div#VCIntroMessage {
+                    display: none;
+                    position: absolute;
+                    z-index: 11;
+                    margin: 150px auto 0px auto;
+                    width: 80%;
+                    height: 60%;
+                    background: #FFF;
+                    color: #000;
+                    left: 10%;
+                    padding: 20px;
+                    border-radius: 5px;
+                }*/
+            }
+            
+            @media (min-width: 768px) and (max-width: 991px) {
+                #map {
+                    height: 500px !important;
+                }
+                #ListView {
+                    max-height: 500px !important;
+                }
+                #mapPanel {
+                    padding: 0 0;
+                }
+                /*#HKList {
+                    padding: 0 0;
+                    padding-bottom: 10px;
+                }
+
+                #WWList {
+                    padding: 0 15px;
+                    padding-bottom: 10px;
+                }*/
+            }
+            
+            @media (max-width: 767px) {
+                
+                .dl-mobile-padding {
+                    padding-bottom: 20px;
+                }
+
+                /*#wwSearchPanel {
+                    padding-top: 30px;
+                }*/
+
+                #map-wrapper {
+                    /*position: fixed;*/
+                    top: 50px;
+                    width: 100%;
+                    right: 0px;
+                    margin-left: 20px;
+                    padding: 0px;
+                }
+                #map {
+                    height: 200px;
+                }
+                #ListView {
+                    padding-top: 10px;
+                }
+                #PrescriptionLocationPanelHeader {
+                    /*padding: 0 20px*/
+                }
+
+                .bs .detail-font {
+                    font-size: 0.8em;
+                }
+
+                .bs #list-back {
+                   /* position: fixed;*/
+                    top: 210px;
+                    width: 100%;
+                    z-index: 7;
+                    background: white;
+                }
+
+                /*div#VCIntroMessage {
+                    display: none;
+                    position: absolute;
+                    z-index: 11;
+                    margin: 100px auto 0px auto;
+                    width: 90%;
+                    height: 80%;
+                    background: #FFF;
+                    color: #000;
+                    left: 5%;
+                    padding: 20px;
+                    border-radius: 5px;
+                }*/
+                
+            }
+
+            .bs .panel-heading {
+                padding-left: 0px;
+                padding-right: 0px;
+            }
+
+            .bs .panel {
+                padding: 0;
+                margin-bottom: 0px;
+            }
+
+            .bs .form-control {
+                margin-top: 10px;
+            }
+
+            .bs div {
+                word-wrap: break-word;
+            }
+
+            .bs .panel-heading{
+                background-color: transparent !important;
+                color: black !important;
+                border:none;
+                border-bottom: 1px solid #ddd;
+            }
+
+            .tab-pane {
+                padding:10px;
+            }
+
+            .bs .Prescription-title {
+                font-size: 1.5em;
+                font-weight: 700;
+                padding-top: 30px;
+            }
+
+            .bs .break-word {
+                white-space: pre-wrap;      /* CSS3 */
+                white-space: -moz-pre-wrap; /* Firefox */
+                white-space: -pre-wrap;     /* before Opera 7 */
+                white-space: -o-pre-wrap;   /* Opera 7 */
+                word-wrap: break-word;      /* IE */
+            }
+
+            .table-header-row {
+                /*background-color:#EBEBEB;*/
+            }
+
+            .bs .Prescription-detail-body{
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+
+        </style>
+    </head>
+
+    <apex:define name="additionalLibraries">
+    </apex:define>
+
+    <script>
+        
+        //Nicole_TDW SIT_20201102
+        /*var myPositionLat = '';
+        var myPositionLng = '';*/
+                       
+        var Cigna = Cigna || {};
+        Cigna.DrList = function() {
+
+            function showLabelLoading() {
+                tempScrollTop = $('#ListView').scrollTop();
+                $('#loadMore-label').hide();
+                $('#loadMore-icon').fadeIn(100);
+            }
+
+            function hideLabelLoading() {
+                $('#ListView').scrollTop(tempScrollTop);
+                $('#loadMore-icon').hide();
+                $('#loadMore-label').fadeIn(100);
+            }
+
+            /*var myOptions = {
+                center:new google.maps.LatLng("{!allLat}","{!allLng}"),
+                zoom: 15,
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                mapTypeControl: false,
+                scrollwheel: true
+            };*/
+            var myOptions = {
+                center:new google.maps.LatLng(22.2775459,114.1684373),
+                zoom: 15,
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                mapTypeControl: false,
+                scaleControl: true,
+                scrollwheel: true
+            };
+
+            var myPositon = {
+                lat: 22.2775459,
+                lng: 114.1684373,
+                dummy: false
+            };
+            
+            //Nicole_TDW SIT_20201102
+            /*myPositionLat = myPositon.lat;
+            myPositionLng = myPositon.lng;*/
+            
+            var map;
+            var validator;
+            var infowindow = new google.maps.InfoWindow({
+                content: "Google Map"
+            });
+
+            var markers = [];
+
+
+            //Functions for Loading
+            function showLoading() {
+                $('#login-loading').fadeIn(100);
+            }
+
+            function finishSubmission() {
+                $('#login-loading').fadeOut(100);
+            }
+
+            function loadList(page){
+                showLabelLoading();
+                DrListAF.loadMore(page);
+            }
+
+            //Fuctions for Google Map
+            
+            function updateGeoLocation() {
+                var timer = setTimeout( function() {handleLocationError();}, 5000);
+                //alert(navigator.geolocation+'------'+Modernizr.geolocation);
+                if (navigator.geolocation && Modernizr.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                            function(position) {
+                                clearTimeout(timer);
+                                
+                                myPositon.lat = position.coords.latitude;
+                                myPositon.lng = position.coords.longitude;
+                                myPositon.dummy = false;
+                                $('#warning-box').hide();
+                              
+                                $('#location-param input[id$="currentLong"]').val(position.coords.longitude);
+                                $('#location-param input[id$="currentLat"]').val(position.coords.latitude);
+
+                                //Andy_TDW location message 20201103
+                                DrListAF.saveCache(position.coords.longitude,position.coords.latitude);
+                                console.log('pass the saveCache');
+                                //handleMapRefresh();
+                                
+                                //Nicole_TDW SIT_20201102
+                               /* $('#select-pickup-location-btn').show();
+                                $('#select-pickup-location-btn-mobile').show();
+                                myPositionLat = myPositon.lat;
+                                myPositionLng = myPositon.lng;
+                                alert('myPositon.lat:'+myPositon.lat);
+                                alert('myPositon.lng:'+myPositon.lng);*/
+                                
+                            },
+                            function(err) {
+                                clearTimeout(timer);
+                                
+                                console.warn('ERROR(' + err.code + '): ' + err.message);
+                                $('#warning-box').show();
+                                
+                                //Nicole_TDW SIT_20201102
+                                /*$('#select-pickup-location-btn').hide();
+                                $('#select-pickup-location-btn-mobile').hide();*/
+
+                                handleLocationError();
+                            }
+                    );
+                } else {
+                    clearTimeout(timer);
+                    console.warn("Your browser is not updated");
+                    handleLocationError();
+                }
+            }
+
+            function handleLocationError() {
+                //$('#location-param input[id$="long"]').val('NULL');
+                //$('#location-param input[id$="lat"]').val('NULL');
+                // Use Cigna building as the center
+                $('#location-param input[id$="long"]').val(Cigna.DrList.myPositon.lng);
+                $('#location-param input[id$="lat"]').val(Cigna.DrList.myPositon.lat);
+                //handleMapRefresh();
+            }
+
+            function handleMapRefresh() {
+                if ($(window).width() < 768) {
+                    DrListAF.findMe(true);
+                } else {
+                    DrListAF.findMe(false);
+                }
+
+            }
+
+            function resizeIframe() {
+                var me = window.name;
+                if (me) {
+                    var iframes = parent.document.getElementsByName(me);
+                    if (iframes && iframes.length == 1) {
+                        height = document.body.offsetHeight;
+                        iframes[0].style.height = height + "px";
+                    }
+                }
+            }
+
+            function removeMarkers(){
+                for (var i = 0; i < Cigna.DrList.markers.length; i++) {
+                    Cigna.DrList.markers[i].setMap(null);
+                }
+                Cigna.DrList.markers = [];
+            }
+            function backRequest() {
+                Cigna.Util.navigateToVFP('PrescriptionVFP', null, null, true);
+            }
+
+            function setRow(itemClassName){
+                //CR-56_Link_20220214
+                var totalItem = $('.'+itemClassName).length;
+
+
+                if($(window).width() < 768){
+                    for(var i = 0; i< totalItem; i++){
+                        $('.'+itemClassName).slice(i,i+1).wrapAll('<div class="bs row"/>');
+                    }
+                    return;
+                }
+
+                if(totalItem > 1){
+                    var pair = Math.ceil(totalItem / 2);
+                    for(var i = 0; i< pair; i++){
+                        if(i*2+2 < totalItem){
+                            $('.'+itemClassName).slice(i*2,i*2+2).wrapAll('<div class="bs row"/>');
+                        } else {
+                            $('.'+itemClassName).slice(i*2).wrapAll('<div class="bs row"/>');
+                        }
+                    }
+                } else if(totalItem == 1) {
+                    $('.'+itemClassName).wrapAll('<div class="bs row"/>');
+                }
+            }
+
+            function scrollToPanel(){
+                console.log('Here');
+                $('body').animate({
+                    scrollTop: $("[id*=hgResultApex]").offset().top - $('#navtopbar').height() - 50
+                }, 100);
+            }
+            function initMakers() {
+                Cigna.DrList.removeMarkers();
+                var bounds = new google.maps.LatLngBounds();
+                var lang = "{!lang}";
+                /*var myMakerLabel = Cigna.DrList.myPositon.dummy?"Cigna Hong Kong":"Me";*/
+                 var myMakerLabel = '';
+                if(lang == 'en'){
+                    myMakerLabel = Cigna.DrList.myPositon.dummy?"Cigna Hong Kong":"Me";
+                }else{
+                    myMakerLabel = Cigna.DrList.myPositon.dummy?"香港信諾":"我";
+                }
+
+                var loc = new google.maps.LatLng(Cigna.DrList.myPositon.lat,Cigna.DrList.myPositon.lng);
+
+                //center map
+                Cigna.DrList.map.setCenter(loc);
+
+                //create marker
+                var currentMarker = new google.maps.Marker({
+                    position: loc,
+                    icon: "{!URLFOR($Resource.MyLocationMarker)}",
+                    map: Cigna.DrList.map,
+                    title: myMakerLabel
+                });
+
+
+                currentMarker.addListener('click', function() {
+                    Cigna.DrList.infowindow.setContent('<div><strong>' + myMakerLabel + '</strong>' + '</div>');
+                    Cigna.DrList.infowindow.open(Cigna.DrList.map, this);
+                });
+
+                bounds.extend(loc);
+                Cigna.DrList.markers.push(currentMarker);
+
+                if('{!allLat}'!='' && '{!allLng}'!=''){
+                    var watSonsLoc = new google.maps.LatLng(parseFloat('{!allLat}'),parseFloat('{!allLng}'));
+                    //create marker
+                    var watSonsLocMarker = new google.maps.Marker({
+                        position: watSonsLoc,
+                        map: Cigna.DrList.map,
+                        title: '{!JSINHTMLENCODE(allName)}'
+                    });
+
+
+                    watSonsLocMarker.addListener('click', function() {
+                        Cigna.DrList.infowindow.setContent('<div><strong>' + '{!JSINHTMLENCODE(allName)}' + '</strong>' + '</div>');
+                        Cigna.DrList.infowindow.open(Cigna.DrList.map, this);
+                    });
+
+                    bounds.extend(watSonsLoc);
+                    Cigna.DrList.markers.push(watSonsLocMarker);
+                }
+
+
+                //auto center
+                Cigna.DrList.map.fitBounds(bounds);
+
+                var $mapDiv = $('#map');
+                console.log('mapDim---'+$mapDiv.height()+'---'+$mapDiv.width());
+                var mapDim = { height: $mapDiv.height(), width: $mapDiv.height() };
+
+                var zoom=getBoundsZoomLevel(bounds,mapDim);
+                console.log('getBoundsZoomLevel---'+zoom);
+
+                google.maps.event.addListenerOnce(Cigna.DrList.map, 'bounds_changed', function(event) {
+                    console.log('this.getZoom()---'+this.getZoom());
+                    this.setZoom(zoom);
+                });
+
+                //auto set zoom
+                function getBoundsZoomLevel(bounds, mapDim) {
+                    var WORLD_DIM = { height: 256, width: 256 };
+                    var ZOOM_MAX = 21;
+
+                    function latRad(lat) {
+                        var sin = Math.sin(lat * Math.PI / 180);
+                        var radX2 = Math.log((1 + sin) / (1 - sin)) / 2;
+                        return Math.max(Math.min(radX2, Math.PI), -Math.PI) / 2;
+                    }
+
+                    function zoom(mapPx, worldPx, fraction) {
+                        return Math.floor(Math.log(mapPx / worldPx / fraction) / Math.LN2);
+                    }
+
+                    var ne = bounds.getNorthEast();
+                    var sw = bounds.getSouthWest();
+
+                    var latFraction = (latRad(ne.lat()) - latRad(sw.lat())) / Math.PI;
+
+                    var lngDiff = ne.lng() - sw.lng();
+                    console.log('lngDiff---'+lngDiff);
+                    var lngFraction = ((lngDiff < 0) ? (lngDiff + 360) : lngDiff) / 360;
+
+                    var latZoom = zoom(mapDim.height, WORLD_DIM.height, latFraction);
+                    var lngZoom = zoom(mapDim.width, WORLD_DIM.width, lngFraction);
+
+                    return Math.min(latZoom, lngZoom, ZOOM_MAX);
+                }
+               /* google.maps.event.addListenerOnce(Cigna.DrList.map, 'bounds_changed', function(event) {
+                    alert('zoom===='+this.getZoom());
+                  if (this.getZoom() != 15) {
+                    this.setZoom(15);
+                  }
+                });*/
+                ///Cigna.DrList.map.panToBounds(bounds);
+
+            }           
+        
+            return {
+                showLoading: showLoading,
+                finishSubmission: finishSubmission,
+                handleMapRefresh: handleMapRefresh,
+                resizeIframe: resizeIframe,
+                myPositon: myPositon,
+                map: map,
+                updateGeoLocation: updateGeoLocation,
+                myOptions: myOptions,
+                infowindow: infowindow,
+                markers: markers,
+                removeMarkers: removeMarkers,
+                showLabelLoading: showLabelLoading,
+                hideLabelLoading: hideLabelLoading,
+                loadList: loadList,
+                backRequest: backRequest,
+                setRow : setRow,
+                initMakers: initMakers,
+                scrollToPanel : scrollToPanel
+            }
+        }();
+        /*efulfillment enhanced added start*/
+        var wid = $(window).width();
+        function refreshFileName(){
+            //alert ('called');
+            $(".txt-filename").each(function(){
+
+                var v = $(this).text();
+
+                if (Cigna.ValidationUtil.isEnglishOnly(v)){
+                    if (wid<768){
+                        if (v.length> 22 ){
+                            $(this).text(v.substring(0,19)+'...');
+                        }
+                    }else if (wid>1170){
+                        if (v.length> 21 ){
+                            $(this).text(v.substring(0,18)+'...');
+                        }
+                    }else{
+                        if (v.length> 19 ){
+                            $(this).text(v.substring(0,16)+'...');
+                        }
+                    }
+                }else{
+                    if (wid<768){
+                        if (v.length> 11 ){
+                            $(this).text(v.substring(0,10)+'...');
+                        }
+                    }else if (wid>1170){
+                        if (v.length> 12 ){
+                            $(this).text(v.substring(0,11)+'...');
+                        }
+                    }else{
+                        if (v.length> 11 ){
+                            $(this).text(v.substring(0,10)+'...');
+                        }
+                    }
+
+                }
+            });
+        }
+        /*efulfillment enhanced added end*/
+        $(document).ready(function() {
+         
+            PrescriptionDetailsAF.initPrescriptionDocList();
+            console.log('initPrescriptionDocList---');
+            /*efulfillment enhanced added start*/
+            $("#PrescriptionDocumentPanel").toggle( );
+            changeSection( $("#PrescriptionDocumentPanelHeader"));
+
+            // $("#PrescriptionLocationPanel").toggle( );
+            // changeSection( $("#PrescriptionLocationPanelHeader"));
+            /*efulfillment enhanced added end*/
+
+            refreshFileName();
+            Cigna.DrList.removeMarkers();
+            
+            
+            
+            //alert('updateGeoLocation currentLat='+"{!currentLat}"+'  currentLong='+"{!currentLong}");
+            if ("{!currentLong}" == "" || "{!currentLong}" == "NULL") {
+                Cigna.DrList.updateGeoLocation();
+            } else {
+                Cigna.DrList.myPositon.lat = parseFloat("{!currentLat}");
+                Cigna.DrList.myPositon.lng = parseFloat("{!currentLong}");
+                Cigna.DrList.myPositon.dummy = false;
+            }
+            //Cigna.DrList.updateGeoLocation();
+            if("{!targetPrescription.pickup_location}" != ''){ 
+                Cigna.DrList.map = new google.maps.Map(document.getElementById("map"), Cigna.DrList.myOptions);
+                Cigna.DrList.initMakers(); 
+            }
+                                           
+        });
+        
+        function redirectToWatsons(prescriptionId) {            
+            console.log(' prescriptionId '+prescriptionId);
+            //Nicole_TDW SIT_20201102
+            //Cigna.Util.navigateToVFP('WatsonsListVFP?prescriptionId=' + prescriptionId , null, null, true);
+            Cigna.Util.navigateToVFP('WatsonsListVFP?prescriptionId=' + prescriptionId + '&currentLat='+ "{!currentLat}" + '&currentLong='+ "{!currentLong}", null, null, true);
+        }
+
+        function redirectToDoc(attachmentKey) {
+            console.log(' attachmentKey '+attachmentKey);
+
+            PrescriptionDetailsController.initPrescriptionDoc(attachmentKey,function (result,event){
+                console.log('result----'+result);
+                if(result!=null){
+                    window.open('{!downloadSitePrefix}'+result);
+                }
+            })
+
+        }
+            
+            
+            function _base64ToArrayBuffer(base64) {
+                var binary_string = window.atob(base64);
+                var len = binary_string.length;
+                var bytes = new Uint8Array(len);
+                for (var i = 0; i < len; i++) {
+                    bytes[i] = binary_string.charCodeAt(i);
+                }
+                return bytes.buffer;
+            }
+            
+        function printPreview() {
+            const data = "JVBERi0xLjMNCiXi48/TDQoNCjEgMCBvYmoNCjw8DQovVHlwZSAvQ2F0YWxvZw0KL091dGxpbmVzIDIgMCBSDQovUGFnZXMgMyAwIFINCj4+DQplbmRvYmoNCg0KMiAwIG9iag0KPDwNCi9UeXBlIC9PdXRsaW5lcw0KL0NvdW50IDANCj4+DQplbmRvYmoNCg0KMyAwIG9iag0KPDwNCi9UeXBlIC9QYWdlcw0KL0NvdW50IDINCi9LaWRzIFsgNCAwIFIgNiAwIFIgXSANCj4+DQplbmRvYmoNCg0KNCAwIG9iag0KPDwNCi9UeXBlIC9QYWdlDQovUGFyZW50IDMgMCBSDQovUmVzb3VyY2VzIDw8DQovRm9udCA8PA0KL0YxIDkgMCBSIA0KPj4NCi9Qcm9jU2V0IDggMCBSDQo+Pg0KL01lZGlhQm94IFswIDAgNjEyLjAwMDAgNzkyLjAwMDBdDQovQ29udGVudHMgNSAwIFINCj4+DQplbmRvYmoNCg0KNSAwIG9iag0KPDwgL0xlbmd0aCAxMDc0ID4+DQpzdHJlYW0NCjIgSg0KQlQNCjAgMCAwIHJnDQovRjEgMDAyNyBUZg0KNTcuMzc1MCA3MjIuMjgwMCBUZA0KKCBBIFNpbXBsZSBQREYgRmlsZSApIFRqDQpFVA0KQlQNCi9GMSAwMDEwIFRmDQo2OS4yNTAwIDY4OC42MDgwIFRkDQooIFRoaXMgaXMgYSBzbWFsbCBkZW1vbnN0cmF0aW9uIC5wZGYgZmlsZSAtICkgVGoNCkVUDQpCVA0KL0YxIDAwMTAgVGYNCjY5LjI1MDAgNjY0LjcwNDAgVGQNCigganVzdCBmb3IgdXNlIGluIHRoZSBWaXJ0dWFsIE1lY2hhbmljcyB0dXRvcmlhbHMuIE1vcmUgdGV4dC4gQW5kIG1vcmUgKSBUag0KRVQNCkJUDQovRjEgMDAxMCBUZg0KNjkuMjUwMCA2NTIuNzUyMCBUZA0KKCB0ZXh0LiBBbmQgbW9yZSB0ZXh0LiBBbmQgbW9yZSB0ZXh0LiBBbmQgbW9yZSB0ZXh0LiApIFRqDQpFVA0KQlQNCi9GMSAwMDEwIFRmDQo2OS4yNTAwIDYyOC44NDgwIFRkDQooIEFuZCBtb3JlIHRleHQuIEFuZCBtb3JlIHRleHQuIEFuZCBtb3JlIHRleHQuIEFuZCBtb3JlIHRleHQuIEFuZCBtb3JlICkgVGoNCkVUDQpCVA0KL0YxIDAwMTAgVGYNCjY5LjI1MDAgNjE2Ljg5NjAgVGQNCiggdGV4dC4gQW5kIG1vcmUgdGV4dC4gQm9yaW5nLCB6enp6ei4gQW5kIG1vcmUgdGV4dC4gQW5kIG1vcmUgdGV4dC4gQW5kICkgVGoNCkVUDQpCVA0KL0YxIDAwMTAgVGYNCjY5LjI1MDAgNjA0Ljk0NDAgVGQNCiggbW9yZSB0ZXh0LiBBbmQgbW9yZSB0ZXh0LiBBbmQgbW9yZSB0ZXh0LiBBbmQgbW9yZSB0ZXh0LiBBbmQgbW9yZSB0ZXh0LiApIFRqDQpFVA0KQlQNCi9GMSAwMDEwIFRmDQo2OS4yNTAwIDU5Mi45OTIwIFRkDQooIEFuZCBtb3JlIHRleHQuIEFuZCBtb3JlIHRleHQuICkgVGoNCkVUDQpCVA0KL0YxIDAwMTAgVGYNCjY5LjI1MDAgNTY5LjA4ODAgVGQNCiggQW5kIG1vcmUgdGV4dC4gQW5kIG1vcmUgdGV4dC4gQW5kIG1vcmUgdGV4dC4gQW5kIG1vcmUgdGV4dC4gQW5kIG1vcmUgKSBUag0KRVQNCkJUDQovRjEgMDAxMCBUZg0KNjkuMjUwMCA1NTcuMTM2MCBUZA0KKCB0ZXh0LiBBbmQgbW9yZSB0ZXh0LiBBbmQgbW9yZSB0ZXh0LiBFdmVuIG1vcmUuIENvbnRpbnVlZCBvbiBwYWdlIDIgLi4uKSBUag0KRVQNCmVuZHN0cmVhbQ0KZW5kb2JqDQoNCjYgMCBvYmoNCjw8DQovVHlwZSAvUGFnZQ0KL1BhcmVudCAzIDAgUg0KL1Jlc291cmNlcyA8PA0KL0ZvbnQgPDwNCi9GMSA5IDAgUiANCj4+DQovUHJvY1NldCA4IDAgUg0KPj4NCi9NZWRpYUJveCBbMCAwIDYxMi4wMDAwIDc5Mi4wMDAwXQ0KL0NvbnRlbnRzIDcgMCBSDQo+Pg0KZW5kb2JqDQoNCjcgMCBvYmoNCjw8IC9MZW5ndGggNjc2ID4+DQpzdHJlYW0NCjIgSg0KQlQNCjAgMCAwIHJnDQovRjEgMDAyNyBUZg0KNTcuMzc1MCA3MjIuMjgwMCBUZA0KKCBTaW1wbGUgUERGIEZpbGUgMiApIFRqDQpFVA0KQlQNCi9GMSAwMDEwIFRmDQo2OS4yNTAwIDY4OC42MDgwIFRkDQooIC4uLmNvbnRpbnVlZCBmcm9tIHBhZ2UgMS4gWWV0IG1vcmUgdGV4dC4gQW5kIG1vcmUgdGV4dC4gQW5kIG1vcmUgdGV4dC4gKSBUag0KRVQNCkJUDQovRjEgMDAxMCBUZg0KNjkuMjUwMCA2NzYuNjU2MCBUZA0KKCBBbmQgbW9yZSB0ZXh0LiBBbmQgbW9yZSB0ZXh0LiBBbmQgbW9yZSB0ZXh0LiBBbmQgbW9yZSB0ZXh0LiBBbmQgbW9yZSApIFRqDQpFVA0KQlQNCi9GMSAwMDEwIFRmDQo2OS4yNTAwIDY2NC43MDQwIFRkDQooIHRleHQuIE9oLCBob3cgYm9yaW5nIHR5cGluZyB0aGlzIHN0dWZmLiBCdXQgbm90IGFzIGJvcmluZyBhcyB3YXRjaGluZyApIFRqDQpFVA0KQlQNCi9GMSAwMDEwIFRmDQo2OS4yNTAwIDY1Mi43NTIwIFRkDQooIHBhaW50IGRyeS4gQW5kIG1vcmUgdGV4dC4gQW5kIG1vcmUgdGV4dC4gQW5kIG1vcmUgdGV4dC4gQW5kIG1vcmUgdGV4dC4gKSBUag0KRVQNCkJUDQovRjEgMDAxMCBUZg0KNjkuMjUwMCA2NDAuODAwMCBUZA0KKCBCb3JpbmcuICBNb3JlLCBhIGxpdHRsZSBtb3JlIHRleHQuIFRoZSBlbmQsIGFuZCBqdXN0IGFzIHdlbGwuICkgVGoNCkVUDQplbmRzdHJlYW0NCmVuZG9iag0KDQo4IDAgb2JqDQpbL1BERiAvVGV4dF0NCmVuZG9iag0KDQo5IDAgb2JqDQo8PA0KL1R5cGUgL0ZvbnQNCi9TdWJ0eXBlIC9UeXBlMQ0KL05hbWUgL0YxDQovQmFzZUZvbnQgL0hlbHZldGljYQ0KL0VuY29kaW5nIC9XaW5BbnNpRW5jb2RpbmcNCj4+DQplbmRvYmoNCg0KMTAgMCBvYmoNCjw8DQovQ3JlYXRvciAoUmF2ZSBcKGh0dHA6Ly93d3cubmV2cm9uYS5jb20vcmF2ZVwpKQ0KL1Byb2R1Y2VyIChOZXZyb25hIERlc2lnbnMpDQovQ3JlYXRpb25EYXRlIChEOjIwMDYwMzAxMDcyODI2KQ0KPj4NCmVuZG9iag0KDQp4cmVmDQowIDExDQowMDAwMDAwMDAwIDY1NTM1IGYNCjAwMDAwMDAwMTkgMDAwMDAgbg0KMDAwMDAwMDA5MyAwMDAwMCBuDQowMDAwMDAwMTQ3IDAwMDAwIG4NCjAwMDAwMDAyMjIgMDAwMDAgbg0KMDAwMDAwMDM5MCAwMDAwMCBuDQowMDAwMDAxNTIyIDAwMDAwIG4NCjAwMDAwMDE2OTAgMDAwMDAgbg0KMDAwMDAwMjQyMyAwMDAwMCBuDQowMDAwMDAyNDU2IDAwMDAwIG4NCjAwMDAwMDI1NzQgMDAwMDAgbg0KDQp0cmFpbGVyDQo8PA0KL1NpemUgMTENCi9Sb290IDEgMCBSDQovSW5mbyAxMCAwIFINCj4+DQoNCnN0YXJ0eHJlZg0KMjcxNA0KJSVFT0YNCg==";
+
+            // const bytesArray = Uint8Array.from(atob(data), c => c.charCodeAt(0))
+            const bytesArray = _base64ToArrayBuffer(data);
+            const pdfBlob = new window.Blob([bytesArray], { type: "application/pdf" })
+    const blobURL = URL.createObjectURL(pdfBlob);
+            var theWindow =  1;
+            if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+   theWindow = window.navigator.msSaveOrOpenBlob(pdfBlob, "123.pdf");
+} else {
+      theWindow = window.open(blobURL);
+    }
+    // const blobURL = URL.createObjectURL(pdfBlob);
+    // Rancho_HKITSFDC212_20250401 - remove hard-code url
+    console.log(blobURL);
+    const theDoc = theWindow.document;
+    
+   
+    const theScript = document.createElement('script');
+    theScript.innerHTML = 'window.onload = function injectThis() {   window.print();   setInterval(function(){      window.alert("Back to App");      window.close();     }, 5000);}';            
+    theDoc.body.appendChild(theScript);
+    theDoc.close();
+};
+            sessionStorage.setItem('printId','123213213');
+            window.alert( sessionStorage.getItem('printId'));
+    </script>
+         
+<!--
+           <div>
+                        <a role="button" onclick="javascript:printPreview()" style="height:200px;width:100px">Print testing~~~~</a>
+                    </div>   -->
+            <br/> <br/>
+             <!--<div>
+                        <a id ="abdceee" href="{!downloadSitePrefix}apex/POCFORPRINTPDFVFP" target="_blank" style="height:200px;width:100px">Print testing2~~~~</a>
+                    </div>   
+<br/> <br/> <br/> <br/>-->
+            
+            
+            
+          
+    <div class="bs">
+        <apex:define name="body">
+            <apex:form >
+                <div id="location-param" style="display: none;">
+                    <apex:inputHidden value="{!allLat}" id="long" />
+                    <apex:inputHidden value="{!allLng}" id="lat" />
+                    <apex:inputHidden value="{!currentLong}" id="currentLong" />
+                    <apex:inputHidden value="{!currentLat}" id="currentLat" />
+                </div>
+                <!-- efulfillment changed-->
+                <!-- <apex:actionFunction action="{!getPrescriptionDetails}"
+                                     name="getPrescriptionDetails"
+                                     reRender="PrescriptionDetailsApex"
+                                     status="loader-icon"
+                                     namespace="PrescriptionDetailsAF"  oncomplete="refreshFileName();$('#PrescriptionDocumentPanelHeader').click();$('#PrescriptionLocationPanelHeader').click();"/> -->
+                <!-- CR-56_Link_20220214 -->                     
+                <apex:actionFunction action="{!initPrescriptionDocList}"
+                                     name="initPrescriptionDocList"
+                                     reRender="PrescriptionDetailsApex"
+                                     status="loader-icon"
+                                     namespace="PrescriptionDetailsAF"  oncomplete="refreshFileName();$('#PrescriptionDocumentPanelHeader').trigger('click');$('#PrescriptionLocationPanelHeader').trigger('click');"/>
+                <apex:actionFunction name="findMe" action="{!iFoundYou}" namespace="DrListAF" reRender="searchPanel,map-wrapper">
+                    <apex:param name="firstParam" assignTo="{!isMobile}" value="" />
+                </apex:actionFunction>
+                <apex:actionFunction name="saveCache" action="{!saveCache}" namespace="DrListAF" reRender="map-wrapper">
+                    <apex:param name="firstParam" assignTo="{!currentLong}" value="" />
+                    <apex:param name="secondParam" assignTo="{!currentLat}" value="" />
+                </apex:actionFunction>
+                
+                <apex:outputPanel id="PrescriptionDetailsApex">
+                    <!--Prescription details -->
+                    <div id="Prescription-detail-header" class="bs">
+                        <!-- Back Button -->
+                        <div class="bs row" style="padding-top:10px;">
+                            <div class="bs col-lg-12 cigna-fg-orange-medium onclick-pointer" onclick="Cigna.DrList.backRequest()">
+                                <i class="ci-hk-arrow-29 ci-hk-sm" aria-hidden="true"></i> {!$Label.Back}
+                            </div>
+                            <!-- </apex:outputLink> -->
+                        </div>
+                        <!-- Back Button End -->
+
+                        <!-- Prescription Title start -->
+                        <div class="bs row form-field">
+                            <div class="bs col-lg-12 Prescription-title">
+                                <apex:outputText value="{!targetPrescription.prescriptionNo}"/>
+                            </div>
+                        </div>
+                        <!-- Prescription Title End -->
+                    </div>
+
+                    <div class="bs Prescription-detail-body">
+                        <apex:pageMessages id="pageMessage"></apex:pageMessages>
+                        <div id="PrescriptionDetail" class=" bs tab-pane in active">
+                            <div class="bs tab-content">
+                                <!----Prescription Details for Group Start---->
+                                <apex:outputPanel layout="none">
+                                    <!-- New Table (Two-Column) -->
+                                    <div class="bs panel">
+                                        <div class="bs panel-body">
+                                            <apex:outputPanel layout="none">
+                                                <apex:outputPanel layout="none" >
+                                                    <div class="bs PrescriptionDetailItem">
+                                                        <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Prescription_No}</div>
+                                                        <div class="bs col-xs-6 col-sm-3 field-value">
+                                                            <apex:outputText value="{!targetPrescription.prescriptionNo}"/>
+                                                        </div>
+                                                    </div>
+                                                </apex:outputPanel>
+                                                <apex:outputPanel layout="none">
+                                                    <div class="bs PrescriptionDetailItem" style="padding-top:10px">
+                                                        <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Issue_Date}</div>
+                                                        <div class="bs col-xs-6 col-sm-3 field-value">
+                                                            <apex:outputText value="{!targetPrescription.issue_date}"/>
+                                                        </div>
+                                                    </div>
+                                                </apex:outputPanel>
+                                                <apex:outputPanel layout="none">
+                                                    <div class="bs PrescriptionDetailItem" style="padding-top:10px">
+                                                        <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pickup_Submission}</div>
+                                                        <div class="bs col-xs-6 col-sm-3 field-value">
+                                                            <apex:outputText value="{!targetPrescription.pickup_submission}"/>
+                                                        </div>
+                                                    </div>
+                                                </apex:outputPanel>
+                                                <apex:outputPanel layout="none">
+                                                    <div class="bs PrescriptionDetailItem" style="padding-top:10px">
+                                                        <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Ready_To_Pickup}</div>
+                                                        <div class="bs col-xs-6 col-sm-3 field-value">
+                                                            <apex:outputText value="{!targetPrescription.ready_pickup}"/>
+                                                        </div>
+                                                    </div>
+                                                </apex:outputPanel>
+                                                <apex:outputPanel layout="none">
+                                                    <div class="bs PrescriptionDetailItem" style="padding-top:10px">
+                                                        <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Pickup_Date}</div>
+                                                        <div class="bs col-xs-6 col-sm-3 field-value">
+                                                            <apex:outputText value="{!targetPrescription.pickup_date}"/>
+                                                        </div>
+                                                    </div>
+                                                </apex:outputPanel>
+                                                <apex:outputPanel layout="none">
+                                                    <div class="bs PrescriptionDetailItem" style="padding-top:10px">
+                                                        <div class="bs col-xs-6 col-sm-3 field-label">{!$Label.Status}</div>
+                                                        <div class="bs col-xs-6 col-sm-3 field-value">
+                                                            <apex:outputText value="{!if(targetPrescription.status!=null,if(targetPrescription.status=='New', $Label.New,if(targetPrescription.status=='Pending for Preparation',$Label.Pending_for_Preparation,if(targetPrescription.status=='Pending Collection',$Label.Pending_Collection,if(targetPrescription.status=='Collected',$Label.Collected,if(targetPrescription.status=='Cancelled',$Label.Cancelled,'N/A'))))),'N/A')}"/>
+                                                        </div>
+                                                    </div>
+                                                </apex:outputPanel>
+
+                                            </apex:outputPanel>
+                                        </div>
+                                    </div>
+                                </apex:outputPanel>
+                                <!----Prescription Details End---->
+
+                                <!-- efulfillment start -->
+                                <apex:outputPanel id="PrescriptionPanel" rendered="{!PrescriptionDocList != null && PrescriptionDocList.size>0}" layout="block" style="padding-top:50px">
+                                    <div class="bs panel panel-default col-xs-12 two-column-table">
+
+                                        <div id="PrescriptionDocumentPanelHeader" class="bs panel-heading form-toggle-tab onclick-pointer ">
+                                        {!$Label.Document}
+                                            <i aria-hidden="true" class="ci-hk-arrow-28 ci-hk-sm pull-right"></i>
+                                        </div>
+                                        <div id="PrescriptionDocumentPanel" class="bs col-xs-12 col-sm-12 collapse panel-body form-toggle-content" >
+                                            <apex:variable var="tmpIdx" value="{!0}" />
+                                            <apex:repeat id="PrescriptionDocList" value="{!PrescriptionDocList}" var="myList">
+                                                <div class='col-xs-11 col-sm-3 dy-col' style='padding:10px;'>
+                                                    <div class="fileWrapper col-xs-12 col-sm-12"  data-brkatt="{!tempAttList[tmpIdx]}"   >
+                                                        <div class="fw-icon">
+                                                            <img src="{!URLFOR($Resource.efulfillment, 'icon.png')}" style='width:100%'/>
+                                                        </div>
+                                                        <div class="fw-filename">
+                                                            <span class='txt-filename'>{!myList.fileName}</span><br/>
+                                                            <span style='font-size: 12px !important;color:gray'>{!myList.creationTime}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div style='display:none;'>
+                                                    <a id="dlink_{!tempAttList[tmpIdx]}" href="{!downloadSitePrefix}apex/ComFileDownLoadVFP?attKey={!tempAttList[tmpIdx]}&type=Prescription" target="_blank">down_load_pdf_hidden</a>
+                                                </div>
+                                                <apex:variable var="tmpIdx" value="{!tmpIdx+1}" />
+                                            </apex:repeat>
+
+                                        </div>
+                                    </div>
+                                </apex:outputPanel>
+
+                                <apex:outputPanel rendered="{!targetPrescription.pickup_location == ''}">
+                                    <!--<div id="select-pickup-location-btn" class="bs row visible-xs cigna-floating-bottom-panel">-->
+                                        <!--<div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark onclick-pointer">-->
+                                            <!--<a href="javascript:void(0);" onclick="redirectToWatsons('{!targetPrescription.prescriptionNo}')" class="onclick-pointer action-btn cigna-fg-white" role="button">-->
+                                                <!--<span class="fa fa-pencil" aria-hidden="true" style="padding-right:10px;"></span>-->
+                                                <!--<br/> {!$Label.Select_Pickup_Location}-->
+                                            <!--</a>-->
+                                        <!--</div>-->
+                                    <!--</div>-->
+                                    <!--mobile action button-->
+                                    <div id="mobile-app-padding" class="bs row" style="display: none; padding-bottom: 100px;">
+                                        <div class="bs col-xs-12"></div>
+                                    </div>
+
+                                    <div id="action-bar" class="bs row visible-xs cigna-floating-bottom-panel" style="left:0px;">
+                                        <div class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark onclick-pointer" onclick="redirectToWatsons('{!targetPrescription.prescriptionNo}')">
+                                            <a class="action-btn cigna-fg-white" role="button"><span class="fa fa-pencil" aria-hidden="true"></span><br/><span id="firstbtnxstext">{!$Label.Select_Pickup_Location}</span></a>
+                                        </div>
+                                    </div>
+                                    <!--desktop action button-->
+                                    <div id="select-pickup-location-btn-mobile" class="bs hidden-xs" style="padding-top: 50px">
+                                        <div class="bs col-sm-2 "></div>
+                                        <div class="bs col-sm-8" style="padding-top: 20px;padding-bottom: 20px;">
+                                            <div class="bs col-sm-3 "></div>
+                                            <div id="submit-btn-mb" style="display: table;" onclick="redirectToWatsons('{!targetPrescription.prescriptionNo}')" class="bs col-sm-6 text-center onclick-pointer mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn lg-option-btn">
+                                                <div style="display: table-cell; vertical-align: middle;">
+                                                        {!$Label.Select_Pickup_Location}
+                                                </div>
+                                            </div>
+                                            <div class="bs col-sm-3 "></div>
+                                        </div>
+                                        <div class="bs col-sm-2"></div>
+                                    </div>
+                                </apex:outputPanel>
+                                <script>
+                                    //CR-56_Link_20220214
+                                    $("#PrescriptionDocumentPanelHeader").on("click",function() {
+                                        $("#PrescriptionDocumentPanel").toggle(null, null,  changeSection(this));
+                                    });
+
+                                    $("#PrescriptionLocationPanelHeader").on("click",function() {
+                                        $("#PrescriptionLocationPanel").toggle(null, null,  changeSection(this));
+                                    });
+
+                                    function changeSection(section){
+                                        var icon = $(section).find('i');
+                                        console.log('test---'+icon.hasClass("ci-hk-arrow-28"));
+                                        if(icon.hasClass("ci-hk-arrow-28")){
+                                            console.log($(section));
+                                            icon.removeClass("ci-hk-arrow-28").addClass("ci-hk-arrow-27");
+                                        }else if(icon.hasClass("ci-hk-arrow-27")){
+                                            icon.removeClass("ci-hk-arrow-27").addClass("ci-hk-arrow-28");
+                                        }
+                                    }
+
+                                    //CR-56_Link_20220214
+                                    $(".fileWrapper").on("click",function(){
+                                        var atk = $(this).data("atk");
+                                        var brkatt = $(this).data("brkatt");
+                                        $("input[id$='targetAttachmentKey']").val(atk);
+                                        $("input[id$='selectedAttID']").val(brkatt);
+                                        var indid = "#dlink_"+ brkatt;
+                                        // 20230921 - minghua - PI-129 Vulnerability follow up request - Pentest (FND-61951) High
+                                        var hrefBack=$(indid).attr("href");
+                                        if (Cigna.Util.isMobile()) {
+                                            var href=hrefBack.split("/apex/");
+                                            var param="/apex/"+href[1];
+                                            if (Cigna.Util.isIOS()) {
+                                                var openURL=openDownload(param);
+                                                $(indid).attr("href",openURL);
+                                            }else{
+                                                $(indid).removeAttr("target");
+                                                $(indid).attr("href","javascript:void(0);");
+                                                $(indid).attr("onclick",openDownload(param));
+                                            }
+                                        }
+                                        $(indid)[0].click();
+                                        if (Cigna.Util.isMobile()) {
+                                            $(indid).attr("href",hrefBack);
+                                        }
+                                    });
+
+                                </script>
+
+                                <style>
+
+                                    @media (min-width:768px and max-width: 991px) {
+                                        .bs .panel-heading {
+                                            padding-left: 0px;
+                                            padding-right: 0px;
+                                        }
+                                        .bs .panel-heading{
+                                            background-color: transparent !important;
+                                            color: black !important;
+                                            border:none;
+                                            border-bottom: 1px solid #ddd;
+                                        }
+                                    }
+                                    @media (max-width: 768px) {
+
+                                        .table-panel-body {
+                                            padding:0px !important;
+                                        }
+                                    }
+
+                                    .bs .panel-body{
+                                        padding:0px;
+                                        padding-top:10px;
+                                    }
+                                    .bs .two-column-table {
+                                        border: 0 !important;
+                                        border-radius: 0 !important;
+                                        -webkit-box-shadow: 0px 0px 0px !important;
+                                        box-shadow: 0px 0px 0px !important;
+                                    }
+                                    .bs .two-column-table-body .row {
+                                        padding-top: 5px;
+                                        padding-bottom: 5px;
+                                    }
+
+                                    @media (max-width:767px){
+
+                                    }
+                                    @media (min-width:768px) and (max-width:1170px){
+                                        .dy-col{
+                                            width:33.3% !important;
+                                        }
+                                    }
+                                    @media (min-width:1171px){
+                                        .dy-col{
+                                            width:25% !important;
+                                        }
+                                    }
+                                    @media (max-width: 1170px) {
+                                        .fw-filename{
+                                            font-size: 12px;
+                                            width:75%;
+                                            padding:0px;
+                                            margin:0px;
+                                            text-align:center;
+                                            vertical-align:middle !important;
+                                            display: inline-block;
+                                            padding-left: 6px;
+                                            padding-right: 10px;
+                                        }
+
+                                    }
+                                    @media (min-width: 1171px) {
+                                        .fw-filename{
+                                            font-size: 14px;
+                                            width:75%;
+                                            padding:0px;
+                                            margin:0px;
+                                            text-align:center;
+                                            vertical-align:middle !important;
+                                            display: inline-block;
+                                            padding-left: 6px;
+                                            padding-right: 11px;
+                                        }
+                                    }
+                                    .fileWrapper {
+                                        font-size:14px;
+                                        font-weight: bold;
+                                        padding-left: 0px;
+                                        padding-right: 0px;
+                                        vertical-align: middle;
+                                        cursor:pointer;
+                                        -moz-box-shadow:1px 3px 8px #919191;
+                                        -webkit-box-shadow:1px 3px 8px #919191;
+                                        box-shadow:1px 3px 8px #919191;
+                                    }
+
+                                    .newFile{
+                                        background: url('{!URLFOR($Resource.eFulfillment, 'icon2.png')}') no-repeat;
+                                        background-position:right top;
+                                        background-size: auto 40%;
+                                    }
+                                    .fw-icon{
+                                        width:25%;
+                                        padding:0px;
+                                        margin:0px;
+                                        text-align:center;
+                                        padding:0px;
+                                        display: inline-block;
+                                        vertical-align: middle;
+                                        background-color: #9BC93B;
+                                    }
+
+                                </style>
+                                <!-- efulfillment end -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <script type="text/javascript">
+                        Cigna.DrList.setRow('PrescriptionDetailItem');
+                    </script>
+
+                </apex:outputPanel>
+                <div class="bs Prescription-detail-body">
+                    <div class=" bs tab-pane in active">
+                        <div class="bs tab-content">
+                            <apex:outputPanel rendered="{!targetPrescription.pickup_location != ''}" layout="block">
+                                <div class="bs panel panel-default col-xs-12 two-column-table">
+
+                                    <div id="PrescriptionLocationPanelHeader" class="bs panel-heading form-toggle-tab onclick-pointer ">
+                                    {!$Label.Pickup_Location}
+                                        <i aria-hidden="true" class="ci-hk-arrow-28 ci-hk-sm pull-right"></i>
+                                    </div>
+                                    <div id="PrescriptionLocationPanel" class="bs col-xs-12 col-sm-12 collapse panel-body form-toggle-content" >
+                                        <div class="bs" id="doctor-container">
+                                            <div id="ListView" class="bs col-sm-12 col-md-12 col-xs-12 col-lg-12" style="padding-right:0px;-webkit-transform: translate3d(0, 0, 0);">
+                                                <div class='bs'>
+                                                    <div id="clinic-{!availableWatsons.id}">
+                                                        <div class="bs onclick-pointer">
+                                                            <div class='bs col-sm-12 col-md-12 col-lg-12 col-xs-12 list-content'>
+                                                                <!--desktop view-->
+                                                                <div class='bs hidden-xs col-sm-5 col-md-5 col-lg-12 col-xs-5'>
+                                                                <div style="font-size: 0.9em;margin-bottom: 5px;">
+                                                                    <apex:outputText escape="false" value="{!IF(lang='en',availableWatsons.Name,availableWatsons.Chinese_Name__c)}"/>
+                                                                    <!-- <apex:outputPanel>
+                                                                    <i class="ci-hk-arrow-31" aria-hidden="true" style="float:right;color: #134688;"></i>
+                                                                    </apex:outputPanel> -->
+                                                                </div>
+                                                                <div style="font-size: 0.7em;line-height: 1.5em;">
+                                                                    <apex:outputText escape="false" value="{!availableWatsons.Address_Display__c}"/>
+                                                                </div>
+                                                                <div style="font-size: 0.7em;line-height: 1.5em;">
+                                                                {!$Label.Opening_Hours}<br/>
+                                                                    <apex:outputText escape="false" value="{! IF(lang="en",SUBSTITUTE(SUBSTITUTE(JSENCODE(availableWatsons.Opening_Hours_en__c),'\\r\\n','<br/>'),'\\n','<br/>'),SUBSTITUTE(SUBSTITUTE(JSENCODE(availableWatsons.Opening_Hours_zh__c),'\\r\\n','<br/>'),'\\n','<br/>'))}"/>
+                                                                </div>
+                                                                </div>
+                                                                <!--desktop view-->
+
+                                                                <!--mobile view-->
+                                                                <div class='bs visible-xs col-sm-12 col-md-12 col-lg-12 col-xs-12' style="">
+                                                                    <div style="font-size: 0.9em;margin-bottom: 5px;">
+                                                                        <apex:outputText escape="false" value="{!IF(lang='en',availableWatsons.Name,availableWatsons.Chinese_Name__c)}"/>
+                                                                        <!-- <apex:outputPanel>
+                                                                        <i class="ci-hk-arrow-31" aria-hidden="true" style="float:right;color: #134688;"></i>
+                                                                        </apex:outputPanel> -->
+                                                                    </div>
+                                                                    <div style="font-size: 0.7em;line-height: 1.5em;">
+                                                                        <apex:outputText escape="false" value="{!availableWatsons.Address_Display__c}"/>
+                                                                    </div>
+                                                                    <div style="font-size: 0.7em;line-height: 1.5em;">
+                                                                    {!$Label.Opening_Hours}<br/>
+                                                                        <apex:outputText escape="false" value="{! IF(lang="en",SUBSTITUTE(SUBSTITUTE(JSENCODE(availableWatsons.Opening_Hours_en__c),'\\r\\n','<br/>'),'\\n','<br/>'),SUBSTITUTE(SUBSTITUTE(JSENCODE(availableWatsons.Opening_Hours_zh__c),'\\r\\n','<br/>'),'\\n','<br/>'))}"/>
+                                                                    </div>
+                                                                </div>
+                                                                <!--mobile view-->
+                                                                <!--  <p style="font-size: 0.7em;color: #134688;margin-bottom: 0px;">
+                                                            <apex:outputPanel >
+                                                                <i class="fa fa-circle" aria-hidden="true" />&nbsp;
+                                                                 {!IF(noUserLocation || !currentWatsons.Coordinate_Available__c,$Label.Doctor_List_Unknown, TEXT(currentWatsons.DistanceToMe__c)&" KM")} &nbsp;&nbsp;
+                                                            </apex:outputPanel>
+                                                        </p> -->
+                                                                <div id="map-wrapper" class="bs col-sm-7 col-md-7 col-xs-7 col-lg-7">
+                                                                    <div id="map"></div>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <script>
+                                                        var isIE = /(MSIE|Trident\/|Edge\/)/i.test(navigator.userAgent);
+                                                        if(isIE){
+                                                            $('#ListView').css('max-height','360px');
+                                                            $('#ListView').css('min-height','360px');
+                                                        }
+                                                    </script>
+                                                </div>
+                                            </div>
+                                            <!-- <apex:outputPanel id="mapPanel" layout="block">
+                                                <div id="mapPanel2">
+                                                    <script type="text/javascript">
+
+
+                                                    </script>
+                                                    <div id="map-wrapper" class="bs col-sm-7 col-md-7 col-xs-12 col-lg-7">
+                                                        <div id="map"></div>
+                                                    </div>
+                                                </div>
+                                            </apex:outputPanel> -->
+
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </apex:outputPanel>
+                            
+                           
+                        </div>
+                    </div>
+                    
+                </div>
+
+            </apex:form>
+        </apex:define>
+    </div>
+            
+<script>   
+     
+            
+    
+</script>
+    <!-- End of the main body -->
+</apex:page>

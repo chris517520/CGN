@@ -1,0 +1,224 @@
+<apex:page cache="false" standardcontroller="Case" extensions="CreateCaseController">
+    <apex:includescript value="{!URLFOR($Resource.jQuery_1_8_2_JS)}" />
+    <script type='text/javascript' src='/canvas/sdk/js/publisher.js' />
+    <apex:includeScript value="/support/console/40.0/integration.js"/>
+    
+    <apex:remoteObjects >
+        <apex:remoteObjectModel name="Case" fields="Id,Chat_Key__c,Subject,Origin"/>
+    </apex:remoteObjects>     
+    
+    <script>
+        $j = jQuery.noConflict();
+
+        function isSalesforce1() {
+            if( (typeof sforce != 'undefined') && (sforce != null) )
+                return true;
+            return false;
+        }
+
+        function backToRecord(hasError) {
+            if (hasError) {
+                $j('#divCreateCase .btn').button('reset');
+                return;
+            }
+
+            if (isSalesforce1()) {
+                Sfdc.canvas.publisher.publish({name: "publisher.close", payload:{ refresh:"true"}});
+            } else {
+                window.top.location = '/console';
+            }
+        }
+
+    </script>
+    <style>
+        .requiredAsterisk {
+            color: #c00;
+            font-size: 18px;
+            vertical-align: middle;
+        }
+    </style>
+
+    <div id="divEditCase" class="bs container-fluid">
+        <div class="bs col-xs-12">
+            <apex:outputpanel id="casePanel">
+                <apex:form id="CaseForm">
+
+                    <apex:pageblock >
+                        <apex:pageblockbuttons location="top">
+
+                            <apex:commandbutton styleclass="bs btn btn-primary pull-left"
+                                                action="{!onEditSave}"
+                                                value="save"
+                                                oncomplete="backToRecord({!hasError});"
+                                                rerender="casePanel"
+                                                immediate="false"
+                                                html-data-loading-text="Loading..." />
+                            <apex:commandbutton styleclass="bs btn btn-primary pull-left"
+                                                action="{!ondelete}"
+                                                value="save&close"
+                                                oncomplete="backToRecord({!hasError});"
+                                                rerender="casePanel"
+                                                immediate="false"
+                                                html-data-loading-text="Loading..." />                    
+                            <apex:commandbutton styleclass="bs btn btn-primary pull-left"
+                                                action="{!onCancel}"
+                                                value="save&new"                                               
+                                                rerender="casePanel"
+                                                immediate="false" />
+                            <apex:commandbutton styleclass="bs btn btn-primary pull-left"
+                                                action="{!onCancel}"
+                                                value="cancel"
+                                                oncomplete="backToRecord({!hasError});"
+                                                rerender="casePanel"
+                                                immediate="false"
+                                                html-data-loading-text="Loading..." />
+                        </apex:pageblockbuttons>
+                        <apex:pagemessages />
+                        <apex:pageBlockSection columns="2">  
+                        
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >Case Owner</apex:outputLabel>
+                                <apex:outputField id="Status" value="{!newCase.Ownerid}" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >Unique ID</apex:outputLabel>
+                                <apex:inputField id="uniqueid" value="{!newCase.Unique_ID__c}" />
+                            </apex:pageBlockSectionItem>                           
+                             <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Title</apex:outputlabel>
+                                <apex:inputfield id="Type" value="{!newCase.Title__c}" required="true"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel >Call List ID</apex:outputLabel>
+                                <apex:inputField id="calllistid" value="{!newCase.Call_List_ID__c}" />
+                            </apex:pageBlockSectionItem>
+                             <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Account Name</apex:outputlabel>
+                                <apex:inputfield id="account" value="{!newCase.accountid}" required="true"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Source</apex:outputlabel>
+                                <apex:inputfield id="Type" value="{!newCase.sourceid}" required="true"/>                              
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Contact Name</apex:outputlabel>
+                                <apex:inputfield id="ContactName" value="{!newCase.contactid}" required="true"/>
+                            </apex:pageBlockSectionItem>  
+                             <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Nature__c.label}" for="Nature" />
+                                <apex:inputfield id="Nature" value="{!newCase.Nature__c}" required="true"/>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >First Name of Non-existing Customer</apex:outputlabel>
+                                <apex:inputfield id="firstname" value="{!newCase.First_Name_Of_Non_Existing_Customer__c}" />
+                            </apex:pageBlockSectionItem>                                                
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Nature-Others</apex:outputlabel>
+                                <apex:inputfield id="natureothers" value="{!newCase.Nature_Others__c}" />
+                            </apex:pageBlockSectionItem>
+                             <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Last Name of Non-existing Customer</apex:outputlabel>
+                                <apex:inputfield id="LastName" value="{!newCase.Last_Name_of_Non_Existing_Customer__c}" />
+                            </apex:pageBlockSectionItem>                                                                                                           
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Media__c.label}" for="Media" />
+                                <apex:inputfield id="Media" value="{!newCase.Media__c}" />
+                            </apex:pageBlockSectionItem>
+                             <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Contact Phone of Non-existing Customer</apex:outputlabel>
+                                <apex:inputfield id="phone" value="{!newCase.Contact_Email_of_Non_Existing_Customer__c}" />
+                            </apex:pageBlockSectionItem>                                                                                                                                                                                        
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Channel__c.label}" for="Channel" />
+                                <apex:inputfield id="Channel" value="{!newCase.Channel__c}" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Contact Email of Non-existing Customer</apex:outputlabel>
+                                <apex:inputfield id="Email" value="{!newCase.Contact_Phone_of_Non_Existing_Customer__c}" />
+                            </apex:pageBlockSectionItem>      
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Category__c.label}" for="Category"/>
+                                <apex:inputfield id="Category" value="{!newCase.Category__c}" required="true" />
+                            </apex:pageBlockSectionItem>    
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.status.label}" for="Status" />
+                                <apex:inputfield id="Channel" value="{!newCase.status}" required="true"/>
+                            </apex:pageBlockSectionItem>  
+                             <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Type__c.label}" for="Type" />
+                                <apex:inputfield id="Type" value="{!newCase.Type__c}" required="true"/>
+                            </apex:pageBlockSectionItem>                                                                                
+                              <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Remarks__c.label}" for="Case Remarks" />
+                                <apex:inputfield id="Remarks" value="{!newCase.Remarks__c}" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Sub_Type__c.label}" for="SubType" />
+                                <apex:inputfield id="SubType" value="{!newCase.Sub_Type__c}" required="true"/>
+                            </apex:pageBlockSectionItem>    
+                        </apex:pageBlockSection>                       
+                            
+                        <apex:pageBlockSection title="Case Feedback" columns="2">
+                             
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Pulse_Survey_Category__c.label}" for="pulse survey caterory" />
+                                <apex:inputfield id="pulsesurvey" value="{!newCase.Pulse_Survey_Category__c}" />
+                            </apex:pageBlockSectionItem>
+                            
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.Score__c.label}" for="Score" />
+                                <apex:inputfield id="Score" value="{!newCase.Score__c}" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Pulse Survey Result</apex:outputlabel>
+                                <apex:inputfield id="Result" value="{!newCase.Result__c}" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.PsRemark__c.label}" for="PsRemark" />
+                                <apex:inputfield id="PsRemark" value="{!newCase.PsRemark__c}" />
+                            </apex:pageBlockSectionItem>
+                        </apex:pageBlockSection>                           
+                                                     
+                        <apex:pageBlockSection title="Service to Sales(S2S)" columns="2">                                                  
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.S2S__c.label}" for="S2S" />
+                                <apex:inputfield id="S2S" value="{!newCase.S2S__c}" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Already follow up by TMR</apex:outputlabel>
+                                <apex:inputCheckbox id="followbytmr" value="{!newCase.Follow_By_TMR__c}" />
+                            </apex:pageBlockSectionItem>
+                             <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Non-Acceptance Reason</apex:outputlabel>
+                                <apex:inputfield id="pulsesurvey" value="{!newCase.S2S_Non_Acceptance_Reason__c}" />
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Name of TMR</apex:outputlabel>
+                                <apex:inputfield id="NameofTMR" value="{!newCase.TMR_Name__c}" />
+                            </apex:pageBlockSectionItem>
+
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.CS_S2S_Remark__c.label}" for="CS_S2S_Remark__c" />
+                                <apex:inputfield id="CSS2SRemark" value="{!newCase.CS_S2S_Remark__c}" />
+                            </apex:pageBlockSectionItem>
+                        </apex:pageBlockSection>
+                            
+                        <apex:pageBlockSection title="Case Result" columns="2">                                                                                
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel value="{!$ObjectType.Case.fields.One_and_Done__c.label}" for="oneanddone" />
+                                <apex:inputfield id="oneanddone" value="{!newCase.One_and_Done__c}" />
+                            </apex:pageBlockSectionItem>  
+                            <apex:pageBlockSectionItem >
+                                <apex:outputlabel >Non-One and Done Reason</apex:outputlabel>
+                                <apex:inputfield id="pulsesurvey" value="{!newCase.Non_One_And_Done_Reason__c}" />
+                            </apex:pageBlockSectionItem>                                                      
+                        </apex:pageBlockSection>
+                    </apex:pageblock>
+                   
+                </apex:form>
+            </apex:outputPanel>
+            
+        </div>
+    </div>
+
+</apex:page>

@@ -1,0 +1,173 @@
+<apex:page docType="html-5.0" sidebar="false" showHeader="false" applyBodyTag="false" applyHtmlTag="false" controller="SMTVerificationCtrl" language="{!JSINHTMLENCODE($CurrentPage.Parameters.lang)}" cache="false"> 
+    <head>
+        <title>{!transField['VHS_Verification_SMT'][$Label.Header_Language_Code_Current]}</title>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"/>
+        <link rel="alternate" href="https://www.mycigna.com.hk/?lang=zh" hreflang="zh"/>
+        <link rel="alternate" href="https://www.mycigna.com.hk/?lang=en" hreflang="en"/>
+        <link rel="alternate" href="https://www.mycigna.com.hk" hreflang="x-default"/>
+        
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"/>
+        <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap.min.js')}"/>
+            <apex:include pageName="CignaUtilJS"/>
+            <script>
+                var timer;
+                function enableConfirm(){      
+                    $("#confirmBtn").attr("disabled",false);
+                }
+                function disableConfirm(){                      
+                    $("#confirmBtn").attr("disabled",true);
+                }
+                function enableResend(){      
+                    $("#sendBtn").attr("disabled",false);
+                }
+                function disableResend(){ 
+                   $("#sendBtn").attr("disabled",true); 
+                   var seconds = 60;  //5 for test
+                        function counter(){
+                            seconds--;
+                            if(seconds>0){
+                                if({!$CurrentPage.Parameters.lang== 'zh_TW'}){
+                                    //$("#sendBtn").html(seconds +"秒後重新傳送");
+                                    $("input[id*='sendBtn']").val(seconds +"秒後重新傳送");
+                                    timer=setTimeout(counter,1000); 
+                                }else{
+                                    //$("#sendBtn").html("Resend after "+ seconds +"s");
+                                    $("input[id*='sendBtn']").val("Resend after "+ seconds +"s");
+                                    timer=setTimeout(counter,1000); 
+                                }                               
+                            }else{
+                                //$("#sendBtn").html("{!transField['SMT_Send_OTP'][$Label.Header_Language_Code_Current]}");
+                                $("input[id*='sendBtn']").val("{!transField['SMT_Send_OTP'][$Label.Header_Language_Code_Current]}");
+                                enableResend();
+                            }
+                        }
+                        timer=setTimeout(counter,1000);
+                }
+                function blockResendButton(){
+                    var isValMo=$("input[type='hidden'][id$='isValMo']").val();
+                    console.log('isValMo '+isValMo);   
+                    if(isValMo=='false' || !isValMo){ 
+                        clearTimeout(timer);
+                        $("input[id*='sendBtn']").val("{!transField['SMT_Send_OTP'][$Label.Header_Language_Code_Current]}");
+                        enableResend();
+                    }
+                }
+            
+                function sendCode(){
+                    //var mobile = $("input[id*='mobile']").val();                  
+                    //if(mobile!='' && mobile!=null){                      
+                    //    disableResend();                     
+                    //}  
+                    disableResend();
+                    serviceAF.sendOTP();                 
+                }
+        </script>
+        <style>
+            html body {
+                font-family: "Gotham SSm A", "Gotham SSm B";
+                font-size: 14px;
+            }
+            span[id$="cigna-error"] span div.message{
+                border: none;
+                //background-color: #cc0000;
+                background-color: #fff;
+                //background-color: transparent;
+                opacity: .9;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td img{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell div span{
+                display: none;
+            }
+            
+            span[id$="cigna-error"] span div.message table.messageTable tbody tr td.messageCell{
+                //color: #fff;
+                //color: #F68621;
+                color:red;
+                font-family: "Gotham SSm A", "Gotham SSm B";
+            }
+            
+            span[id$="cigna-error"] .messageText::before{
+                content: "\f071\20";
+                font: normal normal normal 14px/1 FontAwesome;
+                font-size: inherit;
+                text-rendering: auto;
+                -webkit-font-smoothing: antialiased;
+                padding-right: 7px;
+            }
+            .full-size{
+                padding-left:0 !important;
+                padding-right:0 !important;
+            }
+        </style>
+    </head>
+    
+    <apex:composition template="SmtUnauthorizedPageTemplateNoCache">
+        <apex:define name="body">
+            <apex:outputPanel id="errorPanel">
+                <div class="col-xs-12 col-md-12">
+                    <apex:pageMessages id="cigna-error"/>
+                </div>
+            </apex:outputPanel>
+            
+            <apex:actionFunction action="{!sendOTP}" namespace="serviceAF" name="sendOTP" reRender="errorPanel,para-panel" oncomplete="blockResendButton();"/>
+            <!-- <apex:actionFunction action="{!verifyCode}" namespace="serviceAF" name="verifyCode" reRender="errorPanel,para-panel" onComplete="serviceAF.verifySubscription();" /> -->
+            <apex:actionFunction action="{!verifyCode}" namespace="serviceAF" name="verifyCode" reRender="errorPanel,para-panel" onComplete="serviceAF.validateUser();" />
+            <!-- <apex:actionFunction action="{!verifySubscription}" namespace="serviceAF" name="verifySubscription" reRender="errorPanel,para-panel" onComplete="serviceAF.validateUser();" /> -->
+            <apex:actionFunction action="{!validateUser}" namespace="serviceAF" name="validateUser" reRender="errorPanel,para-panel" onComplete="enableConfirm();" />
+
+            <apex:outputPanel id="para-panel">
+                <apex:inputHidden value="{!isValPass}" id="isValPass" />
+                <apex:inputHidden value="{!isValidMobile}" id="isValMo" />
+            </apex:outputPanel>
+            
+            <div class="form-group col-xs-12 col-md-12 full-size">
+                <div class="col-xs-12 col-md-12 full-size">
+                    <h4>{!transField['SMT_Verification'][$Label.Header_Language_Code_Current]}</h4><br/><br/>
+                </div>
+                <div class="col-xs-12 col-md-12 full-size">
+                    <p>{!transField['SMT_Caption'][$Label.Header_Language_Code_Current]}</p>
+                </div>
+            </div>     
+            
+            <div class="form-group col-xs-12 col-md-12 full-size">
+                <!--Nicole_SMT_20210416-->
+                <div class="col-xs-2 col-md-3 full-size">
+                    <apex:inputText disabled="true" id="countryCode" value="{!countryCode}" styleClass="form-control" style="background:none;color:#fff;border:none;border-bottom: 1px solid #fff;"/>
+                </div>
+                <div class="col-xs-5 col-md-5 full-size">
+                    <apex:inputText maxlength="20" id="mobile" value="{!mobile}" html-placeholder="{!$Label.Mobile_Number}" styleClass="form-control"/>
+                </div>
+                <div class="col-xs-5 col-md-4 full-size">
+                    <!--<button id="sendBtn" class="bs btn" style="width:100%;white-space:break-spaces;" >{!transField['SMT_Send_OTP'][$Label.Header_Language_Code_Current]}</button>-->
+                    <input id="sendBtn"  type="button" class="bs btn" style="width:100%;" onClick="sendCode();" value="{!transField['SMT_Send_OTP'][$Label.Header_Language_Code_Current]}"></input>
+                </div>
+            </div>
+                  
+            <div class="form-group col-xs-12 col-md-12 full-size">
+                <div class="col-xs-4 col-md-4 full-size" style="margin-top:15px;">
+                    {!transField['SMT_Code_Text'][$Label.Header_Language_Code_Current]}
+                </div>
+                <div class="col-xs-8 col-md-8 full-size">
+                    <apex:inputText value="{!code}" styleClass="form-control" style="width:100%;"/>
+                </div>
+            </div>
+            
+            <div class="form-group col-xs-12 col-md-12" style="padding:30px 0;">
+                <div class="col-xs-12 col-md-12 full-size">
+                    <input id="confirmBtn" type="button" class="bs btn" style="width:100%;" onclick="disableConfirm();serviceAF.verifyCode();" value="{!$Label.Confirm}"></input>
+                </div>
+            </div>
+        
+        <div class="form-group col-xs-12 col-md-12 full-size">
+            <div class="col-xs-12 col-md-12 full-size">
+                <BR/>
+                <apex:outputLink value="/customer/SMTCustomerLandingVFP?customerKey={!JSINHTMLENCODE($CurrentPage.Parameters.customerKey)}&lang={!JSINHTMLENCODE($CurrentPage.Parameters.lang)}">{!$Label.Previous_Step}</apex:outputLink> 
+            </div>
+        </div>
+        </apex:define>
+    </apex:composition>
+</apex:page>

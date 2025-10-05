@@ -1,0 +1,471 @@
+<apex:page docType="html-5.0" sideBar="false" showHeader="false" controller="EsalesApplicationDetailsCtrl" title="E-Sales Application Details">
+    <head>
+        <style>
+            .header {
+                background-color: #fff !important;
+                color: black;
+                border-radius: 5px;
+                padding-top: 20px;
+                padding-bottom: 20px;
+                margin-bottom: 15px;
+            }
+            
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h5 style="font-weight:bold; font-size:16px;">E-Sales Application Details</h5>
+        </div>
+
+        <apex:pageBlock title="Prospect Info" mode="maindetail" tabStyle="ESales_Transaction__c">
+            <!-- Source Section -->
+            <apex:pageBlockSection title="Source" columns="2">
+                <apex:outputText label="cigna.com.hk">
+                    <img src="/img/checkbox_checked.gif" alt="Checked" style="{! IF(paramSourceFlag == 'web' || paramSourceFlag == 'Prospect_from_WS', '', 'display: none;')}" />
+                    <img src="/img/checkbox_unchecked.gif" alt="Unchecked" style="{! IF(paramSourceFlag != 'web' && paramSourceFlag != 'Prospect_from_WS', '', 'display: none;')}" />
+                </apex:outputText>
+
+                <apex:outputText label="Customer Portal">
+                    <img src="/img/checkbox_checked.gif" alt="Checked" style="{! IF(paramSourceFlag == 'customer', '', 'display: none;')}" />
+                    <img src="/img/checkbox_unchecked.gif" alt="Unchecked" style="{! IF(paramSourceFlag != 'customer', '', 'display: none;')}" />
+                </apex:outputText>
+
+                <apex:outputText label="Broker Portal">
+                    <img src="/img/checkbox_checked.gif" alt="Checked" style="{! IF(paramSourceFlag == 'broker', '', 'display: none;')}" />
+                    <img src="/img/checkbox_unchecked.gif" alt="Unchecked" style="{! IF(paramSourceFlag != 'broker', '', 'display: none;')}" />
+                </apex:outputText>
+            </apex:pageBlockSection>
+            
+            <!-- prospect from WS -->
+            <apex:outputPanel rendered="{! paramSourceFlag == 'Prospect_from_WS'}">
+                <!-- Application Summary -->
+                <apex:pageBlockSection title="Accplication Summary" columns="2">
+                    <apex:outputText value="{! IF(proDetail.GetQuoteCompleteInd, 'Y', 'N')}" label="Get Quote Completed" />
+
+                    <apex:outputText value="{! IF(proDetail.HolderInfoCompleteInd, 'Y', 'N')}" label="Holder Info Completed" />
+
+                    <apex:outputText value="{! IF(proDetail.PreSalesCompleteInd, 'Y', 'N')}" label="Presales Completed" />
+
+                    <apex:outputText value="{! IF(proDetail.UWQuestionaireCompleteInd, 'Y', 'N')}" label="UW Questionnaire Completed" />
+
+                    <apex:outputText value="{! IF(proDetail.UWReviewCompleteInd, 'Y', 'N')}" label="UW Review Completed" />
+
+                    <apex:outputText value="{! IF(proDetail.ApplicationCompleteInd, 'Y', 'N')}" label="Application Completed" />
+
+                    <apex:outputText value="{! IF(proDetail.PaymentRequestSubmitInd, 'Y', 'N')}" label="Payment Request Submitted" />
+
+                    <apex:outputText value="{! IF(proDetail.PaymentAcceptInd, 'Y', 'N')}" label="Payment Accepted" />
+
+                    <apex:outputText value="{! proDetail.PresalesResult}" label="Presales" />
+
+                    <apex:outputText value="{! proDetail.FinalUWResult}" label="Final U/W" />
+
+                    <apex:outputText value="{! proDetail.FinalResult}" label="Final Result" />
+                </apex:pageBlockSection>
+                
+                <!-- Policy Details -->
+                <apex:pageBlockSection title="Policy Details" columns="2">
+                    <apex:outputText label="Status" value="{! proDetail.policyStatus }" />
+                    <apex:outputText value="{0, Date, yyyy/MM/dd HH:mma}" label="Submission Date">
+                          <apex:param value="{!proDetail.SubmissionDateInTime}"/>
+                    </apex:outputText>
+                    <apex:outputText label="Running No." value="{! proDetail.RunningNumber}" />
+                    <apex:outputText label="Prospect ID" value="{! proDetail.IQId}" />
+                    <apex:outputText label="Policy No." value="{! proDetail.policy.policyNumber}" />
+                    <apex:outputText label="Plan Name (Code)" value="{! proDetail.policy.planName}({! proDetail.policy.productCode})" />
+                    <apex:outputText label="Sum Insured" value="{! proDetail.policy.policyValue}" />
+                    <apex:outputText label="Monthly Premium" value="{! proDetail.policy.monthlyPaymentAmt}" />
+                    <apex:outputText label="Amount Paid" value="{0,Number,###,##0.00}"><apex:param value="{! proDetail.policy.paymentAmt}" /></apex:outputText>
+                    <apex:outputText label="Joint Indicator" value="{! IF(proDetail.JointInd, 'Y', 'N')}"  />
+                </apex:pageBlockSection>
+                
+                <!-- Holder Details -->
+                <apex:pageBlockSection title="Holder Details" columns="2">
+                    <apex:outputText label="Holder (Sex) -SSN/ID" value="{!prospectHolder.personInfo }" />
+                    <apex:outputText label="Date of Birth(Age)" value="{!prospectHolder.birthdateInfo }" />
+                    <apex:outputText label="Address" value="{!prospectHolder.addressInfo }" />
+                    <apex:outputText label="Telephone" value="{!prospectHolder.phoneInfo }" />
+                    <apex:outputText label="Email" value="{!prospectHolder.emailInfo }" />
+                </apex:pageBlockSection>
+                
+                <!-- Insured Details -->
+                <apex:pageBlockSection title="Insured Details" columns="1">
+                    <apex:variable var="counter" value="{! 1}" />
+                    <apex:repeat value="{!prospectInsuredList}" var="prospectInsured">
+                        <apex:pageBlockSection title="Insured {! counter}" columns="2">
+                            <apex:outputText label="Insured (Sex) -SSN/ID" value="{!prospectInsured.personInfo }" />
+                            <apex:outputText label="Date of Birth(Age)" value="{! prospectInsured.birthdateInfo }" />
+                            <apex:outputText label="Address" value="{! prospectInsured.addressInfo }" />
+                            <apex:outputText label="Telephone" value="{! prospectInsured.phoneInfo }" />
+                            <apex:outputText label="Email" value="{! prospectInsured.emailInfo }" />
+                            <apex:outputText label="RelationShip with Holder" value="{!prospectInsured.relationWithHolder}" />
+                        </apex:pageBlockSection>
+                    </apex:repeat>
+                </apex:pageBlockSection>
+                
+                <!-- Beneficiary Details -->
+                <apex:pageBlockSection title="Beneficiary Details" columns="1">
+                    <apex:variable var="counter" value="{! 1}" />
+                    <apex:repeat value="{! prospectBenefitList}" var="prospectBenefit">
+                        <apex:pageBlockSection title="" columns="2">
+                            <apex:outputText label="Beneficiary (Sex) - SSN/ID" value="{! prospectBenefit.personInfo }" />
+                            <apex:outputText label="RelationShip" value="{! prospectBenefit.relationWithHolder }" />
+                            <apex:variable var="cnt" value="{! counter + 1}" />
+                        </apex:pageBlockSection>
+                    </apex:repeat>
+                </apex:pageBlockSection>
+            </apex:outputPanel>
+
+            <!-- web -->
+            <apex:outputPanel rendered="{! paramSourceFlag == 'web'}">
+                <!-- Application Summary -->
+                <apex:pageBlockSection title="Accplication Summary" columns="2">
+                    <apex:outputText label="Get Quote Completed" value="{! IF(webStageNum >= 1, 'Y', 'N')}" />
+                    <apex:outputText label="Holder Info Completed'" value="{! IF(webStageNum >= 2, 'Y', 'N')}" />
+                    <apex:outputText label="Presales completed" value="{! IF(webStageNum >= 3, 'Y', 'N')}" />
+                    <apex:outputText label="UW Questionnaire Completed" value="{! IF(webStageNum >= 4, 'Y', 'N')}" />
+                    <apex:outputText label="UW Review Completed" value="{! IF(webStageNum >= 5, 'Y', 'N')}" />
+                    <apex:outputText label="Application Completed" value="{! IF(webStageNum >= 6, 'Y', 'N')}" />
+                    <apex:outputText label="Payment Request Submitted" value="{! IF(webStageNum >= 7, 'Y', 'N')}" />
+                    <apex:outputText label="Payment Accepted" value="{! IF(webStageNum >= 8, 'Y', 'N')}" />
+
+                    <apex:outputText value="{! txn.Pre_AUW_Result_PH__c}" label="Presales" />
+
+                    <apex:outputText value="{! txn.Final_UW__C}" label="Final U/W" />
+
+                    <apex:outputText value="{! txn.AUW_Overall_Result__c}" label="Final Result" />
+                </apex:pageBlockSection>
+
+                <!-- Policy Details -->
+                <apex:pageBlockSection title="Policy Details" columns="2">
+                    <apex:outputField label="Status" value="{! txn.Policy_Status__c}" />
+                    <apex:outputText value="{0, Date, yyyy/MM/dd HH:mma}" label="Submission Date">
+                          <apex:param value="{! submissionDateFormat}"/>
+                    </apex:outputText>
+                    <apex:outputField label="Running No." value="{! txn.Running_No__c}" />
+                    <apex:outputField label="Prospect ID" value="{! txn.Prospect_ID__c}" />
+                    <apex:outputField label="Policy No." value="{! txn.Policy_Number_PI__c}" />
+                    <apex:outputField label="Plan Name (Code)" value="{! txn.Product_Name__c}" />
+                    <apex:outputField label="Sum Insured" value="{! txn.Sum_Insured__c}" />
+                    <apex:outputField label="Monthly Premium" value="{! txn.Quote_Amount_Monthly__c}" />
+                    <apex:outputField label="Amount Paid" value="{! txn.Amount__c}" />
+                    <apex:outputField label="Joint Indicator" value="{! txn.Joint_Indicator__c}" />
+                </apex:pageBlockSection>
+
+                <!-- Holder Details -->
+                <apex:pageBlockSection title="Holder Details" columns="2">
+                    <apex:outputText label="Holder (Sex) -SSN/ID" value="{! paramPHInfo}" />
+                    <apex:outputText label="Date of Birth(Age)" value="{! paramPHAgeInfo}" />
+                    <apex:outputText label="Address" value="{! paramPHAddressInfo}" />
+                    <apex:outputText label="Telephone" value="{! paramPHTeleInfo}" />
+                    <apex:outputText label="Email" value="{! txn.Email_Address__c}" />
+                </apex:pageBlockSection>
+
+                <!-- Insured Details -->
+                <apex:pageBlockSection title="Insured Details" columns="2">
+                    <apex:outputText label="Insured (Sex) -SSN/ID" value="{! paramPIInfo}" />
+                    <apex:outputText label="Date of Birth(Age)" value="{! paramPIAgeInfo}" />
+                    <apex:outputText label="Address" value="{! paramPIAddressInfo}" />
+                    <apex:outputText label="Telephone" value="{! paramPITeleInfo}" />
+                    <apex:outputText label="Email" value="{! txn.PI_Email__c}" />
+                    <apex:outputText label="RelationShip with Holder" value="{! txn.PI_Relationship__c}" />
+                </apex:pageBlockSection>
+
+                <!-- Beneficiary Details -->
+                <apex:pageBlockSection title="Beneficiary Details" columns="1">
+                    <apex:variable var="counter" value="{! 1}" />
+                    <apex:repeat value="{! paramPHBeneficiaryInfoList}" var="PHBeneficiaries">
+                        <apex:pageBlockSection title="" columns="2">
+                            <apex:outputText label="Holder (Sex) - SSN/ID" value="{! PHBeneficiaries.info}" />
+                            <apex:outputText label="RelationShip" value="{! PHBeneficiaries.relationship}" />
+                            <apex:outputText label="Percentage Share" value="{! PHBeneficiaries.percentage}" />
+                            <apex:variable var="cnt" value="{! counter + 1}" />
+                        </apex:pageBlockSection>
+                    </apex:repeat>
+                </apex:pageBlockSection>
+            </apex:outputPanel>
+
+            <!-- portal -->
+            <apex:outputPanel rendered="{! paramSourceFlag != 'web' && paramSourceFlag != 'Prospect_from_WS'}">
+                <!-- Application Summary -->
+                <apex:pageBlockSection title="Application Summary" columns="2">
+                    <apex:outputText label="Get Quote Completed" value="{! summary.GetQuoteCompleted}" />
+                    <apex:outputText label="Proceed with 'Buy Now'" value="{! summary.ProceedwithBuyNow}" />
+                    <apex:outputText label="Personal Info Completed" value="{! summary.PersonalInfoCompleted}" />
+                    <apex:outputText label="Presales Completed" value="{! summary.PresalesCompleted}" />
+                    <apex:outputText label="U/W Questionnaire Completed" value="{! summary.UWQuestionnaireCompleted}" />
+                    <apex:outputText label="UW Review Completed" value="{! summary.UWReviewCompleted}" />
+                    <apex:outputText label="E-Signature Completed" value="{! summary.ESignatureCompleted}" />
+                    <apex:outputText label="Direct Debit Form Completed" value="{! summary.DirectDebitFormCompleted}" />
+                    <apex:outputText label="Cheque Payment Completed" value="{! summary.ChequePaymentCompleted}" />
+                    <apex:outputText label="Credit Card Form Completed" value="{! summary.CreditCardFormCompleted}" />
+                    <apex:outputText label="Payment Accepted" value="{! summary.PaymentAccepted}" />
+                    <apex:outputText label="Application Submitted" value="{! summary.ApplicationSubmitted}" />
+                    <apex:outputText label="Presales PH Result" value="{! summary.PresalesPHResult}" />
+                    <apex:outputText label="Presales PI Result" value="{! summary.PresalesPIResult}" />
+                    <apex:outputText label="Presales C1 Result" value="{! summary.PresalesC1Result}" />
+                    <apex:outputText label="Presales C2 Result" value="{! summary.PresalesC2Result}" />
+                    <apex:outputText label="Presales C3 Result" value="{! summary.PresalesC3Result}" />
+                    <apex:outputText label="AUW Overall Result" value="{! summary.AUWOverallResult}" />
+                    <apex:outputText label="AUW PH Result" value="{! summary.AUWPHResult}" />
+                    <apex:outputText label="AUW PI Result" value="{! summary.AUWPIResult}" />
+                    <apex:outputText label="AUW C1 Result" value="{! summary.AUWC1Result}" />
+                    <apex:outputText label="AUW C2 Result" value="{! summary.AUWC2Result}" />
+                    <apex:outputText label="AUW C3 Result" value="{! summary.AUWC3Result}" />
+                    <apex:outputText label="Appeal Case" value="{! summary.AppealCase}" />
+                    <apex:outputText label="Remark to Cigna UW" value="{! summary.RemarktoCignaUW}" />
+                </apex:pageBlockSection>
+
+                <!-- Policy Details -->
+                <apex:pageBlockSection title="Policy Details" columns="2">
+                    <apex:outputText label="Status" value="{! paramStatus}" />
+					<apex:outputText value="{0, Date, yyyy/MM/dd HH:mma}" label="Submission Date">
+                          <apex:param value="{! submissionDateFormat}"/>
+                    </apex:outputText>
+                    <apex:outputText label="E-transaction ID" value="{! txn.Name}" />
+                    <apex:outputText label="PH Policy Number" value="{! txn.Policy_Number_PH__c}" />
+                    <apex:outputText label="PI Policy Number" value="{! txn.Policy_Number_PI__c}" />
+                    <apex:outputText label="Child 1 Policy Number" value="{! txn.Policy_Number_C1__c}" />
+                    <apex:outputText label="Child 2 Policy Number" value="{! txn.Policy_Number_C2__c}" />
+                    <apex:outputText label="Child 3 Policy Number" value="{! txn.Policy_Number_C3__c}" />
+                    <apex:outputText label="Number of Adult" value="{! txn.Number_of_Adult__c}" />
+                    <apex:outputText label="Cover Child" value="{! txn.Cover_Child__c}" />
+                    <apex:outputText label="Policy Holder = Person Insured" value="{! txn.PH_is_PI__c}" />
+                    <apex:outputText label="Product Name (Code)" value="{! txn.Product_Name_Formula__c + '(' + txn.Product_Code__c + ')'}" />
+                    <apex:outputText label="Area of Coverage" value="{! txn.Area_of_Coverage__c}" />
+                    <!--apex:outputText label="Sum Insured" value="{! txn.Sum_Insured__c}" /-->
+                    <apex:outputText label="Sum Insured" value="{0,Number,###,##0.00}"><apex:param value="{!txn.Sum_Insured__c}"/></apex:outputText>
+                    <apex:outputText label="Deductible" value="{! txn.Deductible__c}" />
+                    <apex:outputText label="Plan Level" value="{! txn.Plan_Level__c}" />
+                    <apex:outputText label="Level of Coverage" value="{! paramLevelOfCoverage}" />
+                    <apex:outputText label="Additional Protection" value="{! paramAdditionalProtection}" />
+                    <apex:outputText label="Amount Currency" value="{! txn.Amount_Currency__c}" />                    
+                </apex:pageBlockSection>
+
+                <!-- Quote Details -->
+                <apex:pageBlockSection title="Quote Details" columns="2">
+                    <apex:outputText label="Total Original Premium(Annually)" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Original_Amount_Annually__c}"/></apex:outputText>
+                    <apex:outputText label="Total Discount Premium(Annually)" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Quote_Amount_Annually__c}"/></apex:outputText>
+                    <apex:outputText label="Total Original Premium(Monthly)" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Original_Amount_Monthly__c}" /></apex:outputText>
+                    <apex:outputText label="Total Discount Premium(Monthly)" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Quote_Amount_Monthly__c}" /></apex:outputText>
+                    <apex:outputText label="PH Original Premium(Annually)" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Original_Amount_PH_Annually__c}" /></apex:outputText>
+                    <apex:outputText label="PH Discount Premium(Annually)" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Quote_Amount_PH_Annually__c}" /></apex:outputText>
+                    <apex:outputText label="PH Original Premium(Monthly)" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Original_Amount_PH_Monthly__c}" /></apex:outputText>
+                    <apex:outputText label="PH Discount Premium(Monthly)" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Quote_Amount_PH_Monthly__c}"/></apex:outputText>
+                    <apex:outputText label="PI Original Premium(Annually)" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Original_Amount_PI_Annually__c}" /></apex:outputText>
+                    <apex:outputText label="PI Discount Premium(Annually)" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Quote_Amount_PI_Annually__c}" /></apex:outputText>
+                    <apex:outputText label="PI Original Premium(Monthly)" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Original_Amount_PI_Monthly__c}" /></apex:outputText>
+                    <apex:outputText label="PI Discount Premium(Monthly)" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Quote_Amount_PI_Monthly__c}" /></apex:outputText>
+
+                    <apex:outputText label="C1 Original Premium(Annually)" rendered="{! txn.Cover_Child_1__c}" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Original_Amount_C1_Annually__c}" /></apex:outputText>
+                    <apex:outputText label="C1 Discount Premium(Annually)" rendered="{! txn.Cover_Child_1__c}" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Quote_Amount_C1_Annually__c}" /></apex:outputText>
+                    <apex:outputText label="C1 Original Premium(Monthly)" rendered="{! txn.Cover_Child_1__c}" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Original_Amount_C1_Monthly__c}"/></apex:outputText>
+                    <apex:outputText label="C1 Discount Premium(Monthly)" rendered="{! txn.Cover_Child_1__c}" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Quote_Amount_C1_Monthly__c}" /></apex:outputText>
+
+                    <apex:outputText label="C2 Original Premium(Annually)" rendered="{! txn.Cover_Child_2__c}" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Original_Amount_C2_Annually__c}" /></apex:outputText>
+                    <apex:outputText label="C2 Discount Premium(Annually)" rendered="{! txn.Cover_Child_2__c}" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Quote_Amount_C2_Annually__c}"/></apex:outputText>
+                    <apex:outputText label="C2 Original Premium(Monthly)" rendered="{! txn.Cover_Child_2__c}" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Original_Amount_C2_Monthly__c}"/></apex:outputText>
+                    <apex:outputText label="C2 Discount Premium(Monthly)" rendered="{! txn.Cover_Child_2__c}" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Quote_Amount_C2_Monthly__c}"/></apex:outputText>
+
+                    <apex:outputText label="C3 Original Premium(Annually)" rendered="{! txn.Cover_Child_3__c}" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Original_Amount_C3_Annually__c}"/></apex:outputText>
+                    <apex:outputText label="C3 Discount Premium(Annually)" rendered="{! txn.Cover_Child_3__c}" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Quote_Amount_C3_Annually__c}"/></apex:outputText>
+                    <apex:outputText label="C3 Original Premium(Monthly)" rendered="{! txn.Cover_Child_3__c}" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Original_Amount_C3_Monthly__c}"/></apex:outputText>
+                    <apex:outputText label="C3 Discount Premium(Monthly)" rendered="{! txn.Cover_Child_3__c}" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Quote_Amount_C3_Monthly__c}"/></apex:outputText>
+                </apex:pageBlockSection>
+
+                <!-- Policy Holder Details -->
+                <apex:pageBlockSection title="Policy Holder Details" columns="2">
+                    <apex:outputText label="Holder (Sex) -SSN/ID" value="{! paramPHInfo}" />
+                    <apex:outputText label="Permanent HKID Holder" value="{! txn.Is_Permanent_HKID_Holder__c}" />
+                    <apex:outputText label="Date of Birth(Age)" value="{! paramPHAgeInfo}" />
+                    <apex:outputText label="Place of Birth" value="{! txn.Place_of_Birth__c}" />
+                    <apex:outputText label="Nationality" value="{! txn.Nationality__c}" />
+                    <apex:outputText label="Education Level" value="{! txn.Education_Level__c}" />
+                    <apex:outputText label="Smoking Habit" value="{! txn.Smoker_Status__c}" />
+                    <apex:outputText label="Height" value="{! paramPHHeightInfo}" />
+                    <apex:outputText label="Weight" value="{! paramPHWeightInfo}" />
+                    <apex:outputText label="Reason for purchasing in HK" value="{! txn.Purpose_of_Insurance__c}" />
+                    <apex:outputText label="Replacement Declaration past 12 mths" value="{! txn.Replacement_Declaration_Last__c}" />
+                    <apex:outputText label="Replacement Declaration next 12 mths" value="{! txn.Replacement_Declaration_Next__c}" />
+                </apex:pageBlockSection>
+
+                <!-- Policy Holder Employment Information(Life Policy only) -->
+                <apex:pageBlockSection title="Policy Holder Employment Information(Life Policy only)" columns="1" rendered="{! txn.Product__r.Life_GI__c == 'LIFE'}">
+                    <apex:outputText label="Name of Employer" value="{! txn.Name_of_Employer__c}" />
+                    <apex:outputText label="Address of Employer" value="{! paramEmployerAddressInfo}" />
+                    <apex:outputText label="Nature of Business" value="{! txn.Nature_of_Business__c}" />
+                    <apex:outputText label="Job Title" value="{! txn.Job_Title__c}" />
+                    <apex:outputText label="Job Duties" value="{! txn.Job_Duties__c}" />
+                    <apex:outputText label="Monthly Income" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Monthly_Income__c}" /></apex:outputText>
+                    <apex:outputText label="Means of Income" value="{! txn.Means_of_Income__c}" />
+                </apex:pageBlockSection>
+
+                <!-- Policy Holder Contact Details -->
+                <apex:pageBlockSection title="Policy Holder Contact Details" columns="1">
+                    <apex:outputText label="Residential Address" value="{! paramPHAddressInfo}" />
+                    <apex:outputText label="Contact No." value="{! paramPHTeleInfo}" />
+                    <apex:outputText label="Email Address" value="{! txn.Email_Address__c}" />
+                </apex:pageBlockSection>
+
+                <!-- Beneficiary Details of Policy Holder -->
+                <apex:pageBlockSection title="Beneficiary Details of Policy Holder" columns="1" rendered="{! txn.Product__r.Life_GI__c == 'LIFE'}">
+                    <apex:variable var="counter" value="{! 1}" />
+                    <apex:repeat value="{! paramPHBeneficiaryInfoList}" var="PHBeneficiaries">
+                        <apex:pageBlockSection title="" columns="2">
+                            <apex:outputText label="Given Name" value="{! PHBeneficiaries.firstName}" />
+                            <apex:outputText label="Family Name" value="{! PHBeneficiaries.lastName}" />
+                            <apex:outputText label="HKID/Passport/Birth Cert No." value="{! PHBeneficiaries.hkid}" />
+                            <apex:outputText label="Gender" value="{! PHBeneficiaries.gender}" />
+                            <apex:outputText label="Relationship" value="{! PHBeneficiaries.relationship}" />
+                            <apex:outputText label="Percentage Share" value="{! PHBeneficiaries.percentage}" />
+                        </apex:pageBlockSection>
+                    </apex:repeat>
+                </apex:pageBlockSection>
+
+                <!-- Beneficiary Details of Person Insured -->
+                <apex:pageBlockSection title="Beneficiary Details of Person Insured" columns="1" rendered="{! txn.Product__r.Life_GI__c == 'LIFE'}">
+                    <apex:variable var="counter" value="{! 1}" />
+                    <apex:repeat value="{! paramPIBeneficiaryInfoList}" var="PIBeneficiaries">
+                        <apex:pageBlockSection title="" columns="2">
+                            <apex:outputText label="Given Name" value="{! PIBeneficiaries.firstName}" />
+                            <apex:outputText label="Family Name" value="{! PIBeneficiaries.lastName}" />
+                            <apex:outputText label="HKID/Passport/Birth Cert No." value="{! PIBeneficiaries.hkid}" />
+                            <apex:outputText label="Gender" value="{! PIBeneficiaries.gender}" />
+                            <apex:outputText label="Relationship" value="{! PIBeneficiaries.relationship}" />
+                            <apex:outputText label="Percentage Share" value="{! PIBeneficiaries.percentage}" />
+                        </apex:pageBlockSection>
+                    </apex:repeat>
+                </apex:pageBlockSection>
+
+                <!-- Beneficiary Details of Child 1 -->
+                <apex:pageBlockSection title="Beneficiary Details of Child 1" columns="1" rendered="{! txn.Product__r.Life_GI__c == 'LIFE' && txn.Cover_Child_1__c}">
+                    <apex:variable var="counter" value="{! 1}" />
+                        <apex:repeat value="{! paramC1BeneficiaryInfoList}" var="C1Beneficiaries">
+                        <apex:pageBlockSection title="" columns="2">
+                            <apex:outputText label="Given Name" value="{! C1Beneficiaries.firstName}" />
+                            <apex:outputText label="Family Name" value="{! C1Beneficiaries.lastName}" />
+                            <apex:outputText label="HKID/Passport/Birth Cert No." value="{! C1Beneficiaries.hkid}" />
+                            <apex:outputText label="Gender" value="{! C1Beneficiaries.gender}" />
+                            <apex:outputText label="Relationship" value="{! C1Beneficiaries.relationship}" />
+                            <apex:outputText label="Percentage Share" value="{! C1Beneficiaries.percentage}" />
+                        </apex:pageBlockSection>
+                        </apex:repeat>
+                </apex:pageBlockSection>
+
+                <!-- Beneficiary Details of Child 2 -->
+                <apex:pageBlockSection title="Beneficiary Details of Child 2" columns="1" rendered="{! txn.Product__r.Life_GI__c == 'LIFE' && txn.Cover_Child_2__c}">
+                    <apex:variable var="counter" value="{! 1}" />
+                        <apex:repeat value="{! paramC2BeneficiaryInfoList}" var="C2Beneficiaries">
+                        <apex:pageBlockSection title="" columns="2">
+                            <apex:outputText label="Given Name" value="{! C2Beneficiaries.firstName}" />
+                            <apex:outputText label="Family Name" value="{! C2Beneficiaries.lastName}" />
+                            <apex:outputText label="HKID/Passport/Birth Cert No." value="{! C2Beneficiaries.hkid}" />
+                            <apex:outputText label="Gender" value="{! C2Beneficiaries.gender}" />
+                            <apex:outputText label="Relationship" value="{! C2Beneficiaries.relationship}" />
+                            <apex:outputText label="Percentage Share" value="{! C2Beneficiaries.percentage}" />
+                        </apex:pageBlockSection>
+                        </apex:repeat>
+                </apex:pageBlockSection>
+
+                <!-- Beneficiary Details of Child 3 -->
+                <apex:pageBlockSection title="Beneficiary Details of Child 3" columns="1" rendered="{! txn.Product__r.Life_GI__c == 'LIFE' && txn.Cover_Child_3__c}">
+                    <apex:variable var="counter" value="{! 1}" />
+                        <apex:repeat value="{! paramC3BeneficiaryInfoList}" var="C3Beneficiaries">
+                        <apex:pageBlockSection title="" columns="2">
+                            <apex:outputText label="Given Name" value="{! C3Beneficiaries.firstName}" />
+                            <apex:outputText label="Family Name" value="{! C3Beneficiaries.lastName}" />
+                            <apex:outputText label="HKID/Passport/Birth Cert No." value="{! C3Beneficiaries.hkid}" />
+                            <apex:outputText label="Gender" value="{! C3Beneficiaries.gender}" />
+                            <apex:outputText label="Relationship" value="{! C3Beneficiaries.relationship}" />
+                            <apex:outputText label="Percentage Share" value="{! C3Beneficiaries.percentage}" />
+                        </apex:pageBlockSection>
+                        </apex:repeat>
+                </apex:pageBlockSection>
+
+                <!-- Person Insured Details -->
+                <apex:pageBlockSection title="Person Insured Details" columns="2" rendered="{! (txn.Number_of_Adult__c != null && txn.Number_of_Adult__c > 1) || !txn.PH_is_PI__c}">
+                    <apex:outputText label="Holder (Sex) -SSN/ID" value="{! paramPIInfo}" />
+                    <apex:outputText label="Permanent HKID Holder" value="{! txn.Is_Permanent_HKID_Holder_PI__c}" />
+                    <apex:outputText label="Date of Birth(Age)" value="{! paramPIAgeInfo}" />
+                    <apex:outputText label="Nationality" value="{! txn.PI_Nationality__c}" />
+                    <apex:outputText label="Smoking Habit" value="{! txn.Is_Adult_2_a_smoker__c}" />
+                    <apex:outputText label="Height" value="{! paramPIHeightInfo}" />
+                    <apex:outputText label="Weight" value="{! paramPIWeightInfo}" />
+                    <apex:outputText label="Residential Address same as PH" value="{! txn.Same_Residential_Address_as_PH__c}" />
+                    <apex:outputText label="Residential Address" value="{! paramPIAddressInfo}" />
+                    <apex:outputText label="Contact No." value="{! paramPITeleInfo}" />
+                    <apex:outputText label="Email" value="{! txn.PI_Email__c}" />
+                </apex:pageBlockSection>
+
+                <!-- Child 1 Details -->
+                <apex:pageBlockSection title="Child 1 Details" columns="2" rendered="{! txn.Cover_Child_1__c}">
+                    <apex:outputText label="Holder (Sex) -SSN/ID" value="{! paramC1Info}" />
+                    <apex:outputText label="Permanent HKID Holder" value="{! txn.Is_Permanent_HKID_Holder_C1__c}" />
+                    <apex:outputText label="Date of Birth(Age)" value="{! paramC1AgeInfo}" />
+                    <apex:outputText label="Height" value="{! paramC1HeightInfo}" />
+                    <apex:outputText label="Weight" value="{! paramC1WeightInfo}" />
+                </apex:pageBlockSection>
+
+                <!-- Child 2 Details -->
+                <apex:pageBlockSection title="Child 2 Details" columns="2" rendered="{! txn.Cover_Child_2__c}">
+                    <apex:outputText label="Holder (Sex) -SSN/ID" value="{! paramC2Info}" />
+                    <apex:outputText label="Permanent HKID Holder" value="{! txn.Is_Permanent_HKID_Holder_C2__c}" />
+                    <apex:outputText label="Date of Birth(Age)" value="{! paramC2AgeInfo}" />
+                    <apex:outputText label="Height" value="{! paramC2HeightInfo}" />
+                    <apex:outputText label="Weight" value="{! paramC2WeightInfo}" />
+                </apex:pageBlockSection>
+
+                <!-- Child 3 Details -->
+                <apex:pageBlockSection title="Child 3 Details" columns="2" rendered="{! txn.Cover_Child_3__c}">
+                    <apex:outputText label="Holder (Sex) -SSN/ID" value="{! paramC3Info}" />
+                    <apex:outputText label="Permanent HKID Holder" value="{! txn.Is_Permanent_HKID_Holder_C3__c}" />
+                    <apex:outputText label="Date of Birth(Age)" value="{! paramC3AgeInfo}" />
+                    <apex:outputText label="Height" value="{! paramC3HeightInfo}" />
+                    <apex:outputText label="Weight" value="{! paramC3WeightInfo}" />
+                </apex:pageBlockSection>
+
+                <!-- Payment Details -->
+                <apex:pageBlockSection title="Payment Details" columns="2">
+                    <apex:outputText label="Payment Mode" value="{! txn.Payment_Mode__c}" />
+                    <apex:outputText label="1st Payment Paid by Third Party" value="{! txn.Is_Making_1st_Payment__c}" />
+                    <apex:outputText label="1st Payment Amount" value="{0,Number,###,##0.00}"><apex:param value="{! txn.Amount__c}" /></apex:outputText>
+                    <apex:outputText label="1st Payment Method" value="{! txn.Payment_Method_1st_Payment__c}" />
+                    <apex:outputText label="Credit Card Holder Full Name" value="{! txn.Credit_Card_Holder_Full_Name__c}" />
+                    <apex:outputText label="Visa/Master Card Credit Card Number" value="{! txn.First_Payment_DDA_Credit_Card_Number__c}" />
+                    <apex:outputText label="Credit Card Expiry Date(MM/YYYY)" value="{! paramFPCreditCardExpiryInfo}" />
+                    <apex:outputText label="Name of Card Issuing Bank" value="{! txn.Name_of_Card_Issuing_Bank__c}" />
+                    <apex:outputText label="Subsequent Payment Paid by Third Party" value="{! txn.Is_Paying_Subsequent_Payment__c}" />
+                    <apex:outputText label="Account Holder Name(1)" value="{! txn.Name_of_Account_Holder_in_English__c}" />
+                    <apex:outputText label="Account Holder Name(2)" value="{! txn.Credit_Card_Second_Holder_Full_Name__c}" rendered="{! !ISNULL(txn.Credit_Card_Second_Holder_Full_Name__c)}" />
+                    <apex:outputText label="Account Holder Name(3)" value="{! txn.Credit_Card_Third_Holder_Full_Name__c}" rendered="{! !ISNULL(txn.Credit_Card_Third_Holder_Full_Name__c)}" />
+                    <apex:outputText label="Bank Name" value="{! txn.Bank_Name__c}" />
+                    <apex:outputText label="Branch Name" value="{! txn.Branch_Name__c}" />
+                    <apex:outputText label="Bank Account No" value="{! txn.Bank_Account_No__c}" />
+                    <apex:outputText label="DDA Effective Month" value="{! txn.DDA_Effective_Month__c}" />
+                </apex:pageBlockSection>
+
+                <!-- Third Party Payment Details -->
+                <apex:pageBlockSection title="Third Party Payment Details" columns="2" rendered="{! txn.Is_Making_1st_Payment__c == 'No' || txn.Is_Paying_Subsequent_Payment__c == 'No'}">
+                    <apex:outputText label="Third Party Payer" value="{! txn.Third_Party_Payer__c}" />
+                    <apex:outputText label="Third Party Fund Source" value="{! txn.Third_Party_Fund_Source__c}" />
+                    <apex:outputText label="Third Party Payment Reason" value="{! txn.Third_Party_Payment_Reason__c}" />
+                    <apex:outputText label="Third Party Relationship" value="{! txn.Third_Party_Relationship__c}" />
+                    <apex:outputText label="Full Name of Third Party" value="{! txn.Third_Party_Payer_Full_Name__c}" />
+                    <apex:outputText label="Nationality" value="{! txn.Third_Party_Payer_Nationality__c}" />
+                    <apex:outputText label="Contact No. of Third Party Payer" value="{! txn.Third_Party_Payer_Contact_No__c}" />
+                    <apex:outputText label="Residential Address" value="{! paramTPPayerResidentialAddressInfo}" />
+                    <apex:outputText label="Name of Company/ Institute" value="{! txn.ThirdParty_Name_of_Company__c}" />
+                    <apex:outputText label="Name of Person Action on behalf of the Company" value="{! txn.Name_of_person_on_behalf__c}" />
+                    <apex:outputText label="Date of Incorporation" value="{! txn.Date_of_Incorporation__c}" />
+                    <apex:outputText label="Place of Incorporation" value="{! txn.Place_of_Incorporation__c}" />
+                    <apex:outputText label="Designation" value="{! txn.Designation__c}" />
+                    <apex:outputText label="Contact No. of Company Representative" value="{! txn.ThirdParty_Company_Contact_No__c}" />
+                    <apex:outputText label="Bussiness Registration/Incorporation No." value="{! txn.Business_Registration_Incorporation_No__c}" />
+                    <apex:outputText label="Business Address" value="{! paramTPBusinessAddressInfo}" />
+                    <apex:outputText label="Registered Office Address" value="{! paramTPOfficeAddressInfo}" />
+                </apex:pageBlockSection>
+            </apex:outputPanel>
+
+        </apex:pageBlock>
+    </body>
+</apex:page>

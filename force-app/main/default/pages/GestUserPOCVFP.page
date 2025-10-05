@@ -1,0 +1,336 @@
+<apex:page controller="GestUserPOCtoPDFCtrl" showHeader="false" sidebar="false">
+<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />  
+<style>
+ @media (min-width: 768px) {
+                .header-bar {
+                    //background-image: url({!URLFOR($Resource.KV_Get_Quote)});
+                    background-image: url({!URLFOR($Resource.NL_Get_Quote)});
+                    background-size: cover;
+                    background-position-y: 37%;
+                    height:150px;
+                }
+@media (max-width: 767px) {
+                .header-bar {
+                    //background-image: url({!URLFOR($Resource.KV_Get_Quote_Mobile)});
+                    background-image: url({!URLFOR($Resource.NL_Get_Quote_Mobile)});
+                    background-size: cover;
+                    background-position-y: 48%;
+                }
+            }
+ @media (max-width: 767px) {
+            body {
+                padding-top: 50px;
+            }
+            
+            div#reallocationSpecialBoxESales {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 100px auto 0px auto;
+                width: 90%;
+                height: 80%;
+                background: #FFF;
+                color: #000;
+                left: 5%;
+                padding: 20px;
+                border-radius: 5px;
+             }
+        }
+        @media (min-width: 768px) {
+            body {
+                padding-top: 50px;
+                min-height: 1024px;
+            }
+            
+            div#reallocationSpecialBoxESales {
+                display: none;
+                position: absolute;
+                z-index: 11;
+                margin: 150px auto 0px auto;
+                width: 80%;
+                height: 60%;
+                background: #FFF;
+                color: #000;
+                left: 10%;
+                padding:20px;
+                border-radius:5px;
+              }
+        }
+              
+        div#reallocationOverlayESales {
+            display: none;
+            z-index: 10;
+            background: #D9D9D6;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0px;
+            left: 0px;
+            text-align: center;
+        }
+                             
+        #reallocationCloseOverlayESales {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        
+        #reallocationtccontentESales {
+            padding:10px;
+            color:#000;
+            font-size:12px;
+            width: 100%;
+            height: 95%;
+            overflow-y:auto;
+        } 
+          
+        div#overlay{
+            display: none;
+            z-index: 11;
+            background: #D9D9D6;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0px;
+            left: 0px;
+            text-align: left;
+        }
+        
+        div#specialBox{
+            display: none;
+            position: absolute;
+            z-index: 11;
+            margin: 150px auto 0px auto;
+            width: 80%;
+            height: 60%;
+            background: #FFF;
+            color: #000;
+            left: 10%;
+            padding:20px;
+            border-radius:5px;
+        }
+        
+        #closeOverlay{
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        
+        #tccontent {
+            padding:5px;
+            color:#000;
+            font-size:12px;
+            width: 100%;
+            height: 90%;
+            overflow-y:auto;
+        } 
+        .bs .cigna-progress-bar-inner > div {
+                font-size: 0.7em;
+        }
+        .bs cigna-fg-gray-dark {
+                border-left: 1px solid #C8C9C7;
+                border-right: 1px solid #C8C9C7;
+                border-bottom: 1px solid #C8C9C7;
+        }
+        .bs .cigna-form-section-header {
+                background: #eee;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                margin-bottom: 15px;
+        }
+        .bs .cigna-quote-question {
+            padding:15px 0 5px 5px;
+            font-size: 16px;
+            font-weight: 400;
+            color: #58595B !important;
+        }
+        .bs input.cigna-question-text {
+            border: 0;
+            border-bottom: 1px solid #58595B;
+            background: transparent;
+            width: 100%;
+            box-shadow: none !important;
+            border-radius: 0;
+            //color: #58595B;
+            width: 50px;
+            text-align: left;
+            padding:12px;
+            outline: none;
+        }
+        .bs input.text-center{
+            text-align:center;
+        }
+        .bs input.cigna-question-text:focus {
+            box-shadow: none !important;
+            border-bottom: 1px solid #eac048 !important;
+        } 
+        .bs .cigna-btn-desktop {
+                width: 30%;
+                //text-transform: uppercase;
+                font-family: "Gotham SSm A", "Gotham SSm B", "Microsoft Jhenghei", "LiHei Pro", "Heiti TC", Arial, Helvetica, sans-serif;
+                font-style: normal;
+                font-weight: 500;
+        } 
+        .bs .cigna-answer-wrapper > p {
+                background: #fff;
+        }
+        .bs .cigna-answer-wrapper > p > label {
+                margin-left: 10px;
+                margin-top: 5px;
+                font-weight: normal;
+                padding: 5px;
+                width: 100%;
+        } 
+        .uploaded-filelist{
+                padding:10px; 
+                background-color:#f2f2f2;
+                text-overflow: ellipsis;
+                overflow:hidden;
+                white-space:nowrap;
+                
+        }
+        .content-choice{
+                font-size:14px !important;
+                padding-top:20px !important;
+                padding-bottom:10px !important;
+                border-bottom:1px solid #f2f2f2 !important;
+        }     
+        .bs input[type="text"], .bs input[type="tel"], .bs input[type="date"], .bs select, .bs span.form-control  {
+                border-top: 0 !important;
+                border-left: 0 !important;
+                border-right: 0 !important;
+                border-bottom: 1px solid #58595B !important;
+                background: transparent;
+                width: 100%;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                background-color:#FFF!important;
+        }      
+</style>
+ 		<apex:define name="additionalLibraries">
+            <apex:stylesheet value="{!$Setup.Portal_Settings__c.Typography_Font_URL__c}" />
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/bootstrap_ns.css')}" />
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.DD_Demo, 'css/font-awesome.min.css')}" />
+
+            <!-- Bootstrap Core CSS -->
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/jquery.min.js')}"></script>
+            <!--<script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap.min.js')}"></script>-->
+            <!-- HKITSFDC-26 -->
+            <script type="text/javascript" src="{!URLFOR($Resource.DD_Demo, 'js/bootstrap3.3.6.min.js')}"/>
+            <apex:include pageName="CignaUtilJS"/> 
+        <!--additional css, bootstrap, jquery,js libraries-->
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate.min.js')}"></script>
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+        <apex:outputPanel rendered="{!$Label.User_Language == 'zh_tw'}" layout="none">
+             <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+        </apex:outputPanel>
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+    </apex:define>
+<div class="bs">
+	  <apex:actionStatus id="loader-icon">
+                <apex:facet name="start">
+                    <div class="bs col-xs-12 col-lg-12 loading-div" style="padding: 0px;">
+                        <span class="loading-helper"></span>
+                        <i class="spinner-icon fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </apex:facet>
+            </apex:actionStatus>
+            
+            <div class="header-bar">
+                <p style="position: relative; top: 45%; text-align:center; text-transform: uppercase;">
+                   testxxxxxxx
+                </p>
+            </div>
+	<div class="bs container">
+		<apex:form id="from">
+			<div class="bs col-xs-12 cigna-fg-gray-dark cigna-form-section-header"><h4>{!$Label.Policy_Holder}</h4></div>
+			<apex:outputPanel styleClass="bs col-xs-12 cigna-quote-question">
+				<apex:outputPanel >
+					<div class="bs col-xs-3" style="font-weight: 700;">
+						{!$Label.LastName}:
+					</div>
+				</apex:outputPanel>
+					
+				<apex:outputPanel >
+					<div class="bs col-xs-9">
+						<apex:inputText styleClass=".bs input.cigna-question-text" style="width:100%;" value="{!LastName}"/>
+					</div>
+				</apex:outputPanel>
+			</apex:outputPanel>
+			<apex:outputPanel styleClass="bs col-xs-12 cigna-quote-question">
+				<apex:outputPanel >
+					<div class="bs col-xs-3" style="font-weight: 700;">
+						{!$Label.FirstName}:
+					</div>
+				</apex:outputPanel>
+					
+				<apex:outputPanel >
+					<div class="bs col-xs-9">
+						<apex:inputText styleClass=".bs input.cigna-question-text" style="width:100%;" value="{!FirstName}"/>
+					</div>
+				</apex:outputPanel>
+			</apex:outputPanel>
+            <apex:outputPanel styleClass="bs col-xs-12 cigna-quote-question">
+                <apex:outputPanel >
+                    <div class="bs col-xs-3" style="font-weight: 700;">
+                        SSN:
+                    </div>
+                </apex:outputPanel>
+                    
+                <apex:outputPanel >
+                    <div class="bs col-xs-9">
+                        <apex:inputText styleClass=".bs input.cigna-question-text" style="width:100%;" value="{!ssn}"/>
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel>
+			<apex:outputPanel styleClass="bs col-xs-12 cigna-quote-question" >
+				<apex:outputPanel >
+					<div class="bs col-xs-3" style="font-weight: 700;">
+						{!$Label.Gender}:
+					</div>
+				</apex:outputPanel>
+					
+				<apex:outputPanel >
+					<div class="bs col-xs-9">
+						<select id="select-gender-poc" Class="bs form-field-style-select drop-down-seleter">
+                            <option value=""></option>
+							<apex:repeat value="{!genderList}" var="g">
+								<option value="{!g}">{!g}</option>
+							</apex:repeat>
+						</select>
+						<apex:inputHidden value="{!gender}"/>
+						<script>
+							$('[id^=select-gender-]').change(
+				                 function (event) {
+				                     console.log('select changed');
+				                     var hiddenInput= $(this).siblings('input[type="hidden"]');
+				                     console.log('select value is:'+$(this).val());
+				                     hiddenInput.val($(this).val());                            
+				                     hiddenInput.trigger('change');
+				                     });  
+						</script>
+					</div>
+				</apex:outputPanel>
+			</apex:outputPanel>
+			<apex:outputPanel styleClass="bs col-xs-12 cigna-quote-question">
+				<apex:outputPanel >
+					<div class="bs col-xs-3" style="font-weight: 700;">
+						Description:
+					</div>
+				</apex:outputPanel>
+					
+				<apex:outputPanel >
+					<div class="bs col-xs-9">
+						<apex:inputTextarea styleClass=".bs input.cigna-question-text" style="width:100%;" value="{!description}"/>
+					</div>
+				</apex:outputPanel>
+			</apex:outputPanel>
+			<apex:outputPanel >
+				<apex:commandButton action="{!doSave}" value="save"/>
+			</apex:outputPanel>
+		</apex:form>
+	</div>
+</div>        
+</apex:page>
