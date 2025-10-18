@@ -1,3 +1,4 @@
+
 // Use .apex files to store anonymous Apex.
 // You can execute anonymous Apex in VS Code by selecting the
 //     apex text and running the command:
@@ -8,3 +9,7 @@
 string tempvar = 'Enter_your_name_here';
 System.debug('Hello World!');
 System.debug('My name is ' + tempvar);
+
+
+List<String> lst = 'beneficiary;renew;benefit;'.split(';');
+system.debug(lst.size());
