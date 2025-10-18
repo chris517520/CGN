@@ -28,10 +28,89 @@ Step1 CommonSearchComp
 Controller Constructor 构造方法中新建 Claim__c 对象
 cList[0].Person_s_Insured__c = phid;
 cList[0].Person_Insured_Name__c = phname ;
-返回游览器加载页面 document.ready 然后运行 Controller.loadDataFromWS()， 因为Step=2 所以运行 Controller 方法 initData()  488 => 929 
-a. 再次调用getIndividualPolicyListBasicByCriteria 通过 isured id查询其所有policy, wPolicyList_unchanged 获取到值   939 => 1179 行  
-如果是broker wPolicyList_selected = wPolicyList_unchanged
-b. 调用 getPolicyPersonCoverageBasic (感觉是查询Issure的有效期)
+返回游览器加载页面 $(document).ready 然后运行 Controller.loadDataFromWS()， 因为Step=2 所以运行 Controller 方法 initData()  488 => 929 
+a. 再次调用 getIndividualPolicyListBasicByCriteria 通过 isured id查询其所有policy, wPolicyList_unchanged获取到值   939 => 1179 行  
+Map<String,Map<String,String>> allSsnNamePIMap 其实就是ssnnumber 和 fullname ssnnumber的一个映射
+PICount = 2
+PIMapList = List<Map<String,String>>, 每一个Insured的信息都在List中的每一个Map里面， 里面只有'ssnNumber'和'fullName'两个key
+对Person_Insured_Name__c又重新赋值一次
+
+b. 调用LoadPIToGetPlanType()  getPolicyPersonCoverageBasic (感觉是查询Issure的有效期)  947 = > 4642
+如果是broker wPolicyList_selected = wPolicyList_unchanged 2164
+Map<Map<String,String>,List<Map<String,String>>> pNumSsnValueListMap  //GetPolicyPersonCoverageBasic  4638              helper.processPolicyPersonCoverageBasicResult 923
+key是policy number和ssn
+value是 该policy下的converge 里面的 Product code 的拆分 <ProductCode>PMGH :3</ProductCode> <ProductCode>SMMGH:3</ProductCode>
+第一组
+tmpValueMap.put('benefitCode', 'PMGH');
+tmpValueMap.put('rateScale', '3');
+第二组
+tmpValueMap.put('benefitCode', 'SMMGH');
+tmpValueMap.put('rateScale', '3');
+目的，组装pNumSsnValueListMap
+{CTA9005058=Z892137}
+({benefitAmount=1000.00, benefitCode=TUWG, productCode=, rateScale=1})
+
+{CTA9005059=Z892137}
+(
+{benefitAmount=1000.00, benefitCode=PMGH, productCode=, rateScale=3}, 
+{benefitAmount=1000.00, benefitCode=SMMGH, productCode=, rateScale=3}
+)
+
+c. loadSelectedWrapperPolicyList() 950  => 3179
+select id,name,Plan_code__c,Rate_Scale__c from Plan_Code_Claim_Type__c where (Plan_code__c = 'PMGH' and Rate_Scale__c = '3') or (Plan_code__c = 'SMMGH' and Rate_Scale__c = '3')
+得到 Map<Map<String,String>,Map<String,String>> tmpResultMap; 
+这个map放的是 Plan_code__c 和 Rate_Scale__c 对应的所有benifit code 和 claim type
+
+Map<String,String> planCodeRateScaleMap = new Map<String,String>{};  这个就是放benifit code 和 map的对应, 例如{'PMGH'=> '3', 'SMMGH'=>'3'}
+List<Map<String,String>> productCodePlanCodeRateScaleMapList = new List<Map<String,String>>{}; 这list中的每一个map就是
+[{'productCode'=>'', 'benefitCode'=>'PMGH', 'rateScale'=>'3'}, {'productCode'=>'', 'benefitCode'=>'SMMGH', 'rateScale'=>'3'}]\
+
+
+Map<Map<String,String>,Map<String,String>> tmpResultMap = searchAllClaimTypesByPlanCode(productCodePlanCodeRateScaleMapList); 3247
+这个的key就是一个{'PMGH'=> '3'} benifit code 和 rateScale 的键值对
+value是'benefitTypeListStr' => 'ACC, HSP, OPT, DEN, OTH', 'claimTypeListStr' => '1, 2, 3, 4, 5' 类似这也
+最终目的：wPolicyList_PI赋值 把同一个policy下的所有Coverage对应的plan的benifitcode写到一起, 
+benefitTypeListStr 赋值成功
+claimTypeListStr 赋值成功
+
+d. AddPolicyIntoClaim 这一步看上去没什么用
+
+返回前端页面initDisplay(); 
+Step2页面操作行为
+isSelectPolicyLessThan6Months( {!pItem.isLessThan6Months}, '{!pItem.policyNum}');  //判断选择的Policy里面是否有小于6个月的 但是判断成US了，估计有BUG
+isSelectPolicyLessThan1Yr( {!pItem.isLessThan1Yr}, '{!pItem.policyNum}');          //判断选择的Policy里面是否有小于1年
+isSelectPolicyLessThan2Yrs( {!pItem.isLessThan2Yrs}, '{!pItem.policyNum}');        //判断选择的Policy里面是否有小于2年
+isSelectPolicyLessThan3Yrs( {!pItem.isLessThan3Yrs}, '{!pItem.policyNum}');        //判断选择的Policy里面是否有小于3年
+isSelectUSPolicy( {!pItem.isUSDPolicy}, '{!pItem.policyNum}');                     //判断选择的Policy是否为US Policy
+isSelectIndividualLifePolicy( {!pItem.isIndividualPolicy} && {!pItem.isLifePolicy}, '{!pItem.policyNum}'); 
+selectPolicyToShowBenefit('{!pItem.policyNum}', {!pItem.benefitTypeListStr});      //根据传入的benefitTypeListStr，从Coverage接口获取的。去控制下一个页面现实的benifit 1386
+- 调用 questionFlagReset show*** 全部设置为-1 'selectPolicyToShowBenefit reset'
+policyBenefitListMap //ClaimUtil js变量，存的是policy=>benifitcode
+- resetTypesOfBenefitCanChoose() resetStyleTypesOfBenefitCanChoose() 把颜色和可选择都重置
+控制方式 isCI > 0 showCI = 0 //display showCI默认为-1
+
+- hideNextButtonsWhenChangePolicyBrk();
+
+3. benifit选择页面
+
+window.nextStep => ClaimUtilJS.addBenefitTypeToClaimRecord() 组装benefitTypeStr => ClaimSelectBenefitTypeVFP页面.selectBenefitTypeAtAction(benefitTypeStr)
+=> Controller.SelectBenefitType(benefitTypeStr)  初始化 => Controller.loadClaimTypeFromStr() 更新benifit true/false字段
+=> 返回页面调用 ClaimSelectBenefitTypeVFP页面.passQuestionDisplayLogic 判断选择的Benifit是否发生变化，
+如果发生变化则调用ClaimUtilJs.questionDisplayLogic()
+=> 如果是portal直接调用ClaimUtilBrokerJS.questionDisplayLogicBroker()
+计算tmpQuestionList "cx1""cx2""cx3" 用于 ClaimAskIfClaimFromOtherCompanyVFP 页面问题展示
+点击Yes调用 ClaimAskIfClaimFromOtherCompanyVFP.saveRecordBrkReceiveReimbursement
+
+
+4.选择benifit点击next会调用 public void loadClaimTypeDocument(String benefitTypeStr) 867
+public void searchAllDocumentsByClaimType(String benefitTypeStr) 4114
+页面ClaimAskIfClaimFromOtherCompanyVFP
+
+
+
+
+
+3.
 
 初始化的时候给了创建了 Claim__c 给了2个字段值:phname
 Person_s_Insured__c = phid
@@ -39,6 +118,8 @@ Person_Insured_Name__c = phname
 页面变量的数组是 wPolicyList_PI
 getPolicyListForPI() 方法会add
 loadSelectedWrapperPolicyList() 方法会add  => 此方法被InitData调用 
+
+
 
 
 
@@ -63,3 +144,14 @@ Map<Map<String,String>,Map<String,String>> tmpResultMap = new Map<Map<String,Str
 
 接口缓存：
 GetPolicyListBasicByCriteria  取消了缓存
+
+
+
+解决方法：
+1.CI加问题，就加一条claim type document的数据就好
+2.CI加问题：
+
+
+broker问题现实：
+ClaimUtilJS.questionDisplayLogic(currentQuestionNum);
+ClaimUtilBrokerJS.questionDisplayLogicBroker(currentQuestionNum);
