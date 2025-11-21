@@ -279,19 +279,7 @@ public without sharing class ManagePolicyChangeCRTL{
     //JR1840 jack add
     public String encryptedSearchCriteria{get;private set;}
     public final String URLParamName{get;private set;}{URLParamName='FLTR';}
-
-    //Nicole_Bypass Login_20200924
-    public Boolean isTokenValid{get;set;}
-    public Boolean isCustomerSiteGuestUser{get;set;}
-    private String portalUserId{get;set;}
-    private String salesforceAdminId{get;set;}
-    private String paramToken{get;set;}
-    private String paramLanguage{get;set;}
-    private Final String PUBLIC_LINK_SETTING_WA='WA';
-    private Final String POLICY_CHANGE_RESIDENTIAL_ADDRESS='PCA';
-    private Final String POLICY_CHANGE_PAYMENT_CARD='PCP';
-    private Public_Request_Link__c publicRequestLink{get;set;}
-
+    
     //GL31 jack add
     public Map<String,String> assessAllRiderMap=new Map<String,String>();
     public Map<String,String> assessRiderMap{get;set;}
@@ -302,25 +290,12 @@ public without sharing class ManagePolicyChangeCRTL{
     public List<SelectOption> riderOption{get;set;}
     public List<SelectOption> existRiderOption{get;set;}
     public final String riderSperator{get; private set;}{riderSperator=' / ';}
-
+    
     // FileScanning_Link_20220530
     public Boolean scanPopup{get;set;}
-
-    public String transKey{
-        get{
-            if (transKey==null){
-                transKey='';
-                for(String s : transField.keySet()){
-                    transKey +='~'+s+'~';
-                }
-            }
-            return transKey ;
-        }set;
-    }
     
     public String entityName { get; set; } //JOBR-184: JOBR-199 added by Kermit
     public String entityNameForNote { get; set; } // JOBR-184;
-    public String policyColor{get;set;} // Rancho_PI117_20230817 - selected policy current color
     
     public ManagePolicyChangeCRTL(ApexPages.StandardController controller){
         policyHolderSSN=''; //20200306 - minghua - ILAS
@@ -328,17 +303,10 @@ public without sharing class ManagePolicyChangeCRTL{
         if(CignaUtil.isCustomerPortal()){
             sitePrefix='/customer';
             //20200306 - minghua - ILAS
-            //Id holderContactId=[Select Id,ContactId From User Where Id=:Userinfo.getUserId()].ContactId;
-            //Id holderAccountId=[Select Id,AccountId From Contact Where Id=:holderContactId].AccountId;
-            //policyHolderSSN=[Select Id,SSN__c From Account Where Id=:holderAccountId].SSN__c;
-            customerUserId=Userinfo.getUserId();
-            //Nicole_Bypass Login_20200924
-            List<User> userList=[Select Id,ContactId,AccountId,Account.SSN__c From User Where Id=:Userinfo.getUserId()];
-            if(userList.size()>0){
-                if(userList[0].AccountId!=null&&String.IsNotBlank(userList[0].Account.SSN__c)){
-                    policyHolderSSN=userList[0].Account.SSN__c;
-                }
-            }
+            Id holderContactId = [Select Id,ContactId From User Where Id = :Userinfo.getUserId()].ContactId;
+            Id holderAccountId = [Select Id,AccountId From Contact Where Id = :holderContactId].AccountId;
+            policyHolderSSN = [Select Id,SSN__c From Account Where Id = :holderAccountId].SSN__c;
+            customerUserId = Userinfo.getUserId();
         }else{
             sitePrefix='/broker';
         }
@@ -349,29 +317,7 @@ public without sharing class ManagePolicyChangeCRTL{
         if(ApexPages.currentPage().getParameters().get('pcid')!=null&&ApexPages.currentPage().getParameters().get('pcid')!=''){
             policyChangeId=ApexPages.currentPage().getParameters().get('pcid');
         }
-        //Nicole_Bypass Login_20200924
-        isTokenValid=false;
-        isCustomerSiteGuestUser=false;
-        paramToken=ApexPages.currentPage().getParameters().get('token');
-        paramLanguage=ApexPages.currentPage().getParameters().get('lang');
-        publicRequestLink=null;
-        if('Guest'.equalsIgnoreCase(UserInfo.getUserType())&&CignaUtil.isCustomerPortal()) isCustomerSiteGuestUser=true;
-        if(String.IsNotBlank(paramLanguage)) this.userLanguage=paramLanguage;
-        if(isCustomerSiteGuestUser){
-            publicRequestLink=PublicRequestLinkHelper.getPublicRequestLinkByToken(paramToken);
-            // system.debug('publicRequestLink '+publicRequestLink);
-            if(publicRequestLink!=null){
-                isTokenValid=true;
-                policyHolderSSN=publicRequestLink.SSN__c;
-                this.userEmail=publicRequestLink.Portal_User__r.UserName;
-                portalUserId=publicRequestLink.Portal_User__c;
-                salesforceAdminId=Public_Link_Setting__c.getValues(PUBLIC_LINK_SETTING_WA)!=null?Public_Link_Setting__c.getValues(PUBLIC_LINK_SETTING_WA).Salesforce_Admin_Id__c:'';
-            }else{
-                isTokenValid=false;
-            }
-        }
-        // system.debug('this.userLanguage:'+this.userLanguage);
-
+        
         /*For Broker use*/
         if(ApexPages.currentPage().getParameters().get('phid')!=null&&ApexPages.currentPage().getParameters().get('phid')!=''){
             PolicyHolderId=ApexPages.currentPage().getParameters().get('phid');
@@ -398,8 +344,7 @@ public without sharing class ManagePolicyChangeCRTL{
         }
 
         if(CignaUtil.isCustomerPortal()){
-            if(!isCustomerSiteGuestUser) //Nicole_Bypass Login_20200924
-                this.userEmail=UserInfo.getUserName();
+            this.userEmail=UserInfo.getUserName();
         }else{
             this.userEmail=PolicyHolderEmail;
         }
@@ -420,7 +365,6 @@ public without sharing class ManagePolicyChangeCRTL{
         isLife=false;
         isIlas=false;
         hasBenefit=false;
-        policyColor=''; // Rancho_PI117_20230817
 
         ListPolicy=new List<Policy>();
         hasNoPolicy=false;
@@ -442,21 +386,6 @@ public without sharing class ManagePolicyChangeCRTL{
         // Rancho_IA_AML_Inspection_20211005: init country list
         setNationalityListInfo();
         setCountryListInfo();
-
-        //Nicole_Bypass Login_20200924
-        if(isCustomerSiteGuestUser&&publicRequestLink!=null){
-            Public_Link_Mapping__c setting=[Select Name,Request_Code__c From Public_Link_Mapping__c Where Request_Code__c=: publicRequestLink.RequestType__c];
-            if(setting!=null&&setting.Name==POLICY_CHANGE_RESIDENTIAL_ADDRESS){
-                changeType='personal';
-                selectChangeType();
-                currentStep=2;
-            }
-            if(setting!=null&&setting.Name==POLICY_CHANGE_PAYMENT_CARD){
-                changeType='dd';
-                selectChangeType();
-                currentStep=2;
-            }
-        }
     }
 
     public Id getRecordType(String objName,String rtName){
@@ -751,11 +680,7 @@ public without sharing class ManagePolicyChangeCRTL{
                 }
             }
         }else{
-            Request=new Policy_Change_Request__c();
-            //Nicole_Bypass Login_20200924
-            if(isCustomerSiteGuestUser&&currentStep==2){
-                showListPolicy();
-            }
+            Request=new Policy_Change_Request__c();           
         }
         hasAvailablePolicy=true;
         /*get download Document Id*/
@@ -887,6 +812,9 @@ public without sharing class ManagePolicyChangeCRTL{
         }else{
             ListPolicy=getListinforcePolicy();
         }
+
+        ListPolicy = filterPolicyByChangeType(ListPolicy); // 20251019 - HKITSFDC-412
+        
         if(ListPolicy!=null){
             if(ListPolicy.size()>0){
                 policyholder=ListPolicy[0].policyHolder;// get the policy holder name
@@ -901,6 +829,54 @@ public without sharing class ManagePolicyChangeCRTL{
             }
             system.debug('Kevani showListPolicy policyMemberName:' + policyMemberName);
         }
+    }
+
+    /**
+    * @description hide policy based on selected change type
+    * @param List<Policy> lstPolicy 
+    * @return List<Policy> 
+    **/
+    public List<Policy> filterPolicyByChangeType(List<Policy> lstPolicy){
+        List<Policy> lstVisiblePolicies = new List<Policy>();
+        Map<String, Boolean> activeTypeMap = new Map<String, Boolean>{
+            'personal'    => IsPersonal,
+            'beneficiary' => IsBeneficiary,
+            'owner'       => IsOwner,
+            'dd'          => IsDD,
+            'copyDoc'     => IsCopyDoc,
+            'renew'       => IsRenew,
+            'benefit'     => IsBenefit,
+            'app'         => IsApp
+        };
+        Map<String, Policy_Change_Hide_Setting__c> hideSettingMap = Policy_Change_Hide_Setting__c.getAll();
+        for (Policy pol : lstPolicy) {
+            Boolean toHide = false;
+            Policy_Change_Hide_Setting__c polHideSetting = hideSettingMap.get(pol.productCode);
+            if (polHideSetting != null && polHideSetting.Hide_Change_Type__c != null && polHideSetting.Active__c) {
+                
+                Set<String> hiddenTypes = new Set<String>();
+                for (String type : polHideSetting.Hide_Change_Type__c.split(';')) {
+                    
+                    if (String.isNotBlank(type.trim()) && !hiddenTypes.contains(type.trim())) {
+                        hiddenTypes.add(type);
+                    }
+                }
+
+                
+                for (String hideKey : hiddenTypes) {
+                    Boolean isActive = activeTypeMap.get(hideKey);
+                    if (isActive == true) {
+                        toHide = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!toHide) {
+                lstVisiblePolicies.add(pol);
+            }
+        }
+        return lstVisiblePolicies;
     }
 
     /*Policy List By different Criteria*/
@@ -1050,13 +1026,11 @@ public without sharing class ManagePolicyChangeCRTL{
     public void selectPolicy(){
         system.debug('selectPolicy()');
         if(multiPolicy){
-            // Rancho_PI117_20230817 - remove policy when element color is gray only
-            if(setMultiPolicyChoice.contains(PolicyChoice) && policyColor=='gray'){
+            if(setMultiPolicyChoice.contains(PolicyChoice)){
                 setMultiPolicyChoice.remove(PolicyChoice);
             }else if(String.isNotBlank(PolicyChoice)){
                 setMultiPolicyChoice.add(PolicyChoice);
             }
-            policyColor = '';
         }else{
             if(setMultiPolicyChoice.size()>0){
                 setMultiPolicyChoice.clear();
@@ -1099,13 +1073,11 @@ public without sharing class ManagePolicyChangeCRTL{
                     Set<String> benefitCodeSet=new Set<String>();//GL31 jack add
                     for(HttpCalloutVO.PolicyPersonCoverage coverage: policyAvailBenefitList){
                         //only add basic plan benefit into the benefit picklist
-                        System.debug('coverage.productCode:'+coverage.productCode+' coverage.benefitCode:'+coverage.benefitCode+' setIsNotIPMIPolicy:'+setIsNotIPMIPolicy+' policyChoice:'+policyChoice);
                         if((coverage.productCode==coverage.benefitCode)&&setIsNotIPMIPolicy.contains(policyChoice)){
                             String benefitOption=coverage.benefitName.trim()+'/'+coverage.benefitCode.trim();
                             availBenefitSumInsuredOptions.add(new SelectOption(benefitOption ,benefitOption));
                             hasBenefit=true;
                             availBenefitMap.put(benefitOption,coverage);
-                            System.debug('availBenefitMap:'+availBenefitMap);
                         }
                         if(planCodeMap!=null){
                             if(planCodeMap.get(coverage.BenefitCode.trim())!=null){
@@ -1204,13 +1176,10 @@ public without sharing class ManagePolicyChangeCRTL{
             if(strIsLifePolicy.length()>0){
                 strIsLifePolicy=strIsLifePolicy.substring(0,strIsLifePolicy.length()-2);
                 isLife=true;
-                
             }
-            System.debug('1196-isLife:'+isLife);
             if(strIsGeneralPolicy.length()>0){
                 strIsGeneralPolicy=strIsGeneralPolicy.substring(0,strIsGeneralPolicy.length()-2);
                 isGeneral=true;
-                System.debug('1201-isGeneral:'+isGeneral);
             }
         }else{
             hasPolicy=false;
@@ -1239,7 +1208,7 @@ public without sharing class ManagePolicyChangeCRTL{
             entityName = Label.Cigna_Entity_Name;
             entityNameForNote = Label.Cigna_Entity_Name;
         }else{
-            entityName = Label.Both_Life_And_GI_Entity_Name;
+			entityName = Label.Both_Life_And_GI_Entity_Name;
             entityNameForNote = Label.Both_Life_And_GI_Entity_Name;
         }
         //JOBR-184: JOBR-199 added by Kermit
@@ -1284,15 +1253,6 @@ public without sharing class ManagePolicyChangeCRTL{
         Request.Financial_Consultant_Contact_No__c=ConsultantContact;
         Request.Financial_Consultant_Name__c=ConsultantName;
         Request.Broker_Name__c=BrokerName;
-        //HKITTSFDC-211 Begin , get account id of holder
-        if( policyHolderId != null && policyHolderId != '' && BrokerName != ''){
-            List<Account> customerAccList = [SELECT id from account where ssn__c =:policyHolderId limit 1]; 
-            if ( customerAccList.size() > 0 ){
-                Request.account__c= customerAccList[0].Id;
-            }
-            
-        }
-        //HKITTSFDC-211 End, get account id of holder
         //add bob name sc 20201201
         if (Request.X3rd_Party_Payer__c=='Company / Institution'){
             Request.Relationship_with_Policyholder_Applica__c='Employer';
@@ -1420,12 +1380,6 @@ public without sharing class ManagePolicyChangeCRTL{
             Request.RecordTypeId=getRecordType('Policy_Change_Request__c','Beneficiary');
         }else if(IsApp){
             Request.RecordTypeId=getRecordType('Policy_Change_Request__c','Automatic Premium Payment');
-        }
-
-        //Nicole_Bypass Login_20200924
-        if(isCustomerSiteGuestUser&&String.IsNotBlank(portalUserId)){
-            Request.OwnerId=portalUserId;
-            Request.Is_Created_by_Customer_Site_Guest_User__c=true;
         }
 
         Request.id=policyChangeId;
@@ -1597,12 +1551,6 @@ public without sharing class ManagePolicyChangeCRTL{
 
     /*Save e-signature*/
     public void submitEsignature(){
-        //Nicole_Bypass Login_20200924
-        if(IsCustomerSiteGuestUser&&isDD&&String.IsNotBlank(salesforceAdminId)){
-            Request.OwnerId=salesforceAdminId;
-            update Request;
-        }
-
         if(policyChangeId!=null&&policyChangeId!=''){
             /*e-signature For Customer single signature*/
             if(String.isNotBlank(eSignature)){
@@ -1753,7 +1701,6 @@ public without sharing class ManagePolicyChangeCRTL{
                 }
                 update signatureReq;
             }
-            return null;
         }
         return null;
     }
@@ -1853,23 +1800,10 @@ public without sharing class ManagePolicyChangeCRTL{
     }
 
     public void sendEmailSignature(){
-        //Nicole_Bypass Login_20200924
-        if(IsCustomerSiteGuestUser&&isDD&&String.IsNotBlank(salesforceAdminId)){
-            Request.OwnerId=salesforceAdminId;
-            update Request;
-        }
-
-        //Nicole_Bypass Login_20200924
-        //if(UserInfo.getLanguage()=='en_US'){
-        if(this.UserLanguage=='en_US'){
+        if(UserInfo.getLanguage()=='en_US'){
             if(!test.isrunningtest()){
-                //Nicole_Bypass Login_20200924
-                if(IsCustomerSiteGuestUser&&isDD&&String.IsNotBlank(portalUserId)){
-                    ESignatureUtil.sendEmailWebService(policyChangeId,'Email to send signature link PC English',esignatureEmail,true,'Policy_Change_T_and_C','Cigna Hong Kong',true,portalUserId);
-                }else{
-                    //ESignatureUtil.sendEmail(policyChangeId,'Email_to_send_signature_link_PC_English' ,esignatureEmail ,true,'Policy_Change_T_and_C','Cigna Hong Kong') ;
-                    ESignatureUtil.sendEmailWebService(policyChangeId,'Email to send signature link PC English',esignatureEmail,true,'Policy_Change_T_and_C','Cigna Hong Kong');
-                }
+                //ESignatureUtil.sendEmail(policyChangeId,'Email_to_send_signature_link_PC_English' ,esignatureEmail ,true,'Policy_Change_T_and_C','Cigna Hong Kong') ;
+                ESignatureUtil.sendEmailWebService(policyChangeId,'Email to send signature link PC English',esignatureEmail,true,'Policy_Change_T_and_C','Cigna Hong Kong');                
 
                 //Chris_JR1830_20200512
                 List<EmailTemplate> emailTempList=[SELECT Id FROM EmailTemplate WHERE Name='Email to send to broker English'];
@@ -1880,13 +1814,8 @@ public without sharing class ManagePolicyChangeCRTL{
             }
         }else{
             if(!test.isrunningtest()){
-                //Nicole_Bypass Login_20200924
-                if(IsCustomerSiteGuestUser&&isDD&&String.IsNotBlank(portalUserId)){
-                    ESignatureUtil.sendEmailWebService(policyChangeId,'Email to send signature link PC Chinese',esignatureEmail,true,'Policy_Change_T_and_C','Cigna Hong Kong',true,portalUserId);
-                }else{
-                    //ESignatureUtil.sendEmail(policyChangeId,'Email_to_send_signature_link_PC_Chinese' ,esignatureEmail ,true,'Policy_Change_T_and_C','Cigna Hong Kong') ;
-                    ESignatureUtil.sendEmailWebService(policyChangeId,'Email to send signature link PC Chinese',esignatureEmail,true,'Policy_Change_T_and_C','Cigna Hong Kong');
-                }
+                //ESignatureUtil.sendEmail(policyChangeId,'Email_to_send_signature_link_PC_Chinese' ,esignatureEmail ,true,'Policy_Change_T_and_C','Cigna Hong Kong') ;
+                ESignatureUtil.sendEmailWebService(policyChangeId,'Email to send signature link PC Chinese',esignatureEmail,true,'Policy_Change_T_and_C','Cigna Hong Kong');
 
                 //Chris_JR1830_20200512
                 List<EmailTemplate> emailTempList=[SELECT Id FROM EmailTemplate WHERE Name='Email to send to broker Chinese'];
@@ -1901,12 +1830,7 @@ public without sharing class ManagePolicyChangeCRTL{
         Request.id=policyChangeId;
         Request.eSignature_Status__c='Email Sent';
         if(CignaUtil.isCustomerPortal()){
-            //Nicole_Bypass Login_20201005
-            if(isCustomerSiteGuestUser){
-                Request.current_step__c=7;
-            }else{
-                Request.current_step__c=6;
-            }
+            Request.current_step__c=6;           
         }else{
             Request.current_step__c=7;
         }
@@ -1937,11 +1861,6 @@ public without sharing class ManagePolicyChangeCRTL{
                 if(phUsers.size()>0){
                     phUserId=phUsers[0].Id;
                 }
-            }
-
-            //Nicole_Bypass Login_20201005
-            if(IsCustomerSiteGuestUser&&String.IsNotBlank(portalUserId)){
-                phUserId=portalUserId;
             }
 
             E_Signature_Request__c signReq=new E_Signature_Request__c(E_Signature_URL__c=eSignLink,Policy_Change_Request__c=policyChangeId,Policy_Number__c=policyNo,Request_Type__c='Policy Change',OwnerId=phUserId);
@@ -2480,40 +2399,16 @@ public without sharing class ManagePolicyChangeCRTL{
             holderSsnNumber=PolicyHolderId;
             // system.debug('>>>>>>>holderSsnNumber>>>: '+ holderSsnNumber);
         }else{
-            //Nicole_Bypass Login_20200924
-            //Id holderContactId=[Select Id,ContactId From User Where Id=:Userinfo.getUserId()].ContactId;
-            //Id holderAccountId=[Select Id,AccountId From Contact Where Id=:holderContactId].AccountId;
-            //holderSsnNumber=[Select Id,SSN__c From Account Where Id=:holderAccountId].SSN__c;
-            List<User> userList=[Select Id,ContactId,AccountId,Account.SSN__c From User Where Id=:Userinfo.getUserId()];
-            if(userList.size()>0){
-                if(userList[0].AccountId!=null&&String.IsNotBlank(userList[0].Account.SSN__c)){
-                    holderSsnNumber=userList[0].Account.SSN__c;
-                }
-            }
+            Id holderContactId=[Select Id,ContactId From User Where Id=:Userinfo.getUserId()].ContactId;
+            Id holderAccountId=[Select Id,AccountId From Contact Where Id=:holderContactId].AccountId;
+            holderSsnNumber=[Select Id,SSN__c From Account Where Id=:holderAccountId].SSN__c;          
         }
 
         // system.debug('****holderSsnNumber****: '+ holderSsnNumber);
         //String holderSsnNumber='G689080';//for testing only
         /*Get policy List*/
 
-        //Nicole_Bypass Login_20200924
-        if('Guest'.equalsIgnoreCase(UserInfo.getUserType())&&CignaUtil.isCustomerPortal()){
-            String userLanguage=userInfo.getLanguage();
-            String paramToken=ApexPages.currentPage().getParameters().get('token');
-            String paramLanguage=ApexPages.currentPage().getParameters().get('lang');
-            if(String.IsNotBlank(paramLanguage)) userLanguage=paramLanguage;
-            if(String.IsNotBlank(paramToken)){
-                Public_Request_Link__c publicRequestLink=PublicRequestLinkHelper.getPublicRequestLinkByToken(paramToken);
-                if(publicRequestLink!=null){
-                    holderSsnNumber=publicRequestLink.SSN__c;
-                    String userEmail=publicRequestLink.Portal_User__r.UserName;
-                    PolicyCalloutHelper policyHelper1=new PolicyCalloutHelper('PH',userLanguage);
-                    policyListbyHolder=policyHelper1.getIndividualPolicyListBasicByCriteria('','',holderSsnNumber,'','','',null,'',null,'',userEmail,'');
-                }
-            }
-        }else{
-            policyListbyHolder=policyHelper.getIndividualPolicyListBasicByCriteria('','',holderSsnNumber,'','','','','');
-        }
+        policyListbyHolder=policyHelper.getIndividualPolicyListBasicByCriteria('','',holderSsnNumber,'','','','','');        
         return policyListbyHolder ;
     }
 
@@ -2533,22 +2428,7 @@ public without sharing class ManagePolicyChangeCRTL{
         }
         /*Get policy List*/
         if(string.IsNotBlank(policyno)){
-            //Nicole_Bypass Login_20200924
-            if('Guest'.equalsIgnoreCase(UserInfo.getUserType())&&CignaUtil.isCustomerPortal()){
-                String userLanguage=userInfo.getLanguage();
-                String paramToken=ApexPages.currentPage().getParameters().get('token');
-                String paramLanguage=ApexPages.currentPage().getParameters().get('lang');
-                if(String.IsNotBlank(paramLanguage)) userLanguage=paramLanguage;
-                if(String.IsNotBlank(paramToken)){
-                    Public_Request_Link__c publicRequestLink=PublicRequestLinkHelper.getPublicRequestLinkByToken(paramToken);
-                    if(publicRequestLink!=null){
-                        String userEmail=publicRequestLink.Portal_User__r.UserName;
-                        PolicyCalloutHelper policyHelper1=new PolicyCalloutHelper('PH',userLanguage);
-                        policyListbyPolicyNo=policyHelper1.getIndividualPolicyListBasicByCriteria(policyno,'','','','','',ListStatus,'',null,'',userEmail,'');
-                    }
-                }
-            }else
-                policyListbyPolicyNo=policyHelper.getIndividualPolicyListBasicByCriteria(policyno,'','','','','',ListStatus,'');
+            policyListbyPolicyNo=policyHelper.getIndividualPolicyListBasicByCriteria(policyno,'','','','','',ListStatus,'');
         }
         return policyListbyPolicyNo;
     }
@@ -2595,7 +2475,6 @@ public without sharing class ManagePolicyChangeCRTL{
                 tempolicy.isILAS=policy.isILAS ;
                 tempolicy.isIPMIPolicy=policy.isIPMIPolicy;
                 tempolicy.productCode=policy.productCode;//GL31 jack add
-                System.debug('policy.planTypeCode:'+policy.planTypeCode+'policy.planName:'+policy.planName+'policy.productCode:'+policy.productCode);
                 policyList.add(tempolicy);
             }
         }
@@ -2607,8 +2486,7 @@ public without sharing class ManagePolicyChangeCRTL{
         if(policyListbyHolder.size()>0){
             for(HttpCalloutVO.Policy policy : policyListbyHolder){
                 List<HttpCalloutVO.Person> personList=policy.insuredList;
-                system.debug('policy.productCode：'+policy.productCode);
-                selectedProductCode=policy.productCode;
+                selectedProductCode = policy.productCode;
                 if(personList.size()>0){
                     for(HttpCalloutVO.Person person : personList){
                         PolicyInsured insured=new PolicyInsured();
@@ -2669,24 +2547,6 @@ public without sharing class ManagePolicyChangeCRTL{
             }
         }
     }
-
-    // @RemoteAction
-    // public static String assessValidation(){
-    //     String result='';
-    //     if(ListBenefitRider!=null && ListBenefitRider.size()>0){
-    //         Set<String> riderSet=new Set<String>();
-    //         for(Policy_Change_Request_Detail__c benefit : ListBenefitRider){
-    //             if(benefit.Rider_Benefit_Name_Code__c!=null){
-    //                 List<String> tempList=benefit.Rider_Benefit_Name_Code__c.split('/');
-    //                 if(tempList.size()>1){
-    //                     riderSet.add(tempList[1]);
-    //                 }
-    //             }
-    //         } 
-    //         result=CignaUtil.checkAssessResult('','',assessMap,basicProductCode,riderSet,false,false);
-    //     }
-    //     return result;
-    // }
 
     /**
     * setNationalityListInfo

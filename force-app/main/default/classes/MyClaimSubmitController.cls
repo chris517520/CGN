@@ -150,6 +150,7 @@ public without sharing class MyClaimSubmitController{
     /** temp save data **/
     public List<ClaimHelper.WrapperVisit> wVisitDateStrList{get;set;}    //for single date list field
     public List<ClaimHelper.WrapperInfoFromOtherCompany> wInfoFromOtherCompanyList{get;set;}
+    public List<ClaimHelper.WrapperInfoFromOtherCompany> wInfoInsuredFromOtherCompanyList{get;set;} //20251008 - HKITSFDC-412
     public List<ClaimHelper.WrapperAdmittedAndDischargedFromHospital> wAdmittedAndDischargedFromHospitalList{get;set;}
     /** end temp save data **/   
     /* WS or Salesforce */   
@@ -246,8 +247,10 @@ public without sharing class MyClaimSubmitController{
     }
     // minghua - 20220523 - file virus scan
     public Boolean scanPopup{get;set;}{scanPopup=false;}
+    public Boolean isInsuredForSimilarBenefitsFlag{get;set;} 
 
     public MyClaimSubmitController(){
+        isInsuredForSimilarBenefitsFlag = false;
         // 20210803 - minghua - CR48
         allowGovernmentHospitalVisit=false; // Rancho_CR48_20210706
         isEntitledBenefit=false;
@@ -305,11 +308,14 @@ public without sharing class MyClaimSubmitController{
         /** tmp data for question answer **/
         wVisitDateStrList = new List<ClaimHelper.WrapperVisit>{};    //for mulitiple consultation date in list
         wInfoFromOtherCompanyList = new List<ClaimHelper.WrapperInfoFromOtherCompany>{};
+        wInfoInsuredFromOtherCompanyList = new List<ClaimHelper.WrapperInfoFromOtherCompany>{}; //20251008 - HKITSFDC-412
         wAdmittedAndDischargedFromHospitalList = new List<ClaimHelper.WrapperAdmittedAndDischargedFromHospital>{};        
         ClaimHelper.WrapperVisit wVisitItem = new ClaimHelper.WrapperVisit();
         wVisitDateStrList.add(wVisitItem);
         ClaimHelper.WrapperInfoFromOtherCompany wInfoFromOtherCompanyItem = new ClaimHelper.WrapperInfoFromOtherCompany();
-        wInfoFromOtherCompanyList.add(wInfoFromOtherCompanyItem);    //add 1 new item        
+        ClaimHelper.WrapperInfoFromOtherCompany wInfoInsuredFromOtherCompanyItem = new ClaimHelper.WrapperInfoFromOtherCompany(); //20251008 - HKITSFDC-412
+        wInfoFromOtherCompanyList.add(wInfoFromOtherCompanyItem);    //add 1 new item
+        wInfoInsuredFromOtherCompanyList.add(wInfoInsuredFromOtherCompanyItem);    //add 1 new item        
         ClaimHelper.WrapperAdmittedAndDischargedFromHospital wAdmittedAndDischargedFromHospitalItem = new ClaimHelper.WrapperAdmittedAndDischargedFromHospital();
         wAdmittedAndDischargedFromHospitalList.add(wAdmittedAndDischargedFromHospitalItem);    //add 1 new item
         /** end tmp data **/
@@ -585,10 +591,10 @@ public without sharing class MyClaimSubmitController{
     }
     
     public PageReference saveSelectedExtraQuestionBrk(){
-        // // system.debug('to see currentSelectedQuestionId: '+currentSelectedQuestionId);
+        system.debug('to see currentSelectedQuestionId: '+currentSelectedQuestionId);
         if(!String.isBlank(currentSelectedQuestionId) && cList.size()>0){
             String result = cList[0].Selected_Question_s__c;
-            for(Integer i = 1; i<= 3; i++){
+            for(Integer i = 1; i<= 5; i++){
                 result = result.remove('"cx' + String.ValueOf(i) + '"');
             }
             cList[0].Selected_Question_s__c = result + currentSelectedQuestionId;
@@ -790,7 +796,12 @@ public without sharing class MyClaimSubmitController{
             system.debug('to see loadClaimRecordByPassingId cList: ' + cList);
             //load all json data to custom list
             if(cList.size()>0 && !String.isBlank(cList[0].Visit_Date__c)){wVisitDateStrList = (List<ClaimHelper.WrapperVisit>)JSON.deserialize(cList[0].Visit_Date__c,List<ClaimHelper.WrapperVisit>.class);}
-            if(cList.size()>0 && !String.isBlank(cList[0].Information_from_other_companies__c)){wInfoFromOtherCompanyList = (List<ClaimHelper.WrapperInfoFromOtherCompany>)JSON.deserialize(cList[0].Information_from_other_companies__c,List<ClaimHelper.WrapperInfoFromOtherCompany>.class);}
+            if(cList.size()>0 && !String.isBlank(cList[0].Information_from_other_companies__c)){
+                wInfoFromOtherCompanyList = (List<ClaimHelper.WrapperInfoFromOtherCompany>)JSON.deserialize(cList[0].Information_from_other_companies__c,List<ClaimHelper.WrapperInfoFromOtherCompany>.class);
+            }
+            if (cList.size()>0 && !String.isBlank(cList[0].Information_of_benifit_from_other_comp__c)) {
+                wInfoInsuredFromOtherCompanyList = (List<ClaimHelper.WrapperInfoFromOtherCompany>)JSON.deserialize(cList[0].Information_of_benifit_from_other_comp__c,List<ClaimHelper.WrapperInfoFromOtherCompany>.class);
+            }
             if(cList.size()>0 && !String.isBlank(cList[0].Admitted_and_discharged_from_hospital__c)){wAdmittedAndDischargedFromHospitalList = (List<ClaimHelper.WrapperAdmittedAndDischargedFromHospital>)JSON.deserialize(cList[0].Admitted_and_discharged_from_hospital__c,List<ClaimHelper.WrapperAdmittedAndDischargedFromHospital>.class);}            
             if(cList.size()>0){localIsFastTrack = cList[0].Is_Fast_Track__c;}           
             //if(cList.size()>0)    localIsPIForTC = cList[0].Is_PI_Greater_Then_18__c;  //Comment by Nicole for Encryption CR
@@ -889,7 +900,8 @@ public without sharing class MyClaimSubmitController{
             claimTypeDocIdAttachmentMap.put(att.ParentId, tmp_attList);
         }
         
-        // system.debug('to see claimTypeDocIdAttachmentMap: '+claimTypeDocIdAttachmentMap);        
+        //system.debug('to see claimTypeDocIdAttachmentMap: '+claimTypeDocIdAttachmentMap);
+        system.debug('[MyClaimSubmitController] soql_attDoc : ' + soql_attDoc);      //HKITSFDC-413 debug only  
         //clear list to load related doc need to download / upload
         wClaimTypeRelatedDocList.clear();        
         //add all result to wrapper class for claim type document
@@ -2271,7 +2283,7 @@ public without sharing class MyClaimSubmitController{
                                     // cItem.Certificate_Number__c = certNum; //Add by Manuel on Sep 28 that supplement parameter for claim request
                                     // system.debug('to see Person_Insured_Name__c : '+cItem.Person_Insured_Name__c);
                                     //ind. and group
-                                    getPolicyPersonCoverageBasic(wPolicyItem.policyNum, PISsn, !wPolicyItem.isIndividualPolicy);    //pNumSsnValueListMap get result Map<Map<String,String>, List<Map <String,String>>>
+                                    getPolicyPersonCoverageBasic(wPolicyItem.policyNum, PISsn);    //pNumSsnValueListMap get result Map<Map<String,String>, List<Map <String,String>>>
                                     //get value - policyNumSsnGetCertNumMap from getPolicyPersonCoverageBasic - //policyNum, ssn, certNum
                                     //group -> get benefit code by clinic visit call
                                     // Zoe commented on 1017 PPCP-143
@@ -2309,7 +2321,8 @@ public without sharing class MyClaimSubmitController{
     }    
     
     public void AddPolicyIntoClaim(){
-        // system.debug('to see AddPolicyIntoClaim start');
+        system.debug('to see AddPolicyIntoClaim start');
+        system.debug('cList[0].Policy__c: '+cList[0].Policy__c);
         // system.debug('to see wPolicyList_PI: '+wPolicyList_PI);
         Boolean tmp_policyMoreThan6Month = false;
         totalSumInsured = 0;    //init
@@ -2617,7 +2630,8 @@ public without sharing class MyClaimSubmitController{
     }
     
     public void CreateClaimRecord(){
-        // system.debug('to see CreateClaimRecord');
+        system.debug('to see CreateClaimRecord');
+        system.debug('to see cList[0].policy__c: '+cList[0].Policy__c);
         // system.debug('to see wPolicyList_PI: '+wPolicyList_PI);
         Savepoint sp = Database.setSavepoint();
         try{
@@ -2747,7 +2761,10 @@ public without sharing class MyClaimSubmitController{
                 //date
                 if(firstConsultationDateTimestamp != null && firstConsultationDateTimestamp != 0){cList[0].What_is_your_1st_consultation_date__c = DateTime.newInstance(firstConsultationDateTimestamp).date();}
                 if(dateToStopWorkDateTimestamp != null && dateToStopWorkDateTimestamp != 0){cList[0].Date_of_stop_working_due_to_disability__c = DateTime.newInstance(dateToStopWorkDateTimestamp).date();}
-                if(wInfoFromOtherCompanyList.size()>0){cList[0].Information_from_other_companies__c = JSON.serialize(wInfoFromOtherCompanyList);}
+                if(wInfoFromOtherCompanyList.size()>0 || wInfoInsuredFromOtherCompanyList.size()>0){
+                    cList[0].Information_from_other_companies__c = JSON.serialize(wInfoFromOtherCompanyList);
+                    cList[0].Information_of_benifit_from_other_comp__c = JSON.serialize(wInfoInsuredFromOtherCompanyList);
+                }
                 if(wAdmittedAndDischargedFromHospitalList.size()>0){cList[0].Admitted_and_discharged_from_hospital__c= JSON.serialize(wAdmittedAndDischargedFromHospitalList);}
                 if(wVisitDateStrList.size()>0){cList[0].Visit_Date__c = JSON.serialize(wVisitDateStrList);}
                 
@@ -2792,6 +2809,10 @@ public without sharing class MyClaimSubmitController{
                             }
                         }
                     }
+                }
+
+                if(cList[0].Is_Insured_for_Similar_Benefits__c){
+                    isInsuredForSimilarBenefitsFlag = true;
                 }
                 
                 //exist claim record
@@ -3163,7 +3184,7 @@ public without sharing class MyClaimSubmitController{
     
     /** common method **/  
     public void getPolicyListForPI(List<ClaimHelper.WrapperPolicy> wPolicyList_PI,List<ClaimHelper.WrapperPolicy> wPolicyList_unchanged,String ssn){
-        system.debug('to see getPolicyListForPI start');
+        // system.debug('to see getPolicyListForPI start');
         wPolicyList_PI.clear();
         for(ClaimHelper.WrapperPolicy wPolicyItem: wPolicyList_unchanged){
             for(Map<String,String> tmpMap: wPolicyItem.PIMapList){
@@ -3179,7 +3200,7 @@ public without sharing class MyClaimSubmitController{
     }
 
     public void loadSelectedWrapperPolicyList(List<ClaimHelper.WrapperPolicy> wPolicyList_PI,List<ClaimHelper.WrapperPolicy> wPolicyList_unchanged,String ssn){
-        system.debug('to see loadSelectedWrapperPolicyList start');
+        // system.debug('to see loadSelectedWrapperPolicyList start');
         wPolicyList_PI.clear();
         //wPolicyList_PI - add selected pi to list
         //wPolicyList_unchanged -  original list
@@ -3795,7 +3816,7 @@ public without sharing class MyClaimSubmitController{
                         typeCode.put('OP', '11');
                         typeCode.put('MAT', '12');
                         typeCode.put('DIS', '13');
-                        typeCode.put('CI', '14');
+                        typeCode.put('CI', '14'); //HKITSFDC-412 Emanuel rollback
                         typeCode.put('WL', '15');
                         typeCode.put('MIS', '16');
                         typeCode.put('SD', '17');
@@ -3804,7 +3825,7 @@ public without sharing class MyClaimSubmitController{
                         typeCode.put('ACC', '20');
                         typeCode.put('OTH', '21');
                         typeCode.put('OPF', '22');
-
+                            
                         for(String typeStr : tmpClaimTypeList){
                             HttpCalloutVO.ClaimType claimTyp = new HttpCalloutVO.ClaimType();
                             claimTyp.claimType = typeStr;
@@ -4126,7 +4147,7 @@ public without sharing class MyClaimSubmitController{
             if(benefitTypeItem == 'HS'){tmp_conditionList.add('HS__c');}
             if(benefitTypeItem == 'DIS'){tmp_conditionList.add('DIS__c');}
             if(benefitTypeItem == 'MAT'){tmp_conditionList.add('MAT__c');}
-            if(benefitTypeItem == 'CI'){tmp_conditionList.add('CI__c');}
+            if((benefitTypeItem == 'CI' || benefitTypeItem == 'WP')){tmp_conditionList.add('CI__c');} //HKITSFDC-412 Show CI Doc when WP is selected
             if(benefitTypeItem == 'OP'){tmp_conditionList.add('OP__c');}
             if(benefitTypeItem == 'OPF'){tmp_conditionList.add('OPF__c');}
             //Added by minglei 2018.05.15 [add Wellness type to claim] start
@@ -4284,7 +4305,6 @@ public without sharing class MyClaimSubmitController{
             if(pCodeClaimType.IPMI__c){tmpValueMap.put('isIPMI', '1');}    //have value mean fast track allow
             returnMap.put(tmpKeyMap, tmpValueMap);
         }
-        System.debug('covid-19 benefit: '+isCovid19);
         return returnMap;
     }
     
@@ -4294,6 +4314,14 @@ public without sharing class MyClaimSubmitController{
         //add 1 item each time
         ClaimHelper.WrapperInfoFromOtherCompany wItem_tmp = new ClaimHelper.WrapperInfoFromOtherCompany();
         wInfoFromOtherCompanyList.add(wItem_tmp);
+        return null;
+    }
+
+     public PageReference addInfoInsdFromOtherComp(){
+        // system.debug('to see AddInfoFromOtherComp start');
+        //add 1 item each time
+        ClaimHelper.WrapperInfoFromOtherCompany wItem_tmp = new ClaimHelper.WrapperInfoFromOtherCompany();
+        wInfoInsuredFromOtherCompanyList.add(wItem_tmp);
         return null;
     }
     
@@ -4312,6 +4340,22 @@ public without sharing class MyClaimSubmitController{
         wInfoFromOtherCompanyList = wInfoFromOtherCompanyList_tmp;
         return null;
     }
+
+    public PageReference RemoveInfoInsdFromOtherComp(){
+        // system.debug('to see RemoveInfoFromOtherComp start');
+        //remove 1 item each time with param
+        String idx_infoInsdFromOtherCompany = ApexPages.currentPage().getParameters().get('idx_infoInsdFromOtherCompany'); 
+        String idx_tmp = idx_infoInsdFromOtherCompany;
+        List<ClaimHelper.WrapperInfoFromOtherCompany> wInfoInsuredFromOtherCompanyList_tmp = new List<ClaimHelper.WrapperInfoFromOtherCompany>{};
+        Integer i = 0;
+        for(ClaimHelper.WrapperInfoFromOtherCompany tmpItem: wInfoInsuredFromOtherCompanyList){
+            if(idx_tmp != null && i != Integer.valueOf(idx_tmp)){wInfoInsuredFromOtherCompanyList_tmp.add(tmpItem);}
+            i++;
+        }
+        wInfoInsuredFromOtherCompanyList.clear();
+        wInfoInsuredFromOtherCompanyList = wInfoInsuredFromOtherCompanyList_tmp;
+        return null;
+    }
     
     public void clearwInfoFromOtherCompanyList(){
         // system.debug('to see pass clearwInfoFromOtherCompanyList');
@@ -4321,6 +4365,16 @@ public without sharing class MyClaimSubmitController{
         tmpWrapperList.add(wInfoFromOtherCompanyItem);
         wInfoFromOtherCompanyList = tmpWrapperList;
         cList[0].Information_from_other_companies__c = JSON.serialize(wInfoFromOtherCompanyList);
+    }
+
+    public void clearwInfoInsdFromOtherCompanyList(){
+        // clear for question: for borker new question - Information of benifit from other company  HKITSFDC-412
+        wInfoInsuredFromOtherCompanyList.clear();
+        List<ClaimHelper.WrapperInfoFromOtherCompany> tmpWrapperList2 = new List<ClaimHelper.WrapperInfoFromOtherCompany>{};
+        ClaimHelper.WrapperInfoFromOtherCompany wInfoInsuredFromOtherCompanyItem = new ClaimHelper.WrapperInfoFromOtherCompany();
+        tmpWrapperList2.add(wInfoInsuredFromOtherCompanyItem);
+        wInfoInsuredFromOtherCompanyList = tmpWrapperList2;
+        cList[0].Information_of_benifit_from_other_comp__c = JSON.serialize(wInfoInsuredFromOtherCompanyList);
     }
     
     public PageReference AddAdmissionAndDischargeDate(){
@@ -4638,7 +4692,7 @@ public without sharing class MyClaimSubmitController{
     }
     
     // WS - GetPolicyPersonCoverageBasic - pass ssn to get policy detail
-    public void getPolicyPersonCoverageBasic(String policyNumber,String ssn, Boolean isGroup){    //pNumSsnValueListMap 
+    public void getPolicyPersonCoverageBasic(String policyNumber,String ssn){    //pNumSsnValueListMap 
         // system.debug('to see getPolicyPersonCoverageBasic policyNumber start: '+policyNumber+'    ssn: '+ssn);
         policyNumber = policyNumber.trim();
         ssn = ssn.trim();
@@ -4679,9 +4733,6 @@ public without sharing class MyClaimSubmitController{
                 // system.debug('to see policyPersonCoverageList: '+policyPersonCoverageList);
             }
             List<Map<String,String>> tmpValueMapList = new List<Map<String,String>>{};
-            // 20200527 - minghua -Claim(group policy) filter out description contains Network Only Plan
-            Set<String> networkBenefitCode = new Set<String>();
-            Set<String> tmpBenefitCodeSet = new Set<String>();
                     
             for(HttpCalloutVO.PolicyPersonCoverage policyPersonCoverageItem: policyPersonCoverageList){
                 // system.debug('to see policyPersonCoverageItem: '+policyPersonCoverageItem);
@@ -4728,24 +4779,9 @@ public without sharing class MyClaimSubmitController{
                     //tmpValueMap.put('benefitCode', 'HEX');
                     tmpValueMap.put('rateScale', '');
                 }
-                // 20200527 - minghua -Claim(group policy) filter out description contains Network Only Plan
-                // comment by Rancho for CR48 testing - 20211109
-                // if(isGroup){
-                //     String benefitDetailItemDesc = policyPersonCoverageItem.benefitDetailItemDesc;
-                //     String benefitItemCodeStr = policyPersonCoverageItem.benefitItemCode;
-                //     if(String.isNotBlank(benefitDetailItemDesc) && benefitDetailItemDesc.containsIgnoreCase('Network Only')){
-                //         networkBenefitCode.add(benefitItemCodeStr);
-                //         System.debug('description contains Network Only Plan:'+benefitDetailItemDesc);
-                //         System.debug('description contains Network Only Plan - benefitCode is:'+benefitItemCodeStr);
-                //     }
-                //     if(!tmpBenefitCodeSet.contains(benefitItemCodeStr) && !networkBenefitCode.contains(benefitItemCodeStr)){
-                //         tmpBenefitCodeSet.add(benefitItemCodeStr);
-                //         tmpValueMapList.add(tmpValueMap);
-                //     }
-                // }else{
-                    tmpValueMapList.add(tmpValueMap);
-                // }
-                
+
+                tmpValueMapList.add(tmpValueMap);
+
                 Map<String,String> tmpCertMap = new Map<String,String>{};    //policyNum: ssn -> policyNum / ssn / certnum
                 tmpCertMap.put('policyNum', policyNumber);    
                 tmpCertMap.put('ssnNumber', ssn);
@@ -4757,29 +4793,9 @@ public without sharing class MyClaimSubmitController{
             
             // system.debug('to see tmpValueMapList: '+tmpValueMapList);
             if(tmpValueMapList.size()>0){
-                // 20200527 - minghua -Claim(group policy) filter out description contains Network Only Plan
-                // comment by Rancho for CR48 testing - 20211109
-                // if(isGroup){
-                //     List<Map<String,String>> tmpValueMapListTwo = new List<Map<String,String>>{};
-                //     if(!networkBenefitCode.isEmpty()){
-                //         for(Map<String,String> item: tmpValueMapList){
-                //             String benefitICode = item.get('benefitCode');
-                //             if(String.isNotBlank(benefitICode) && !networkBenefitCode.contains(benefitICode)){
-                //                 tmpValueMapListTwo.add(item);
-                //             }
-                //         }
-                //         if(tmpValueMapListTwo.size() != tmpValueMapList.size()){
-                //             tmpValueMapList.clear();
-                //             tmpValueMapList = tmpValueMapListTwo;
-                //         }
-                //     }
-                // }
-                // if(tmpValueMapList.size()>0){
-                    pNumSsnValueListMap.put(tmpKeyMap, tmpValueMapList);
-                // }
+                pNumSsnValueListMap.put(tmpKeyMap, tmpValueMapList);
                 system.debug('to see pNumSsnValueListMap: '+pNumSsnValueListMap);
-            }
-            
+            }           
             // for policy currency, updated by Zoe on 0405 for performance tuning
             // system.debug('********** wPolicyList_unchanged: ' + wPolicyList_unchanged);
             // system.debug('********** wPolicyList_unchanged.size: '+ wPolicyList_unchanged.size());  
@@ -5315,6 +5331,7 @@ public without sharing class MyClaimSubmitController{
             claimTypeDocIdSet.add(cTypeDocItem.id);
         }
         Map<String,List<Attachment>> claimTypeDocIdAttachmentMap = loadClaimTypeDocumentAttachement(claimTypeDocIdSet);    //save data in claimTypeDocIdAttachmentMap
+        system.debug('claimTypeDocIdAttachmentMap size: ' + claimTypeDocIdAttachmentMap.size() ) ;//HKITSFDC-413 debug only
         String typeNameEng ='';
         String typeNameChi ='';
         
@@ -5560,8 +5577,8 @@ public without sharing class MyClaimSubmitController{
         if(String.IsNotBlank(claimId)){
             String soql = ClaimHelper.BANK_ACCOUNT_ALL_FIELD;
             soql += ' where Claim__c =\''+claimId+'\'';
-            bankAccountList = Database.query(soql);
-            /* Nicole_GS Claim UAT_20210430_onPolicyChange();*/
+             /* Nicole_GS Claim UAT_20210430_bankAccountList = Database.query(soql);*/
+            onPolicyChange();
         }
     }
     
@@ -5811,6 +5828,7 @@ public without sharing class MyClaimSubmitController{
      * @DateTime 2021-11-08T15:03:48+0800
      * @param    selectedPolicy    
      */
+    @TestVisible
     private Boolean checkESFPolicy(String selectedPolicy){
         GS_ESF_Policy_Match_Setting__c matchRecord = GS_ESF_Policy_Match_Setting__c.getInstance(selectedPolicy);
         if(null != matchRecord && matchRecord.Policy_Type__c == 'ESF'){

@@ -9,9 +9,10 @@
  * JR1774           Lawrence BP Wong        2019-11                   JR1774
  * AH18454          Lawrence BP Wong        2020-01                   AH18454
  * HKITSFDC-8       Kamlesh, PCCW           2024-01                  Add 3 new field for Elite 360 Migration
+ * HKITSFDC-267     Alif, PCCW              2025-09                  NCD update
  ********************************************************************************/
 public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
-    // Function Name 
+    // Function Name
     public static final String GetPolicyListBasicByCriteria='GetPolicyListBasicByCriteria';
     public static final String GetPolicyPersonListBasic='GetPolicyPersonListBasic';
     public static final String GetPolicyPaymentBasic='GetPolicyPaymentBasic';
@@ -38,9 +39,6 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
     public static final String GetAuditTrail='GetAuditTrail'; //CS Member Level Jack add
     public static final String GetPolicyReplacementChangeHistory='GetPolicyReplacementChangeHistory';//policy replacement jack add
     public static final String GetMemberListByCriteria='GetMemberListByCriteria';//Rancho_JOBR347_20231108
-    
-    public static final String GetBodyCheckEligibility = 'GetBodyCheckEligibility'; // 21-02-2024 BodyCheckEligibility
-        
     //add by kermit
     public static final String BROKER_PORTAL_APPNAME='BROKER_PORTAL';
     public static final String CUSTOMER_PORTAL_APPNAME='CUSTOMER_PORTAL';
@@ -98,13 +96,13 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
         //SPS-165
     }
     
-    // BEGIN https://jira.express-scripts.com/browse/HKITSFDC-15
+     // BEGIN https://jira.express-scripts.com/browse/HKITSFDC-15
     // Elite 360 Migration  NCD
     public static final List<String> nCDProductList = new List<String>{
         'NELG', 'NESG', 'NELGA', 'NESGA', 'NELGM', 'NESGM', 'NELG2', 'NESG2'
     };
     // END https://jira.express-scripts.com/browse/HKITSFDC-15  
-
+    
     //Added by Nicole in Phase2
     public static final Map<String,String> familyRecordMap{get;set;}
     static{
@@ -183,7 +181,7 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
         this.functionName=PolicyCalloutHelper.getPolicyBillingListBasic;
         paramsMap=new Map<String,String>();
         paramsMap.put('PolNumber',policyNumber);
-        paramsMap.put('BrokerPortalBillingInd','N');	//HKITSFDC-148
+        paramsMap.put('BrokerPortalBillingInd','N');    //HKITSFDC-148
         return (List<HttpCalloutVO.PolicyBilling>)execute(new Map<String,String>());
     }
     //BEGIN HKITSFDC-148
@@ -225,7 +223,7 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
                 billing.FinActivityDate=getChildNodeTextIfNotEmpty('FinActivityDate',faNode);
                 billing.FinActivityDateInDate=getChildNodeDateIfNotEmpty('FinActivityDate',faNode,'yyyy-MM-dd');
                 billing.commissionAmt=getChildNodeDecimalIfNotEmpty('CommissionAmt',faNode);
-                //BEGIN HKITSFDC-148
+                 //BEGIN HKITSFDC-148
                 billing.paymentDescription=getChildNodeTextIfNotEmpty('PaymentDescription',faNode);
                 //END HKITSFDC-148
                 Dom.XmlNode paymentNode=getChildNodeIfNotNull('Payment',faNode);
@@ -337,7 +335,6 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
                     payment.annualPremium=getChildNodeDecimalIfNotEmpty('AnnualPaymentAmt',policyNode);
                     // Zoe updated on 0614,PPCP-33
                     payment.couponUsedAmt=getChildNodeDecimalIfNotEmpty('CouponUsedAmt',policyNode);//AM project coupon jack add
-                    payment.renewalNoticeInd=getChildNodeTextIfNotEmpty('RenewalNoticeInd',policyNode);// Rancho_JOBR367_20240513 - update premium display
                     
                     // 20200610 - minghua - levyII
                     payment.levyCurrentPremium=getChildNodeDecimalIfNotEmpty('LastPaymentLevy',policyNode);
@@ -366,11 +363,10 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
                     
                     // BEGIN https://jira.express-scripts.com/browse/HKITSFDC-15
                     // Elite 360 Migration - NCD
-                        payment.nCDEligibility = getChildNodeTextIfNotEmpty('NcdEligibility',policyNode);
-                        payment.nCDUpdateDate = getChildNodeTextIfNotEmpty('NcdUpdDate',policyNode);
+                    payment.nCDEligibility = getChildNodeTextIfNotEmpty('NcdEligibility',policyNode);
+                    payment.nCDUpdateDate = getChildNodeTextIfNotEmpty('NcdUpdDate',policyNode);
                     // END https://jira.express-scripts.com/browse/HKITSFDC-15  
-
-
+                    
                     //JR1783
                     payment.discountList=new List<HttpCalloutVO.Discount>();
                     payment.couponList=new List<Coupon>();//AM project coupon jack add
@@ -976,7 +972,6 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
                 Policy.marketingName=getChildNodeTextIfNotEmpty('MarketingName',policyNode);
                 Policy.productType=getChildNodeTextIfNotEmpty('ProductType',policyNode);
                 Policy.productTypeCode=getChildNodeAttributeIfNotEmpty('ProductType','tc',policyNode);
-                Policy.renewalNoticeInd=getChildNodeTextIfNotEmpty('RenewalNoticeInd',policyNode);// Rancho_JOBR367_20240513 - update premium display
                 
                 Dom.XmlNode PoLifEExtensionNode=getChildNodeIfNotNull('OLifEExtension',policyNode);
                 List<Dom.XmlNode> benefitNodeList=getChildElementsIfNotNull(PoLifEExtensionNode);
@@ -1027,14 +1022,15 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
                         coverage.productType=Policy.productType;
                         coverage.planTypeCode=Policy.planTypeCode;
                         coverage.planTypeDesc=Policy.productType;
-                    
-                    	//START HKITSFDC-265
-                		coverage.planLevel=getChildNodeTextIfNotEmpty('PlanLevel',policyNode);
-                		coverage.AreaOfCover=getChildNodeTextIfNotEmpty('AreaOfCover',policyNode);
-                		coverage.RoomType=getChildNodeTextIfNotEmpty('RoomType',policyNode);
-                		//END HKITSFDC-265
+
+                		//START HKITSFDC-412
+                		coverage.RemainSumInsured=getChildNodeTextIfNotEmpty('RemainSumInsured',coverageNode);
+                		coverage.CoveragePeriodFrom=getChildNodeTextIfNotEmpty('CoveragePeriodFrom',coverageNode);
+                        coverage.CoveragePeriodFromInDate=getChildNodeDateIfNotEmpty('CoveragePeriodFrom',coverageNode,'yyyy-MM-dd');
+                		coverage.CoveragePeriodTo=getChildNodeTextIfNotEmpty('CoveragePeriodTo',coverageNode);
+                    	coverage.CoveragePeriodToInDate=getChildNodeDateIfNotEmpty('CoveragePeriodTo',coverageNode,'yyyy-MM-dd');
+                		//END HKITSFDC-412
                     	
-                        coverage.renewalNoticeInd=Policy.renewalNoticeInd;// Rancho_JOBR367_20240513 - update premium display
                         // Coverage node
                         String benefitCodeRateScale=getChildNodeTextIfNotEmpty('ProductCode',coverageNode);
                         coverage.benefitCode=benefitCodeRateScale;
@@ -1681,7 +1677,7 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
                     person.productCode=getChildNodeTextIfNotEmpty('ProductCode',OLifEExtensionNode);
                     //end
                     //Add by Owen ,2023.06.30 for GetPolicyPersonListBasicByCriteria to get GOPIndicator and PreAuthIndicator
-                    //person.PreAuthIndicator='True'.equals(getChildNodeTextIfNotEmpty('PreAuthIndicator',OLifEExtensionNode));
+                    person.PreAuthIndicator='True'.equals(getChildNodeTextIfNotEmpty('PreAuthIndicator',OLifEExtensionNode));
                     //Hardcopy Indicator added start
                     Dom.XmlNode HardCopyIndicatorNode=getChildNodeIfNotNull('HardCopyIndicator',OLifEExtensionNode);
                     person.medCardIndicator=getChildNodeTextIfNotEmpty('MedCardIndicator',HardCopyIndicatorNode);
@@ -1757,7 +1753,7 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
                 policy.policyRemark=getChildNodeTextIfNotEmpty('Remarks',pOLifEExtensionNode);
                 policy.holderName=getChildNodeTextIfNotEmpty('PolicyHolderName',pOLifEExtensionNode);
                 //Add by Owen ,2023.06.30 for GetPolicyPersonListBasicByCriteria to get GOPIndicator and PreAuthIndicator
-                //policy.GOPIndicator='True'.equals(getChildNodeTextIfNotEmpty('GOPIndicator',pOLifEExtensionNode));
+                policy.GOPIndicator='True'.equals(getChildNodeTextIfNotEmpty('GOPIndicator',pOLifEExtensionNode));
                 //Added by Connor
                 Dom.XmlNode pOLifExHardCopyIndicatorNode=getChildNodeIfNotNull('HardCopyIndicator',pOLifEExtensionNode);
                 policy.medCardIndicator=getChildNodeTextIfNotEmpty('MedCardIndicator',pOLifExHardCopyIndicatorNode);
@@ -2736,7 +2732,6 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
                     policy.rateScale=getChildNodeTextIfNotEmpty('RateScale',policyNode); // WS GetPolicyBasic enhanced added by ZaiHong 20180427
                     policy.rateScaleName=getChildNodeTextIfNotEmpty('RateScaleName',policyNode);//AM project rate scale name
                     policy.sourceSystem=getChildNodeTextIfNotEmpty('SourceSystem',policyNode);// Added by lu weizheng at 20180516
-                    policy.renewalNoticeInd=getChildNodeTextIfNotEmpty('RenewalNoticeInd',policyNode);// Rancho_JOBR367_20240513 - update premium display
                     
                     // Add 3 new field for Elite 360 Migration https://jira.express-scripts.com/browse/HKITSFDC-8
                     if(!String.isBlank(policy.marketingName) && policy.marketingName.toLowerCase().contains('elite')) {
@@ -2745,15 +2740,15 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
                         policy.actualSegment=getChildNodeTextIfNotEmpty('ActualSegment',policyNode);
                     }
                     
-                    // BEGIN https://jira.express-scripts.com/browse/HKITSFDC-15
+                     // BEGIN https://jira.express-scripts.com/browse/HKITSFDC-15
                     // Elite 360 Migration - NCD
                         policy.nCDEligibility = getChildNodeTextIfNotEmpty('NcdEligibility',policyNode);
                         policy.nCDUpdateDate = getChildNodeTextIfNotEmpty('NcdUpdDate',policyNode);
-                    // END https://jira.express-scripts.com/browse/HKITSFDC-15
-                     
-                    // BEGIN HKITSFDC-267
-                    policy.NcdInd = getChildNodeTextIfNotEmpty('NcdInd', policyNode);
-					policy.NcdPercentage = getChildNodeDecimalIfNotEmpty('NcdPercentage', policyNode);
+                    // END https://jira.express-scripts.com/browse/HKITSFDC-15  
+                    
+                        // BEGIN HKITSFDC-267
+                        policy.NcdInd = getChildNodeTextIfNotEmpty('NcdInd', policyNode);
+                        policy.NcdPercentage = getChildNodeDecimalIfNotEmpty('NcdPercentage', policyNode);
                     // END HKITSFDC-267  
 
                     
@@ -4916,8 +4911,7 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
                 + '    </OLifEExtension>'
                 + '</OLifE>';
             }
-        }else if(this.functionName == PolicyCalloutHelper.GetMemberListByCriteria){// Rancho_JOBR347_20231108
-            // HKITSFDC-57 add node GovtID
+        }else if(this.functionName == PolicyCalloutHelper.GetMemberListByCriteria){// Rancho_JOBR347_20231108 // HKITSFDC-57 add node GovtID
             criterias +='<CriteriaExpression>'
                        +'    <CriteriaOperator tc="2">And</CriteriaOperator>'
                        +     CignaUtil.buildCriteriaNode('252','OLifEExtension','PolicyType',paramsMap.get('PolicyType'),'1','Equal')
@@ -5077,7 +5071,7 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
                   +             productCodeCriteria
                   +             buildClaimNode()
                   + (this.functionName==PolicyCalloutHelper.GetPolicyDocTypeList || this.functionName==PolicyCalloutHelper.GetPolicyReplacementChangeHistory ?holderGovtIDNode:'') // for efulfillment enhanced //jack add for policy replacement
-                  + (this.functionName==PolicyCalloutHelper.GetPolicyBillingListBasic ? '<BrokerPortalBillingInd>'+brokerPortalBillingInd+'</BrokerPortalBillingInd>':'') //HKITSFDC-148            
+                  + (this.functionName==PolicyCalloutHelper.GetPolicyBillingListBasic ? '<BrokerPortalBillingInd>'+brokerPortalBillingInd+'</BrokerPortalBillingInd>':'') //HKITSFDC-148      
                   +'        </Policy>'
                   +         buildInvestmentNode()
                   +         buildAttachmentNode()
@@ -6419,25 +6413,6 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
 
         return newReportMap.values();
     }
-    
-    // 21-02-2024 BodyCheckEligibility
-   /********************************************************************
-     * @param policyNumber – policy number 
-     * @param certificateNo – certificate number
-     * @param userName -  user name
-     * @decs:Call GetBodyCheckEligibility WS to get bodyCheckEligibility info 
-     * @return List<HttpCalloutVO.BodyCheckEligibility>
-   ********************************************************************/
-    public List<HttpCalloutVO.BodyCheckEligibility> getBodyCheckEligibility(String policyNumber, String certificateNo, String userName){
-        system.debug('PolicyCalloutHelper.getBodyCheckEligibility');
-        this.functionName=PolicyCalloutHelper.getBodyCheckEligibility;
-        paramsMap=new Map<String,String>();
-        if(String.isNotBlank(policyNumber)){paramsMap.put('PolNumber', policyNumber);}
-        if(String.isNotBlank(certificateNo)){paramsMap.put('CertificateNo', certificateNo);}
-        if(String.isNotBlank(userName)){paramsMap.put('UserLoginName', username);}
-        return (List<HttpCalloutVO.BodyCheckEligibility>)execute(new Map<String,String>());
-    }
-    
 
     /********************************************************************
      * @decs: Rancho_JOBR347_20231108 - get member list with criteria
@@ -6457,6 +6432,7 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
         if(String.isNotBlank(fullName)){paramsMap.put('FullName', fullName);}
         if(String.isNotBlank(fullName)){paramsMap.put('SortOrder', sortOrder);}
         if(String.isNotBlank(fullName)){paramsMap.put('UserLoginName', username);}
+
         if(String.isNotBlank(fullName)){paramsMap.put('GovtID','');}//HKITSFFDC-57 blank value to get empty string of GovtID node
         return (List<HttpCalloutVO.DocMember>)execute(new Map<String, String>());
     }
@@ -6486,7 +6462,6 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
         return (List<HttpCalloutVO.DocMember>)execute(new Map<String, String>());
     }
 
-    
     /********************************************************************
      * @decs: Rancho_JOBR347_20231108 - get member list with criteria
      * @param Dom.document doc - response body

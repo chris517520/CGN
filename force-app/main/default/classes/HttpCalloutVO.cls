@@ -8,7 +8,10 @@
  * ......           
  * JR1774           Lawrence BP Wong        2019-11                  JR1774
  * AH18454          Lawrence BP Wong        2020-01                  AH18454
- * HKITSFDC-8       Kamlesh, PCCW           2024-01                  Add 3 new field for Elite 360 Migration    
+ * HKITSFDC-8       Kamlesh, PCCW           2024-01                  Add 3 new field for Elite 360 Migration 
+ * HKITSFDC-6       Kamlesh, PCCW           2024-04                  Body Check
+ * HKITSFDC-22      Kamlesh, PCCW          2024-06                  HKITSFDC-15 and 22 , LIH and NCD fields
+ * HKITSFDC-267     Alif, PCCW                    2024-06                  HKITSFDC-267 , NCD fields
  ********************************************************************************/
 public class HttpCalloutVO{
     /*
@@ -184,16 +187,9 @@ public class HttpCalloutVO{
         @AuraEnabled public Date cashRewardDate{get;set;}
         //Added by Nicole for test in Phase2 End
         //HC-217 Add by Owen , 2023.06.30 for GetPolicyPersonListBasicByCriteria to get GOPIndicator and PreAuthIndicator
-        // @AuraEnabled
-        // public Boolean GOPIndicator{get;set;}
+        @AuraEnabled
+        public Boolean GOPIndicator{get;set;}
         //add by jay
-        
-        //START HKITSFDC-265
-        public String planLevel{get;set;}
-        public String AreaOfCover{get;set;}
-        public String RoomType{get;set;}
-        //END HKITSFDC-265
-        
         public String insuredSsn{get;set;}
         public List<IncentivesInformation> incentiviesInfoList{get;set;}{incentiviesInfoList = new List<IncentivesInformation>();}
         public String customId{get;set;}
@@ -213,12 +209,12 @@ public class HttpCalloutVO{
         @AuraEnabled public String retentionHealthEligible {get; set;}
         
         // END changes HKITSFDC-22
- 
+        
         // BEGIN HKITSFDC-267
         @AuraEnabled public String NcdInd {get;set;}
         @AuraEnabled public Double NcdPercentage {get;set;}
-        // END BEGIN HKITSFDC-267
-            
+        // END BEGIN HKITSFDC-267    
+        
         // David Zhang - CB - 20190221
         public String memberCertNo{get;set;} //for group PI
         //David Zhang - Policy Function Mapping
@@ -271,7 +267,7 @@ public class HttpCalloutVO{
         public Boolean isNCDEligible {get; set;}
         // END https://jira.express-scripts.com/browse/HKITSFDC-15  
 
-        // BEGIN HKITSFDC-148	
+        // BEGIN HKITSFDC-148   
         public String lastAgent {get;set;}
         public String writingAgent {get;set;}
         public Date brokerChangeDate {get;set;}
@@ -476,12 +472,6 @@ public class HttpCalloutVO{
         public String renewalRemarks{get;set;}
         public String diagnosisCode{get;set;}
         public String diagnosisDesc{get;set;}
-        
-        // BEGIN HKITSFDC-4
-        public Boolean isPersonVIP{get;set;}
-        public Boolean hasAnyActiveComplaints{get;set;}
-        // END HKITSFDC-4 
-        
         //add Bob 20210318 Client Policy Information
         @AuraEnabled
         public String contactPerson{get;set;}
@@ -840,8 +830,8 @@ public class HttpCalloutVO{
         //CS Member Level Jack add end
 
         //HC-217 Add by Owen , 2023.06.30 for GetPolicyPersonListBasicByCriteria to get GOPIndicator and PreAuthIndicator
-        // @AuraEnabled
-        // public Boolean PreAuthIndicator{get;set;}
+        @AuraEnabled
+        public Boolean PreAuthIndicator{get;set;}
 
     }
 
@@ -1037,7 +1027,6 @@ public class HttpCalloutVO{
      * Class for GetPolicyPaymentBasic
      */
     public class PolicyPayment{
-        public String renewalNoticeInd{get;set;}// Rancho_JOBR367_20240513 - update premium display
         //AM project coupon jack add
         public Decimal couponUsedAmt{get;set;}
         @AuraEnabled public List<Coupon> couponList{get;set;}
@@ -1170,10 +1159,12 @@ public class HttpCalloutVO{
         public String currencyTypeCode{get;set;}       // Currency Code  e.g. 840
         @AuraEnabled
         public String currencyTypeDesc{get;set;}       // Currency description  e.g. USD
-		//BEGIN HKITSFDC-148
+        
+        //BEGIN HKITSFDC-148
         @AuraEnabled
         public String paymentDescription{get;set;}
         //END HKITSFDC-148
+        
         //for Group
         @AuraEnabled
         public String issueDate{get;set;}
@@ -1322,7 +1313,6 @@ public class HttpCalloutVO{
      * Class for GetPolicyPersonCoverageBasic
      */
     public class PolicyPersonCoverage implements Comparable{
-        public String renewalNoticeInd{get;set;}// Rancho_JOBR367_20240513 - update premium display
         public String partyTypeCode{get;set;}            // Product code
         public String govtID{get;set;}
         public String originatingObjectType{get;set;}
@@ -1391,14 +1381,15 @@ public class HttpCalloutVO{
         @AuraEnabled
         public String benefitItemCode{get;set;}           // Benefit Detail Item Code
         
-        //START HKITSFDC-265
+        
+        //START HKITSFDC-412
         @AuraEnabled
-        public String planLevel{get;set;}
-        @AuraEnabled
-        public String AreaOfCover{get;set;}
-        @AuraEnabled
-        public String RoomType{get;set;}
-        //END HKITSFDC-265
+        public String RemainSumInsured{get;set;}
+        public String CoveragePeriodFrom{get;set;}
+        @AuraEnabled public Date CoveragePeriodFromInDate{get;set;}
+        public String CoveragePeriodTo{get;set;}
+        @AuraEnabled public Date CoveragePeriodToInDate{get;set;}       
+        //END HKITSFDC-412
 
         public String currencySymbol{get;set;}
         public String currencyTypeCodeTC{get;set;}
@@ -1439,9 +1430,10 @@ public class HttpCalloutVO{
         public Boolean isDisplay{get;set;}{ isDisplay = true;} // Display flag for hot fix
         public List<HttpCalloutVO.Exclusion> exclusionList{get;set;}
         public String sectionType{get;set;}
-        public String benefitEnName{get;set;}// Rancho_JOBR382_20240730
+        public String benefitEnName{get;set;}// Rancho_JOBR382_20240730 ,  HKITSFDC-47
         public Integer compareTo(Object ct){
             PolicyPersonCoverage that = (PolicyPersonCoverage) ct;
+            
              //Begin HKITSFDC-47
             if(String.isNotBlank(this.indicatorCode) && String.isNotBlank(that.indicatorCode)){
                 if(this.indicatorCode> that.indicatorCode){ return 1; }
@@ -1453,7 +1445,7 @@ public class HttpCalloutVO{
                 else if(this.benefitEnName< that.benefitEnName){ return -1; }
                 else{ return 0; }
             }
-            //End HKITSFDC-47 , original sort by coverageNumner and benefitCode only
+            //End HKITSFDC-47 , original sort by coverageNumner and benefitCode only 
             else if(String.isNotBlank(this.coverageNumber) && this.coverageNumber.isNumeric()
                     && String.isNotBlank(that.coverageNumber) && that.coverageNumber.isNumeric()){
                 Integer thisNo = Integer.valueOf(this.coverageNumber);
@@ -1461,8 +1453,7 @@ public class HttpCalloutVO{
                 if(thisNo > thatNo){ return 1; }
                 else if(thisNo < thatNo){ return -1; }
                 else{ return 0; }
-            }
-            else if(String.isNotBlank(this.benefitCode) && String.isNotBlank(that.benefitCode)){
+            }else if(String.isNotBlank(this.benefitCode) && String.isNotBlank(that.benefitCode)){
                 if(this.benefitCode > that.benefitCode){ return 1; }
                 else if(this.benefitCode < that.benefitCode){ return -1; }
                 else{ return 0; }
@@ -2434,7 +2425,6 @@ public class HttpCalloutVO{
         public String forgetPassword{get;set;} // XmlElement(name = "ForgetPassword") "Y" or "N", Rancho_JOBR300_20230214 - detect forgot password and register user
         public String isHKID{get;set;} // XmlElement(name = "GovtIDIndicator") "Y" or "N", Rancho_JOBR300_20230214 - identity number user registered with
         public String newAgentCode{get;set;}        // Rancho_PI83_20221110 - only pass value when update user agent code
-        public String openId{get;set;} // Rancho_iAMSmart_20250806 - iAM Smart Open ID
         public User() {
             this.hkId = '';
             this.roleId = '';
@@ -2611,7 +2601,6 @@ public class HttpCalloutVO{
         public String subject{get;set;}
         public String content{get;set;}
         public String recipient{get;set;}
-        @AuraEnabled public String status {get;set;}	//HKITSFDC-342
     }
 
     public class CaseRequest{
@@ -3645,7 +3634,7 @@ public String PromoCode{get;set;} // Add by Owen,20230523, For JOBR-312 to get p
         @AuraEnabled public String deductibleFulfilment{get;set;}// Y/N
     }
     
-    // BEGIN BodyCheckEligibility
+     // BEGIN BodyCheckEligibility
     public class BodyCheckEligibility{
         @AuraEnabled public String PlanDescription{get;set;}
         @AuraEnabled public String PolicyNumber{get;set;}
@@ -3727,7 +3716,5 @@ public String PromoCode{get;set;} // Add by Owen,20230523, For JOBR-312 to get p
         }
     }
     
-// END BodyCheckEligibility
-
-    
+    // END BodyCheckEligibility
 }
