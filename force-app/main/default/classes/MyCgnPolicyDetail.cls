@@ -206,7 +206,8 @@ global with sharing class MyCgnPolicyDetail {
                 List<Object> resultList = getChangeRecordPI(reqMap);
                 result.data = resultList;
             }else if(reqUrl.equalsIgnoreCase('/policyDetail/getAttBody')){
-                getAttBody(reqMap);
+                List<Object> resultList = new List<object>{getAttBody(reqMap)};
+                result.data = resultList;
             }else if(reqUrl.equalsIgnoreCase('/policyDetail/checkIsDocumentDownloadComplete')){
                 List<Object> resultList = new List<object>{checkIsDocumentDownloadComplete(reqMap)};
                 result.data = resultList;
@@ -1644,16 +1645,19 @@ global with sharing class MyCgnPolicyDetail {
     public Class DocumentInfo{
         String result;
         String body;
+        String attachmentId;
     }
     public static DocumentInfo checkIsDocumentDownloadComplete(Map<String, Object> reqMap){
         DocumentInfo docInf = new DocumentInfo();
         String attId = String.valueOf(reqMap.get('attId'));
         if(String.isNotBlank(attId)){
+            // to do if file store id 
+            // else attid 
             for(attachment a : [Select Id,Body From Attachment Where Id =:attId]){
                 if(a.Body!=null && a.body.size()>0){
                     docInf.result='true';
                     docInf.body=EncodingUtil.base64Encode(a.Body);
-                   // HKITSFDC-438  docInf.body='file=00PA200000EkTN7MAN&operationContext=S1';
+                    // HKITSFDC-438  docInf.body='file=00PA200000EkTN7MAN&operationContext=S1';
                 }
             }
         }else{
@@ -1662,7 +1666,11 @@ global with sharing class MyCgnPolicyDetail {
         return docInf;
     }
     //{!downloadSitePrefix}apex/ComFileDownLoadVFP?lang={!curLang}&attID={!indDocAttIDList[tmpIdx]}&attKey={!myList.attachmentKey}&pol={!JSINHTMLENCODE(policyNumber)}&appName=CUSTOMER_PORTAL
-    public static void getAttBody(Map<String, Object> reqMap){
+    Class AttBodyInfo {
+        String fileStoreId;
+    }
+    public static AttBodyInfo getAttBody(Map<String, Object> reqMap){
+        AttBodyInfo attInfo = new AttBodyInfo();
         system.debug(' getAttBody ' + reqMap) ;//20250801 debug
         string attID = String.valueOf(reqMap.get('attID'));        
         string pol = String.valueOf(reqMap.get('pol'));
@@ -1674,23 +1682,31 @@ global with sharing class MyCgnPolicyDetail {
         
         // String selectedDowlAttId = String.valueOf(reqMap.get('attID'));
         String appName = 'CUSTOMER_PORTAL';//String.valueOf(reqMap.get('appName'));
-          system.debug('[MyCgnPolicyDetail] parameters ' + ' ' + pol + ' attKey ' +  attKey + 'lang ' + lang + ' attID ' + attID + ' appName ' + appName + 'type ' + type ) ;//20250801 debug
+        system.debug('[MyCgnPolicyDetail] parameters ' + ' ' + pol + ' attKey ' +  attKey + 'lang ' + lang + ' attID ' + attID + ' appName ' + appName + 'type ' + type ) ;//20250801 debug
         if(attKey!='Insurance_Certificate'){
-            if ('policy'.equalsIgnoreCase(type)){
-                 system.debug(' enqueueJob ' + ' ' + pol + ' attKey ' +  attKey + 'lang ' + lang + ' attID ' + attID + ' appName ' + appName + 'type ' + type ) ;//20250801 debug
-               try{
-                   Id jid = System.enqueueJob(new downloadDocQueue(pol, attKey, lang, attID, appName, type));// 20250802 System.enqueueJob(new downloadDocQueue(pol, attKey, lang, attID, appName, type));  
+            File_Store__c fs = new File_Store__c();
+            fs.OwnerId = UserInfo.getUserId();
+            fs.Owner_id__c = UserInfo.getUserId();
+            insert fs;
+            attInfo.fileStoreId = fs.Id;
+            system.debug(' getAttBody fileStoreId ' + attInfo.fileStoreId) ;
+            if  ('policy'.equalsIgnoreCase(type)){
+                system.debug(' enqueueJob ' + ' ' + pol + ' attKey ' +  attKey + 'lang ' + lang + ' attID ' + attID + ' appName ' + appName + 'type ' + type ) ;//20250801 debug
+                try{
+                   Id jid = System.enqueueJob(new downloadDocQueue(pol, attKey, lang, attID, appName, type, fs.Id)); 
                    system.debug('enequeue jid  ' + jid +' total running ' + Limits.getQueueableJobs() );
-                 }
+                }
                 catch(Exception ex){
                     system.debug('enequeue Exception: ' + ex.getStackTraceString());
                 }
-               finally{
-                   system.debug(' enqueueJob done') ;//20250801 debug
+                finally{
+                    system.debug(' enqueueJob done') ;//20250801 debug
                 }
             }
-            
+        } else {
+            attInfo.fileStoreId = '';
         }
+        return attInfo;
     }
 
     Class MedicalcardInfo{
@@ -1761,7 +1777,7 @@ global with sharing class MyCgnPolicyDetail {
            Boolean isCI = false;
            for(HttpCalloutVO.PolicyPersonCoverage cov : covList){
                 
-                
+        
                 if(String.isNOTBlank(cov.benefitCode) && String.isNotBlank(cov.coverageIndicator) &&  cov.coverageIndicator.equals('Base') ){ // confirm by that CI wont be in rider ( cov.coverageIndicator.equals('Base') || cov.coverageIndicator.equals('Rider'))){
                    if ( ciProductCodeList.contains(cov.benefitCode.toUpperCase()) ){
                        isCI = true;
@@ -1788,7 +1804,7 @@ global with sharing class MyCgnPolicyDetail {
                                 //cov.CoveragePeriodFrom =  String.valueOf(cov.CoveragePeriodFromInDate.day())+ '/' + String.valueOf(cov.CoveragePeriodFromInDate.month()) + '/' + String.valueOf(cov.CoveragePeriodFromInDate.year());
                             }
                             if ( String.isNotBlank(cov.CoveragePeriodTo) && cov.CoveragePeriodToInDate != null ) {
-                                 cov.CoveragePeriodFrom = dateTimeString(cov.CoveragePeriodToInDate);
+                                 cov.CoveragePeriodTo = dateTimeString(cov.CoveragePeriodToInDate);
                                 //cov.CoveragePeriodTo = String.valueOf(cov.CoveragePeriodToInDate.day()) + '/' + String.valueOf(cov.CoveragePeriodToInDate.month()) + '/' + String.valueOf(cov.CoveragePeriodToInDate.year());
                             }
                         }
