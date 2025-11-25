@@ -1649,19 +1649,21 @@ global with sharing class MyCgnPolicyDetail {
     }
     public static DocumentInfo checkIsDocumentDownloadComplete(Map<String, Object> reqMap){
         DocumentInfo docInf = new DocumentInfo();
-        String attId = String.valueOf(reqMap.get('attId'));
-        if(String.isNotBlank(attId)){
+        String fileStoreId = String.valueOf(reqMap.get('fileStoreId'));
+        if(String.isNotBlank(fileStoreId)){
             // to do if file store id 
             // else attid 
-            for(attachment a : [Select Id,Body From Attachment Where Id =:attId]){
-                if(a.Body!=null && a.body.size()>0){
+            for(attachment att : [Select Id, Body From Attachment Where ParentId =: fileStoreId]){
+                if(att.Body!=null && att.Body.size()>0){
                     docInf.result='true';
-                    docInf.body=EncodingUtil.base64Encode(a.Body);
-                    // HKITSFDC-438  docInf.body='file=00PA200000EkTN7MAN&operationContext=S1';
+                    // docInf.body=EncodingUtil.base64Encode(a.Body);
+                    //HKITSFDC-438  
+                    docInf.body='file='+ att.Id + '&operationContext=S1';
+                    docInf.attachmentId=att.Id;
                 }
             }
         }else{
-        docInf.result = 'false';
+            docInf.result = 'false';
         }
         return docInf;
     }
