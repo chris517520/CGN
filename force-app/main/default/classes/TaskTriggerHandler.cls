@@ -29,6 +29,11 @@ public without sharing class TaskTriggerHandler{
     
     public static void onBeforeInsert(List<Task> newList){
         system.debug('TaskTriggerHandler.onBeforeInsert in');
+        for (Task t : newList) {
+            System.debug('New Task Record Type: ' + recordTypeMap.get(t.recordTypeId));
+            System.debug('New isSetReminder: ' + t.IsReminderSet);
+            System.debug('New ReminderDateTime: ' + t.ReminderDateTime);
+        }
         If(isBDUser){
             TaskTriggerHandler.dueDateValidation(newList);
         }

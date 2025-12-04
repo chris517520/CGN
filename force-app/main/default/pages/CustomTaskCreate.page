@@ -1,0 +1,121 @@
+<apex:page controller="CustomTaskCreateController" showHeader="true" sidebar="true">
+    <apex:sectionHeader title="Task Edit" subtitle="New Task"/>
+    
+    <apex:form >
+        <apex:pageMessages />
+        
+        <!-- Call Task Section -->
+        <apex:pageBlock title="Task Information" mode="edit">
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!saveTasks}" value="Save"/>
+                <apex:commandButton action="{!cancel}" value="Cancel"/>
+            </apex:pageBlockButtons>
+            
+            <!-- Task Information Section -->
+            <apex:pageBlockSection title="Task Information" columns="2">
+                <apex:inputField value="{!callTask.WhatId}" label="Related To"/>
+                <apex:inputField value="{!callTask.OwnerId}" label="Assigned To"/>
+                <apex:inputField value="{!callTask.Subject}" label="Subject" required="true"/>
+                <apex:inputField value="{!callTask.ActivityDate}" label="Due Date" required="true"/>
+                <apex:inputField value="{!callTask.Comments}" label="Comments"/>
+                <apex:inputField value="{!callTask.Term_Code__c}" label="Term Code"/>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Result"/>
+                    <apex:outputPanel >
+                        <apex:inputField value="{!callTask.Result__c}">
+                            <apex:actionSupport event="onchange" action="{!updateTermCode}" reRender="termCodeField"/>
+                        </apex:inputField>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:inputField value="{!callTask.UCID__c}" label="UCID"/>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Overall Opt-in/Opt-out"/>
+                    <apex:selectList value="{!callTask.Overall_Opt_in_Opt_out__c}" size="1">
+                        <apex:selectOptions value="{!optInOptOutOptions}"/>
+                    </apex:selectList>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            
+            <!-- Call Details Section -->
+            <apex:pageBlockSection title="Call Details" columns="2">
+                <apex:inputField value="{!callTask.CallDurationInSeconds}" label="Call Duration"/>
+                <apex:inputField value="{!callTask.TMR_Agent_ID__c}" label="TMR Agent ID"/>
+                <apex:inputField value="{!callTask.Call_Start_Time__c}" label="Call Start Time"/>
+                <apex:inputField value="{!callTask.Call_End_Time__c}" label="Call End Time"/>
+            </apex:pageBlockSection>
+            
+            <!-- Additional Information Section -->
+            <apex:pageBlockSection title="Additional Information" columns="2">
+                <apex:inputField value="{!callTask.Status}" label="Status" required="true"/>
+                <apex:inputField value="{!callTask.Phone__c}" label="Phone"/>
+                <apex:inputField value="{!callTask.Priority}" label="Priority"/>
+                <apex:inputField value="{!callTask.Email__c}" label="Email"/>
+                <apex:inputField value="{!callTask.Final_Attempt__c}" label="Final Attempt"/>
+            </apex:pageBlockSection>
+            
+            <!-- System Populate Information (Read-only) -->
+            <apex:pageBlockSection title="System Populate Information" columns="2">
+                <apex:outputField value="{!callTask.OwnerId}" label="Record Type"/>
+                <apex:outputField value="{!callTask.AccountId}" label="Name"/>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        
+        <!-- Schedule Follow-up Task Section -->
+        <apex:pageBlock title="Schedule Follow-up Task" mode="edit">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton action="{!toggleFollowUpSection}" 
+                    value="{!IF(showFollowUpSection, 'Hide Follow-up Task', 'Show Follow-up Task')}" 
+                    reRender="followUpPanel"/>
+            </apex:pageBlockButtons>
+            
+            <apex:outputPanel id="followUpPanel">
+                <apex:pageBlockSection rendered="{!showFollowUpSection}" columns="1">
+                    <apex:inputCheckbox value="{!createFollowUp}" label="Create Follow-up Task"/>
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection title="Task Information" columns="2" rendered="{!AND(showFollowUpSection, createFollowUp)}">
+                    <apex:inputField value="{!followUpTask.OwnerId}" label="Assigned To" required="true"/>
+                    <apex:inputField value="{!followUpTask.Subject}" label="Subject" required="true"/>
+                    <apex:inputField value="{!followUpTask.WhatId}" label="Related To"/>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Due Date"/>
+                        <apex:outputPanel layout="block" styleClass="requiredInput">
+                            <apex:outputPanel layout="block" styleClass="requiredBlock"/>
+                            <apex:inputField value="{!followUpTask.ActivityDate}" required="true"/>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:inputField value="{!followUpTask.Comments}" label="Comments"/>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Due Time"/>
+                        <apex:outputPanel layout="block" styleClass="requiredInput">
+                            <apex:outputPanel layout="block" styleClass="requiredBlock"/>
+                            <apex:inputField value="{!followUpTask.due_Time__c}" required="true"/>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection title="Additional Information" columns="2" rendered="{!AND(showFollowUpSection, createFollowUp)}">
+                    <apex:inputField value="{!followUpTask.Status}" label="Status" required="true"/>
+                    <apex:inputField value="{!followUpTask.Call_Duration__c}" label="Call Duration"/>
+                    <apex:inputField value="{!followUpTask.Priority}" label="Priority" required="true"/>
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection title="Reminder" columns="2" rendered="{!AND(showFollowUpSection, createFollowUp)}">
+                    <apex:inputCheckbox value="{!followUpTask.IsReminderSet}" label="Reminder"/>
+                    <apex:inputField value="{!followUpTask.ReminderDateTime}" label="Reminder Date/Time"/>
+                </apex:pageBlockSection>
+            </apex:outputPanel>
+        </apex:pageBlock>
+    </apex:form>
+    
+    <style>
+        .requiredInput .requiredBlock {
+            background-color: #c00;
+            position: absolute;
+            left: -4px;
+            width: 3px;
+            top: 1px;
+            bottom: 1px;
+        }
+    </style>
+</apex:page>
