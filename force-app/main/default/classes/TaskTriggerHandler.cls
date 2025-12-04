@@ -141,7 +141,7 @@ public without sharing class TaskTriggerHandler{
         if(!tmtaskList.isEmpty()){
             TaskTriggerHandler.updateRelatedAccount(tmtaskList);
             TaskTriggerHandler.updateOppFieldsAfterCreateForTM(tmtaskList);
-            TaskTriggerHandler.insertOptoutHistory(new Map<Id, Task>(), tmtaskList);
+            // TaskTriggerHandler.insertOptoutHistory(new Map<Id, Task>(), tmtaskList); // HKITSFDC-451 Remove automation of auto-create Opt_out_History__c
             // TaskTriggerHandler.newSARecd(tmtaskList);// Rancho_SpeechAnalytics_20210607
         }
         system.debug('TaskTriggerHandler.onAfterInsert out');
@@ -202,7 +202,7 @@ public without sharing class TaskTriggerHandler{
         if(!tmtaskList.isEmpty()){
             TaskTriggerHandler.updateRelatedAccount(tmtaskList);
             TaskTriggerHandler.updateOppFieldsAfterUpdateForTM(tmtaskList);
-            TaskTriggerHandler.insertOptoutHistory(oldMap, tmtaskList);
+            // TaskTriggerHandler.insertOptoutHistory(oldMap, tmtaskList);// HKITSFDC-451 Remove automation of auto-create Opt_out_History__c 
             // TaskTriggerHandler.newSARecd(tmtaskList);// Rancho_SpeechAnalytics_20210607
         }
         system.debug('TaskTriggerHandler.onAfterUpdate out');
