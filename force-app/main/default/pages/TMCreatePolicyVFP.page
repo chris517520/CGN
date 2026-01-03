@@ -805,8 +805,8 @@
 <!----------------------------------------------------actionFunction-------------------------------------------------->
                         <!-- add by Hao Li for TM address -->
             <apex:actionFunction name="TMResidentialAddressChange" action="{!TMResidentialAddressChange}" reRender="ResidentialAddress2,ResidentialAddress3,ResidentialAddress4"/>
-           <apex:actionFunction name="TMCorrespondingAddressChange" action="{!TMCorrespondingAddressChange}" reRender="correspondingAddress2,correspondingAddress3,correspondingAddress4"/>
-           <!-- end -->
+            <apex:actionFunction name="TMCorrespondingAddressChange" action="{!TMCorrespondingAddressChange}" reRender="correspondingAddress2,correspondingAddress3,correspondingAddress4"/>
+            <!-- end -->
            
             <!--Nicole_20200407_CDD-->
             <apex:actionFunction name="companyAddressChange" action="{!companyAddressChange}" status="loader-icon" reRender="companyAddress1Panel,companyAddress2Panel,companyAddress3Panel,companyAddress4Panel"/>                                   
@@ -1700,6 +1700,13 @@
                                 </apex:selectList>
                             </apex:pageBlockSectionItem>                            
                         </apex:repeat>
+
+                        <!-- Rancho_HKITSFDC402_20250930 - add CI product -->
+                        <apex:pageBlockSectionItem id="sumInsuredItem" dataStyleClass="requiredInput required" rendered="{!selectedProduct.Product_Code__c == 'CIB25' || selectedProduct.Product_Code__c == 'CIR25'}">
+                            <apex:outputLabel value="{!$ObjectType.New_Policy__c.Fields.Sum_Insured__c.Label}" for="sumInsured"></apex:outputLabel>
+                            <!-- <apex:input id="sumInsured" value="{!PIS.sumInsured}" type="number" html-min="300000" html-step="1000"></apex:input> -->
+                            <apex:inputText id="sumInsured" value="{!PIS.sumInsured}"></apex:inputText>
+                        </apex:pageBlockSectionItem>
                         
                         <apex:pageBlockSectionItem id="theInsuredType" >
                             <apex:outputLabel value="{!$ObjectType.Person_Insured__c.Fields.Insured_Type__c.Label}" for="TMInsuredType"></apex:outputLabel>
@@ -1741,7 +1748,11 @@
                                 <apex:outputLabel value="No Email"></apex:outputLabel>
                             </apex:outputPanel>
                         </apex:pageBlockSectionItem>
-                        
+                        <!-- Rancho_HKITSFDC402_20250930 - display parent policy number for CI product -->
+                        <apex:pageBlockSectionItem id="parentPolicyNumberItem" rendered="{!(selectedProduct.Product_Code__c == 'CIB25' || selectedProduct.Product_Code__c == 'CIR25') && PIS.pi.Insured_Type__c == 'Dependent'}">
+                            <apex:outputLabel value="Parent Policy Number" for="parentPolicyNumber"></apex:outputLabel>
+                            <apex:inputText id="parentPolicyNumber" value="{!PIS.parentPolicyNumber}"></apex:inputText>
+                        </apex:pageBlockSectionItem>
                         <!-- GL31 jack add -->
                         <apex:pageBlockSectionItem >
                             <apex:outputLabel value="Available Rider Name for Assessment Question" />
@@ -2626,7 +2637,7 @@
                         </apex:pageBlockSectionItem>
                         <apex:pageBlockSectionItem dataStyleClass="requiredInput required">
                             <apex:outputLabel value="{!$ObjectType.New_Policy__c.Fields.Master_Policy_No__c.Label}"></apex:outputLabel>
-                            <apex:inputField value="{!PIS.piPolicy.Master_Policy_No__c}"/>
+                            <apex:inputField value="{!PIS.piPolicy.Master_Policy_No__c}" />
                         </apex:pageBlockSectionItem>
                         <apex:pageBlockSectionItem >
                             <apex:outputLabel value="{!$ObjectType.New_Policy__c.Fields.Policy_Effective_Date__c.Label}"></apex:outputLabel>
@@ -2841,6 +2852,14 @@
                                 <td style="border:1px solid black;"></td>
                                 <apex:repeat var="p" value="{!premiumAmountList}">
                                     <td style="border:1px solid black;">{!p.premiumDescription}</td>
+                                </apex:repeat>
+                            </tr>
+
+                            <!-- Rancho_HKITSFDC402_20250930 - display sum insured in payment information table -->
+                            <tr style="height:20px; border:1px solid black;{!IF(selectedProduct.Product_Code__c == 'CIB25' || selectedProduct.Product_Code__c == 'CIR25', "display: true", "display: none")}">
+                                <td style="border:1px solid black;">{!$ObjectType.New_Policy__c.Fields.Sum_Insured__c.Label} &nbsp; ({!selectedProduct.currency__c})</td>
+                                <apex:repeat var="p" value="{!premiumAmountList}">
+                                    <td style="border:1px solid black;"><apex:outputText value="{0,Number,###,###,###}"><apex:param value="{!p.sumInsured}"/></apex:outputText></td>
                                 </apex:repeat>
                             </tr>
                             
