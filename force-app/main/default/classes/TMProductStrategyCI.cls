@@ -34,6 +34,51 @@ public abstract class TMProductStrategyCI extends TMproductStrategy{
         System.debug('TMProductStrategyCI.basePiValidation()');
         super.piValidation(ptvs, productCode);
         validateAllPISumInsured();
+        validateAllPISameProduct();
+    }
+
+    /**
+     * Validate all PIs have the same product already submitted in current day
+     * HKITSFDC_505_506
+     */
+    private void validateAllPISameProduct(){
+        Set<String> piIdSet = new Set<String>();
+        for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
+            piIdSet.add(pis.pi.Personal_ID__c);
+        }
+        List<Person_Insured__c> lstTodaySubmittedPI = [
+            SELECT Id, Personal_ID__c  
+            FROM Person_Insured__c 
+            WHERE 
+                Personal_ID__c IN :piIdSet 
+                AND New_Policy__r.Policy_Transaction__r.Status__c = 'Completed' 
+                AND New_Policy__r.Policy_Transaction__r.Submission_Date_Time__c = TODAY
+                AND New_Policy__r.Product_Code__c IN ('CIB25','CIR25')
+        ];
+        Map<String, List<Person_Insured__c>> mapTodaySubmittedPI = new Map<String, List<Person_Insured__c>>();
+        for(Person_Insured__c pi : lstTodaySubmittedPI){
+            if(!mapTodaySubmittedPI.containsKey(pi.Personal_ID__c)){
+                mapTodaySubmittedPI.put(pi.Personal_ID__c, new List<Person_Insured__c>());
+            }
+            mapTodaySubmittedPI.get(pi.Personal_ID__c).add(pi);
+        }
+        System.debug('mapTodaySubmittedPI: ' + mapTodaySubmittedPI);
+        for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
+            // if otherValidation is already false, break same product checking
+            if(!pis.piValidationItem.otherValidation){
+                break;
+            }
+            // if there is already submitted PI(Same Personal_ID__c and Id) with same product today
+            if(mapTodaySubmittedPI.containsKey(pis.pi.Personal_ID__c)){
+                for (Person_Insured__c pi : mapTodaySubmittedPI.get(pis.pi.Personal_ID__c)) {
+                    if(pi.Id != pis.pi.Id){
+                        ptvs.ctrl.pageMsg = 'Duplicate submission, Please double check and follow up with customer';
+                        pis.piValidationItem.otherValidation = false;
+                        break;
+                    }
+                }
+            }
+        }
     }
     
     /**

@@ -18,7 +18,7 @@ public class TMProductStrategyCIR25 extends TMProductStrategyCI {
         for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
             piIdSet.add(pis.pi.Personal_ID__c);
         }
-        for(Person_Insured__c np : [SELECT Id,Personal_ID__c FROM Person_Insured__c WHERE Personal_ID__c IN :piIdSet AND (New_Policy__r.Policy_Status__c='Completed' OR New_Policy__r.Policy_Status__c='Submitted') AND New_Policy__r.Product_Code__c!=:productCode AND New_Policy__r.Opportunity__c = :ptvs.ctrl.opportunityId]){
+        for(Person_Insured__c np : [SELECT Id,Personal_ID__c FROM Person_Insured__c WHERE Personal_ID__c IN :piIdSet AND (New_Policy__r.Policy_Status__c='Completed' OR New_Policy__r.Policy_Status__c='Submitted') AND New_Policy__r.Product_Code__c!=:productCode AND New_Policy__r.Product_Code__c != 'CBOG' AND New_Policy__r.Opportunity__c = :ptvs.ctrl.opportunityId]){
             hkidWithSFDCPolicySet.add(np.Personal_ID__c);
         }
         System.debug('current PI HKID set: ' + piIdSet);
@@ -40,7 +40,7 @@ public class TMProductStrategyCIR25 extends TMProductStrategyCI {
                 List<HttpCalloutVO.Policy> plist = ptvs.ctrl.policyCalloutHelper.getIndividualPolicyListBasicByCriteria('', '', '', '', '', pis.pi.Personal_ID__c);
                 if(null != plist && plist.size() > 0){
                     for(HttpCalloutVO.Policy p : plist){
-                        if(p.productCode != 'CIR25' && p.policyStatusDisplayName == 'Inforce'){
+                        if(p.productCode != 'CIR25' && p.productCode != 'CBOG' && p.policyStatusDisplayName == 'Inforce'){
                             pis.piValidationItem.otherValidation = true;
                             break;
                         }
