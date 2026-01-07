@@ -799,40 +799,43 @@ public with sharing class policyDetailsController{
             getPolicySSNNum();
             //List<HttpCalloutVO.PolicyDocType> tempPolicyDocList=helper.getPolicyDocTypeList(policyNumber);
             List<HttpCalloutVO.PolicyDocType> tempPolicyDocList=helper.getPolicyDocTypeList(policyNumber,'',ssnNum);
-
             System.debug('tempPolicyDocList:'+tempPolicyDocList);
-            //Rancho_PI64_20220411 - enhance the code
-            List<File_Store__c> fileList = new List<File_Store__c>();
-            List<Attachment> attList = new List<Attachment>();
             for(HttpCalloutVO.PolicyDocType pd:tempPolicyDocList){
-                //System.debug('code:'+pd.attachmentTypeCode);
-                //if(!hidePolicyDocType.contains(pd.attachmentTypeCode)){       //Comment by Nicole for DPSP-905
                 policyDocList.add(pd);
-                //}
-                File_Store__c fileStore=new File_Store__c();
-                fileStore.OwnerId=UserInfo.getUserId();
-                fileStore.Owner_id__c=UserInfo.getUserId();
-                fileList.add(fileStore);
             }
-            //insert file store
-            if(!Test.isRunningTest()){
-                insert fileList;
-            }
-            //insert attachment
-            for(File_Store__c f : fileList){
-                Attachment tatt = new Attachment();
-                tatt.parentId=f.Id;
-                tatt.contentType='application/pdf';
-                tatt.name='tempDoc4Broker';
-                tatt.body=Blob.valueOf('');
-                attList.add(tatt);
-            }
-            if(!Test.isRunningTest()){
-                insert attList;
-            }
-            for(Attachment a : attList){
-                indDocAttIDList.add(a.Id);
-            }
+            //Rancho_PI64_20220411 - enhance the code
+            // HKITSFDC-438_20260107 - attachment is created by WS, so comment the code block below
+            // List<File_Store__c> fileList = new List<File_Store__c>();
+            // List<Attachment> attList = new List<Attachment>();
+            // for(HttpCalloutVO.PolicyDocType pd:tempPolicyDocList){
+            //     //System.debug('code:'+pd.attachmentTypeCode);
+            //     //if(!hidePolicyDocType.contains(pd.attachmentTypeCode)){       //Comment by Nicole for DPSP-905
+            //     policyDocList.add(pd);
+            //     //}
+            //     File_Store__c fileStore=new File_Store__c();
+            //     fileStore.OwnerId=UserInfo.getUserId();
+            //     fileStore.Owner_id__c=UserInfo.getUserId();
+            //     fileList.add(fileStore);
+            // }
+            // //insert file store
+            // if(!Test.isRunningTest()){
+            //     insert fileList;
+            // }
+            // //insert attachment
+            // for(File_Store__c f : fileList){
+            //     Attachment tatt = new Attachment();
+            //     tatt.parentId=f.Id;
+            //     tatt.contentType='application/pdf';
+            //     tatt.name='tempDoc4Broker';
+            //     tatt.body=Blob.valueOf('');
+            //     attList.add(tatt);
+            // }
+            // if(!Test.isRunningTest()){
+            //     insert attList;
+            // }
+            // for(Attachment a : attList){
+            //     indDocAttIDList.add(a.Id);
+            // }
         }
         InitDocYearMap();
         //System.debug('getPolicyDocTypeList:'+policyDocList);
@@ -3423,35 +3426,35 @@ public with sharing class policyDetailsController{
         //corDocList=helper.getPolicyDocTypeList(policyNumber,true,'Policy Correspondence','','','','');
         corDocList=helper.getPolicyDocTypeList(policyNumber,true,'Policy Correspondence','','','','','',ssnNum);
 
-        indCorsAttIDList=new List<String>();
-        // Rancho_PI64_20220411 - enhance the code
-        List<File_Store__c> fileList = new List<File_Store__c>();
-        List<Attachment> attList = new List<Attachment>();
-        for(HttpCalloutVO.PolicyDocType doctype:corDocList){
-            File_Store__c fileStore=new File_Store__c();
-            fileStore.OwnerId=UserInfo.getUserId();
-            fileStore.Owner_id__c=UserInfo.getUserId();
-            fileList.add(fileStore);
-        }
-        //insert file store
-        if(!Test.isRunningTest()){
-            insert fileList;
-        }
-        //insert attachment
-        for(File_Store__c f : fileList){
-            Attachment tatt = new Attachment();
-            tatt.parentId=f.Id;
-            tatt.contentType='application/pdf';
-            tatt.name='tempDoc4Broker';
-            tatt.body=Blob.valueOf('');
-            attList.add(tatt);
-        }
-        if(!Test.isRunningTest()){
-            insert attList;
-        }
-        for(Attachment a : attList){
-            indCorsAttIDList.add(a.Id);
-        }
+        // indCorsAttIDList=new List<String>();
+        // // Rancho_PI64_20220411 - enhance the code
+        // List<File_Store__c> fileList = new List<File_Store__c>();
+        // List<Attachment> attList = new List<Attachment>();
+        // for(HttpCalloutVO.PolicyDocType doctype:corDocList){
+        //     File_Store__c fileStore=new File_Store__c();
+        //     fileStore.OwnerId=UserInfo.getUserId();
+        //     fileStore.Owner_id__c=UserInfo.getUserId();
+        //     fileList.add(fileStore);
+        // }
+        // //insert file store
+        // if(!Test.isRunningTest()){
+        //     insert fileList;
+        // }
+        // //insert attachment
+        // for(File_Store__c f : fileList){
+        //     Attachment tatt = new Attachment();
+        //     tatt.parentId=f.Id;
+        //     tatt.contentType='application/pdf';
+        //     tatt.name='tempDoc4Broker';
+        //     tatt.body=Blob.valueOf('');
+        //     attList.add(tatt);
+        // }
+        // if(!Test.isRunningTest()){
+        //     insert attList;
+        // }
+        // for(Attachment a : attList){
+        //     indCorsAttIDList.add(a.Id);
+        // }
         InitCorDocYearMap();
     }
 
@@ -3507,7 +3510,13 @@ public with sharing class policyDetailsController{
 
     public String selectedDowlAttId{get;set;}
     public String selectedDowlAttKey{get;set;}
+    public String dlFileStoreId{get;set;}
     public void downloadDocument(){
+        File_Store__c fileStore = new File_Store__c();
+        fileStore.OwnerId = UserInfo.getUserId();
+        fileStore.Owner_id__c = UserInfo.getUserId();
+        insert fileStore;
+        dlFileStoreId=fileStore.Id;
         //add by kermit
         String appName='';
         if(CignaUtil.isCustomerPortal()){
@@ -3520,21 +3529,28 @@ public with sharing class policyDetailsController{
         //add by kermit
         system.debug('selectedDowlAttId'+selectedDowlAttId);
         System.debug('selectedDowlAttKey'+selectedDowlAttKey);
-        System.enqueueJob(new downloadDocQueue(policyNumber,selectedDowlAttKey,curLang,selectedDowlAttId,appName));
-
+        // HKITSFDC-438 - Update file download process
+        // System.enqueueJob(new downloadDocQueue(policyNumber,selectedDowlAttKey,curLang,selectedDowlAttId,appName));
+        System.enqueueJob(new downloadDocQueue(policyNumber, selectedDowlAttKey, curLang, '', '', '', dlFileStoreId));
     }
 
     public boolean isDownloadComplete{get;set;}
     public void checkIsDocumentDownloadComplete(){
+        // HKITSFDC-438 - Update file download process
         isDownloadComplete=false;
-        if(selectedDowlAttId!=null){
-            Attachment a=[Select Id,Body From Attachment Where Id =:selectedDowlAttId];
-            if(a.Body!=null){
-                if(a.body.size()>0){
-                    isDownloadComplete=true;
-                }
-            }
+        List<Attachment> aList = [SELECT Id, BodyLength FROM Attachment WHERE ParentId = :dlFileStoreId];
+        if(aList != null && aList.size() > 0){
+            selectedDowlAttId = aList[0].Id;
+            isDownloadComplete=true;
         }
+        // if(selectedDowlAttId!=null){
+        //     Attachment a=[Select Id,Body From Attachment Where Id =:selectedDowlAttId];
+        //     if(a.Body!=null){
+        //         if(a.body.size()>0){
+        //             isDownloadComplete=true;
+        //         }
+        //     }
+        // }
     }
 
     /*
