@@ -1033,6 +1033,14 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
                 		coverage.AreaOfCover=getChildNodeTextIfNotEmpty('AreaOfCover',policyNode);
                 		coverage.RoomType=getChildNodeTextIfNotEmpty('RoomType',policyNode);
                 		//END HKITSFDC-265
+                		
+                		//START HKITSFDC-412
+                		coverage.RemainSumInsured=getChildNodeTextIfNotEmpty('RemainSumInsured',coverageNode);
+                		coverage.CoveragePeriodFrom=getChildNodeTextIfNotEmpty('CoveragePeriodFrom',coverageNode);
+                        coverage.CoveragePeriodFromInDate=getChildNodeDateIfNotEmpty('CoveragePeriodFrom',coverageNode,'yyyy-MM-dd');
+                		coverage.CoveragePeriodTo=getChildNodeTextIfNotEmpty('CoveragePeriodTo',coverageNode);
+                    	coverage.CoveragePeriodToInDate=getChildNodeDateIfNotEmpty('CoveragePeriodTo',coverageNode,'yyyy-MM-dd');
+                		//END HKITSFDC-412
                     	
                         coverage.renewalNoticeInd=Policy.renewalNoticeInd;// Rancho_JOBR367_20240513 - update premium display
                         // Coverage node
@@ -1174,6 +1182,8 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
                             p.planDescription=party.planDescription;
                             p.insuredName=party.insuredName;
                             p.memberName=party.memberName;
+                            // Rancho_HKITSFDC402_20250930 - set value for insured ssn
+                            p.insuredSSN=party.ssnNumber;
                         }
                     }
                 }
@@ -2508,15 +2518,22 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
         //end add by kermit
         return (List<HttpCalloutVO.PolicyDoc>)execute(new Map<String,String>());
     }
-/*efulfillment endhanced add end*/
+    /*efulfillment endhanced add end*/
+
+    // Rancho_HKITSFDC321_20251013 - add file store id, WS will insert attachment in file store
+    public List<HttpCalloutVO.PolicyDoc> getPolicyDoc(String policyNumber,String attachmentKey,String appName){
+        return getPolicyDoc(policyNumber,attachmentKey,appName,'');
+    }
     
     //add by kermit
-    public List<HttpCalloutVO.PolicyDoc> getPolicyDoc(String policyNumber,String attachmentKey,String appName){
+    public List<HttpCalloutVO.PolicyDoc> getPolicyDoc(String policyNumber,String attachmentKey,String appName,String parentId){
         system.debug('PolicyCalloutHelper.getPolicyDoc');
         this.functionName=PolicyCalloutHelper.GetPolicyDoc;
         paramsMap=new Map<String,String>();
         paramsMap.put('PolNumber',policyNumber);
         paramsMap.put('AttachmentKey',attachmentKey);
+        // Rancho_HKITSFDC321_20251013 - add file store id, WS will insert attachment in file store
+        paramsMap.put('ParentId',parentId);
         this.appName=appName;
         return (List<HttpCalloutVO.PolicyDoc>)execute(new Map<String,String>());
     }
@@ -2549,7 +2566,9 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
                         policyDoc.attachmentType=getChildNodeTextIfNotEmpty('AttachmentType',attachmentNode);
                         policyDoc.fileName=getChildNodeTextIfNotEmpty('FileName',attachmentNode);
                         //policyDoc.attachmentData64Binary=getChildNodeTextIfNotEmpty('AttachmentData64Binary',attachmentNode);  //Comment by Nicole for large file download
-                        policyDoc.attBody=getChildNodeBlobIfNotEmpty('AttachmentData64Binary',attachmentNode);
+                        //Rancho_HKITSFDC321_20251013 - get attachment id
+                        //policyDoc.attBody=getChildNodeBlobIfNotEmpty('AttachmentData64Binary',attachmentNode);
+                        policyDoc.sfdcAttachmentId=getChildNodeTextIfNotEmpty('AttachmentData64Binary',attachmentNode);
                         policyDoc.mimeTypeTC=getChildNodeTextIfNotEmpty('MimeTypeTC',attachmentNode);
                         policyDoc.mimeTypeTCNumber=getChildNodeAttributeIfNotEmpty('MimeTypeTC','tc',attachmentNode);//Autumn_SMT_20210408               
                         policyDoc.attachmentLocation=getChildNodeTextIfNotEmpty('AttachmentLocation',attachmentNode);
@@ -5293,6 +5312,8 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
         if(this.functionName==PolicyCalloutHelper.GetPolicyDoc){
             result='<Attachment>'
                   +'    <AttachmentKey>'+attachmentKey+'</AttachmentKey>'
+                  // Rancho_HKITSFDC321_20251013 - add file store id, WS will insert attachment in file store
+                  +'    <ParentId>'+paramsMap.get('ParentId')+'</ParentId>'
                   +'</Attachment>';
         }
 
@@ -6554,6 +6575,14 @@ public with sharing class PolicyCalloutHelper extends HttpCalloutHelperAbstract{
         }else if(this.functionName==PolicyCalloutHelper.GetPolicyAvailFundListBasic){
             return processPolicyAvailFundListBasicResult(doc);
         }else if(this.functionName==PolicyCalloutHelper.GetPolicyPersonCoverageBasic){
+            //HKITSFDC-265 fix DIRT CHECK
+            String oldReqAttachmentId = '00PA200000FZqXt';
+            Attachment att = [SELECT Body from attachment where id=:oldReqAttachmentId limit 1];
+            String xmlStr = att.Body.toString();
+            system.debug('xlStr : '+ xmlStr);
+            doc = new DOM.Document();
+            doc.load(xmlStr);
+            //END DIRT CHECK
             return processPolicyPersonCoverageBasicResult(doc);
         }else if(this.functionName==PolicyCalloutHelper.GetPolicyBasic){
             return processPolicyBasicResult(doc);
