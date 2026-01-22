@@ -4172,6 +4172,16 @@ global class TMCreatePolicyCtrl {
         // Rancho_HKITSFDC398_20250909 - 2025Q4 CX Campaign - allow select different discount for each policy
         Boolean isError = false;
         System.debug('[selectDiscount1] currentPolicyNo='+currentPolicyNo);
+        System.debug('[discount12Options] discount12Options='+discount12Options);
+        Set<String> set2026Q1Discount = new Set<String>{
+            '1 App. W/O Ext. Coverage',
+            '1 App. WITH Ext. Coverage',
+            '2-3 App. W/O Ext. Coverage',
+            '2-3 App. WITH Ext.Coverage',
+            '4-6 App. W/O Ext. Coverage',
+            '4-6 App. WITH Ext. Coverage',
+            'YR2 20% DISCOUNT'
+        };
         for(PersonInsuredStructure pis : personInsuredStructureList){
             // only validate the discount for current policy if current policy number is not blank
             // or validate the discount for all policies
@@ -4230,6 +4240,11 @@ global class TMCreatePolicyCtrl {
                 pis.discountErrorMsg='This discount 1 is not eligible';
                 pis.discount1=null;
                 isError = true;
+            }else if (set2026Q1Discount.contains(pis.discount2) && set2026Q1Discount.contains(pis.discount1)) {
+                pis.showDiscountErrorMsg=2;
+                pis.discountErrorMsg='This discount 1 is not eligible';
+                pis.discount1=null;
+                isError = true;
             }else{//jack add for friend and family discount in SFDC
                 pis.showDiscountErrorMsg=0;
             }
@@ -4253,6 +4268,16 @@ global class TMCreatePolicyCtrl {
         // Rancho_HKITSFDC398_20250909 - 2025Q4 CX Campaign - allow select different discount for each policy
         Boolean isError = false;
         System.debug('[selectDiscount2] currentPolicyNo='+currentPolicyNo);
+        Set<String> set2026Q1Discount = new Set<String>{
+            '1 App. W/O Ext. Coverage',
+            '1 App. WITH Ext. Coverage',
+            '2-3 App. W/O Ext. Coverage',
+            '2-3 App. WITH Ext.Coverage',
+            '4-6 App. W/O Ext. Coverage',
+            '4-6 App. WITH Ext. Coverage',
+            'YR2 20% DISCOUNT'
+        };
+        
         for(PersonInsuredStructure pis : personInsuredStructureList){
             System.debug('pi policy no: '+pis.piPolicy.Policy_No__c);
             if(String.isNotBlank(currentPolicyNo) && pis.piPolicy.Policy_No__c != currentPolicyNo){
@@ -4305,6 +4330,12 @@ global class TMCreatePolicyCtrl {
                 isError = true;
             }else if('YR1 50% DISCOUNT'.equals(pis.discount2) && amountOfPI > 5 && exceedDiscountUsageLimit(pis.discount2)){// Rancho_HKITSFDC402_20250930 - discount 83 only available for up to 5 policies
                 System.debug('discount usage limit exceeded');
+                ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR,'This discount 2 is not eligible'));
+                pis.showDiscountErrorMsg=2;
+                pis.discountErrorMsg='This discount 2 is not eligible';
+                pis.discount2=null;
+                isError = true;
+            }else if (set2026Q1Discount.contains(pis.discount2) && set2026Q1Discount.contains(pis.discount1)) { // Rancho_HKITSFDC406_20251205 - discount 1-6 apps only available for up to 6 policies
                 ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR,'This discount 2 is not eligible'));
                 pis.showDiscountErrorMsg=2;
                 pis.discountErrorMsg='This discount 2 is not eligible';

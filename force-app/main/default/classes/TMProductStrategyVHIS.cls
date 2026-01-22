@@ -21,6 +21,7 @@ public abstract class TMProductStrategyVHIS extends TMProductStrategy{
     
     public override void discountValidation(){
         super.discountValidation(ptvs,productCode);
+        vhisSuper_2026Q1Validation();
         childOfferDiscountValidation();
         childGroupOfferDiscountValidation();
         kidsOfferDiscountValidation();
@@ -254,4 +255,96 @@ public abstract class TMProductStrategyVHIS extends TMProductStrategy{
         
     }
     
+    public void vhisSuper_2026Q1Validation(){
+        // Implement VHIS specific validation for 2026 Q1 here
+        Integer insuredCount = ptvs.ctrl.amountOfPI;
+        Boolean hasWithDeductible = false;
+        List<String> elite360_2026Q1discountType = new List<String>{
+            '1 App. W/O Ext. Coverage',
+            '1 App. WITH Ext. Coverage',
+            '2-3 App. W/O Ext. Coverage',
+            '2-3 App. WITH Ext.Coverage',
+            '4-6 App. W/O Ext. Coverage',
+            '4-6 App. WITH Ext. Coverage',
+            'YR2 20% DISCOUNT'
+        };
+        // Only for NELG2 and NESG2
+        if (productCode != 'VSUPG' && productCode != 'VSPWG') {
+            return;
+        }
+
+        // Only for TM policies
+        for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
+            if(!pis.piPolicy.Policy_No__c.startsWith('CTM')){
+                return;
+            }
+        }
+
+        // 1.Set default false
+        for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
+            for (String discountType : elite360_2026Q1discountType) {
+                if (pis.availableDiscountMap.containsKey(discountType)) {
+                    pis.availableDiscountMap.put(discountType, false);
+                }
+            }
+        }
+
+        // 2.check whether Person Insured has with deductible  
+        for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
+            if (pis.pi.Benefit_Level__c != '1') {
+                hasWithDeductible = true;
+                break;
+            }
+        }
+
+        // 3.set to true base on the amount of insured and insured type 
+        // discount code: 84-89
+        for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
+            List<String> applicableDiscounts = new List<String>();
+            if (pis.pi.Benefit_Level__c != '1') {
+                if (insuredCount == 1) {
+                    applicableDiscounts.add('1 App. WITH Ext. Coverage');
+                    applicableDiscounts.add('1 App. W/O Ext. Coverage');
+                    applicableDiscounts.add('2-3 App. WITH Ext.Coverage');
+                    applicableDiscounts.add('2-3 App. W/O Ext. Coverage');
+                } else if (insuredCount >= 2 && insuredCount <= 3) {
+                    applicableDiscounts.add('2-3 App. WITH Ext.Coverage');
+                    applicableDiscounts.add('2-3 App. W/O Ext. Coverage');
+                } else if (insuredCount >= 4 && insuredCount <= 5) {
+                    applicableDiscounts.add('4-6 App. WITH Ext. Coverage');
+                    applicableDiscounts.add('4-6 App. W/O Ext. Coverage');  
+                } 
+            }
+            // else {
+            //     // all without deductible
+            //     if (!hasWithDeductible) {
+            //         if (insuredCount == 1) {
+            //             // do nothing
+            //         } else if (insuredCount == 2) {
+            //             applicableDiscounts.add('PROMOTION');
+            //         }
+            //     } else {
+            //         // mix with deductible
+            //         if (insuredCount >= 2 && insuredCount <= 4) {
+            //             applicableDiscounts.add('PROMOTION');
+            //         }
+            //     }
+            // }
+
+            for (String discountType : applicableDiscounts) {
+                if (pis.availableDiscountMap.containsKey(discountType)) {
+                    pis.availableDiscountMap.put(discountType, true);
+                }
+            }
+        }
+
+        // discount code 90 (Cathay VHIS)
+        for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
+            if(pis.availableDiscountMap.containsKey('YR2 20% DISCOUNT')){
+                if (pis.pi.Benefit_Level__c != '1') {
+                    pis.availableDiscountMap.put('YR2 20% DISCOUNT',true);
+                }
+            }
+        }
+    }
 }

@@ -46,6 +46,13 @@ public abstract class TMProductStrategyAB extends TMProductStrategy{
                     }
                 }
                 System.debug('AB current available discount map: '+pis.availableDiscountMap);
+
+                // HKITSFDC_521_Discount
+                if(pis.availableDiscountMap.containsKey('YR2 20% DISCOUNT')){
+                    if (pis.pi.Benefit_Level__c == '1' || pis.pi.Benefit_Level__c == '5' || pis.pi.Benefit_Level__c == '9') {
+                        pis.availableDiscountMap.put('YR2 20% DISCOUNT',false);
+                    }
+                }
             }
 
             System.debug('AB eligiblePICount: '+eligiblePICount);
