@@ -11,7 +11,7 @@ Modification Log:
 * ------    -----------     ------------            -----------------------
 * 1.0       Nicole          2016/02/11              Get policy detail information
                                                     by web service.
-* 1.1       Alif, LPS       2025/10/01              HKITSFDC - 412
+* 1.1		Alif, LPS		2025/10/01				HKITSFDC - 412
 ********************************************************************************/
 public with sharing class policyDetailsController{
     public String PLAN_NAME_PREFIX{get{return 'Plan:';}set;}
@@ -47,7 +47,6 @@ public with sharing class policyDetailsController{
     public Integer paymentTranTotalPage{get;set;}
     public Boolean paymenthasPrev{get;set;}
     public Boolean paymenthasNext{get;set;}
-    
     //BEGIN HKITSFDC-148
     public Date pyBillingDateFrom {get;set;}
     public Date pyBillingDateTo {get;set;}
@@ -146,7 +145,7 @@ public with sharing class policyDetailsController{
     //page turning
     private static final Integer PAGE_SIZE=20;
     private static final Integer BILL_PAGE_SIZE=12; //HKITSFDC-148
-     
+
     //Constant variable for unlimited clinic visit count by Caden
     private static final String unlimitedVisCount='999999';
     private static final String unlimitedVisCountDesc='Unlimited';
@@ -364,9 +363,9 @@ public with sharing class policyDetailsController{
         set;
     }
     //junda add end
-    
+
     public Set<Id> altruistAdminSet {get;set;}//HKITSFDC-148
-    
+
     public policyDetailsController(){
         //initCategoryList();
         isBrokerUser=CignaUtil.isBrokerPortal();
@@ -375,12 +374,11 @@ public with sharing class policyDetailsController{
         showPreApprovalButton=false;
         showDeductible=false;
         policyDocList=new List<HttpCalloutVO.PolicyDocType>();
-         //BEGIN HKITSFDC-148
+        //BEGIN HKITSFDC-148
         pyFilteredList = new List<HttpCalloutVO.PolicyBilling>(); 
         pyTotalRecords = 0;
         pyCurrentPage = 1;
         //END HKITSFDC-148
-        
         /*efulfillment added start*/
         curCorDocList=new List<HttpCalloutVO.PolicyDocType>();
         corDocList=new List<HttpCalloutVO.PolicyDocType>();
@@ -482,10 +480,11 @@ public with sharing class policyDetailsController{
                 over90Days = true;
             }
         }
-        
-         //BEGIN HKITSFDC-148 NOTE:TEMPORARY
+
+        //BEGIN HKITSFDC-148 NOTE:TEMPORARY
         loadAltruistAdminProfileSet();
         //END HKITSFDC-148 NOTE:TEMPORARY
+
     }
 
     public void getPolicyInfomation(){
@@ -557,7 +556,6 @@ public with sharing class policyDetailsController{
                         }
                     }
                 }
-               
             }
         }
         //efulfillment
@@ -780,40 +778,43 @@ public with sharing class policyDetailsController{
             getPolicySSNNum();
             //List<HttpCalloutVO.PolicyDocType> tempPolicyDocList=helper.getPolicyDocTypeList(policyNumber);
             List<HttpCalloutVO.PolicyDocType> tempPolicyDocList=helper.getPolicyDocTypeList(policyNumber,'',ssnNum);
-
             System.debug('tempPolicyDocList:'+tempPolicyDocList);
-            //Rancho_PI64_20220411 - enhance the code
-            List<File_Store__c> fileList = new List<File_Store__c>();
-            List<Attachment> attList = new List<Attachment>();
             for(HttpCalloutVO.PolicyDocType pd:tempPolicyDocList){
-                //System.debug('code:'+pd.attachmentTypeCode);
-                //if(!hidePolicyDocType.contains(pd.attachmentTypeCode)){       //Comment by Nicole for DPSP-905
                 policyDocList.add(pd);
-                //}
-                File_Store__c fileStore=new File_Store__c();
-                fileStore.OwnerId=UserInfo.getUserId();
-                fileStore.Owner_id__c=UserInfo.getUserId();
-                fileList.add(fileStore);
             }
-            //insert file store
-            if(!Test.isRunningTest()){
-                insert fileList;
-            }
-            //insert attachment
-            for(File_Store__c f : fileList){
-                Attachment tatt = new Attachment();
-                tatt.parentId=f.Id;
-                tatt.contentType='application/pdf';
-                tatt.name='tempDoc4Broker';
-                tatt.body=Blob.valueOf('');
-                attList.add(tatt);
-            }
-            if(!Test.isRunningTest()){
-                insert attList;
-            }
-            for(Attachment a : attList){
-                indDocAttIDList.add(a.Id);
-            }
+            //Rancho_PI64_20220411 - enhance the code
+            // HKITSFDC-438_20260107 - attachment is created by WS, so comment the code block below
+            // List<File_Store__c> fileList = new List<File_Store__c>();
+            // List<Attachment> attList = new List<Attachment>();
+            // for(HttpCalloutVO.PolicyDocType pd:tempPolicyDocList){
+            //     //System.debug('code:'+pd.attachmentTypeCode);
+            //     //if(!hidePolicyDocType.contains(pd.attachmentTypeCode)){       //Comment by Nicole for DPSP-905
+            //     policyDocList.add(pd);
+            //     //}
+            //     File_Store__c fileStore=new File_Store__c();
+            //     fileStore.OwnerId=UserInfo.getUserId();
+            //     fileStore.Owner_id__c=UserInfo.getUserId();
+            //     fileList.add(fileStore);
+            // }
+            // //insert file store
+            // if(!Test.isRunningTest()){
+            //     insert fileList;
+            // }
+            // //insert attachment
+            // for(File_Store__c f : fileList){
+            //     Attachment tatt = new Attachment();
+            //     tatt.parentId=f.Id;
+            //     tatt.contentType='application/pdf';
+            //     tatt.name='tempDoc4Broker';
+            //     tatt.body=Blob.valueOf('');
+            //     attList.add(tatt);
+            // }
+            // if(!Test.isRunningTest()){
+            //     insert attList;
+            // }
+            // for(Attachment a : attList){
+            //     indDocAttIDList.add(a.Id);
+            // }
         }
         InitDocYearMap();
         //System.debug('getPolicyDocTypeList:'+policyDocList);
@@ -963,13 +964,11 @@ public with sharing class policyDetailsController{
                         coverageList=helper.getPolicyPersonCoverageBasic(policyNumber,insure.ssnNumber);
                         //coverageList=helper.getPolicyPersonCoverageBasic('HMKHK0000229825','A932622');
                         //                        system.debug('coverageList:'+coverageList);
-                        
-                       //BEGIN HKITSFDC-47 
+                        //BEGIN HKITSFDC-47 
                         if(!coverageList.isEmpty()&&coverageList.size()>0){
                             coverageList.sort();
                         }
                         //END HKITSFDC-47 
-                        
                         // Person Insured Name
                         if(!coverageList.isEmpty()&&coverageList.size()>0){
                             for(HttpCalloutVO.PolicyPersonCoverage c:coverageList){
@@ -1148,7 +1147,7 @@ public with sharing class policyDetailsController{
         if(validateKey){
             getPolicyPaymentBasic();
             getPolicyBillingListBasic();
-            initializeDateConstraints();   //HKITSFDC-148
+            initializeDateConstraints();	//HKITSFDC-148
         }
     }
 
@@ -1209,8 +1208,7 @@ public with sharing class policyDetailsController{
         if(paymentTransactionList==null){
             paymentTransactionList=new List<HttpCalloutVO.PolicyBilling>();
             if(policyNumber!=null&&policyNumber!=''){
-               
-                  //BEGIN HKITSFDC-148
+                //BEGIN HKITSFDC-148
                 // paymentTransactionList=helper.getPolicyBillingListBasic(policyNumber);
                 refreshGetPolicyBillingListBasic();
                 filterByAnnuallyOrMonthly();
@@ -1237,8 +1235,7 @@ public with sharing class policyDetailsController{
     }
     
     public Integer getPyTotalPages(){
-         return Math.ceil(pyTotalRecords * 1.0 / BILL_PAGE_SIZE).intValue();
-        
+        return Math.ceil(pyTotalRecords * 1.0 / BILL_PAGE_SIZE).intValue();
     }
     
     public List<Integer> getPyPageNumbers(){
@@ -1305,7 +1302,7 @@ public with sharing class policyDetailsController{
             //Check the policy.PaymentMode
             Date startDate;
             if(null != policy.paymentMode && policy.paymentMode.equalsIgnoreCase('Annually')){
-                startDate = maxDate.addYears(-3);
+            	startDate = maxDate.addYears(-3);
             }else{
                 startDate = maxDate.addMonths(-36);
             }
@@ -1337,8 +1334,8 @@ public with sharing class policyDetailsController{
         //filter records based on date range selected: update paymentTransactionList
         List<HttpCalloutVO.PolicyBilling> dateRangeList = new List<HttpCalloutVO.PolicyBilling>();
         for(HttpCalloutVO.PolicyBilling pb : pyFilteredList) {
-            if(pb.payDate >= pyBillingDateFrom && pb.payDate <= pyBillingDateTo) {
-                dateRangeList.add(pb);
+        	if(pb.payDate >= pyBillingDateFrom && pb.payDate <= pyBillingDateTo) {
+            	dateRangeList.add(pb);
             }
         }
         pyFilteredList = dateRangeList;
@@ -1383,7 +1380,6 @@ public with sharing class policyDetailsController{
     }
     //END HKITSFDC-148
 
-    
     public void searchPremiumSettlementbybranch(){
         premiumSettlementList=new List<HttpCalloutVO.PolicyBilling>();
         if(selectedPremiumBranch=='All'){
@@ -3391,35 +3387,35 @@ public with sharing class policyDetailsController{
         //corDocList=helper.getPolicyDocTypeList(policyNumber,true,'Policy Correspondence','','','','');
         corDocList=helper.getPolicyDocTypeList(policyNumber,true,'Policy Correspondence','','','','','',ssnNum);
 
-        indCorsAttIDList=new List<String>();
-        // Rancho_PI64_20220411 - enhance the code
-        List<File_Store__c> fileList = new List<File_Store__c>();
-        List<Attachment> attList = new List<Attachment>();
-        for(HttpCalloutVO.PolicyDocType doctype:corDocList){
-            File_Store__c fileStore=new File_Store__c();
-            fileStore.OwnerId=UserInfo.getUserId();
-            fileStore.Owner_id__c=UserInfo.getUserId();
-            fileList.add(fileStore);
-        }
-        //insert file store
-        if(!Test.isRunningTest()){
-            insert fileList;
-        }
-        //insert attachment
-        for(File_Store__c f : fileList){
-            Attachment tatt = new Attachment();
-            tatt.parentId=f.Id;
-            tatt.contentType='application/pdf';
-            tatt.name='tempDoc4Broker';
-            tatt.body=Blob.valueOf('');
-            attList.add(tatt);
-        }
-        if(!Test.isRunningTest()){
-            insert attList;
-        }
-        for(Attachment a : attList){
-            indCorsAttIDList.add(a.Id);
-        }
+        // indCorsAttIDList=new List<String>();
+        // // Rancho_PI64_20220411 - enhance the code
+        // List<File_Store__c> fileList = new List<File_Store__c>();
+        // List<Attachment> attList = new List<Attachment>();
+        // for(HttpCalloutVO.PolicyDocType doctype:corDocList){
+        //     File_Store__c fileStore=new File_Store__c();
+        //     fileStore.OwnerId=UserInfo.getUserId();
+        //     fileStore.Owner_id__c=UserInfo.getUserId();
+        //     fileList.add(fileStore);
+        // }
+        // //insert file store
+        // if(!Test.isRunningTest()){
+        //     insert fileList;
+        // }
+        // //insert attachment
+        // for(File_Store__c f : fileList){
+        //     Attachment tatt = new Attachment();
+        //     tatt.parentId=f.Id;
+        //     tatt.contentType='application/pdf';
+        //     tatt.name='tempDoc4Broker';
+        //     tatt.body=Blob.valueOf('');
+        //     attList.add(tatt);
+        // }
+        // if(!Test.isRunningTest()){
+        //     insert attList;
+        // }
+        // for(Attachment a : attList){
+        //     indCorsAttIDList.add(a.Id);
+        // }
         InitCorDocYearMap();
     }
 
@@ -3475,7 +3471,13 @@ public with sharing class policyDetailsController{
 
     public String selectedDowlAttId{get;set;}
     public String selectedDowlAttKey{get;set;}
+    public String dlFileStoreId{get;set;}
     public void downloadDocument(){
+        File_Store__c fileStore = new File_Store__c();
+        fileStore.OwnerId = UserInfo.getUserId();
+        fileStore.Owner_id__c = UserInfo.getUserId();
+        insert fileStore;
+        dlFileStoreId=fileStore.Id;
         //add by kermit
         String appName='';
         if(CignaUtil.isCustomerPortal()){
@@ -3486,22 +3488,30 @@ public with sharing class policyDetailsController{
             appName=PolicyCalloutHelper.SERVICE_CONSOLE_APPNAME;
         }
         //add by kermit
-        //        system.debug('attachmentID'+selectedDowlAttId);
-        System.enqueueJob(new downloadDocQueue(policyNumber,selectedDowlAttKey,curLang,selectedDowlAttId,appName));
-
+        system.debug('selectedDowlAttId'+selectedDowlAttId);
+        System.debug('selectedDowlAttKey'+selectedDowlAttKey);
+        // HKITSFDC-438 - Update file download process
+        // System.enqueueJob(new downloadDocQueue(policyNumber,selectedDowlAttKey,curLang,selectedDowlAttId,appName));
+        System.enqueueJob(new downloadDocQueue(policyNumber, selectedDowlAttKey, curLang, '', '', '', dlFileStoreId));
     }
 
     public boolean isDownloadComplete{get;set;}
     public void checkIsDocumentDownloadComplete(){
+        // HKITSFDC-438 - Update file download process
         isDownloadComplete=false;
-        if(selectedDowlAttId!=null){
-            Attachment a=[Select Id,Body From Attachment Where Id =:selectedDowlAttId];
-            if(a.Body!=null){
-                if(a.body.size()>0){
-                    isDownloadComplete=true;
-                }
-            }
+        List<Attachment> aList = [SELECT Id, BodyLength FROM Attachment WHERE ParentId = :dlFileStoreId];
+        if(aList != null && aList.size() > 0){
+            selectedDowlAttId = aList[0].Id;
+            isDownloadComplete=true;
         }
+        // if(selectedDowlAttId!=null){
+        //     Attachment a=[Select Id,Body From Attachment Where Id =:selectedDowlAttId];
+        //     if(a.Body!=null){
+        //         if(a.body.size()>0){
+        //             isDownloadComplete=true;
+        //         }
+        //     }
+        // }
     }
 
     /*
@@ -3595,7 +3605,8 @@ public with sharing class policyDetailsController{
         }
         //        System.debug('getPolicySSNNum ssnNum:'+ssnNum);
     }
-     //BEGIN HKITSFDC-148 
+
+    //BEGIN HKITSFDC-148 NOTE:TEMPORARY
     public void loadAltruistAdminProfileSet(){
         altruistAdminSet = new Set<Id>();
         Profile prf = [SELECT Id,Name FROM Profile WHERE Name IN ('Cigna Altruist Broker Admin') LIMIT 1];
