@@ -894,7 +894,6 @@
                 $('#download-loader').fadeOut(100);
                 
             }
-            
         </script>
         
         <div class="bs">          
@@ -918,10 +917,10 @@
                                     oncomplete="PolicyDetailAF.InitEfulfillment();"/>
                  
                 
-              <!--converage -->                              
+              <!--converage-->  <!---HKTISFDC-412 added reRender ciCovergaeFields-->                            
               <apex:actionFunction action="{!getPolicyPersonCoverageBasic}" 
                                     name="getPolicyPersonCoverageBasic" 
-                                    reRender="CoverageInformationApex"
+                                    reRender="CoverageInformationApex,ciCoverageFields"
                                     status="loader-icon"
                                     namespace="PolicyDetailAF" />
 
@@ -993,6 +992,7 @@
                                     oncomplete="documentDetector();"
 
                                     >
+                              <apex:param name="attID" value="" assignTo="{!selectedDowlAttId}"/>
                               <apex:param name="attKey" value="" assignTo="{!selectedDowlAttKey}"/>
                </apex:actionFunction>
 
@@ -1003,7 +1003,7 @@
                </apex:outputPanel>
                
                <!-- added for async download  -->   
-               <apex:actionFunction action="{!checkIsDocumentDownloadComplete}" name="checkIsDocumentDownloadComplete"  reRender="is-document-download-param-panel,open-attachment-link-panel" oncomplete="documentDetector();" />
+               <apex:actionFunction action="{!checkIsDocumentDownloadComplete}" name="checkIsDocumentDownloadComplete"  reRender="is-document-download-param-panel" oncomplete="documentDetector();" />
                <apex:outputPanel id="is-document-download-param-panel" >
                      <apex:inputHidden value="{!isDownloadComplete}" id="is-document-download-complete"/>
                </apex:outputPanel>
@@ -1830,7 +1830,6 @@
                               </div>
                             </div>
                           </div>
-                          
                           <!-- BEGIN HKITSFDC-148 -->
                           <!-- Altruist or Non Altruist-->
                           <div class="bs panel two-column-table minor-panel">
@@ -1895,7 +1894,6 @@
                             </div>                          
                           </div>
                           <!-- END HKITSFDC-148 -->
-
                           <apex:outputPanel layout="block" rendered="{!fields2['Beneficiary'][JSINHTMLENCODE(policyType)]}">
                             <div class="bs panel two-column-table minor-panel">
                               <div id="beneficiaryPanelHeader" class="bs panel-heading form-toggle-tab onclick-pointer">
@@ -2009,8 +2007,8 @@
                                           <apex:variable var="tmpIdx" value="{!0}" />  
                                             <apex:repeat id="curDocList" value="{!curDocList}" var="myList">
                                                 <apex:outputPanel rendered="{!isBrokerUser}">   
-                                                    <div class='col-xs-11 col-sm-3 dy-col' style='padding:10px;' onclick="showLoading();PolicyDetailAF.downloadDocument('{!myList.attachmentKey}');">    
-                                                        <div class="fileWrapper col-xs-12 col-sm-12 {!if(myList.isNew,'newFile','')}" data-atk="{!myList.attachmentKey}">
+                                                    <div class='col-xs-11 col-sm-3 dy-col' style='padding:10px;' onclick="showLoading();PolicyDetailAF.downloadDocument('{!indDocAttIDList[tmpIdx]}','{!myList.attachmentKey}');">    
+                                                        <div class="fileWrapper col-xs-12 col-sm-12 {!if(myList.isNew,'newFile','')}" data-atk="{!myList.attachmentKey}" data-brkatt="{!indDocAttIDList[tmpIdx]}"  >
                                                                 <div class="fw-icon">
                                                                   <img src="{!URLFOR($Resource.efulfillment, 'icon.png')}" style='width:100%'/>
                                                                 </div>
@@ -2081,8 +2079,8 @@
                                           <apex:variable var="tmpIdx" value="{!0}" />  
                                             <apex:repeat id="curCorDocList" value="{!curCorDocList}" var="myList">
                                                 <apex:outputPanel rendered="{!isBrokerUser}">   
-                                                    <div class='col-xs-11 col-sm-3 dy-col' style='padding:10px;' onclick="showLoading();PolicyDetailAF.downloadDocument('{!myList.attachmentKey}');">    
-                                                        <div class="fileWrapper col-xs-12 col-sm-12 {!if(myList.isNew,'newFile','')}" data-atk="{!myList.attachmentKey}" >
+                                                    <div class='col-xs-11 col-sm-3 dy-col' style='padding:10px;' onclick="showLoading();PolicyDetailAF.downloadDocument('{!indCorsAttIDList[tmpIdx]}','{!myList.attachmentKey}');">    
+                                                        <div class="fileWrapper col-xs-12 col-sm-12 {!if(myList.isNew,'newFile','')}" data-atk="{!myList.attachmentKey}" data-brkatt="{!indCorsAttIDList[tmpIdx]}"  >
                                                                 <div class="fw-icon">
                                                                   <img src="{!URLFOR($Resource.efulfillment, 'icon.png')}" style='width:100%'/>
                                                                 </div>
@@ -2155,7 +2153,6 @@
                         $("#serviceProviderPanel").toggle(null, null, Cigna.PolicyDetail.changeSection(this));
                       });
                       //END HKITSFDC-148
-                      
                       $("#personInsuredPanelHeader").on("click",function() {
                           $("#personInsuredPanel").toggle(null, null, Cigna.PolicyDetail.changeSection(this));
                       });
@@ -3109,9 +3106,7 @@
                                         <td class="bs field-label" style="{!IF(fields2['AdditionalF Contribution Annual Amount'][JSINHTMLENCODE(policyType)] && showAFCcolumns,'','display:none')}" >{!$Label.Pol_Additional_Fund_Contribution_Annual_Amount}</td>
                                         <td class="bs field-label" style="{!IF(fields2['Person Insured'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Person_Insured}</td>
                                         <!-- HKITSFDC-412 -->
-                                        <td class="bs field-label" style="{!IF(fields2['Sum Insured'][JSINHTMLENCODE(policyType)] && showSumInsured && NOT(showFaceAmt), '', 'display:none')}">{!$Label.Pol_Sum_Insured}</td>
-                                        <td class="bs field-label" style="{!IF(fields2['Sum Insured'][JSINHTMLENCODE(policyType)] && NOT(showSumInsured) && showFaceAmt, '', 'display:none')}">{!$Label.Pol_Sum_Insured}</td>
-                                        <!-- START HKITSFDC-265 -->
+                                        <td class="bs field-label" style="{!IF(fields2['Sum Insured'][JSINHTMLENCODE(policyType)],'', 'display:none')}">{!$Label.Pol_Sum_Insured}</td>
                                         <td class="bs field-label" style="{!IF(fields2['Plan Level'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Plan_Level}</td>
                                         <td class="bs field-label" style="{!IF(fields2['Area Of Cover'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Area_Of_Cover}</td>
                                         <td class="bs field-label" style="{!IF(fields2['Room Type'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Room_Type}</td>
@@ -3121,9 +3116,8 @@
                                         <td class="bs field-label" style="{!IF(fields2['Loading (Amount Duration)'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Loading_Amount_Duration}</td>
                                         <td class="bs field-label" style="{!IF(fields2['Loading (Percentage Duration)'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Loading_Percentage_Duration}</td>
                                         <td class="bs field-label" style="{!IF(fields2['Exclusion'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Exclusion}</td>
-                                        <!-- END HKITSFDC-265 -->
                                         <!-- START HKITSFDC-412 -->
-                                        <td class="bs field-label" style="{!IF(fields2['Period of Cover'][JSINHTMLENCODE(policyType)] && showCoverageFields != false,'','display:none')}" >{!$Label.Pol_Period_of_Cover}</td>
+                                        <td class="bs field-label" style="{!IF(fields2['Period of Cover'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Period_of_Cover}</td>
                                         <!-- END HKITSFDC-412 -->
                                         <td class="bs field-label" style="{!IF(fields2['Maturity/Expiry Date'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Maturity_Expiry_Date}</td>
                                     </tr>
@@ -3131,13 +3125,14 @@
                                     <apex:repeat value="{!coverageMap[coveragePage]}" var="c">
                                       <tr class="bs {!IF(MOD(rowNum,2)==1,'grey-background','')}" >
                                           <td class="bs field-value" style="{!IF(fields2['Benefit'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.benefitMarketingName}</td>
-                                          <!-- <td class="bs field-value" style="{!IF(fields2['Sum Insured'][JSINHTMLENCODE(policyType)],'','display:none')}" ><!--{!c.sumInsured}
+                                          <!--HKITSFDC-265 20251231 fix of extra column BEGIN-->
+                                         <!-- <td class="bs field-value" style="{!IF(fields2['Sum Insured'][JSINHTMLENCODE(policyType)] && showSumInsured,'','display:none')}" ><!--{!c.sumInsured}
                                               {!IF(c.benefitAmountInNumber == null,'',policy.currencySymbol)}
                                               <apex:outputText styleClass="pull-right" value="{0, Number,###,##0.00}">
                                                   <apex:param value="{!c.benefitAmountInNumber}"/>
                                               </apex:outputText>
-                                          </td> -->
-                                          
+                                          </td>-->
+                                           <!--HKITSFDC-265 fix of extra column ENDED-->
                                           <td class="bs field-value" style="{!IF(fields2['Deductible Amount'][JSINHTMLENCODE(policyType)] && showDeductible,'','display:none')}">
                                               {!IF(c.deductibleAmount == null,'',policy.currencySymbol)}
                                               <apex:outputText styleClass="pull-right" value="{0, Number,###,##0.00}">
@@ -3204,20 +3199,47 @@
                                           </td>
                                           <td class="bs field-value" style="{!IF(fields2['Person Insured'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.insuredName}</td>
                                           <!-- START HKITSFDC-412 -->
-                                          <td class="bs field-value" style="{!IF(fields2['Sum Insured'][JSINHTMLENCODE(policyType)] && showSumInsured && NOT(showFaceAmt), '', 'display:none')}" ><!--{!c.sumInsured}-->
-                                              {!IF(c.benefitAmountInNumber == null,'',policy.currencySymbol)}
-                                              <apex:outputText styleClass="pull-right" value="{0, Number,###,##0.00}">
-                                                  <apex:param value="{!c.benefitAmountInNumber}"/>
-                                              </apex:outputText>
-                                          </td>
-                                          <td class="bs field-value" style="{!IF(fields2['Sum Insured'][JSINHTMLENCODE(policyType)] && NOT(showSumInsured) && showFaceAmt, '', 'display:none')}" ><!--{!c.sumInsured}-->
-                                              {!IF(c.FaceAmt == null,'',policy.currencySymbol)}
-                                              <apex:outputText styleClass="pull-right" value="{0, Number,###,##0.00}">
-                                                  <apex:param value="{!c.benefitAmountInNumber}"/>
-                                              </apex:outputText>
+                                          <td class="bs field-value" style="{!IF(fields2['Sum Insured'][JSINHTMLENCODE(policyType)],'', 'display:none')}" ><!--{!c.sumInsured}-->
+                                              <apex:outputPanel id="ciCoverageFields" >
+                                                  <script>
+                                                  (function(){
+                                                      var showCoverage = ({!showCoverageFields});
+                                                      window.__pc_showCoverageFields = showCoverage;
+                                                      console.log('[SumInsured] showCoverageFields =', showCoverage);
+                                                  })();
+                                                  </script>
+                                                  <!-- When CoverageFields is TRUE -->
+                                                  <apex:outputPanel rendered="{!showCoverageFields}">
+                                                      
+                                                      <!-- benefitAmountInNumber available -->
+                                                      <apex:outputPanel rendered="{!c.benefitAmountInNumber != null}">
+                                                          {!policy.currencySymbol}
+                                                          <apex:outputText styleClass="pull-right" value="{0, Number,###,##0.00}">
+                                                              <apex:param value="{!c.benefitAmountInNumber}"/>
+                                                          </apex:outputText>
+                                                      </apex:outputPanel>
+                                                      
+                                                      <!-- benefitAmountInNumber empty but FaceAmt available -->
+                                                      <apex:outputPanel rendered="{!c.benefitAmountInNumber == null && c.FaceAmt != null}">
+                                                          {!policy.currencySymbol} &nbsp;&nbsp;&nbsp;
+                                                          <apex:outputText value="{0, Number,###,##0.00}">
+                                                              <apex:param value="{!c.FaceAmt}"/>
+                                                          </apex:outputText>
+                                                      </apex:outputPanel>
+                                                      
+                                                      <!-- both empty -->
+                                                      <apex:outputPanel rendered="{!c.benefitAmountInNumber == null && c.FaceAmt == null}">
+                                                          N/A
+                                                      </apex:outputPanel>
+                                                  </apex:outputPanel>
+                                                  
+                                                  <!-- When CoverageFields is FALSE -->
+                                                  <apex:outputPanel rendered="{!NOT(showCoverageFields)}">
+                                                      N/A
+                                                  </apex:outputPanel>
+                                              </apex:outputPanel>
                                           </td>
                                           <!-- END HKITSFDC-412 -->
-                                          <!-- START HKITSFDC-265 -->
                                           <td class="bs field-value" style="{!IF(fields2['Plan Level'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.planLevel}</td>
                                           <td class="bs field-value" style="{!IF(fields2['Area Of Cover'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.AreaOfCover}</td>
                                           <td class="bs field-value" style="{!IF(fields2['Room Type'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.RoomType}</td>
@@ -3227,38 +3249,54 @@
                                           <td class="bs field-label" style="{!IF(fields2['Loading (Amount Duration)'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.loadingAmountDuration}</td>
                                           <td class="bs field-label" style="{!IF(fields2['Loading (Percentage Duration)'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.loadingPercentageDuration}</td>
                                           <td class="bs field-value" style="{!IF(fields2['Exclusion'][JSINHTMLENCODE(policyType)],'','display:none')}">{!c.exclusionList}</td>
-                                          <!-- END HKITSFDC-265 -->
                                           <!-- START HKITSFDC-412 -->
-                                          <td class="bs field-value" style="{!IF(fields2['Period of Cover'][JSINHTMLENCODE(policyType)] && showCoverageFields != false,'','display:none')}">
-                                            <script>
+                                          <td class="bs field-value" style="{!IF(fields2['Period of Cover'][JSINHTMLENCODE(policyType)],'','display:none')}">
+                                              <script>
                                               (function(){
-                                                var showCoverage = ({!showCoverageFields});
-                                                window.__pc_showCoverageFields = showCoverage;
-                                                console.log('[PeriodOfCover] showCoverageFields =', showCoverage);
+                                                  var showCoverage = ({!showCoverageFields});
+                                                  var showCoverageStat = ({!showCoverageStatus});
+                                                  window.__pc_showCoverageFields = showCoverage;
+                                                  window.__pc_showCoverageStatus = showCoverageStat;
+                                                  console.log('[PeriodOfCover] showCoverageFields =', showCoverage);
+                                                  console.log('[PeriodOfCover] showCoverageStatus =', showCoverageStat);
                                               })();
-                                            </script>
-  										  	<apex:outputPanel rendered="{!showCoverageFields != false}">
-    											<apex:outputPanel rendered="{!c.CoveragePeriodFromInDate != null}">
-      												<apex:outputText value="{0,date,yyyy/MM/dd}">
-        												<apex:param value="{!c.CoveragePeriodFromInDate}"/>
-      												</apex:outputText>
-    											</apex:outputPanel>
-    											<apex:outputPanel rendered="{!c.CoveragePeriodFromInDate == null}">
-      												N/A
-    											</apex:outputPanel>
-
-    											<br/>{!$Label.Pol_to}<br/>
-
-    											<apex:outputPanel rendered="{!c.CoveragePeriodToInDate != null}">
-      												<apex:outputText value="{0,date,yyyy/MM/dd}">
-        												<apex:param value="{!c.CoveragePeriodToInDate}"/>
-      												</apex:outputText>
-    											</apex:outputPanel>
-    											<apex:outputPanel rendered="{!c.CoveragePeriodToInDate == null}">
-      												N/A
-    											</apex:outputPanel>
-  											</apex:outputPanel>
-										  </td>
+                                              </script>
+                                              <apex:outputPanel >
+                                                  <!-- If showCoverageFields == true & showCoverageStatus == false -->
+                                                  <apex:outputPanel rendered="{!showCoverageFields == true && showCoverageStatus == false}">
+                                                      <apex:outputPanel rendered="{!c.CoveragePeriodFromInDate != null}">
+                                                          <apex:outputText value="{0,date,yyyy/MM/dd}">
+                                                              <apex:param value="{!c.CoveragePeriodFromInDate}"/>
+                                                          </apex:outputText>
+                                                      </apex:outputPanel>
+                                                      <apex:outputPanel rendered="{!c.CoveragePeriodFromInDate == null}">
+                                                          N/A
+                                                      </apex:outputPanel>
+                                                      
+                                                      <br/>{!$Label.Pol_to}<br/>
+                                                      
+                                                      <apex:outputPanel rendered="{!c.CoveragePeriodToInDate != null}">
+                                                          <apex:outputText value="{0,date,yyyy/MM/dd}">
+                                                              <apex:param value="{!c.CoveragePeriodToInDate}"/>
+                                                          </apex:outputText>
+                                                      </apex:outputPanel>
+                                                      <apex:outputPanel rendered="{!c.CoveragePeriodToInDate == null}">
+                                                          N/A
+                                                      </apex:outputPanel>
+                                                  </apex:outputPanel>
+                                                  
+                                                  <!-- If showCoverageFields == false -->
+                                                  <apex:outputPanel rendered="{!showCoverageFields == false}">
+                                                      N/A
+                                                  </apex:outputPanel>
+                                                  
+                                                  <!-- If showCoverageStatus & showCoverageStatus == true -->
+                                                  <apex:outputPanel rendered="{!showCoverageFields == true && showCoverageStatus == true}">
+                                                      N/A
+                                                  </apex:outputPanel>
+                                                
+                                              </apex:outputPanel>
+                                          </td>
                                           <!-- END HKITSFDC-412 -->
                                           <td class="bs field-value" style="{!IF(fields2['Maturity/Expiry Date'][JSINHTMLENCODE(policyType)],'','display:none')}" ><!--{!c.maturityexpiryDate}-->
                                             <apex:outputPanel rendered="{!c.termDateInDate != null}">
@@ -3369,16 +3407,79 @@
                                       </tr>
                                        <!-- START HKITSFDC-265 -->
                                       <tr class="bs {!IF(MOD(rowNum,2)==1,'grey-background','')}">
-                                           <td class="bs field-label" style="{!IF(fields2['Person Insured'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Plan_Level}</td>
-                                           <td  class="bs field-value" style="{!IF(fields2['Person Insured'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.planLevel}</td>
+                                           <td class="bs field-label" style="{!IF(fields2['Plan Level'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Plan_Level}</td>
+                                           <td  class="bs field-value" style="{!IF(fields2['Plan Level'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.planLevel}</td>
                                       </tr>
                                       <tr class="bs {!IF(MOD(rowNum,2)==1,'grey-background','')}">
-                                           <td class="bs field-label" style="{!IF(fields2['Person Insured'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Area_Of_Cover}</td>
-                                           <td  class="bs field-value" style="{!IF(fields2['Person Insured'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.AreaOfCover}</td>
+                                           <td class="bs field-label" style="{!IF(fields2['Area Of Cover'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Area_Of_Cover}</td>
+                                           <td  class="bs field-value" style="{!IF(fields2['Area Of Cover'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.AreaOfCover}</td>
                                       </tr>
                                       <tr class="bs {!IF(MOD(rowNum,2)==1,'grey-background','')}">
-                                           <td class="bs field-label" style="{!IF(fields2['Person Insured'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Room_Type}</td>
-                                           <td  class="bs field-value" style="{!IF(fields2['Person Insured'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.RoomType}</td>
+                                           <td class="bs field-label" style="{!IF(fields2['Room Type'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Room_Type}</td>
+                                           <td  class="bs field-value" style="{!IF(fields2['Room Type'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.RoomType}</td>
+                                      </tr>
+                                      <tr class="bs {!IF(MOD(rowNum,2)==1,'grey-background','')}">
+                                           <td class="bs field-label" style="{!IF(fields2['Deductible Amount'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Deductible_Amount}</td>
+                                           <td  class="bs field-value" style="{!IF(fields2['Deductible Amount'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.deductibleAmount}</td>
+                                      </tr>
+                                        <tr class="bs {!IF(MOD(rowNum,2)==1,'grey-background','')}">
+                                           <td class="bs field-label" style="{!IF(fields2['Loading (Amount)'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Loading_Amount}</td>
+                                           <td  class="bs field-value" style="{!IF(fields2['Loading (Amount)'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.loadingAmount}</td>
+                                      </tr>
+                                        <tr class="bs {!IF(MOD(rowNum,2)==1,'grey-background','')}">
+                                           <td class="bs field-label" style="{!IF(fields2['Loading (Percentage)'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Loading_Percentage}</td>
+                                           <td  class="bs field-value" style="{!IF(fields2['Loading (Percentage)'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.loadingPercentage}</td>
+                                      </tr>
+                                        <tr class="bs {!IF(MOD(rowNum,2)==1,'grey-background','')}">
+                                           <td class="bs field-label" style="{!IF(fields2['Loading (Amount Duration)'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Loading_Amount_Duration}</td>
+                                           <td  class="bs field-value" style="{!IF(fields2['Loading (Amount Duration)'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.loadingAmountDuration}</td>
+                                      </tr>
+                                        <tr class="bs {!IF(MOD(rowNum,2)==1,'grey-background','')}">
+                                           <td class="bs field-label" style="{!IF(fields2['Loading (Percentage Duration)'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Loading_Percentage_Duration}</td>
+                                           <td  class="bs field-value" style="{!IF(fields2['Loading (Percentage Duration)'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.loadingPercentageDuration}</td>
+                                      </tr>
+                                        <tr class="bs {!IF(MOD(rowNum,2)==1,'grey-background','')}">
+                                           <td class="bs field-label" style="{!IF(fields2['Exclusion'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Exclusion}</td>
+                                           <td  class="bs field-value" style="{!IF(fields2['Exclusion'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!c.exclusionList}</td>
+                                      </tr>
+                                        <tr class="bs {!IF(MOD(rowNum,2)==1,'grey-background','')}">
+                                           <td class="bs field-label" style="{!IF(fields2['Period of Cover'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!$Label.Pol_Period_of_Cover}</td>
+                                           <td class="bs field-value" style="{!IF(fields2['Period of Cover'][JSINHTMLENCODE(policyType)],'','display:none')}" >
+                                                <apex:outputPanel >
+                                                  <!-- If showCoverageFields == true & showCoverageStatus == false -->
+                                                  <apex:outputPanel rendered="{!showCoverageFields == true && showCoverageStatus == false}">
+                                                      <apex:outputPanel rendered="{!c.CoveragePeriodFromInDate != null}">
+                                                          <apex:outputText value="{0,date,yyyy/MM/dd}">
+                                                              <apex:param value="{!c.CoveragePeriodFromInDate}"/>
+                                                          </apex:outputText>
+                                                      </apex:outputPanel>
+                                                      <apex:outputPanel rendered="{!c.CoveragePeriodFromInDate == null}">
+                                                          N/A
+                                                      </apex:outputPanel>
+                                                      
+                                                      <br/>{!$Label.Pol_to}<br/>
+                                                      
+                                                      <apex:outputPanel rendered="{!c.CoveragePeriodToInDate != null}">
+                                                          <apex:outputText value="{0,date,yyyy/MM/dd}">
+                                                              <apex:param value="{!c.CoveragePeriodToInDate}"/>
+                                                          </apex:outputText>
+                                                      </apex:outputPanel>
+                                                      <apex:outputPanel rendered="{!c.CoveragePeriodToInDate == null}">
+                                                          N/A
+                                                      </apex:outputPanel>
+                                                  </apex:outputPanel>
+                                                  
+                                                  <!-- If showCoverageFields == false -->
+                                                  <apex:outputPanel rendered="{!showCoverageFields == false}">
+                                                      N/A
+                                                  </apex:outputPanel>
+                                                  
+                                                  <!-- If showCoverageStatus & showCoverageStatus == true -->
+                                                  <apex:outputPanel rendered="{!showCoverageFields == true && showCoverageStatus == true}">
+                                                      N/A
+                                                  </apex:outputPanel>
+                                              </apex:outputPanel>
+                                            </td>
                                       </tr>
                                         <!-- END HKITSFDC-265 -->
                                       <tr class="bs {!IF(MOD(rowNum,2)==1,'grey-background','')}">
@@ -3440,7 +3541,8 @@
                              oncomplete="Cigna.PolicyDetail.scrollToPanel('transactionResult');"/>
 
                       <div id="paymentInfoPanel" class="bs panel-body two-column-table-body">
-                        <apex:outputPanel layout="block" rendered="{!fields2['Policy No.'][JSINHTMLENCODE(policyType)]}">
+                      <!--HKITSFDC-148 Begin-->
+                       <apex:outputPanel layout="block" rendered="{!fields2['Policy No.'][JSINHTMLENCODE(policyType)]}">
                                 <div class="paymentInfoPanelItem bs">
                                     <div class="bs col-xs-6 col-md-3 field-label">{!$Label.Pol_Policy_No}</div>
                                     <div class="bs col-xs-6 col-md-3 field-value"> 
@@ -3459,7 +3561,7 @@
                                 </div>
                               </div>
                             </apex:outputPanel> 
-                          
+                         <!--HKITSFDC-148 End-->    
                         <apex:outputPanel layout="block" rendered="{!fields2['Payment Mode'][JSINHTMLENCODE(policyType)]}">
                             <div class="paymentInfoPanelItem bs">    
                               <div class="bs col-xs-6 col-md-3 field-label">{!$Label.Pol_Payment_Mode}</div>
@@ -3550,7 +3652,7 @@
                           <div class="paymentInfoPanelItem bs">    
                             <div class="bs col-xs-6 col-md-3 field-label">{!$Label.Pol_Payment_Method}</div>
                             <div class="bs col-xs-6 col-md-3 field-value">
-                                <apex:outputText value="{!payment.paymentMethod}"/>
+                              <apex:outputText value="{!payment.paymentMethod}"/>
                             </div>
                           </div>
                         </apex:outputPanel>
@@ -3621,14 +3723,14 @@
                       </div>                                                     
                     
                       <!-- BEGIN HKITSFDC-148 -->
-                      <!-- <apex:outputPanel id="transactionResult" rendered="false">--> <!---rollback 20250516 rendered="{!isAltruistAdmin}"-->
-                      <apex:outputPanel id="transactionResult"  >
+                      <!-- <apex:outputPanel id="transactionResult" rendered="false">-->
+                      <apex:outputPanel id="transactionResult">
                       <!-- END HKITSFDC-148 -->
                         <div class="bs panel two-column-table">
                           <div class="bs panel-heading">
                              {!$Label.Pol_Transaction_History}
                           </div>
-                          <!-- BEGIN HKITSFDC-148 -->
+                           <!-- BEGIN HKITSFDC-148 -->
                           <div class="bs panel">
                               
                               
@@ -3655,7 +3757,6 @@
                             <span class="text-danger">{!pyBillingErrMsg}</span>
                           </apex:outputPanel>  
                           <!-- END HKITSFDC-148 -->  
-                            
                           <div id ="transactionPanel" class="bs panel-body table-panel-body two-column-table-body">
                             <div class="bs row">
                               <div class="bs col-lg-12">
@@ -3676,9 +3777,9 @@
                                         <!-- END HKITSFDC-148 -->
                                     </tr>
                                     <apex:variable value="{!1}" var="rowNum" />
-                                    <!-- BEGIN HKITSFDC-148 -->  
+                                       <!-- BEGIN HKITSFDC-148 -->  
                                     <!--<apex:repeat value="{!paymentTranMap[paymentTranPage]}" var="b">-->
-                                    <apex:repeat value="{!pyCurrentPageRecords}" var="b">
+                                    <apex:repeat value="{!pyCurrentPageRecords}" var="bv">
                                     <!-- END HKITSFDC-148 -->
                                       <tr class="bs field-value {!IF(MOD(rowNum,2)==1,'grey-background','')}">
                                         <td class="bs field-value" style="{!IF(fields2['Payment Transaction Date'][JSINHTMLENCODE(policyType)],'','display:none')}" ><!--{!b.finActivityDate}-->
@@ -3686,45 +3787,45 @@
                                             <!--<apex:OutputText value="{0,date,yyyy/MM/dd}" escape="false">-->
                                             <apex:OutputText value="{0,date,yyyy-MM-dd}">
                                             <!-- END HKITSFDC-148 -->
-                                              <apex:Param value="{!b.finActivityDateInDate}"/>
+                                              <apex:Param value="{!bv.finActivityDateInDate}"/>
                                             </apex:OutputText>
                                         </td>
                                         <!-- BEGIN HKITSFDC-148 -->   
                                         <!--<td class="bs field-value" style="{!IF(fields2['Description'][JSINHTMLENCODE(policyType)],'','display:none')}" >{!b.description}</td>-->
-                                        <td class="bs field-value">{!b.paymentDescription}</td>
+                                        <td class="bs field-value">{!bv.paymentDescription}</td>
                                         
-                                        <!--<td class="bs field-value" style="{!IF(fields2['Payment Amount'][JSINHTMLENCODE(policyType)],'','display:none')}" >--><!--{!b.paymentAmt}FinActivityGrossAmt-->
-                                        <!--    <apex:outputText styleClass="pull-right" value="{!IF(b.FinActivityGrossAmt == null, '', policy.currencySymbol)} {0, Number,###,##0.00}">-->
-                                        <!--        <apex:param value="{!b.FinActivityGrossAmt}"/>-->
-                                        <!--    </apex:outputText>-->
-                                        <!--</td>-->
+                                        <!--<td class="bs field-value" style="{!IF(fields2['Payment Amount'][JSINHTMLENCODE(policyType)],'','display:none')}" >
+                                       <apex:outputText styleClass="pull-right" value="{!IF(b.FinActivityGrossAmt == null, '', policy.currencySymbol)} {0, Number,###,##0.00}">
+                                        <apex:param value="{!b.FinActivityGrossAmt}"/>
+                                        </apex:outputText>
+                                        </td>-->
                                         <td class="bs field-value">
-                                            <apex:outputText value="{!IF(b.FinActivityGrossAmt == null, '', policy.currencySymbol)} {0, Number,###,##0.00}">
-                                                <apex:param value="{!b.FinActivityGrossAmt}"/>
+                                            <apex:outputText value="{!IF(bv.FinActivityGrossAmt == null, '', policy.currencySymbol)} {0, Number,###,##0.00}">
+                                                <apex:param value="{!bv.FinActivityGrossAmt}"/>
                                             </apex:outputText>
                                         </td>
                                         <!-- END HKITSFDC-148 -->
                                         <!-- BEGIN HKITSFDC-148 -->
                                         <td class="bs field-value" >
                                             <apex:outputText value="{0,date,yyyy-MM-dd}">
-                                                <apex:param value="{!b.PayDate}"/>
+                                                <apex:param value="{!bv.PayDate}"/>
                                             </apex:outputText>
                                         </td>
-                                        <td class="bs field-value">{!b.currencyTypeDesc}</td>
+                                        <td class="bs field-value">{!bv.currencyTypeDesc}</td>
 
                                         <!--<td class="bs field-value" style="{!IF(fields2['Automatic Premium Payment'][JSINHTMLENCODE(policyType)],'','display:none')}" >--><!--{!b.automaticPremiumPayment}-->
                                         <!--    <apex:outputText styleClass="pull-right" value="{!IF(b.automaticPremiumPayment == null,'',policy.currencySymbol)} {0, Number,###,##0.00}">-->
                                         <!--        <apex:param value="{!b.automaticPremiumPayment}"/>-->
                                         <!--    </apex:outputText>-->
                                         <!--</td>-->                                          
-                                          <!-- END HKITSFDC-148 -->                                                                              
+                                          <!-- END HKITSFDC-148 -->                                
                                       </tr>
                                       <apex:variable var="rowNum" value="{!rowNum + 1}" />
                                     </apex:repeat>
                                   </tbody>                                   
                                   <tbody class="visible-xs">
                                     <apex:variable value="{!1}" var="rowNum" />
-                                    <!-- BEGIN HKITSFDC-148-->
+                                     <!-- BEGIN HKITSFDC-148-->
                                     <!--<apex:repeat value="{!paymentTranMap[paymentTranPage]}" var="b"> -->
                                     <apex:repeat value="{!pyCurrentPageRecords}" var="b">
                                     <!-- END HKITSFDC-148-->
@@ -3789,7 +3890,6 @@
                                       <!--   </td>-->
                                       <!--</tr>-->
                                       <!-- END HKITSFDC-148 -->
-                                      
                                       <apex:variable var="rowNum" value="{!rowNum + 1}" />
                                     </apex:repeat>
                                   </tbody>                             
@@ -3798,7 +3898,7 @@
                             </div>
                             <div class="bs row">
                               <div style="padding:20px;" class="bs col-sm-12 col-xs-12 text-center">
-                                <!-- BEGIN HKITSFDC-148 --> 
+                                 <!-- BEGIN HKITSFDC-148 --> 
                                 
                                 <apex:outputPanel rendered="{!pyHasPrevious}">
                                     <apex:commandLink value="<PrevPage " action="{!pyPrevious}" reRender="transactionResult" onclick="showLoading();" oncomplete="finishLoading();"/>     
@@ -3816,27 +3916,17 @@
                                 <apex:outputPanel rendered="{!pyHasNext}">
                                     <apex:commandLink value=" NextPage>" action="{!pyNext}" reRender="transactionResult" onclick="showLoading();" oncomplete="finishLoading();"/>
                                 </apex:outputPanel>  
-                                  
-                                <!--<apex:outputPanel rendered="{!If(paymentTranTotalPage<=1 || !paymenthasPrev,false,true)}">
-                                  <div class="ci-hk-arrow-29 ci-hk-sm onclick-pointer cigna-fg-orange-dark" style="padding-right:10px;" aria-hidden="true" onclick="paymentprevPage();"/>
-                                </apex:outputPanel>
 
-                                <apex:outputText value="{!$Label.Page_0_of_1}" >
-                                    <apex:param value="{!paymentTranPage}" />
-                                    <apex:param value="{!paymentTranTotalPage}" />
-                                </apex:outputText>
-
-                                <apex:outputPanel rendered="{!If(paymentTranTotalPage>1 && paymenthasNext,true,false)}">
+                                <!--<apex:outputPanel rendered="{!If(paymentTranTotalPage>1 && paymenthasNext,true,false)}">
                                     <div class="ci-hk-arrow-31 ci-hk-sm onclick-pointer cigna-fg-orange-dark" style="padding-left:10px;" aria-hidden="true" onclick="paymentnextPage()"/>
                                 </apex:outputPanel>-->
-                                <!-- END HKITSFDC-148 -->  
+                                  <!-- END HKITSFDC-148 --> 
                               </div>
                             </div> 
                           </div>
-                            
                         </div>
                       </apex:outputPanel>
-                      <!-- END HKITSFDC-148 -->
+
                       <script>
                         Cigna.PolicyDetail.setRow('paymentInfoPanelItem');
                       </script>
@@ -5837,23 +5927,6 @@
             $('body').css('position', 'fixed').css('overflow-y', 'scroll').css('width', '100%').css('height', '100%');
 
           }
-            
-    // Parse fields2 map from Apex into JSON
-    var fields2 = JSON.parse('{!JSENCODE(fields2Json)}');
-    console.log('fields2:', fields2);
-
-    // Log the policyType used in the style check
-    var policyType = '{!JSINHTMLENCODE(policyType)}';
-    console.log('policyType:', policyType);
-
-    // Optional: check if "Plan Level" for this policyType is available
-    if (fields2['Plan Level'] && fields2['Plan Level'][policyType] !== undefined) {
-        console.log('Plan Level visibility for ' + policyType + ':', fields2['Plan Level'][policyType]);
-    } else {
-        console.warn('Plan Level not found in fields2 for policyType:', policyType);
-    }
-            
         </script>
-
 
     </apex:page>

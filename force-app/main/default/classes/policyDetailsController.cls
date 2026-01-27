@@ -11,7 +11,7 @@ Modification Log:
 * ------    -----------     ------------            -----------------------
 * 1.0       Nicole          2016/02/11              Get policy detail information
                                                     by web service.
-* 1.1		Alif, LPS		2025/10/01				HKITSFDC - 412
+* 1.1       Alif, LPS       2025/10/01              HKITSFDC - 412
 ********************************************************************************/
 public with sharing class policyDetailsController{
     public String PLAN_NAME_PREFIX{get{return 'Plan:';}set;}
@@ -47,6 +47,7 @@ public with sharing class policyDetailsController{
     public Integer paymentTranTotalPage{get;set;}
     public Boolean paymenthasPrev{get;set;}
     public Boolean paymenthasNext{get;set;}
+    
     //BEGIN HKITSFDC-148
     public Date pyBillingDateFrom {get;set;}
     public Date pyBillingDateTo {get;set;}
@@ -60,11 +61,7 @@ public with sharing class policyDetailsController{
     public Date toDateMin { get; set; }
     public Date toDateMax { get; set; }
     //END HKITSFDC-148
-    //BEGIN HKITSFDC-211
-    public Date DateFrom { get; set; }
-    public Date DateTo { get; set; }
-    //BEGIN HKITSFDC-211
-
+    
     //Policy Change Tab
     public List<HttpCalloutVO.WorkStatus> policyChangeList{get;set;}
     public List<HttpCalloutVO.WorkStatus> allPolicyChangeList{get;set;}
@@ -149,7 +146,7 @@ public with sharing class policyDetailsController{
     //page turning
     private static final Integer PAGE_SIZE=20;
     private static final Integer BILL_PAGE_SIZE=12; //HKITSFDC-148
-
+     
     //Constant variable for unlimited clinic visit count by Caden
     private static final String unlimitedVisCount='999999';
     private static final String unlimitedVisCountDesc='Unlimited';
@@ -218,7 +215,7 @@ public with sharing class policyDetailsController{
     public List<SelectOption> premiumbranchList{get;set;}
     public Set<String> hidePolicyDocType=new Set<String>{'249','2147483647'};
     public Boolean showSumInsured{get;set;}{showSumInsured=true;}
-    public Boolean showFaceAmt{get;set;}{showFaceAmt=false;}
+    public Boolean showFaceAmt{get;set;}{showFaceAmt=false;} // HKITSFDC - 412
     public Boolean showApplyForGOPBtn{get;set;}{showApplyForGOPBtn=false;}
 
     //Added by Nicole to get translation by Custom Metadata Types
@@ -332,7 +329,6 @@ public with sharing class policyDetailsController{
     public Boolean displayOtherProductDoc{get;set;}{displayOtherProductDoc=false;}// Rancho_JOBR340_20231107
     //Rancho_JOBR324_20230905 - hide special rider
     public List<String> specialRiderList{get;set;}
-    public Boolean renewalEligible{get;set;}// Rancho_JOBR367_20240513
     public String termDate{get;set;}// Rancho_JOBR376_20240612 - could not submit claim if policy expired more than 90 days
     //Rancho_HKITSFDC83_20240829 - not allow submit claim for pending policy
     public static List<Policy_Status_Mapping__c> polStatusList = Policy_Status_Mapping__c.getAll().values();
@@ -368,9 +364,9 @@ public with sharing class policyDetailsController{
         set;
     }
     //junda add end
-
+    
     public Set<Id> altruistAdminSet {get;set;}//HKITSFDC-148
-
+    
     public policyDetailsController(){
         //initCategoryList();
         isBrokerUser=CignaUtil.isBrokerPortal();
@@ -379,11 +375,12 @@ public with sharing class policyDetailsController{
         showPreApprovalButton=false;
         showDeductible=false;
         policyDocList=new List<HttpCalloutVO.PolicyDocType>();
-        //BEGIN HKITSFDC-148
+         //BEGIN HKITSFDC-148
         pyFilteredList = new List<HttpCalloutVO.PolicyBilling>(); 
         pyTotalRecords = 0;
         pyCurrentPage = 1;
         //END HKITSFDC-148
+        
         /*efulfillment added start*/
         curCorDocList=new List<HttpCalloutVO.PolicyDocType>();
         corDocList=new List<HttpCalloutVO.PolicyDocType>();
@@ -393,8 +390,6 @@ public with sharing class policyDetailsController{
         // curDocList=new List<HttpCalloutVO.PolicyDocType>();
         documentList=new List<HttpCalloutVO.PolicyDocType>();
         docYearList=new List<SelectOption>();
-        
-        CoverageFieldSetting();
 
         tempAttList=new List<String>();
         indDocAttIDList=new List<String>();
@@ -479,15 +474,6 @@ public with sharing class policyDetailsController{
             encryptedSearchCriteria=EncodingUtil.urlEncode(encryptedFilter,'UTF-8');
         }
         //JR1840 jack add
-        // Rancho_JOBR367_20240513 - update premium display
-        renewalEligible = false;
-        String dateStr = CignaUtil.getMetadataByName('RenewalNoticeExpiredDate')?.get('expiredDate');
-        if(String.isNotBlank(dateStr)){
-            Date renewalExpiredDate = Date.valueOf(dateStr);
-            if(Date.today() < renewalExpiredDate){
-                renewalEligible = true;
-            }
-        }
 
         // Rancho_JOBR376_20240612 - group policy term date limit
         if(String.isNotBlank(termDate)){
@@ -496,11 +482,10 @@ public with sharing class policyDetailsController{
                 over90Days = true;
             }
         }
-
-        //BEGIN HKITSFDC-148 NOTE:TEMPORARY
+        
+         //BEGIN HKITSFDC-148 NOTE:TEMPORARY
         loadAltruistAdminProfileSet();
         //END HKITSFDC-148 NOTE:TEMPORARY
-
     }
 
     public void getPolicyInfomation(){
@@ -572,59 +557,60 @@ public with sharing class policyDetailsController{
                         }
                     }
                 }
+               
             }
         }
         //efulfillment
         //InitEfulfillment();
     }
     
-    // START HKITSFDC-412
-   	public void getFaceAmtShow() {
-    	if (policy == null && validateKey) {
-        	PersonCalloutHelper pcHelper = new PersonCalloutHelper();
-        	if (policyNumber != null && policyNumber != '') {
-            	getPolicyBasic();
-            	if (!isGroup) {
-                	getPolicyPaymentBasic();
-                	getPolicyHolderBasic();
-                	if (holder != null && String.isNotBlank(holder.ssnNumber)) {
-                    	List<HttpCalloutVO.Person> p1 = pcHelper.getPersonBasic(holder.ssnNumber);
-                    	if (p1 != null && p1.size() > 0) {
-                        	holder.homePhoneNo = p1[0].homePhoneNo;
-                        	holder.businessPhoneNo = p1[0].businessPhoneNo;
-                        	holder.mobilephoneNo = p1[0].mobilePhoneNo;
-                        	if (String.isBlank(holder.emailAddress)) {
-                            	holder.emailAddress = p1[0].emailAddress;
-                        	}
-                    	}
-                	}
+        // START HKITSFDC-412
+    public void getFaceAmtShow() {
+        if (policy == null && validateKey) {
+            PersonCalloutHelper pcHelper = new PersonCalloutHelper();
+            if (policyNumber != null && policyNumber != '') {
+                getPolicyBasic();
+                if (!isGroup) {
+                    getPolicyPaymentBasic();
+                    getPolicyHolderBasic();
+                    if (holder != null && String.isNotBlank(holder.ssnNumber)) {
+                        List<HttpCalloutVO.Person> p1 = pcHelper.getPersonBasic(holder.ssnNumber);
+                        if (p1 != null && p1.size() > 0) {
+                            holder.homePhoneNo = p1[0].homePhoneNo;
+                            holder.businessPhoneNo = p1[0].businessPhoneNo;
+                            holder.mobilephoneNo = p1[0].mobilePhoneNo;
+                            if (String.isBlank(holder.emailAddress)) {
+                                holder.emailAddress = p1[0].emailAddress;
+                            }
+                        }
+                    }
 
-                	GetPolicyPersonCoverageBasic();
+                    GetPolicyPersonCoverageBasic();
 
-                	if (showSumInsured) {
-                    	System.debug('showSumInsured is TRUE');
-                	} else {
-                    	Map<String, Policy_Change_Hide_Setting__c> hideSettings = Policy_Change_Hide_Setting__c.getAll();
+                    if (showSumInsured) {
+                        System.debug('showSumInsured is TRUE');
+                    } else {
+                        Map<String, Policy_Change_Hide_Setting__c> hideSettings = Policy_Change_Hide_Setting__c.getAll();
 
-                    	Boolean productFound = false;
-                    	for (Policy_Change_Hide_Setting__c setting : hideSettings.values()) {
-                        	if (setting.Product_Code__c == ProductCode) {
-                            	productFound = true;
-                            	break;
-                        	}
-                    	}
+                        Boolean productFound = false;
+                        for (Policy_Change_Hide_Setting__c setting : hideSettings.values()) {
+                            if (setting.Product_Code__c == ProductCode) {
+                                productFound = true;
+                                break;
+                            }
+                        }
 
-                    	if (productFound) {
-                        	showFaceAmt = true;
-                        	System.debug('ProductCode found in custom setting; showFaceAmt set to TRUE');
-                    	} else {
-                        	System.debug('ProductCode not found in custom setting; showFaceAmt remains FALSE');
-                    	}
-                	}
-            	}
-        	}
-    	}
-	}
+                        if (productFound) {
+                            showFaceAmt = true;
+                            System.debug('ProductCode found in custom setting; showFaceAmt set to TRUE');
+                        } else {
+                            System.debug('ProductCode not found in custom setting; showFaceAmt remains FALSE');
+                        }
+                    }
+                }
+            }
+        }
+    }
  
     private Boolean shouldShowCoverageFields(String productCode) {
         if (String.isBlank(productCode)) {
@@ -659,7 +645,6 @@ public with sharing class policyDetailsController{
                 //junda add 20201202
                 System.debug('productCode---'+productCode);
                 System.debug('statusCodeList---'+statusCodeList);
-                System.debug('p.productCode---'+policy.productCode);
                 System.debug('p.planTypeCode111---'+policy.planTypeCode);
                 System.debug('p.policyStatusCode111---'+policy.policyStatusCode);
                 if(policy.productCode!=null&&policy.policyStatusCode!=null&&String.isNotBlank(productCode)&&!statusCodeList.isEmpty()){
@@ -674,7 +659,6 @@ public with sharing class policyDetailsController{
                 }
                 //System.debug('policy---'+policy);
                 //junda add end
-                System.debug('policy term date: '+policyType+' '+policy.termDateInDate);
                 // Rancho_PI61_20220222
                 if(!policyType.equalsIgnoreCase('Group')){
                     Integer inactiveDays = helper.getIndividualPolicyListBasicByCriteria(policyNumber,'','','','','')[0].inactiveDays;
@@ -683,9 +667,6 @@ public with sharing class policyDetailsController{
                         over90Days = true;
                     }
                 }
-                // HKITSFDC-416 - evaluate coverage fields after policy loaded
-                showCoverageFields = shouldShowCoverageFields(policy.productCode);
-                System.debug('showCoverageFields (from getPolicyBasic) = ' + showCoverageFields);
                 // Owen_JOBR_301 hide the make a claim button
                 String userId = UserInfo.getUserId();
                 List <User> uList = [select id, LanguageLocaleKey, username, ProfileId, Profile.Name, AccountId, Account.ssn__c,Company_Code__c from User where id=: userId ];
@@ -799,43 +780,40 @@ public with sharing class policyDetailsController{
             getPolicySSNNum();
             //List<HttpCalloutVO.PolicyDocType> tempPolicyDocList=helper.getPolicyDocTypeList(policyNumber);
             List<HttpCalloutVO.PolicyDocType> tempPolicyDocList=helper.getPolicyDocTypeList(policyNumber,'',ssnNum);
+
             System.debug('tempPolicyDocList:'+tempPolicyDocList);
-            for(HttpCalloutVO.PolicyDocType pd:tempPolicyDocList){
-                policyDocList.add(pd);
-            }
             //Rancho_PI64_20220411 - enhance the code
-            // HKITSFDC-438_20260107 - attachment is created by WS, so comment the code block below
-            // List<File_Store__c> fileList = new List<File_Store__c>();
-            // List<Attachment> attList = new List<Attachment>();
-            // for(HttpCalloutVO.PolicyDocType pd:tempPolicyDocList){
-            //     //System.debug('code:'+pd.attachmentTypeCode);
-            //     //if(!hidePolicyDocType.contains(pd.attachmentTypeCode)){       //Comment by Nicole for DPSP-905
-            //     policyDocList.add(pd);
-            //     //}
-            //     File_Store__c fileStore=new File_Store__c();
-            //     fileStore.OwnerId=UserInfo.getUserId();
-            //     fileStore.Owner_id__c=UserInfo.getUserId();
-            //     fileList.add(fileStore);
-            // }
-            // //insert file store
-            // if(!Test.isRunningTest()){
-            //     insert fileList;
-            // }
-            // //insert attachment
-            // for(File_Store__c f : fileList){
-            //     Attachment tatt = new Attachment();
-            //     tatt.parentId=f.Id;
-            //     tatt.contentType='application/pdf';
-            //     tatt.name='tempDoc4Broker';
-            //     tatt.body=Blob.valueOf('');
-            //     attList.add(tatt);
-            // }
-            // if(!Test.isRunningTest()){
-            //     insert attList;
-            // }
-            // for(Attachment a : attList){
-            //     indDocAttIDList.add(a.Id);
-            // }
+            List<File_Store__c> fileList = new List<File_Store__c>();
+            List<Attachment> attList = new List<Attachment>();
+            for(HttpCalloutVO.PolicyDocType pd:tempPolicyDocList){
+                //System.debug('code:'+pd.attachmentTypeCode);
+                //if(!hidePolicyDocType.contains(pd.attachmentTypeCode)){       //Comment by Nicole for DPSP-905
+                policyDocList.add(pd);
+                //}
+                File_Store__c fileStore=new File_Store__c();
+                fileStore.OwnerId=UserInfo.getUserId();
+                fileStore.Owner_id__c=UserInfo.getUserId();
+                fileList.add(fileStore);
+            }
+            //insert file store
+            if(!Test.isRunningTest()){
+                insert fileList;
+            }
+            //insert attachment
+            for(File_Store__c f : fileList){
+                Attachment tatt = new Attachment();
+                tatt.parentId=f.Id;
+                tatt.contentType='application/pdf';
+                tatt.name='tempDoc4Broker';
+                tatt.body=Blob.valueOf('');
+                attList.add(tatt);
+            }
+            if(!Test.isRunningTest()){
+                insert attList;
+            }
+            for(Attachment a : attList){
+                indDocAttIDList.add(a.Id);
+            }
         }
         InitDocYearMap();
         //System.debug('getPolicyDocTypeList:'+policyDocList);
@@ -985,11 +963,13 @@ public with sharing class policyDetailsController{
                         coverageList=helper.getPolicyPersonCoverageBasic(policyNumber,insure.ssnNumber);
                         //coverageList=helper.getPolicyPersonCoverageBasic('HMKHK0000229825','A932622');
                         //                        system.debug('coverageList:'+coverageList);
-                        //BEGIN HKITSFDC-47 
+                        
+                       //BEGIN HKITSFDC-47 
                         if(!coverageList.isEmpty()&&coverageList.size()>0){
                             coverageList.sort();
                         }
                         //END HKITSFDC-47 
+                        
                         // Person Insured Name
                         if(!coverageList.isEmpty()&&coverageList.size()>0){
                             for(HttpCalloutVO.PolicyPersonCoverage c:coverageList){
@@ -1030,11 +1010,6 @@ public with sharing class policyDetailsController{
                             if(plcCovg.benefitCode.startsWith('AFCR')||plcCovg.benefitCode.startsWith('AFCS')){
                                 showAFCcolumns=true;
                             }
-                            // START HKITSFDC-416
-                            if(plcCovg.coverageStatus.equalsIgnoreCase('Not taken')){
-                                showCoverageStatus = true;
-                            }
-                            // END HKITSFDC-416
                         }
 
                         // Benefit Code
@@ -1069,6 +1044,9 @@ public with sharing class policyDetailsController{
             */
             // Zoe updated on 0614,PPCP-33
         }
+        CoverageFieldSetting();//HKITSFDC-412 20251126 Added to reload showCovergae Fields
+        
+        
     }
 
     public PageReference searchMemberListbybranch(){
@@ -1170,7 +1148,7 @@ public with sharing class policyDetailsController{
         if(validateKey){
             getPolicyPaymentBasic();
             getPolicyBillingListBasic();
-            initializeDateConstraints();	//HKITSFDC-148
+            initializeDateConstraints();   //HKITSFDC-148
         }
     }
 
@@ -1231,7 +1209,8 @@ public with sharing class policyDetailsController{
         if(paymentTransactionList==null){
             paymentTransactionList=new List<HttpCalloutVO.PolicyBilling>();
             if(policyNumber!=null&&policyNumber!=''){
-                //BEGIN HKITSFDC-148
+               
+                  //BEGIN HKITSFDC-148
                 // paymentTransactionList=helper.getPolicyBillingListBasic(policyNumber);
                 refreshGetPolicyBillingListBasic();
                 filterByAnnuallyOrMonthly();
@@ -1239,27 +1218,27 @@ public with sharing class policyDetailsController{
                 //paymentTranPagingMethod();
                 //END HKITSFDC-148
                 System.debug('getPolicyBillingListBasic:'+paymentTransactionList);
-
-                if(paymentTranMap != null){
-                    System.debug('getPolicyBillingListBasic.paymentTranMap: '+paymentTranMap);
-                }
             }
         }
 
     }
-    //BEGIN HKITSFDC-148
+    
+     //BEGIN HKITSFDC-148
     public List<HttpCalloutVO.PolicyBilling> getPyCurrentPageRecords(){
         List<HttpCalloutVO.PolicyBilling> pgRec = new List<HttpCalloutVO.PolicyBilling>();
         Integer startIdx = (pyCurrentPage - 1) * BILL_PAGE_SIZE;
-		pyTotalRecords = pyFilteredList.size();
+        pyTotalRecords = pyFilteredList.size();
+        system.debug('20250503 : ' + pyTotalRecords );
         for(Integer i = startIdx; i < startIdx + BILL_PAGE_SIZE && i < pyTotalRecords; i++){
             pgRec.add(pyFilteredList[i]);
         }
+        system.debug('20250503b : ' + pgRec.size());
         return pgRec;
     }
     
     public Integer getPyTotalPages(){
-        return Math.ceil(pyTotalRecords * 1.0 / BILL_PAGE_SIZE).intValue();
+         return Math.ceil(pyTotalRecords * 1.0 / BILL_PAGE_SIZE).intValue();
+        
     }
     
     public List<Integer> getPyPageNumbers(){
@@ -1301,21 +1280,11 @@ public with sharing class policyDetailsController{
     }
     
     public void refreshGetPolicyBillingListBasic(){
-    	paymentTransactionList=new List<HttpCalloutVO.PolicyBilling>();
+        paymentTransactionList=new List<HttpCalloutVO.PolicyBilling>();
         if(policyNumber!=null&&policyNumber!=''){
             paymentTransactionList=helper.getPolicyBillingListBasic(policyNumber,true);
         }
     }
-    
-    //BEGIN HKITSFDC-211
-    public void refreshGetPolicyBillingListWithDate(){
-    	paymentTransactionList = new List<HttpCalloutVO.PolicyBilling>();
-    	if ((policyNumber != null && policyNumber != '') && (DateFrom != null && DateTo != null)) {
-        	paymentTransactionList = helper.getPolicyBillingListBasic(policyNumber, true);
-    	}
-	}
-
-    //END HKITSFDC-211
     
     private Date getMaxDateFromPaymentTransactionList(){
         Date maxDate = Date.today();
@@ -1336,7 +1305,7 @@ public with sharing class policyDetailsController{
             //Check the policy.PaymentMode
             Date startDate;
             if(null != policy.paymentMode && policy.paymentMode.equalsIgnoreCase('Annually')){
-            	startDate = maxDate.addYears(-3);
+                startDate = maxDate.addYears(-3);
             }else{
                 startDate = maxDate.addMonths(-36);
             }
@@ -1368,8 +1337,8 @@ public with sharing class policyDetailsController{
         //filter records based on date range selected: update paymentTransactionList
         List<HttpCalloutVO.PolicyBilling> dateRangeList = new List<HttpCalloutVO.PolicyBilling>();
         for(HttpCalloutVO.PolicyBilling pb : pyFilteredList) {
-        	if(pb.payDate >= pyBillingDateFrom && pb.payDate <= pyBillingDateTo) {
-            	dateRangeList.add(pb);
+            if(pb.payDate >= pyBillingDateFrom && pb.payDate <= pyBillingDateTo) {
+                dateRangeList.add(pb);
             }
         }
         pyFilteredList = dateRangeList;
@@ -1414,6 +1383,7 @@ public with sharing class policyDetailsController{
     }
     //END HKITSFDC-148
 
+    
     public void searchPremiumSettlementbybranch(){
         premiumSettlementList=new List<HttpCalloutVO.PolicyBilling>();
         if(selectedPremiumBranch=='All'){
@@ -2061,11 +2031,6 @@ public with sharing class policyDetailsController{
         }
         return fields2;
     }
-    
-    public String getFields2Json() {
-    	return JSON.serialize(getFields2());
-	}
-
 
     /*
     public PageReference getPolicyDetailData(){
@@ -3426,35 +3391,35 @@ public with sharing class policyDetailsController{
         //corDocList=helper.getPolicyDocTypeList(policyNumber,true,'Policy Correspondence','','','','');
         corDocList=helper.getPolicyDocTypeList(policyNumber,true,'Policy Correspondence','','','','','',ssnNum);
 
-        // indCorsAttIDList=new List<String>();
-        // // Rancho_PI64_20220411 - enhance the code
-        // List<File_Store__c> fileList = new List<File_Store__c>();
-        // List<Attachment> attList = new List<Attachment>();
-        // for(HttpCalloutVO.PolicyDocType doctype:corDocList){
-        //     File_Store__c fileStore=new File_Store__c();
-        //     fileStore.OwnerId=UserInfo.getUserId();
-        //     fileStore.Owner_id__c=UserInfo.getUserId();
-        //     fileList.add(fileStore);
-        // }
-        // //insert file store
-        // if(!Test.isRunningTest()){
-        //     insert fileList;
-        // }
-        // //insert attachment
-        // for(File_Store__c f : fileList){
-        //     Attachment tatt = new Attachment();
-        //     tatt.parentId=f.Id;
-        //     tatt.contentType='application/pdf';
-        //     tatt.name='tempDoc4Broker';
-        //     tatt.body=Blob.valueOf('');
-        //     attList.add(tatt);
-        // }
-        // if(!Test.isRunningTest()){
-        //     insert attList;
-        // }
-        // for(Attachment a : attList){
-        //     indCorsAttIDList.add(a.Id);
-        // }
+        indCorsAttIDList=new List<String>();
+        // Rancho_PI64_20220411 - enhance the code
+        List<File_Store__c> fileList = new List<File_Store__c>();
+        List<Attachment> attList = new List<Attachment>();
+        for(HttpCalloutVO.PolicyDocType doctype:corDocList){
+            File_Store__c fileStore=new File_Store__c();
+            fileStore.OwnerId=UserInfo.getUserId();
+            fileStore.Owner_id__c=UserInfo.getUserId();
+            fileList.add(fileStore);
+        }
+        //insert file store
+        if(!Test.isRunningTest()){
+            insert fileList;
+        }
+        //insert attachment
+        for(File_Store__c f : fileList){
+            Attachment tatt = new Attachment();
+            tatt.parentId=f.Id;
+            tatt.contentType='application/pdf';
+            tatt.name='tempDoc4Broker';
+            tatt.body=Blob.valueOf('');
+            attList.add(tatt);
+        }
+        if(!Test.isRunningTest()){
+            insert attList;
+        }
+        for(Attachment a : attList){
+            indCorsAttIDList.add(a.Id);
+        }
         InitCorDocYearMap();
     }
 
@@ -3510,13 +3475,7 @@ public with sharing class policyDetailsController{
 
     public String selectedDowlAttId{get;set;}
     public String selectedDowlAttKey{get;set;}
-    public String dlFileStoreId{get;set;}
     public void downloadDocument(){
-        File_Store__c fileStore = new File_Store__c();
-        fileStore.OwnerId = UserInfo.getUserId();
-        fileStore.Owner_id__c = UserInfo.getUserId();
-        insert fileStore;
-        dlFileStoreId=fileStore.Id;
         //add by kermit
         String appName='';
         if(CignaUtil.isCustomerPortal()){
@@ -3527,30 +3486,22 @@ public with sharing class policyDetailsController{
             appName=PolicyCalloutHelper.SERVICE_CONSOLE_APPNAME;
         }
         //add by kermit
-        system.debug('selectedDowlAttId'+selectedDowlAttId);
-        System.debug('selectedDowlAttKey'+selectedDowlAttKey);
-        // HKITSFDC-438 - Update file download process
-        // System.enqueueJob(new downloadDocQueue(policyNumber,selectedDowlAttKey,curLang,selectedDowlAttId,appName));
-        System.enqueueJob(new downloadDocQueue(policyNumber, selectedDowlAttKey, curLang, '', '', '', dlFileStoreId));
+        //        system.debug('attachmentID'+selectedDowlAttId);
+        System.enqueueJob(new downloadDocQueue(policyNumber,selectedDowlAttKey,curLang,selectedDowlAttId,appName));
+
     }
 
     public boolean isDownloadComplete{get;set;}
     public void checkIsDocumentDownloadComplete(){
-        // HKITSFDC-438 - Update file download process
         isDownloadComplete=false;
-        List<Attachment> aList = [SELECT Id, BodyLength FROM Attachment WHERE ParentId = :dlFileStoreId];
-        if(aList != null && aList.size() > 0){
-            selectedDowlAttId = aList[0].Id;
-            isDownloadComplete=true;
+        if(selectedDowlAttId!=null){
+            Attachment a=[Select Id,Body From Attachment Where Id =:selectedDowlAttId];
+            if(a.Body!=null){
+                if(a.body.size()>0){
+                    isDownloadComplete=true;
+                }
+            }
         }
-        // if(selectedDowlAttId!=null){
-        //     Attachment a=[Select Id,Body From Attachment Where Id =:selectedDowlAttId];
-        //     if(a.Body!=null){
-        //         if(a.body.size()>0){
-        //             isDownloadComplete=true;
-        //         }
-        //     }
-        // }
     }
 
     /*
@@ -3644,8 +3595,7 @@ public with sharing class policyDetailsController{
         }
         //        System.debug('getPolicySSNNum ssnNum:'+ssnNum);
     }
-
-    //BEGIN HKITSFDC-148 NOTE:TEMPORARY
+     //BEGIN HKITSFDC-148 
     public void loadAltruistAdminProfileSet(){
         altruistAdminSet = new Set<Id>();
         Profile prf = [SELECT Id,Name FROM Profile WHERE Name IN ('Cigna Altruist Broker Admin') LIMIT 1];
