@@ -62,14 +62,6 @@ public class downloadDocQueue implements Queueable, Database.AllowsCallouts {
         this.type = type;
         this.parentId = parentId;
     }
-
-    //junda add
-    public downloadDocQueue(string attKey,string attID,String type){
-        this.type = type;
-        this.attKey = attKey;
-        this.attID = attID;
-    }
-    //junda add end
     
     public void execute(QueueableContext context) {
         try{
@@ -135,37 +127,6 @@ public class downloadDocQueue implements Queueable, Database.AllowsCallouts {
                         }      
                     } 
                 }
-                //junda add
-                else if('Prescription'.equalsIgnoreCase(type)){
-                    PrescriptionCalloutHelper helper = new PrescriptionCalloutHelper();
-                    HttpCalloutVO.Attachment workDoc = null;
-
-                    List<HttpCalloutVO.Attachment> docList = helper.GetPrescriptionDoc(attKey);
-                    if(!docList.isEmpty() && docList.size()>0){
-                        workDoc = docList.get(0);
-                    }
-                    if (workDoc !=null){
-                        att.name = workDoc.fileName;
-                        List<String> splitList=att.name.split('\\.');
-                        System.debug('splitList---'+splitList);
-                        if(splitList.size()>0){
-                            //att.contentType = 'application/'+splitList[splitList.size()-1];
-                            if(splitList[splitList.size()-1]=='pdf'){
-                                att.contentType = 'application/'+splitList[splitList.size()-1];
-                            }else if(splitList[splitList.size()-1]=='jpg'){
-                                att.contentType = 'image/jpeg';
-                            }else{
-                                att.contentType = 'image/'+splitList[splitList.size()-1];
-                            }
-                        }
-                        att.body = null;
-                        att.body = EncodingUtil.base64Decode(workDoc.attachmentData64Binary);
-                        if (!Test.isRunningTest()){
-                            upsert att;
-                        }
-                    }
-                }
-                //junda add end
             }
         }catch(Exception e){
             system.debug('invalid download parameter!');
