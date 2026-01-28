@@ -21,7 +21,7 @@ public abstract class TMProductStrategyVHIS extends TMProductStrategy{
     
     public override void discountValidation(){
         super.discountValidation(ptvs,productCode);
-        vhisSuper_2026Q1Validation();
+        vhisSuper_2026Q1Validation(); // HKITSFDC_521_Discount
         childOfferDiscountValidation();
         childGroupOfferDiscountValidation();
         kidsOfferDiscountValidation();
@@ -255,6 +255,9 @@ public abstract class TMProductStrategyVHIS extends TMProductStrategy{
         
     }
     
+    /**
+     * HKITSFDC_521_Discount
+     */
     public void vhisSuper_2026Q1Validation(){
         // Implement VHIS specific validation for 2026 Q1 here
         Integer insuredCount = ptvs.ctrl.amountOfPI;
@@ -315,21 +318,6 @@ public abstract class TMProductStrategyVHIS extends TMProductStrategy{
                     applicableDiscounts.add('4-6 App. W/O Ext. Coverage');  
                 } 
             }
-            // else {
-            //     // all without deductible
-            //     if (!hasWithDeductible) {
-            //         if (insuredCount == 1) {
-            //             // do nothing
-            //         } else if (insuredCount == 2) {
-            //             applicableDiscounts.add('PROMOTION');
-            //         }
-            //     } else {
-            //         // mix with deductible
-            //         if (insuredCount >= 2 && insuredCount <= 4) {
-            //             applicableDiscounts.add('PROMOTION');
-            //         }
-            //     }
-            // }
 
             for (String discountType : applicableDiscounts) {
                 if (pis.availableDiscountMap.containsKey(discountType)) {

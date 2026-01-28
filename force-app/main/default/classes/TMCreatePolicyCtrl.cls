@@ -241,7 +241,6 @@ global class TMCreatePolicyCtrl {
     }
     
     private ID productBeforeChange;//SPS-449   
-    public Integer tabIndex{get;set;}
     //TM work at Home
     public OriginalData orgnDataBeforeMask {get;set;}    
     public Map<String,Product__c> productCodeProductMap=new Map<String,Product__c>();  
@@ -266,9 +265,7 @@ global class TMCreatePolicyCtrl {
     public Integer showRefundErrorMessage{get;set;}{showRefundErrorMessage=0;}
     public List<HttpCalloutVO.Policy> holderPolicyList=new List<HttpCalloutVO.Policy>();
     public String GAList {get;set;}//add by jack for policy replacement    
-    // public Map<String,Boolean> firstYDisEliMap {get;set;}//Nicole_Elite Revamp_20210319 Rancho_AH24240_20220224
-    //JR1817 - End
-
+    public Map<String,Boolean> firstYDisEliMap {get;set;}//Nicole_Elite Revamp_20210319
     //GL31 Tovid add --start
     public final static String NO_SUCH_PRODUCT = 'N/A';
     List<TM_Product_Category__c> tmProcatList;
@@ -284,26 +281,6 @@ global class TMCreatePolicyCtrl {
     // Rancho_HKITSFDC398_20250909 - 2025Q4 CX Campaign - allow select different discount for each policy
     public String currentPolicyNo{get;set;}
     
-    /* add by Jack on 2022-02-24 for project: Discount enhancement*/
-    // String holderSSN;
-    // public List<HttpCalloutVO.Policy> holderPolicyList{
-    //     get{
-    //         if((holderSSN!=null && !holderSSN.equalsIgnoreCase(newPolicy.Personal_ID__c)) || holderSSN==null){
-    //             if(orgnDataBeforeMask.workAtHome){
-    //                 deMaskSensiData();
-    //             }
-    //             holderSSN=newPolicy.Personal_ID__c;
-    //             holderPolicyList=policyCalloutHelper.getIndividualPolicyListBasicByCriteria('', '', '', '', '', newPolicy.Personal_ID__c);
-    //             if(orgnDataBeforeMask.workAtHome){
-    //                 maskSensiData();
-    //             }
-    //             return holderPolicyList;
-    //         }else{
-    //             return holderPolicyList;
-    //         }
-    //     }
-    //     set;
-    // }
     /**
    * @description The Construction of TMCreatePolicyCtrl
    * @param ApexPages.StandardController controller
@@ -323,7 +300,6 @@ global class TMCreatePolicyCtrl {
                 initPolicy(policyTxnId);
                 initPersonInsuredInfo(policyList);
                 initAccount(accountId);
-                initPolIdPolicyNoMap();//Add by Kermit at 20191216
                 ////System.debug('[TMCreatePolicyCtrl] TMCreatePolicyCtrl().PolIdPolicyNoMap='+this.PolIdPolicyNoMap);
                 //System.debug('[TMCreatePolicyCtrl] TMCreatePolicyCtrl().personInsuredStructureList.size()'+personInsuredStructureList.size());
             }else if(policyTran.Opportunity__c!=null){
@@ -336,13 +312,7 @@ global class TMCreatePolicyCtrl {
                 initPersonInsuredInfo();
             }                      
             initCurrentStep();
-            if(this.currentStep>=6){
-                for(PersonInsuredStructure pis : personInsuredStructureList){
-                    pis.pi.Benefit_Level__c=dec2HexMap.get(pis.pi.Benefit_Level__c)==null? 
-                    pis.pi.Benefit_Level__c:dec2HexMap.get(pis.pi.Benefit_Level__c);
-                }
-            }
-            initPolicyTransactionValidationStruct();  
+            initPolicyTransactionValidationStruct();      
             //GL31 Tovid add --start
             if(policyTransaction != null && policyTransaction.Objectives_Question__c == null && policyTransaction.Which_type_s_of_medical_insurance__c == null){
                 policyTransaction.Objectives_Question__c = opp.Objectives_Question__c;
@@ -377,9 +347,9 @@ global class TMCreatePolicyCtrl {
             ////System.debug('TMCreatePolicyCtrl showPolicyReplacement:'+showPolicyReplacement+'policyTransaction.PolicyReplacement__c'+policyTransaction.PolicyReplacement__c);
         }
         // if(currentStep==STEP_PHPI_INFORMATION){
-        //     //initAssessRider(this.opp.Prod_Rider_Map__c,this.selectedProduct.Product_Code__c,this);//GL31 jack add
-        //     initAssessRider();//GL31 Tovid add
+        //     initAssessRider(this.opp.Prod_Rider_Map__c,this.selectedProduct.Product_Code__c,this);//GL31 jack add
         // }
+        PolIdPolicyNoMap = new Map<String,String>();
     }
     
     /**    
@@ -414,7 +384,6 @@ global class TMCreatePolicyCtrl {
         
         GAProductValidationList=[SELECT Name,Post_Duplication_Checking__c,AUW__c,Channel__c,Insured_Type__c,Side_Order__c,UW_Requirement__c FROM GA_Product_Validation_Checking__c];
         //SPS-237        
-        tabIndex=1;
         // TM Work at Home
         orgnDataBeforeMask=new OriginalData();
         if(currentUser.Work_From_Home__c){
@@ -434,7 +403,7 @@ global class TMCreatePolicyCtrl {
     * @date 2018-10-12 15:02:29 
     */ 
     public void initOpportunity(Id oppId){
-        this.opp=[select id,Name,Accountid,Campaign__c,Is_Success__c,RecordType.DeveloperName,Source_of_Activity__c,Is_Side_Order__c,Reference3__c,Reference5__c,Reference2__c,Reference4__c,Running_No__c,IQ_ID__c,OwnerId,Product_1__c,Quote_Product1__c,Is_GA__c,Available_Product_Code_For_Assessment__c,Prod_Rider_Map__c,Objectives_Question__c,  Which_type_s_of_medical_insurance__c,Available_Product_Name_For_Assessment__c,Assessment_Question_1__c,Assessment_Questoin_2__c,Asia_Miles_Membership_First_Name__c,Asia_Miles_Membership_Last_Name__c,Asia_Miles_Membership_Num__c   from Opportunity where id=:oppId];//GL31 jack add//AM project AM info enhancement jack add
+        this.opp=[select id,Name,Accountid,Campaign__c,Is_Success__c,RecordType.DeveloperName,Source_of_Activity__c,Is_Side_Order__c,Reference3__c,Reference5__c,Reference2__c,Reference4__c,Running_No__c,IQ_ID__c,OwnerId,Product_1__c,Quote_Product1__c,Available_Product_Code_For_Assessment__c,Prod_Rider_Map__c,Objectives_Question__c,  Which_type_s_of_medical_insurance__c,Available_Product_Name_For_Assessment__c,Assessment_Question_1__c,Assessment_Questoin_2__c,Asia_Miles_Membership_First_Name__c,Asia_Miles_Membership_Last_Name__c,Asia_Miles_Membership_Num__c   from Opportunity where id=:oppId];//GL31 jack add//AM project AM info enhancement jack add
         this.opportunityId=this.opp.Id;
         this.campaignId=this.opp.Campaign__c;
         this.accountId=this.opp.Accountid;
@@ -451,10 +420,6 @@ global class TMCreatePolicyCtrl {
     public void initAccount(Id accountId){
         // 20200717 - minghua - SF Modeling
         this.acc = [select firstName,lastName,Chinese_Name__c,Gender__c,Nationality__c,PersonBirthdate__c,PersonHomePhone,PersonMobilePhone,Office_Phone__c,PersonEmail,Home_Address_Line_1__c,Home_Address_Line_2__c,Home_Address_Line_3__c,Home_Address_Line_4__c,Company__c,Position__c,SSN__c,Email__c, Credit_Card_No_BackEnd__c,Credit_Card_No__c,Call_List_Address_Line_1__c,Call_List_Address_Line_2__c,Call_List_Address_Line_3__c,Call_List_Address_Line_4__c,Maturity_Policy_Number__c, LHB_certificate_number__c, LHB_policy_number__c, recordType.developerName,Prospect_reference1__c, Reference2__pc, Reference3__pc, Reference4__pc, Reference5__pc,Bank_Account_No__c, Bank_Account_No_BackEnd__c from account where id = :accountId];
-        //AH19572 adjust gender
-        if(String.isNotBlank(this.acc.Gender__c)){
-            this.acc.Gender__c=adjustGender(this.acc.Gender__c);
-        }
     }
 
     /** 
@@ -582,7 +547,7 @@ global class TMCreatePolicyCtrl {
     * @date 2018-10-12 15:02:29 
     */     
     public void initCampaign(Id campId){
-        cam=[select id,Core_Product__c,Status,IPAS_Campaign_Code__c,Bank__c,Payment_Method__c,BF_Annual__c,BF_Month__c,BF_Quater__c,BF_Semi_Annual__c,BF_Single__c,Channel__c,Expiry_Date__c,Channel__r.Is_GA_Channel__c,Credit_Card__c,Campaign_Type__c,Channel__r.Channel_Code__c,Select_All_Bank__c,Campaign_Type__r.Name,Name,Campaign_Code__c,Batch_No__c,(select id,Alt_Campaign__r.Core_Product__c,Alt_Campaign__c from Core_Campaign_Alter_Campaign__r),(select id,name,Campaign__c,Discount__c,Discount_Type__c,Duration__c,Lapse_Surrender_Policy_Checking__c,Mandatory__c from Premium_Discounts__r WHERE RecordType.DeveloperName!='Premium_Refund'),Business_Partner__r.Sponsor_Code__c,Is_GA__c from Campaign where id=:campId];//AM project coupon jack add/* add by Jack on 2022-01-11 for project: Discount Enhancement */       
+        cam=[select id,Core_Product__c,Status,IPAS_Campaign_Code__c,Bank__c,Payment_Method__c,BF_Annual__c,BF_Month__c,BF_Quater__c,BF_Semi_Annual__c,BF_Single__c,Channel__c,Expiry_Date__c,Channel__r.Is_GA_Channel__c,Credit_Card__c,Campaign_Type__c,Channel__r.Channel_Code__c,Select_All_Bank__c,Campaign_Type__r.Name,Name,Campaign_Code__c,Batch_No__c,(select id,Alt_Campaign__r.Core_Product__c,Alt_Campaign__c from Core_Campaign_Alter_Campaign__r),(select id,name,Campaign__c,Discount__c,Discount_Type__c,Duration__c,Lapse_Surrender_Policy_Checking__c,Mandatory__c from Premium_Discounts__r WHERE RecordType.DeveloperName!='Premium_Refund'),Business_Partner__r.Sponsor_Code__c from Campaign where id=:campId];//AM project coupon jack add/* add by Jack on 2022-01-11 for project: Discount Enhancement */    
         isGAChannel=(cam.Channel__r.Is_GA_Channel__c==true);
         initProduct(cam);
         productIdCampaignMap.put(cam.Core_Product__c,cam);
@@ -610,13 +575,13 @@ global class TMCreatePolicyCtrl {
                 productIdList.add(ccac.Alt_Campaign__r.Core_Product__c);
             }
         }
-        for(Product__c prod : [select id,Disable_Monthly_Payment__c,name,Is_Life__c,CRS_Indicator__c,Product_code__c,Is_Basic_Plan__c,Rate_Scale__c,Policy_Prefix__c,Is_AML__c,currency__c,Website_Product_Code__c/*Nicole_Elite Revamp_20210318*/  from product__c where id in :productIdList]){           /* add by Jack on 2022-04-21 for project: Disable monthly payment */
+        for(Product__c prod : [select id,name,Is_Life__c,CRS_Indicator__c,Product_code__c,Is_Basic_Plan__c,Rate_Scale__c,Policy_Prefix__c,Is_AML__c,currency__c,Website_Product_Code__c/*Nicole_Elite Revamp_20210318*/  from product__c where id in :productIdList]){           
             this.productMap.put(prod.Id,prod);
             this.productOptions.add(new SelectOption(prod.id,prod.name));
             this.productCodeProductMap.put(prod.Product_Code__c,prod);
         }
         ////System.debug('[TMCreatePolicyCtrl] initProduct().altCamIds='+altCamIds);
-        List<Campaign> campaignList=[select id,Core_Product__c,Is_GA__c,(select id,name,Campaign__c,Discount__c,Discount_Type__c,Duration__c,Lapse_Surrender_Policy_Checking__c,Mandatory__c from Premium_Discounts__r WHERE RecordType.DeveloperName!='Premium_Refund') from Campaign where id in :altCamIds];/* add by Jack on 2022-01-11 for project: Discount Enhancement */
+        List<Campaign> campaignList=[select id,Core_Product__c,(select id,name,Campaign__c,Discount__c,Discount_Type__c,Duration__c,Lapse_Surrender_Policy_Checking__c,Mandatory__c from Premium_Discounts__r WHERE RecordType.DeveloperName!='Premium_Refund') from Campaign where id in :altCamIds];/* add by Jack on 2022-01-11 for project: Discount Enhancement */
         ////System.debug('[TMCreatePolicyCtrl] initProduct().campaignList='+campaignList);
         campaignList.add(cam);
         for(Campaign ca : campaignList){
@@ -653,7 +618,7 @@ global class TMCreatePolicyCtrl {
     * @date 2018-10-12 15:02:29 
     */     
     public void initPolicyTransaction(Id policyTxnId){
-        policyTransaction=[select Id,Account__c,Opportunity__c,Opportunity__r.AccountId,Core_Campaign__c,Step__c,Status__c,Product_Name__c,Effective_Date__c,Master_Policy_No__c,Number_of_Person_Insured__c,(select id from NewPolicies__r ),LC_Assessed__c,LC_Reviewer__c,LC_Reviewer_Date__c,PolicyReplacement__c,Objectives_Question__c,Which_type_s_of_medical_insurance__c,Available_Product_Code_For_Assessment__c,Available_Product_Name_For_Assessment__c,Prod_Rider_Map__c from Policy_transaction__c where id=:policyTxnId];//GL31 jack add
+        policyTransaction=[select Id,Account__c,Opportunity__c,Opportunity__r.AccountId,Core_Campaign__c,Step__c,Status__c,Product_Name__c,Effective_Date__c,Master_Policy_No__c,Number_of_Person_Insured__c,(select id from NewPolicies__r ),LC_Assessed__c,LC_Reviewer__c,LC_Reviewer_Date__c,PolicyReplacement__c,Objectives_Question__c,Which_type_s_of_medical_insurance__c,Available_Product_Code_For_Assessment__c,Available_Product_Name_For_Assessment__c,Prod_Rider_Map__c from Policy_transaction__c where id=:policyTxnId];//GL31 jack add        
         isExists=1;
         currentStep=Integer.valueOf(policyTransaction.Step__c);        
         if(policyTransaction.Status__c=='Completed'){
@@ -814,8 +779,8 @@ global class TMCreatePolicyCtrl {
             pIds.add(policy.id);
         }
         personInsuredStructureList=new List<PersonInsuredStructure>();
-         List<person_insured__c> piList = [select Id, Name, Other_Reason_for_PI_age_over_18__c,Reason_for_PI_age_over_18__c, Insured_Type__c,Benefit_Level__c,Rider__c,Insured_Last_Name__c, Basic_Plan__c,Insured_First_Name__c,Insured_Name_Chi__c,Marital_Status__c,Gender__c,Smoker__c,Date_of_Birth__c,Nationality__c,ID_Type__c,Personal_ID__c,Weight__c,Benefit_lv_DP_SP_larger_than_MI__c,Weight_Unit__c,Height__c,Height_Unit__c,Home_Phone__c,Mobile_Phone__c,Office_Phone__c,Email__c,Position__c,Income_HKD__c,Corresponding_Address_1__c,Insured_Type_Code__c,Corresponding_Address_2__c,Corresponding_Address_3__c,Corresponding_Address_4__c,Corresponding_Address_Country__c,New_Policy__c,New_Policy__r.Opportunity__r.RecordType.DeveloperName,New_Policy__r.Product_Code__c,New_Policy__r.Id, Person_Insured_Name__c, PI_Age__c,Relationship__c,Education_Level__c,Place_of_Birth__c,Parent_PI_ID__c,New_Policy__r.Pre_Sales_Result__c, New_Policy__r.UW_Result__c, New_Policy__r.UW_Overrall_Result__c,Residential_Address_1__c,Residential_Address_2__c,Residential_Address_3__c,Residential_Address_4__c,Is_Email_Needed__c,Height_Inch__c, LHB_certificate_number__c, LHB_policy_number__c, Declare_new_marriage_new_born_baby__c, Residential_Address_Country__c,Place_of_Residence_picklist__c,Spouse_PI_ID__c,Cancer_Declaration__c, Accident_Declaration__c,Is_GA__c,Asia_Miles_Membership_First_Name__c,Asia_Miles_Membership_Last_Name__c,Asia_Miles_Membership_Num__c,(select id,Last_Name__c,First_Name__c,Person_ID__c,Beneficiary_Type__c,Gender__c,Relationship__c,Percent__c,Person_Insured__c,Policy__c from Beneficiary__r )//AM project jack add/* add by Jack on 2021-12-03 for project: JR1829 */
-         //(select Id, Application_Id__c, Full_Result__c, Is_Basic_Plan__c, Loading__c, Person_Insured__c, Policy__c, Presales_Result__c, Product__c, Source__c, Submission_Date_Time__c, Overrall_Result__c, 
+        List<person_insured__c> piList = [select Id, Name, Other_Reason_for_PI_age_over_18__c,Reason_for_PI_age_over_18__c, Insured_Type__c,Benefit_Level__c,Rider__c,Insured_Last_Name__c, Basic_Plan__c,Insured_First_Name__c,Insured_Name_Chi__c,Marital_Status__c,Gender__c,Smoker__c,Date_of_Birth__c,Nationality__c,ID_Type__c,Personal_ID__c,Weight__c,Benefit_lv_DP_SP_larger_than_MI__c,Weight_Unit__c,Height__c,Height_Unit__c,Home_Phone__c,Mobile_Phone__c,Office_Phone__c,Email__c,Position__c,Income_HKD__c,Corresponding_Address_1__c,Insured_Type_Code__c,Corresponding_Address_2__c,Corresponding_Address_3__c,Corresponding_Address_4__c,Corresponding_Address_Country__c,New_Policy__c,New_Policy__r.Opportunity__r.RecordType.DeveloperName,New_Policy__r.Product_Code__c,New_Policy__r.Id, Person_Insured_Name__c, PI_Age__c,Relationship__c,Education_Level__c,Place_of_Birth__c,Parent_PI_ID__c,New_Policy__r.Pre_Sales_Result__c, New_Policy__r.UW_Result__c, New_Policy__r.UW_Overrall_Result__c,Residential_Address_1__c,Residential_Address_2__c,Residential_Address_3__c,Residential_Address_4__c,Is_Email_Needed__c,Height_Inch__c, LHB_certificate_number__c, LHB_policy_number__c, Declare_new_marriage_new_born_baby__c, Residential_Address_Country__c,Place_of_Residence_picklist__c,Spouse_PI_ID__c,Cancer_Declaration__c, Accident_Declaration__c,Asia_Miles_Membership_First_Name__c,Asia_Miles_Membership_Last_Name__c,Asia_Miles_Membership_Num__c,(select id,Last_Name__c,First_Name__c,Person_ID__c,Beneficiary_Type__c,Gender__c,Relationship__c,Percent__c,Person_Insured__c,Policy__c from Beneficiary__r )//AM project jack add/* add by Jack on 2021-12-03 for project: JR1829 */
+//(select Id, Application_Id__c, Full_Result__c, Is_Basic_Plan__c, Loading__c, Person_Insured__c, Policy__c, Presales_Result__c, Product__c, Source__c, Submission_Date_Time__c, Overrall_Result__c, 
 //Appeal__c, UW_EXCL_1__c, UW_EXCL_10__c, UW_EXCL_2__c, UW_EXCL_3__c, UW_EXCL_4__c, UW_EXCL_5__c, UW_EXCL_6__c, UW_EXCL_7__c, UW_EXCL_8__c, UW_EXCL_9__c,Remarks_to_Cigna_Underwriter__c,
 // Presales_Result_Attribute__c,AUW_URL__c,LastModifiedDate,PreSales_Result_Msg__c from UW_Result__r order by createddate desc)                                    
  from person_insured__c where New_Policy__c in :pIds];       
@@ -870,9 +835,6 @@ global class TMCreatePolicyCtrl {
                 break;
             }
         }        
-        // add by kermit for SPS-237
-        //this.showBMIforSpecialProduct();
-        // end for SPS-237
         
         //if presales result is not accepted,the step 4 page must show
         //if(isAccepted){
@@ -935,10 +897,10 @@ global class TMCreatePolicyCtrl {
                     newPolicy.Is_Email_Needed__c=true;
                 }else{
                     //System.debug('[TMCreatePolicyCtrl] policy_holder_email_address='+newPolicy.Policy_Holder_Email_Address__c);
-                    if(String.isNotBlank(newPolicy.Policy_Holder_Email_Address__c) && !emailPattern.matcher(newPolicy.Policy_Holder_Email_Address__c).matches()){
-                        newPolicy.Is_Email_Needed__c=true;
+                    if(String.isBlank(newPolicy.Policy_Holder_Email_Address__c) || !emailPattern.matcher(newPolicy.Policy_Holder_Email_Address__c).matches()){
+                        newPolicy.Is_Email_Needed__c = true;
                     }else{
-                        newPolicy.Policy_Holder_Email_Address__c=acc.Email__c;
+                        newPolicy.Policy_Holder_Email_Address__c = acc.Email__c;
                     }
                 }
                 newPolicy.Company__c=acc.Company__c;
@@ -1091,7 +1053,6 @@ global class TMCreatePolicyCtrl {
                     initPersonInsuredInfo();
                 }
             }
-            premiumAmountList.clear();
         }               
         productBeforeChange=newPolicy.Product__c;
     }
@@ -1114,9 +1075,6 @@ global class TMCreatePolicyCtrl {
             Integer i=personInsuredStructureList.size();
             while(amountOfPI>personInsuredStructureList.size()){
                 PersonInsuredStructure newPIS=new PersonInsuredStructure();
-                //Wellness CI GA system approach
-                newPIS.pi.Is_GA__c=productIdCampaignMap.containsKey(this.selectedProduct.Id)?productIdCampaignMap.get(this.selectedProduct.Id).Is_GA__c:false;
-                //Wellness CI GA system approach
                 newPIS.pi.Weight_Unit__c='kg';
                 newPIS.pi.Height_Unit__c='cm';
                 newPIS.pi.ID_Type__c='HK PERM RESIDENT';
@@ -1217,8 +1175,6 @@ global class TMCreatePolicyCtrl {
                 }
             }
         }
-        if(newPolicy!=null && newPolicy.Unexpected__c)
-            currentStep=STEP_POLICY_INFORMATION;
         // TM Work at Home
         if(orgnDataBeforeMask.workAtHome){           
             maskSensiData();
@@ -1483,16 +1439,8 @@ global class TMCreatePolicyCtrl {
         }
         //Before AUW step4
         if(isInStep(STEP_UW_INFORMATION)){
-            //System.debug('>>>>>> TMCreatePolicy,D this.currentStep='+this.currentStep);
-            //System.debug('TMCreatePolicyCtrl canSave'+canSave);
             policyStepStrategy=new TMCreatePolicyStep4Strategy(ptvs);
-            policyStepStrategy.nextStep();
-            //System.debug('after step 4 strategy');
-            for(PersonInsuredStructure pis : personInsuredStructureList){
-                //System.debug('after step 4 strategy pis.piPolicy.application_Id__c='+pis.piPolicy.Application_Id__c);
-            }
-            //System.debug('TMCreatePolicyCtrl canSave'+canSave);
-            //System.debug('>>>>>> TMCreatePolicy,E this.currentStep='+this.currentStep);
+            policyStepStrategy.nextStep();            
         }
         //AUW step5
         if(isInStep(STEP_UW_INFORMATION_2)){
@@ -1537,13 +1485,6 @@ global class TMCreatePolicyCtrl {
         
         //System.debug('>>>>>> TMCreatePolicy,this.currentStep='+this.currentStep);
         System.debug('>>>>>> TMCreatePolicy,canSave='+canSave); 
-        for(PersonInsuredStructure pis : personInsuredStructureList){
-            //System.debug('[TMCreatePolicyCtrl] after '+currentStep+' Strategy pis.piPolicy.UW_Result__c=' +pis.piPolicy.UW_Result__c);
-            //System.debug('[TMCreatePolicyCtrl] after '+currentStep+' Strategy pis.piPolicy.Application_Id__c=' +pis.piPolicy.Application_Id__c);
-        }
-        for(PersonInsuredStructure pis : personInsuredStructureList){
-            //System.debug('TMCreatePolicy,pis.piPolicy.Pre_Sales_Result__c'+pis.piPolicy.Pre_Sales_Result__c+'pis.piPolicy.UW_Overrall_Result__c:'+pis.piPolicy.UW_Overrall_Result__c);
-        }
         return null;
     }
        
@@ -1566,11 +1507,6 @@ global class TMCreatePolicyCtrl {
      **/
     public void previousStep(){
         //System.debug('[TMCreatePolicyCtrl] previousStep().before back step='+currentStep);
-        for(PersonInsuredStructure pis : personInsuredStructureList){
-            if(!pis.pi.Benefit_Level__c.isNumeric()){
-                pis.pi.Benefit_Level__c=hex2DecMap.get(pis.pi.Benefit_Level__c);
-            }
-        }
         if(isInStep(STEP_CONFIRMATION_PAYMENT)){
             isPaymentButtonClicked=false;        
             showDiscountErrorMsg=0;
@@ -1884,7 +1820,7 @@ global class TMCreatePolicyCtrl {
             
             //System.debug('[TMCreatePolicyCtrl] initRiderRelated4PI().availableRidersMap='+availableRidersMap);
             //System.debug('[TMCreatePolicyCtrl] initRiderRelated4PI().productCode='+productCode);
-            if(SPECIAL_RIDER_PRODUCTCODE.contains(productCode) || SPECIAL_RIDER_PRODUCTCODE2.contains(productCode) || '@SP100;SP100'.contains(productCode)){
+            if(SPECIAL_RIDER_PRODUCTCODE.contains(productCode) || SPECIAL_RIDER_PRODUCTCODE2.contains(productCode)){
                 //initialize ridercode,ridername
                 for(String riderCode : allRiders.keySet()){
                     AvailableRiderBenefitlevelItem ai=new AvailableRiderBenefitlevelItem();
@@ -2039,16 +1975,8 @@ global class TMCreatePolicyCtrl {
         
         public List<SelectOption> getAvailableRiders(){
             List<SelectOption> availabelRiders=new List<SelectOption>();
-            //Owen_JOBR324_20230905 - hide special rider
-            List<String> specialRider=Custom_Value__c.getInstance('Hide Product Rider').Value__c?.split(';');
-            Map<String,String> hiddenRiderMap = new Map<String,String>();
-            for(String i:specialRider){
-                hiddenRiderMap.put(i,i);
-            }
             for(String riderCode : availableRidersMap.keySet()){
-                if(hiddenRiderMap.get(riderCode)==null){
-                    availabelRiders.add(new SelectOption(riderCode,availableRidersMap.get(riderCode)));
-                }
+                availabelRiders.add(new SelectOption(riderCode,availableRidersMap.get(riderCode)));
             }
             if(availabelRiders.isEmpty()){
                 availabelRiders.add(new SelectOption('','--None--'));
@@ -2209,9 +2137,6 @@ global class TMCreatePolicyCtrl {
         policyTransaction.Number_of_Person_Insured__c=amountOfPI;
         //policyTransaction.Product_Code__c=productCode;
         //policyTransaction.Product_Name__c=productMap.get(selectedProductId).Name;
-        // add income_hkc_c and nationality by tovid 2021.04.30
-        policyTransaction.Policy_Holder_Monthly_Income__c = newPolicy.Income_HKD__c;
-        policyTransaction.Policy_Holder_Nationality__c = newPolicy.Nationality__c; 
         policyTransaction.Product_Code__c=productMap.get(newPolicy.Product__c).Product_Code__c;
         policyTransaction.Product_Name__c=productMap.get(newPolicy.Product__c).Name;
         policyTransaction.Step__c=String.valueOf(currentStep);
@@ -2247,32 +2172,12 @@ global class TMCreatePolicyCtrl {
     public void savePolicy(){
         //delete policy before insert
         if(!deletePolicyList.isEmpty()){
-            Set<ID> polIdSet=new Set<ID>();
-            for(New_Policy__c p : deletePolicyList){
-                polIdSet.add(p.Id);
-            }
-            List<New_Policy__c> tempList=new List<New_Policy__c>();
-            for(New_Policy__c p : [SELECT Id FROM NEW_Policy__c WHERE Id IN :polIdSet]){
-                tempList.add(p);
-            }
-            deletePolicyList=tempList;
-            if(!deletePolicyList.isEmpty()){
-                Database.DeleteResult[] DR_Dels=Database.delete(deletePolicyList,true);
-                //System.debug('>>>>>>>>>>>>>>>>>>>>>>>>>>>deletePolicy:'+DR_Dels);
-                deletePolicyList.clear();
-            }
+            Database.DeleteResult[] DR_Dels=Database.delete(deletePolicyList,true);
+            //System.debug('>>>>>>>>>>>>>>>>>>>>>>>>>>>deletePolicy:'+DR_Dels);
+            deletePolicyList.clear();
         }
         //TMPolicyUtil.updateUWRelatedFieldsInPolicies(policyList);
 
-        //AH19572 adjust gender
-        if(String.isNotBlank(newPolicy.Gender__c)){
-            newPolicy.Gender__c=adjustGender(newPolicy.Gender__c);
-        }
-        //System.debug('[TMCreatePolicyCtrl] savePolicy currentStep='+this.currentStep);
-        for(PersonInsuredStructure pis : personInsuredStructureList){
-            //System.debug('policy_no__c='+pis.piPolicy.policy_no__c+' application_id__c='+pis.piPolicy.Application_Id__c);
-        }
-                
         if(null==newPolicy.Policy_Transaction__c){
             newPolicy.Policy_Transaction__c=policyTransaction.Id;}       
         if(null==newPolicy.Account__c){
@@ -2437,37 +2342,14 @@ global class TMCreatePolicyCtrl {
         //System.debug('TMCreatePolicyCtrl newPolicy.Is_Corr_Address_Country_Changed__c'+newPolicy.Is_Corr_Address_Country_Changed__c);
         if(( newPolicy.Is_Corr_Address_Country_Changed__c==false || String.isBlank(newPolicy.Corresponding_Address_Country__c) )&& String.isBlank(newPolicy.Corresponding_Address_1__c) && String.isBlank(newPolicy.Corresponding_Address_2__c) && String.isBlank(newPolicy.Corresponding_Address_3__c) && String.isBlank(newPolicy.Corresponding_Address_4__c) && String.isNotBlank(newPolicy.Residential_Address_Country__c)){
             newPolicy.Corresponding_Address_Country__c=newPolicy.Residential_Address_Country__c;
-        }
-        
-        //upsert newPolicy;
-        //SPS-417
-        try{
-            upsert newPolicy;
-            //System.debug('[TMCreatePolicy] savePolicy after upsert newPolicy.Application_Id__c='+newPolicy.Application_Id__c);
-        }catch(DmlException e){
-            //System.debug('[TMCreatePolicyCtrl] save() e.getMessage:'+e.getMessage());
-            if(e.getMessage().contains('duplicates value')){
-                Product__c pro=productMap.get(newPolicy.Product__c);
-                newPolicy.Policy_No__c=TMPolicyUtil.generatePolicyNumber(pro.Policy_Prefix__c);
-                newPolicy.Unexpected__c=true;
-                //System.debug('[TMCreatePolicyCtrl] regenerate policy num:'+newPolicy.Policy_No__c);
-                upsert newPolicy;
-            }
-        }
-        //SPS-417
-        
+        }       
+        upsert newPolicy;       
         Integer i=0;
         //List<new_policy__c> toSavePolicyList=new List<new_policy__c>();
         for(new_policy__c policy : policyList){
             if(i==0){
                 policy=newPolicy;//the first policy in policylist is referenced to newPolicy 
             }else{
-
-                //AH19572 adjust gender
-                if(String.isNotBlank(policy.Gender__c)){
-                    policy.Gender__c=adjustGender(policy.Gender__c);
-                }
-
                 TMPolicyUtil.copyPolicyNotNull(newPolicy,policy);
                 if(null==policy.Policy_Transaction__c)
                     policy.Policy_Transaction__c=policyTransaction.id;
@@ -2544,13 +2426,14 @@ global class TMCreatePolicyCtrl {
                         policy.Original_Premium__c=pa.originalPremiumMonth;
                         break;
                     }
-                }  
-                
-                if(String.isNotBlank(newPolicy.Asia_Miles_Membership_Num__c) && String.isBlank(policy.Asia_Miles_Membership_Num__c)){
+                }   
+
+                if(String.isNotBlank(newPolicy.Asia_Miles_Membership_Num__c) && String.isBlank(policy.Asia_Miles_Membership_Num__c)){//AM project AM info jack add
                     policy.Asia_Miles_Membership_First_Name__c=newPolicy.Asia_Miles_Membership_First_Name__c;
                     policy.Asia_Miles_Membership_Last_Name__c=newPolicy.Asia_Miles_Membership_Last_Name__c;
                     policy.Asia_Miles_Membership_Num__c=newPolicy.Asia_Miles_Membership_Num__c;
-                }
+                }//AM project AM info jack add          
+                //toSavePolicyList.add(policy);
             }
             ++i;
         }
@@ -2578,33 +2461,12 @@ global class TMCreatePolicyCtrl {
         //if Master_Policy_No_Saved__c is null,Master_Policy_No__c will be generated every time users reach Step6
         if(currentStep>=STEP_CONFIRMATION_PAYMENT){
             for(PersonInsuredStructure pis : personInsuredStructureList){
-                if(String.isBlank(pis.piPolicy.Master_Policy_No__c) && String.isBlank(pis.piPolicy.Master_Policy_No_Saved__c)){
-                    pis.piPolicy.Master_Policy_No__c=pis.piPolicy.Policy_No__c;
-                }
                 if(String.isNotBlank(pis.piPolicy.Master_Policy_No__c)){
                     pis.piPolicy.Master_Policy_No_Saved__c=pis.piPolicy.Master_Policy_No__c;
                 }
             }
-        }
-        
-        //upsert policyList;
-        //System.debug('[TMCreatePolicyCtrl] policyList='+policyList);
-        //SPS-417
-        try{
-            upsert policyList;
-        }catch(DmlException e){
-            //System.debug('[TMCreatePolicyCtrl] save() upsert policyList e.getMessage:'+e.getMessage());
-            if(e.getMessage().contains('duplicates value')){
-                Product__c pro=productMap.get(newPolicy.Product__c);
-                for(New_Policy__c np : policyList){
-                    np.Policy_No__c=TMPolicyUtil.generatePolicyNumber(pro.Policy_Prefix__c);
-                    np.UnExpected__c=true;
-                    //System.debug('[TMCreatePolicyCtrl] regenerate policyList policy num np.Policy_No__c='+np.Policy_No__c);
-                }
-                upsert policyList;
-            }
-        }
-        //SPS-417
+        }       
+        upsert policyList;
         
         for(PersonInsuredStructure pis : personInsuredStructureList){
             if(!Test.isRunningTest()){PolIdPolicyNoMap.put(pis.piPolicy.product_code__c+pis.piPolicy.Id,pis.piPolicy.Policy_No__c);}
@@ -2680,12 +2542,6 @@ global class TMCreatePolicyCtrl {
             //System.debug('[TMCreatePolicyCtrl] savePersonInsuredInfo pis.pi.Rider__c'+pis.pi.Rider__c);
             pis.pi.Person_Insured_Name__c=pis.pi.Insured_Last_Name__c+' '+pis.pi.Insured_First_Name__c;
             //pis.pi.Person_Insured_Name__c=pis.pi.Name;
-
-            //AH19572 adjust gender
-            if(String.isNotBlank(pis.pi.Gender__c)){
-                pis.pi.Gender__c=adjustGender(pis.pi.Gender__c);
-            }
-
             if(pis.pi.Date_of_Birth__c!=null){               
                 pis.pi.PI_Age__c=TMPolicyUtil.calculateAge(pis.pi.Date_of_Birth__c);
                 if(pis.pi.PI_Age__c<18){
@@ -2722,11 +2578,6 @@ global class TMCreatePolicyCtrl {
                             }
                             if(null==bs.beneficiary.Policy__c){
                                 bs.beneficiary.Policy__c=policyList.get(j).id;
-                            }
-
-                            //AH19572 adjust gender
-                            if(String.isNotBlank(bs.beneficiary.Gender__c)){
-                                bs.beneficiary.Gender__c=adjustGender(bs.beneficiary.Gender__c);
                             }
                             //bs.beneficiary.name=bs.beneficiary.Last_Name__c+bs.beneficiary.First_Name__c;
                             benList.add(bs.beneficiary);
@@ -2768,7 +2619,7 @@ global class TMCreatePolicyCtrl {
         }
         //auto select monthly if Direct Billing is selected
         // if('Direct Billing'.equals(selectedPaymentType)){
-        if('Direct Billing'.equals(selectedPaymentType)&&String.isBlank(selectedPaymentFrequency)&&!selectedProduct.disable_monthly_payment__c){//AM project issue fix, set default value when frequency is blank/* add by Jack on 2022-04-21 for project: Disable monthly payment */
+        if('Direct Billing'.equals(selectedPaymentType)&&String.isBlank(selectedPaymentFrequency)){//AM project issue fix, set default value when frequency is blank
             selectedPaymentFrequency='Monthly';
             selectPaymentFrequency();
         }    
@@ -3190,10 +3041,6 @@ global class TMCreatePolicyCtrl {
     public void paymentFrequencyInitialize(){              
         Campaign selectedCampaign;
         try{
-            // if(this.newPolicy.Product_Code__c.replace('@','')!=selectedProduct.Product_Code__c.replace('@','')){
-            //     CignaException exc=new CignaException();
-            //     throw exc;
-            // }
             selectedCampaign=productIdCampaignMap.get(selectedProduct.Id);
         }catch(Exception e){
             Product__c prod=[SELECT Id,Product_Code__c FROM Product__c WHERE Id=:this.newPolicy.Product__c];
@@ -3210,7 +3057,7 @@ global class TMCreatePolicyCtrl {
             paymentFrequencyOptions.add(new SelectOption('Annual','Annual'));
             paymentFrequencyDiscountMap.put('Annual',selectedCampaignDetail.BF_Annual__c);
         }
-        if(null!=selectedCampaignDetail.BF_Month__c && !selectedProduct.disable_monthly_payment__c){
+        if(null!=selectedCampaignDetail.BF_Month__c){
             paymentFrequencyOptions.add(new SelectOption('Monthly','Monthly'));
             paymentFrequencyDiscountMap.put('Monthly',selectedCampaignDetail.BF_Month__c);
         }
@@ -3245,7 +3092,7 @@ global class TMCreatePolicyCtrl {
                     */
                     if( pm=='Cheque' && !paymentFrequencyOptions.contains(new SelectOption('Annual','Annual'))){
                         //Not to show Cheque payment method
-                    }else if( pm=='Direct Billing' && !selectedProduct.disable_monthly_payment__c && !paymentFrequencyOptions.contains(new SelectOption('Monthly','Monthly'))){
+                    }else if( pm=='Direct Billing' && !paymentFrequencyOptions.contains(new SelectOption('Monthly','Monthly'))){
                         //Not to show Direct Billing payment method
                     }else{
                         paymentTypeOptions.add(new SelectOption(pm,pm));
@@ -3297,9 +3144,6 @@ global class TMCreatePolicyCtrl {
     }
     
     public void pickListInitialize(){
-        // for(TMCreatePolicyCtrl.PersonInsuredStructure pis : personInsuredStructureList){
-        //     //System.debug('[TMCreatePolicyCtrl]pickListInitialize().p.availableDiscountMap='+pis.availableDiscountMap);
-        // }
         beneficiaryLevelAndRiderInitialize();
         initAssessRider();//GL31 Jack add
         discount12Initialize();
@@ -3308,12 +3152,8 @@ global class TMCreatePolicyCtrl {
         paymentMethodInitialize();
         bankInitialize();
         creditCardBankInitialize();
-        // for(TMCreatePolicyCtrl.PersonInsuredStructure pis : personInsuredStructureList){
-        //     //System.debug('[TMCreatePolicyCtrl]pickListInitialize().p.availableDiscountMap='+pis.availableDiscountMap);
-        // }
         //System.debug('[TMCreatePolicy] pickListInitialize().premiumDiscountMap='+premiumDiscountMap);
         //System.debug('[TMCreatePolicy] pickListInitialize().ptvs.ctrl.premiumDiscountMap='+ptvs.ctrl.premiumDiscountMap);
-        //System.debug('[TMCreatePolicy] add by li hao currentStep'+currentStep);
         if(currentStep>STEP_POLICY_INFORMATION){
             TMPolicyUtil.policyTransactionValidation(ptvs);
         }
@@ -3348,9 +3188,6 @@ global class TMCreatePolicyCtrl {
             TMCreatePolicyStepStrategy policyStepStrategy=new TMCreatePolicyStep6Strategy(ptvs);
             policyStepStrategy.stepInit();
         }
-        // for(TMCreatePolicyCtrl.PersonInsuredStructure pis : personInsuredStructureList){
-        //     //System.debug('[TMCreatePolicyCtrl]pickListInitialize().p.availableDiscountMap='+pis.availableDiscountMap);
-        // }
         validateInfoIntegrity();        
     }    
     
@@ -3792,32 +3629,16 @@ global class TMCreatePolicyCtrl {
                 initCouponTotal();//AM project coupon jack init total coupon
                 initFamilyDiscountPannel(false);//jack add for friend and family discount in SFDC
                 //System.debug('[TMCreatePolicyCtrl]getPaymentPremium().totalPremium: '+totalPremium);
-                // BEGIN https://jira.express-scripts.com/browse/HKITSFDC-17
-                System.debug('executing getPaymentPremium()');
-                for (String code: planCodeSet){
-                    System.debug('code '+ code);
-                }
-				// END https://jira.express-scripts.com/browse/HKITSFDC-17
-            }
-            this.isWSError=false;
-           
-            // Rancho_HKITSFDC398_20250909 - 2025Q4 CX Campaign - allow select different discount for each policy
-            // WellnessCI
-            // if(!personInsuredStructureList.isEmpty()){
-            //     PersonInsuredStructure structure=personInsuredStructureList.get(0);
-            //     if(structure.availableDiscountMap.containsKey('Personal Choice premium refund')){
-            //         this.selectedRefund='Personal Choice premium refund';
-            //     }
-            // }
-            // WellnessCI
-        }catch(Exception e){
-            this.isWSError=true;
-            isPaymentButtonClicked=false;
-            ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR,wsErrorMsg));
-            System.debug('>>>> WS Error:'+e.getMessage());
-            System.debug('>>>> WS Error:'+e.getLineNumber());
-            System.debug('>>>> WS Error:'+e.getStackTraceString());
-        }
+           }
+           this.isWSError=false;
+       }catch(Exception e){
+           this.isWSError=true;
+           isPaymentButtonClicked=false;
+           ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR,wsErrorMsg));
+           System.debug('>>>> WS Error:'+e.getMessage());
+           //System.debug('>>>> WS Error:'+e.getLineNumber());
+           System.debug('>>>> WS Error:'+e.getStackTraceString());
+       }
         // TM Work at Home
         if(orgnDataBeforeMask.workAtHome){
             maskSensiData();
@@ -3926,17 +3747,15 @@ global class TMCreatePolicyCtrl {
                         tol.actualPremium=TMEsalesHelper.calWithDiscount(tol.originalPremiumMonth,tol.totalDiscountPercent,null,loading,isSpecialProduct,null) * 6;
                     }
                 }else{//for annual
-                    //Updated by Andy Li for JIRA ROP-13,as all specila product will return the BPAnnualPrem and BPMonthlyPrem;
-                    //so we can use the data directly,no need to multiplied by 12
-                    /*if(isSpecialProduct){
-                        tol.originalPremium=tol.originalPremiumMonth.Round(System.RoundingMode.HALF_UP) * 12;
-                        tol.loadingPremium=(tol.originalPremium * loading/100).Round(System.RoundingMode.HALF_UP);
-                        tol.actualPremium=TMEsalesHelper.calWithDiscount(tol.originalPremiumMonth,tol.totalDiscountPercent,null,loading,isSpecialProduct,null)*12;
-                    }else{*/
-                        tol.originalPremium=tol.annualPremium;
-                        tol.loadingPremium=(tol.originalPremium * loading/100).Round(System.RoundingMode.HALF_UP);
-                        tol.actualPremium=TMEsalesHelper.calWithDiscount(tol.annualPremium,tol.totalDiscountPercent,null,loading,isSpecialProduct,null);
-                    /*}*/
+                    if(isSpecialProduct){
+                        tol.originalPremium = tol.originalPremiumMonth.Round(System.RoundingMode.HALF_UP) * 12;
+                        tol.loadingPremium = (tol.originalPremium * loading/100).Round(System.RoundingMode.HALF_UP); 
+                        tol.actualPremium = TMEsalesHelper.calWithDiscount(tol.originalPremiumMonth, tol.totalDiscountPercent, null, loading,isSpecialProduct, null)*12;
+                    }else{
+                        tol.originalPremium = tol.annualPremium;
+                        tol.loadingPremium = (tol.originalPremium * loading/100).Round(System.RoundingMode.HALF_UP); 
+                        tol.actualPremium = TMEsalesHelper.calWithDiscount(tol.annualPremium, tol.totalDiscountPercent, null, loading,isSpecialProduct, null);
+                    }
                 }
                 
                 //System.debug('[TMCreatePolicy] initPremiumAmountList().tol.actualPremium='+tol.actualPremium);               
@@ -4054,8 +3873,6 @@ global class TMCreatePolicyCtrl {
             newObj.Policy__c=tol.policyId;
             
             // Rancho_HKITSFDC398_20250909 - 2025Q4 CX Campaign - allow select different discount for each policy
-            System.debug('tol.policyId: '+tol.policyId);
-            System.debug('pismap: '+pisMap.get(tol.policyId));
             TMPolicyUtil.setDiscountCodeToPlanQuote(newObj,pisMap.get(tol.policyId),selectedProduct,paymentFrequencyDiscountMap,premiumDiscountMap,pisMap.get(tol.policyId).discount1,pisMap.get(tol.policyId).discount2,selectedPaymentFrequency);                        
             TM_General_Setting__c generalSetting=TM_General_Setting__c.getValues('Default');
             if(generalSetting!=null && String.isNotBlank(generalSetting.Special_Level_Rider_Product__c)){
@@ -4484,68 +4301,11 @@ global class TMCreatePolicyCtrl {
             policyTransaction.LC_Reviewer_Date__c=null;
         }
         //System.debug('[TMCreatePolicyCtrl] newPolicy.Missing_CDD_Info__c='+newPolicy.Missing_CDD_Info__c);
-    }    
-    
-    public void createTestCase(){
-        //System.debug('[TMCreatePolicyCtrl] create Test case');
-        init();
-        initPolicyTransaction();
-        initPolicy();
-        New_Policy__c tmp=[SELECT Id,Policy_No__c,Product__c FROM New_Policy__c WHERE Opportunity__c=:opportunityId order by createddate desc limit 1];
-        Product__c pro=productMap.get(tmp.Product__c);
-        policyTransaction=new Policy_Transaction__c(
-            Number_of_Person_Insured__c=1,
-            Core_Campaign__c=campaignId,
-            Opportunity__c=opportunityId,
-            Account__c=accountId,
-            Step__c='2',
-            Product_Code__c=pro.Product_Code__c,
-            Product_Name__c=pro.Name,
-            Status__c='Pending Basic Information'
-       );
-        savePolicyTransaction();
-        newPolicy=new New_Policy__c(
-            Policy_no__c=tmp.Policy_No__c,
-            Policy_Transaction__c=policyTransaction.Id,
-            Opportunity__c=opportunityId,
-            Appeal__c=APPEAL_YES,
-            Product_Code__c=policyTransaction.Product_Code__c,
-            Policy_Status__c='Pending Basic Information',
-            Appeal_For_UW_Result__c=APPEAL_YES,
-            Product__c=pro.Id
-       );
-        policyList.clear();
-        policyList.add(newPolicy);
-        savePolicy();
-        initPersonInsuredInfo();
-        this.currentStep++;
-    }
+    }        
 
     //jack JR1641
     public void detectCorAddressChange(){
         newPolicy.Is_Corr_Address_Country_Changed__c=true ;
-    }
-
-    /**
-    *   AH19572 avoid invalid value is copied to person insured records,include: '男'， '女','F','M',' F 'with white space
-    *   @param inGender - old gender value
-    *   @return String - new gender value
-    *   @Author Zane Zh  - 10082020
-    **/
-    private String adjustGender(String inGender){
-        String adjGen=inGender;
-        Map<String,String> adjustGenderMap=new Map<String,String>{                                                  
-            'F'=>'Female','M'=>'Male',
-            '女'=>'Female','男'=>'Male'
-        };
-
-        if(String.isNotBlank(adjGen)){
-                String tempGender=adjGen.trim();
-                if (adjustGenderMap.containsKey(tempGender)){
-                    adjGen=adjustGenderMap.get(tempGender);
-                }
-        }
-        return adjGen;     
     }
 
     /**
@@ -4917,10 +4677,10 @@ global class TMCreatePolicyCtrl {
         pis.couponMsg='';
         try{
             if(CouponUtil.couponLengthValidate(pis.couponMap.size())){
-                String couponNumber=pis.newCouponNumber;
-                if(String.isBlank(pis.newCouponNumber)){
+                String couponNumber=pis.newCouponNumber.trim();
+                if(String.isBlank(couponNumber)){
                     pis.couponMsg='No coupon number is inputted.';
-                }else if(pis.couponMap.containsKey(pis.newCouponNumber)){
+                }else if(pis.couponMap.containsKey(couponNumber)){
                     pis.couponMsg='Duplicated coupon cannot be added into policy.';
                 }else{
                     //Call WS to use couopn and get result
