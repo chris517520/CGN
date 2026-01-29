@@ -106,7 +106,6 @@ global with sharing class MyCgnPolicyDetail {
         String insuranceCertId;
         String insuranceCertBody;
         Boolean displayOtherProductDoc = false;
-        Boolean renewalEligible = false;// Rancho_JOBR367_20240513
 
         List<String> attIdList;
         List<String> docAttIdList;
@@ -150,9 +149,6 @@ global with sharing class MyCgnPolicyDetail {
         
         RestRequest req = RestContext.request;
         RestResponse res = RestContext.response;
-        // rancho testing
-        String userAgent = RestContext.request.headers.get('User-Agent');
-        System.debug('userAgent: '+userAgent);
         String requestBody = req.requestBody?.toString();
         Map<String, Object> reqMap;
         if(String.isNotBlank(requestBody)){
@@ -215,10 +211,6 @@ global with sharing class MyCgnPolicyDetail {
                 List<Object> resultList = new List<object>{getMedicalCardAction()};
                 result.data = resultList;
             }
-            else if(reqUrl.equalsIgnoreCase('/policyDetail/getPolicyBillingList')){
-                List<Object> resultList = new List<object>{getPolicyBillingList()};
-                result.data = resultList;
-            }
             else if(reqUrl.equalsIgnoreCase('/policyDetail/getPolicyBillingListTable')){
                 String policyNumber = (String) reqMap.get('policyNumber');
                 String dateFrom = (String) reqMap.get('dateFrom');
@@ -234,11 +226,6 @@ global with sharing class MyCgnPolicyDetail {
             system.debug(e.getMessage());
             result.message = e.getMessage();
         }
-        
-        /*if (result.message==null){ //Code lead to error when download file
-          result.message = String.valueOf(result.data.size());
-        }*/
-        
         res.statusCode=200;
         res.responseBody=Blob.valueOf(JSON.serialize(result));
     }
@@ -333,15 +320,6 @@ global with sharing class MyCgnPolicyDetail {
                     }
                 }else{
                     wrap = getBenefitSchedule(reqMap);
-                }
-
-                // Rancho_JOBR367_20240513 - update premium display
-                String dateStr = CignaUtil.getMetadataByName('RenewalNoticeExpiredDate')?.get('expiredDate');
-                if(String.isNotBlank(dateStr)){
-                    Date renewalExpiredDate = Date.valueOf(dateStr);
-                    if(Date.today() < renewalExpiredDate){
-                        wrap.renewalEligible = true;
-                    }
                 }
             }
         }
@@ -935,7 +913,7 @@ global with sharing class MyCgnPolicyDetail {
                 }
             }
         }
-        //HKITSFDC-412 BEGIN
+         //HKITSFDC-412 BEGIN
         result.policyCoverageList = formatCoverage(policyCoverageList);
         //HKITSFDC-412 ENDED
         result.policyCoverageList = sortCoverage(policyCoverageList);
@@ -1346,52 +1324,6 @@ global with sharing class MyCgnPolicyDetail {
         return policyList;
     }
 
-
-  /********************************************************************
-     * @decs get policy billing list records for all policies from SFDC or WS
-     * @param     N/A
-     * @return    List<PolicyChange>            policy change list from SFDC/WS
-     * @author    Lenovo Solution
-     ********************************************************************/
-
-  public static List<PolicyChange> getPolicyBillingList(){
-        List<PolicyChange> polChangeList = new List<PolicyChange>();
-
-        // get outstanding records from SFDC
-        // MR-709 missing changese policy change
-        for(Policy_Change_Request__c temp : [SELECT Id, Policy_No__c, toLabel(RecordType.Name), RecordType.DeveloperName, Policy_Holder_Name__c, Policy_Holder_Id__c, toLabel(Status__c), LastModifiedDate FROM Policy_Change_Request__c WHERE Policy_No__c='CTA9000111' ]){
-            PolicyChange pc = new PolicyChange();
-                 
-            pc.policyChangeId = temp.Id;
-            pc.policyChangeDate = temp.LastModifiedDate.format('dd/MM/yyyy');
-            pc.policyNo = temp.Policy_No__c;
-            pc.policyChangeType = temp.RecordType.Name;
-            pc.status = 'Draft';
-            pc.displayStatus = System.Label.Draft;
-            pc.policyHolderName =temp.Policy_Holder_Name__c;
-            pc.policyHolderId =temp.Policy_Holder_Id__c;
-            pc.changedContent = temp.RecordType.Name;
-            
-            polChangeList.add(pc);
-        }
-
-        // get submitted records from WS
-     
-        return polChangeList;
-    }
-
-    //HKITSFDC-211 Begin MSHAH10 
-  public static List<HttpCalloutVO.PolicyBilling> getPolicyBillingListTable(String policyNumber, String dateFrom, String dateTo){
-        PolicyCalloutHelper helper = new PolicyCalloutHelper();
-        Boolean isBrokerPortalBillingIndicator = true;// HKITSFDC-211 202507729 updated from false to true according to user request ;
-      
-        List<HttpCalloutVO.PolicyBilling> billingList = helper.getPolicyBillingListBasic(policyNumber, isBrokerPortalBillingIndicator);
-
-        return billingList;
-    }
-    
-    //HKITSFDC-211 End MSHAH10 
-
     /********************************************************************
      * @decs get policy change records for all policies from SFDC or WS
      * @param     N/A
@@ -1645,8 +1577,11 @@ global with sharing class MyCgnPolicyDetail {
     public Class DocumentInfo{
         String result;
         String body;
-        String attachmentId;
+        String attachmentId; //HKIDSFDC-438
     }
+
+  
+
     public static DocumentInfo checkIsDocumentDownloadComplete(Map<String, Object> reqMap){
         DocumentInfo docInf = new DocumentInfo();
         String fileStoreId = String.valueOf(reqMap.get('fileStoreId'));
@@ -1665,6 +1600,7 @@ global with sharing class MyCgnPolicyDetail {
         }else{
             docInf.result = 'false';
         }
+       
         return docInf;
     }
     //{!downloadSitePrefix}apex/ComFileDownLoadVFP?lang={!curLang}&attID={!indDocAttIDList[tmpIdx]}&attKey={!myList.attachmentKey}&pol={!JSINHTMLENCODE(policyNumber)}&appName=CUSTOMER_PORTAL
@@ -1762,7 +1698,19 @@ global with sharing class MyCgnPolicyDetail {
         return result;
     }
     
-    //HKITSFDC-412 BEGIN
+     //HKITSFDC-211 Begin MSHAH10 
+      public static List<HttpCalloutVO.PolicyBilling> getPolicyBillingListTable(String policyNumber, String dateFrom, String dateTo){
+            PolicyCalloutHelper helper = new PolicyCalloutHelper();
+            Boolean isBrokerPortalBillingIndicator = true;// HKITSFDC-211 202507729 updated from false to true according to user request ;
+          
+            List<HttpCalloutVO.PolicyBilling> billingList = helper.getPolicyBillingListBasic(policyNumber, isBrokerPortalBillingIndicator);
+    
+            return billingList;
+        }
+        
+        //HKITSFDC-211 End MSHAH10 
+       
+       //HKITSFDC-412 BEGIN
     public static List<HttpCalloutVO.PolicyPersonCoverage> formatCoverage(List<HttpCalloutVO.PolicyPersonCoverage> covList){
         
         List<HttpCalloutVO.PolicyPersonCoverage> formattedCovList = new List<HttpCalloutVO.PolicyPersonCoverage>();
@@ -1848,5 +1796,6 @@ global with sharing class MyCgnPolicyDetail {
         return dtStr;
     }
 
-    //HKITSFDC-412 ENDED
+    //HKITSFDC-412 ENDED 
+        
 }
