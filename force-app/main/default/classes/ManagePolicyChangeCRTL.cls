@@ -887,6 +887,9 @@ public without sharing class ManagePolicyChangeCRTL{
         }else{
             ListPolicy=getListinforcePolicy();
         }
+
+        ListPolicy = filterPolicyByChangeType(ListPolicy); // 20251019 - HKITSFDC-412
+        
         if(ListPolicy!=null){
             if(ListPolicy.size()>0){
                 policyholder=ListPolicy[0].policyHolder;// get the policy holder name
@@ -901,6 +904,54 @@ public without sharing class ManagePolicyChangeCRTL{
             }
             system.debug('Kevani showListPolicy policyMemberName:' + policyMemberName);
         }
+    }
+
+    /**
+    * @description hide policy based on selected change type
+    * @param List<Policy> lstPolicy 
+    * @return List<Policy> 
+    **/
+    public List<Policy> filterPolicyByChangeType(List<Policy> lstPolicy){
+        List<Policy> lstVisiblePolicies = new List<Policy>();
+        Map<String, Boolean> activeTypeMap = new Map<String, Boolean>{
+            'personal'    => IsPersonal,
+            'beneficiary' => IsBeneficiary,
+            'owner'       => IsOwner,
+            'dd'          => IsDD,
+            'copyDoc'     => IsCopyDoc,
+            'renew'       => IsRenew,
+            'benefit'     => IsBenefit,
+            'app'         => IsApp
+        };
+        Map<String, Policy_Change_Hide_Setting__c> hideSettingMap = Policy_Change_Hide_Setting__c.getAll();
+        for (Policy pol : lstPolicy) {
+            Boolean toHide = false;
+            Policy_Change_Hide_Setting__c polHideSetting = hideSettingMap.get(pol.productCode);
+            if (polHideSetting != null && polHideSetting.Hide_Change_Type__c != null && polHideSetting.Active__c) {
+                
+                Set<String> hiddenTypes = new Set<String>();
+                for (String type : polHideSetting.Hide_Change_Type__c.split(';')) {
+                    
+                    if (String.isNotBlank(type.trim()) && !hiddenTypes.contains(type.trim())) {
+                        hiddenTypes.add(type);
+                    }
+                }
+
+                
+                for (String hideKey : hiddenTypes) {
+                    Boolean isActive = activeTypeMap.get(hideKey);
+                    if (isActive == true) {
+                        toHide = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!toHide) {
+                lstVisiblePolicies.add(pol);
+            }
+        }
+        return lstVisiblePolicies;
     }
 
     /*Policy List By different Criteria*/
@@ -2669,24 +2720,6 @@ public without sharing class ManagePolicyChangeCRTL{
             }
         }
     }
-
-    // @RemoteAction
-    // public static String assessValidation(){
-    //     String result='';
-    //     if(ListBenefitRider!=null && ListBenefitRider.size()>0){
-    //         Set<String> riderSet=new Set<String>();
-    //         for(Policy_Change_Request_Detail__c benefit : ListBenefitRider){
-    //             if(benefit.Rider_Benefit_Name_Code__c!=null){
-    //                 List<String> tempList=benefit.Rider_Benefit_Name_Code__c.split('/');
-    //                 if(tempList.size()>1){
-    //                     riderSet.add(tempList[1]);
-    //                 }
-    //             }
-    //         } 
-    //         result=CignaUtil.checkAssessResult('','',assessMap,basicProductCode,riderSet,false,false);
-    //     }
-    //     return result;
-    // }
 
     /**
     * setNationalityListInfo
