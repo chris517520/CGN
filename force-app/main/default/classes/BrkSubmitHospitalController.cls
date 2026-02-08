@@ -630,6 +630,8 @@ public without sharing class BrkSubmitHospitalController{
     }
     
     public void searchPI(){
+        // HKITSFDC-513 Exclude CI and Plus policy (CIB25 , CIR25)(TUPG, TUSG, TUWG)(GAOP)
+        Set<String> setEligibleProduct = new Set<String>{'CIB25', 'CIR25', 'TUPG', 'TUSG', 'TUWG', 'GAOP'};
         // Rancho_JR1878_20210104
         isSearchHolder=false;
         // personInsuredMap = new Map<String, List<HttpCalloutVO.Person>>();
@@ -656,6 +658,12 @@ public without sharing class BrkSubmitHospitalController{
                 return;
             }
             for(HttpCalloutVO.Policy p : eligiblePolicyList){
+                // HKITSFDC-513 Exclude CI and Plus policy
+                // (CIB25 , CIR25)(TUPG, TUSG, TUWG)(GAOP)
+                if (!setEligibleProduct.contains(p.productCode)) {
+                    System.Debug('Exclude CI and Plus policy, Product Code: ' + p.productCode);
+                    continue;
+                }
                 if(p.isIPMIPolicy){
                     System.Debug('Policy Number: ' + p.policyNumber);
                     System.Debug('isLifePolicy: ' + p.isLifePolicy);

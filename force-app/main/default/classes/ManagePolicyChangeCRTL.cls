@@ -321,6 +321,16 @@ public without sharing class ManagePolicyChangeCRTL{
     public String entityName { get; set; } //JOBR-184: JOBR-199 added by Kermit
     public String entityNameForNote { get; set; } // JOBR-184;
     public String policyColor{get;set;} // Rancho_PI117_20230817 - selected policy current color
+
+    // HKIDSFDC-513 Eligible Plan with beneficiary in policy owner change flow
+    public Set<String> setEligibleProductCode = new Set<String>{
+        'GELG', 'HELG',
+        'ABAG', 'ABEG', 'ABWG',
+        'NELG', 'NELGA', 'NESG', 'NESGA',
+        'NELG2', 'NESG2', 'NELGM', 'NESGM',
+        'CBOG'
+    };
+    public Boolean isEligibleProductSelected { get; set; }
     
     public ManagePolicyChangeCRTL(ApexPages.StandardController controller){
         policyHolderSSN=''; //20200306 - minghua - ILAS
@@ -633,6 +643,7 @@ public without sharing class ManagePolicyChangeCRTL{
                         }
                     }
                     hasPolicy=true;
+                    checkEligibleProductSelected(setMultiPolicyChoice);
                 }
 
                 /*update policy list record for those chosen policy*/
@@ -886,8 +897,11 @@ public without sharing class ManagePolicyChangeCRTL{
             ListPolicy=getListIsILASPolicy();
         }else{
             ListPolicy=getListinforcePolicy();
+            if (IsBeneficiary) {
+                ListPolicy = getEligiblePolicy(ListPolicy);
+            }
         }
-
+         
         ListPolicy = filterPolicyByChangeType(ListPolicy); // 20251019 - HKITSFDC-412
         
         if(ListPolicy!=null){
@@ -904,6 +918,24 @@ public without sharing class ManagePolicyChangeCRTL{
             }
             system.debug('Kevani showListPolicy policyMemberName:' + policyMemberName);
         }
+    }
+
+    public List<Policy> getEligiblePolicy(List<Policy> lstPolicy){
+        List<Policy> lstEligiblePolicies = new List<Policy>();
+        for (Policy pol : lstPolicy) {
+            if (setEligibleProductCode.contains(pol.productCode) && pol.productCode != 'CBOG') {
+                lstEligiblePolicies.add(pol);
+            } else if (setEligibleProductCode.contains(pol.productCode) && pol.productCode == 'CBOG') {
+                List<HttpCalloutVO.PolicyPersonCoverage> lstPersonCov = getPolicyPlanCode(pol.policyNo);
+                for (HttpCalloutVO.PolicyPersonCoverage objPolCov : lstPersonCov) {
+                    if (objPolCov.benefitCode == 'CADG') {
+                        lstEligiblePolicies.add(pol);
+                        break;
+                    }
+                }
+            }
+        }
+        return lstEligiblePolicies;
     }
 
     /**
@@ -931,12 +963,10 @@ public without sharing class ManagePolicyChangeCRTL{
                 
                 Set<String> hiddenTypes = new Set<String>();
                 for (String type : polHideSetting.Hide_Change_Type__c.split(';')) {
-                    
                     if (String.isNotBlank(type.trim()) && !hiddenTypes.contains(type.trim())) {
                         hiddenTypes.add(type);
                     }
                 }
-
                 
                 for (String hideKey : hiddenTypes) {
                     Boolean isActive = activeTypeMap.get(hideKey);
@@ -1116,8 +1146,44 @@ public without sharing class ManagePolicyChangeCRTL{
                 setMultiPolicyChoice.add(PolicyChoice);
             }
         }
+        checkEligibleProductSelected(setMultiPolicyChoice);
         assignPolicyList();
         system.debug('Kevani selectPolicy policyMemberName: ' + policyMemberName);
+    }
+
+    /**
+     * HKITSFDC-513 - check if the selected policy is eligible for the change type,
+     * if yes, display the beneficiary optional Question in owner change form
+     */
+    public void checkEligibleProductSelected(Set<String> setMultiPolicyChoice){     
+        isEligibleProductSelected=false;
+        if(setMultiPolicyChoice.size()>0){
+            for(String policyChoice :setMultiPolicyChoice){
+                for (Policy objPol : ListAvaliblePolicy) {
+                    if (objPol.policyNo != policyChoice) {
+                        continue;
+                    }
+                    if (setEligibleProductCode.contains(objPol.productCode) && objPol.productCode != 'CBOG') {
+                        isEligibleProductSelected = true;
+                        break;
+                    } else if (setEligibleProductCode.contains(objPol.productCode) && objPol.productCode == 'CBOG') {
+                        List<HttpCalloutVO.PolicyPersonCoverage> lstPersonCov = getPolicyPlanCode(objPol.policyNo);
+                        for (HttpCalloutVO.PolicyPersonCoverage objPolCov : lstPersonCov) {
+                            if (objPolCov.benefitCode == 'CADG') {
+                                isEligibleProductSelected = true;
+                                break;
+                            }
+                        }
+                        if(isEligibleProductSelected){
+                            break;
+                        }
+                    }
+                }
+                if(isEligibleProductSelected){
+                    break;
+                }
+            }
+        }
     }
 
     public void assignPolicyList(){
