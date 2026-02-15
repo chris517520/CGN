@@ -327,11 +327,20 @@
             }
             
             var selectedMemberName = '';
-            function selectPolicy(policyno, policymember){
+            function selectPolicy(policyno, policymember, element){
                 //if( isPolicySelected == false ){
                     //isPolicySelected = true;
+                    var color = '';
+                    // on() is always later than onclick and click
+                    // so if element color is gray currently, it means it is going to change to orange
+                    if (element && element.classList.contains('cigna-fg-gray-dark')) {
+                        color = 'orange';
+                    } else {
+                        color = 'gray';
+                    }
+                    console.log('current color: '+color);
                     selectedMemberName = policymember;
-                    selectedPolicy(policyno, policymember);
+                    selectedPolicy(policyno, policymember, color);
                     $("html, body").animate({ scrollTop: $(document).height() }, "slow");
                 //}
             }
@@ -1125,6 +1134,7 @@
                             <apex:actionFunction name="selectedPolicy" action="{!selectPolicy}" rerender="selectPolicy,mobileSelectpolicy,policyChangeForm,mobilePolicyChangeForm,requiredAttList,uploadatt,scriptRequiredAtt,downloadDoc,mobileNextFixJS" status="loader-icon" oncomplete="checkIsSinglePolicy();">
                                 <apex:param name="policyno" value="" assignTo="{!PolicyChoice}"/>
                                 <apex:param name="policyholder" value="" assignTo="{!policyMemberName}"/>
+                                <apex:param name="color" value="" assignTo="{!policyColor}"/>
                             </apex:actionFunction>
                                 <script>
                                 /*Multi Select Policy Change Color*/
@@ -1163,7 +1173,7 @@
                                         </div>
                                     </apex:outputpanel>
                                     <apex:repeat value="{!ListPolicy}" var="policy">
-                                        <div class="bs row policy-multi content-choice cigna-fg-gray-dark onclick-pointer" data-select="{!policy.policySelected}" onclick="selectPolicy('{!policy.policyNo}','{!policy.policyHolder}');">
+                                        <div class="bs row policy-multi content-choice cigna-fg-gray-dark onclick-pointer" data-select="{!policy.policySelected}" onclick="selectPolicy('{!policy.policyNo}','{!policy.policyHolder}',this);">
                                             <div class="bs col-xs-12 col-sm-12 table-row policy-title" style="padding-left:0px">
                                                 <div class="bs col-xs-2 col-sm-1 table-cell"><i class="ci-hk-notes content-icon" aria-hidden="true"/></div>
                                                 <div class="bs col-xs-10 col-sm-11 table-cell"><b>{!policy.policyName}</b></div>

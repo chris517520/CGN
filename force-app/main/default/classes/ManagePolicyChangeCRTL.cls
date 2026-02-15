@@ -1155,7 +1155,8 @@ public without sharing class ManagePolicyChangeCRTL{
      * HKITSFDC-513 - check if the selected policy is eligible for the change type,
      * if yes, display the beneficiary optional Question in owner change form
      */
-    public void checkEligibleProductSelected(Set<String> setMultiPolicyChoice){     
+    public void checkEligibleProductSelected(Set<String> setMultiPolicyChoice){
+        System.debug('checkEligibleProductSelected setMultiPolicyChoice: '+setMultiPolicyChoice);
         isEligibleProductSelected=false;
         if(setMultiPolicyChoice.size()>0){
             for(String policyChoice :setMultiPolicyChoice){
