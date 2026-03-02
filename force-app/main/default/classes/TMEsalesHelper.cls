@@ -207,7 +207,7 @@ public class TMEsalesHelper {
 
         // Rancho_HKITSFDC402_20250930 - add sumInsured in AUW request
         att.sumInsured = String.isNotBlank(pis.sumInsured) ? pis.sumInsured : '';
-        
+        att.bundlePolicyNo = String.isNotBlank(pis.pi.Bundle_Policy_Number__c) ? pis.pi.Bundle_Policy_Number__c : '';
         //added by ken, for DPSP-628     
         //system.debug('[TMEsalesHelper] getPreSalesAttribute().productCode='+productCode); 
         //system.debug('[TMEsalesHelper] getPreSalesAttribute().pis.parentIDPolicylist='+pis.parentIDPolicylist);
@@ -341,8 +341,8 @@ public class TMEsalesHelper {
                     + '                <attribute name="INCOME" value="' + att.income + '" />'
                     + '                <attribute name="GENDER" value="' + att.gender + '" />'
                     + '                <attribute name="SMOKER" value="' + att.smoker + '" />'
-                    + '                <attribute name="CURRENT_CI_SUM_INSURED" value="' + att.sumInsured + '" />';// Rancho_HKITSFDC402_20250930 - add sumInsured in AUW request
-        
+                    + '                <attribute name="CURRENT_CI_SUM_INSURED" value="' + att.sumInsured + '" />'
+                    + '                <attribute name="PRE_APP_ID" value="' + att.bundlePolicyNo + '" />'; // Rancho_HKITSFDC402_20250930 - add sumInsured in AUW request
         if(att.ProductRecordList != null && att.ProductRecordList.size() > 0){
             for(productRecord r : att.ProductRecordList){
                 body += '<record>'
@@ -395,6 +395,7 @@ public class TMEsalesHelper {
                     + '              <attribute name="SMOKER" value="' + att.smoker + '" />'
                     + '              <attribute name="CAMPAIGN_CODE" value="' + att.campaignCode + '" />'
                     + '              <attribute name="CURRENT_CI_SUM_INSURED" value="' + att.sumInsured + '" />'// Rancho_HKITSFDC402_20250930 - add sumInsured in AUW request
+                    + '              <attribute name="PRE_APP_ID" value="' + att.bundlePolicyNo + '" />' // HKITSFDC-536_20260226 - add bundle policy number in AUW request
                     + '            </insured>'
                     + '          </caseData>]]>'
                     + '        </caseXML>'
@@ -550,8 +551,8 @@ public class TMEsalesHelper {
         public String flag { get; set; }
         public List<ProductRecord> productRecordList { get; set; } { productRecordList = new List<ProductRecord>(); }
         public String sumInsured { get; set; }// Rancho_HKITSFDC402_20250930 - add sumInsured in AUW request
-        
-        public preSalesAttribute(){}
+        public String bundlePolicyNo { get; set; } //HKITSFDC536_20260226 - add bundle policy no for CIR25
+        public PreSalesAttribute(){}
     }
     
     public class ProductRecord {
