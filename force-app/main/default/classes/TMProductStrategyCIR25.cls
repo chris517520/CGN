@@ -15,12 +15,14 @@ public class TMProductStrategyCIR25 extends TMProductStrategyCI {
         // CIR25 can only be applied to the person insured who has active policy
         Set<String> piIdSet = new Set<String>();
         Set<String> hkidWithSFDCPolicySet = new Set<String>();
+        Map<String, String> mapExistingPolicy = new Map<String, String>();
         for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
             piIdSet.add(pis.pi.Personal_ID__c);
         }
         // HKITSFDC_505_506 - Exclude CBOG policy from validation
-        for(Person_Insured__c np : [SELECT Id,Personal_ID__c FROM Person_Insured__c WHERE Personal_ID__c IN :piIdSet AND (New_Policy__r.Policy_Status__c='Completed' OR New_Policy__r.Policy_Status__c='Submitted') AND New_Policy__r.Product_Code__c!=:productCode AND New_Policy__r.Product_Code__c != '@CBOG' AND New_Policy__r.Opportunity__c = :ptvs.ctrl.opportunityId]){
+        for(Person_Insured__c np : [SELECT Id,Personal_ID__c,New_Policy__r.Policy_No__c FROM Person_Insured__c WHERE Personal_ID__c IN :piIdSet AND (New_Policy__r.Policy_Status__c='Completed' OR New_Policy__r.Policy_Status__c='Submitted') AND New_Policy__r.Product_Code__c!=:productCode AND New_Policy__r.Product_Code__c != '@CBOG' AND New_Policy__r.Opportunity__c = :ptvs.ctrl.opportunityId]){
             hkidWithSFDCPolicySet.add(np.Personal_ID__c);
+            mapExistingPolicy.put(np.New_Policy__r.Policy_No__c, np.Personal_ID__c);
         }
         System.debug('current PI HKID set: ' + piIdSet);
         System.debug('HKID with SFDC policy set: ' + hkidWithSFDCPolicySet);
@@ -49,6 +51,17 @@ public class TMProductStrategyCIR25 extends TMProductStrategyCI {
                     }
                 }
             }
+        }
+
+        for (TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList) {
+            System.debug('PI Bundle_policy_number__c: ' + pis.pi.Bundle_Policy_Number__c);
+            if (pis.piValidationItem.otherValidation && String.isNotBlank(pis.pi.Bundle_Policy_Number__c)){
+                if (!mapExistingPolicy.containsKey(pis.pi.Bundle_Policy_Number__c) ||
+                    mapExistingPolicy.get(pis.pi.Bundle_Policy_Number__c) != pis.pi.Personal_ID__c){
+                    ptvs.ctrl.pageMsg = 'Please confirm you have inputted the correct bundle Policy no.';
+                    pis.piValidationItem.otherValidation = false;
+                }
+            } 
         }
     }
 }

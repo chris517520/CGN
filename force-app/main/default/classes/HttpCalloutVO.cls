@@ -271,11 +271,14 @@ public class HttpCalloutVO{
         public Boolean isNCDEligible {get; set;}
         // END https://jira.express-scripts.com/browse/HKITSFDC-15  
 
-        // BEGIN HKITSFDC-148	
+        // BEGIN HKITSFDC-148   
         public String lastAgent {get;set;}
         public String writingAgent {get;set;}
         public Date brokerChangeDate {get;set;}
         // END HKITSFDC-148 
+
+        
+        public String  networkSearchType {get;set;} //HKITSFDC-213 Both / HK / CN / OP / notOP /8in1
     }
 
     //20210621 Bob Asia Mile 
@@ -1170,7 +1173,7 @@ public class HttpCalloutVO{
         public String currencyTypeCode{get;set;}       // Currency Code  e.g. 840
         @AuraEnabled
         public String currencyTypeDesc{get;set;}       // Currency description  e.g. USD
-		//BEGIN HKITSFDC-148
+        //BEGIN HKITSFDC-148
         @AuraEnabled
         public String paymentDescription{get;set;}
         //END HKITSFDC-148
@@ -1399,6 +1402,17 @@ public class HttpCalloutVO{
         @AuraEnabled
         public String RoomType{get;set;}
         //END HKITSFDC-265
+        
+        //START HKITSFDC-412
+        @AuraEnabled
+        public String RemainSumInsured{get;set;}
+        public String CoveragePeriodFrom{get;set;}
+        @AuraEnabled public Date CoveragePeriodFromInDate{get;set;}
+        public String CoveragePeriodTo{get;set;}
+        @AuraEnabled public Date CoveragePeriodToInDate{get;set;}       
+        //END HKITSFDC-412
+
+        public Date ReinstatementDate {get;set;}//HKITSFDC-511
 
         public String currencySymbol{get;set;}
         public String currencyTypeCodeTC{get;set;}
@@ -1571,6 +1585,9 @@ public class HttpCalloutVO{
         public String claimNumber{get;set;}
         public String attachmentKey{get;set;}
         public blob attBody{get;set;}
+
+        // Rancho_HKITSFDC321_20251013 - SFDC attachment id
+        public String sfdcAttachmentId{get;set;}
     }
     /*efulfillment enhanced  end*/
 
@@ -1677,6 +1694,7 @@ public class HttpCalloutVO{
 
         // appianRequestURL for Ref#3 9.1.2.12 Case ID, Request ID from Appian are linked to Appian designed page
         @AuraEnabled public String appianRequestURL{get;set;} //added by Zaihong 20180423
+        @AuraEnabled public String isInternalRecord{get;set;} // Rancho_OPSPM530_20251021 - add is internal record flag
 
         public Integer compareTo(Object ws){
             HttpCalloutVO.WorkStatus workStatus2 = (HttpCalloutVO.WorkStatus)ws;
@@ -2435,6 +2453,7 @@ public class HttpCalloutVO{
         public String isHKID{get;set;} // XmlElement(name = "GovtIDIndicator") "Y" or "N", Rancho_JOBR300_20230214 - identity number user registered with
         public String newAgentCode{get;set;}        // Rancho_PI83_20221110 - only pass value when update user agent code
         public String openId{get;set;} // Rancho_iAMSmart_20250806 - iAM Smart Open ID
+        public String agreeTnc{get;set;} // Rancho_HKITSFDC324_20251110 - agree TelaDoc Data Privacy and TNC
         public User() {
             this.hkId = '';
             this.roleId = '';
@@ -2611,7 +2630,7 @@ public class HttpCalloutVO{
         public String subject{get;set;}
         public String content{get;set;}
         public String recipient{get;set;}
-        @AuraEnabled public String status {get;set;}	//HKITSFDC-342
+        @AuraEnabled public String status {get;set;}    //HKITSFDC-342
     }
 
     public class CaseRequest{

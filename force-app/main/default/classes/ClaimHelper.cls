@@ -58,11 +58,11 @@ global class ClaimHelper{
         //Added by minglei 2018.05.15 [add Wellness type to claim] start
         +'WL__c, Is_Selected_J__c, createdBy.name,createdById,ownerId,' // Added by IBM(Roy) due to PPS-21(OWNer related field)
         //Added by minglei 2018.05.15 [add Wellness type to claim] end 
-        +'Account__r.name, Account__r.Salutation, Account__r.firstname, Account__r.lastname,Account__r.SSN__c, Account__r.Gender__c, Owner.Name,Claim_Type__c, Date_of_stop_working_due_to_disability__c,Do_you_stay_in_hospital__c, Information_from_other_companies__c, Is_there_any_room_charge__c, '
+        +'Account__r.name, Account__r.Salutation, Account__r.firstname, Account__r.lastname,Account__r.SSN__c, Account__r.Gender__c, Owner.Name,Claim_Type__c, Date_of_stop_working_due_to_disability__c,Do_you_stay_in_hospital__c, Information_from_other_companies__c, Information_of_benifit_from_other_comp__c, Is_there_any_room_charge__c, '
         //20210803 - Kirk - CR48
         //Rancho_CR48_20210706: add Is_Public_Hospital__c
         +'What_Are_Your_Symptoms_And_Diagnosis__c,Ask_If_Include_Separate_Medication__c,Consultation_Currency_Code__c,Is_Public_Hospital__c, '        
-        +'Payment_Currency__c, Please_input_the_amount_of_charge_HKD__c,Please_input_the_amount_of_charge_Con__c,Please_input_the_amount_of_charge_Oth__c,Please_input_the_amount_of_charge_Med__c,Policy__c, Receive_reimbursement_from_other_comp__c, Have_All_Documents_To_Upload__c,Still_on_sick_leave__c, Type_of_benefit_to_claim__c,What_is_the_hospital_doctor_name__c, What_is_your_1st_consultation_date__c,toLabel(Status__c) status_translated,Status__c, '
+        +'Payment_Currency__c, Please_input_the_amount_of_charge_HKD__c,Please_input_the_amount_of_charge_Con__c,Please_input_the_amount_of_charge_Oth__c,Please_input_the_amount_of_charge_Med__c,Policy__c, Receive_reimbursement_from_other_comp__c,Is_Insured_for_Similar_Benefits__c, Have_All_Documents_To_Upload__c,Still_on_sick_leave__c, Type_of_benefit_to_claim__c,What_is_the_hospital_doctor_name__c, What_is_your_1st_consultation_date__c,toLabel(Status__c) status_translated,Status__c, '
         +'CreatedDate, LastModifiedDate,Certificate_Number__c, ' //Add by Manuel on Sep 28 that supplement parameter for claim request
         +'RecordType.developerName, ' //add by minghua for claim submitClaim - 20190718
         +'Incurred_Country_Code__c,Incurred_Country_Name__c,Incurred_Currency_Code__c,Incurred_Currency_Name__c,Bank_Account_Sync_Up_Status__c, '/*add by Raistlin foor GS claim -20191024*/      
@@ -394,4 +394,12 @@ global class ClaimHelper{
         global Boolean IsSelectedTransfertoHKBank {get;set;}
         global Boolean IsSelectedTransfertoOverseaBank {get;set;}  
     }
+    
+    //HKITSFDC-412 BEGIN
+     global Class WrapperInfoBenefitFromOtherCompany{   
+        global String nameOfInsurer {get;set;}
+        global String policyNum {get;set;}
+        global WrapperInfoBenefitFromOtherCompany(){}  
+    }
+    //HKITSFDC-412 ENDED
 }

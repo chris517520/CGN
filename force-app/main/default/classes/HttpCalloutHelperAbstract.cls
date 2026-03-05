@@ -123,8 +123,13 @@ public without sharing abstract class HttpCalloutHelperAbstract{
         List<AuthSession> sessionList=[SELECT Id,LoginHistory.Application From AuthSession Where UsersId=:userinfo.getUserId() and IsCurrent=true];
         if (!sessionList.isEmpty()&&'MycignaReactApp'.equalsIgnoreCase(sessionList[0].LoginHistory.Application)) {
             callerPlatform='App';
-            System.debug('HttpCalloutHelperAbstract sessionList:'+sessionList);
+            System.debug('HttpCalloutHelperAbstract sessionList:'+sessionList + ' current ws functionName '+ functionName + ' ');
         }
+        else{
+            System.debug('HttpCalloutHelperAbstract sessionList:'+sessionList + ' current ws functionName '+ functionName + ' ');
+        }
+        //HKITSFDC-438R caller platform of queue
+        
         if(Test.isRunningTest()){
             calloutSetting = WS_Callout_Setting__c.getValues('Default');
         }else{
@@ -326,6 +331,7 @@ public without sharing abstract class HttpCalloutHelperAbstract{
                 if(this.functionName == PolicyCalloutHelper.GetPolicyDoc||this.functionName == WorkCalloutHelper.GetWorkDoc){   //Added by Nicole for Efulfillent Large document download
                      response.setBody('');
                 }
+                System.debug('HttpCalloutHelperAbstract sessionList: '+ callerPlatform + ' current ws functionName '+ functionName + ' ');//HKITSFDC-438 test
                 insertLog(request, response, '', '', callTimeStart, callTimeEnd, TRUE);
             }
         }
