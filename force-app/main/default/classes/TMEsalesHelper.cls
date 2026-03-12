@@ -207,6 +207,19 @@ public class TMEsalesHelper {
 
         // Rancho_HKITSFDC402_20250930 - add sumInsured in AUW request
         att.sumInsured = String.isNotBlank(pis.sumInsured) ? pis.sumInsured : '';
+        // HKITSFDC-536_20260226 - add bundle policy number in AUW request
+        if (String.isNotBlank(pis.pi.Bundle_Policy_Number__c)) {
+            att.bundlePolicyNo = pis.pi.Bundle_Policy_Number__c;
+            List<new_Policy__c> lstPolicy = [SELECT Application_Id__c FROM new_Policy__c WHERE Policy_No__c = :pis.pi.Bundle_Policy_Number__c Limit 1];
+            if (!lstPolicy.isEmpty() && String.isNotBlank(lstPolicy[0].Application_Id__c)) {
+                att.preAppId = lstPolicy[0].Application_Id__c;
+            } else {
+                att.preAppId = '';
+            }
+        } else {
+            att.bundlePolicyNo = '';
+            att.preAppId = '';
+        }
         att.bundlePolicyNo = String.isNotBlank(pis.pi.Bundle_Policy_Number__c) ? pis.pi.Bundle_Policy_Number__c : '';
         //added by ken, for DPSP-628     
         //system.debug('[TMEsalesHelper] getPreSalesAttribute().productCode='+productCode); 
@@ -342,7 +355,7 @@ public class TMEsalesHelper {
                     + '                <attribute name="GENDER" value="' + att.gender + '" />'
                     + '                <attribute name="SMOKER" value="' + att.smoker + '" />'
                     + '                <attribute name="CURRENT_CI_SUM_INSURED" value="' + att.sumInsured + '" />'
-                    + '                <attribute name="PRE_APP_ID" value="' + att.bundlePolicyNo + '" />'; // Rancho_HKITSFDC402_20250930 - add sumInsured in AUW request
+                    + '                <attribute name="PRE_APP_ID" value="' + att.preAppId + '" />'; // Rancho_HKITSFDC402_20250930 - add sumInsured in AUW request
         if(att.ProductRecordList != null && att.ProductRecordList.size() > 0){
             for(productRecord r : att.ProductRecordList){
                 body += '<record>'
@@ -395,7 +408,7 @@ public class TMEsalesHelper {
                     + '              <attribute name="SMOKER" value="' + att.smoker + '" />'
                     + '              <attribute name="CAMPAIGN_CODE" value="' + att.campaignCode + '" />'
                     + '              <attribute name="CURRENT_CI_SUM_INSURED" value="' + att.sumInsured + '" />'// Rancho_HKITSFDC402_20250930 - add sumInsured in AUW request
-                    + '              <attribute name="PRE_APP_ID" value="' + att.bundlePolicyNo + '" />' // HKITSFDC-536_20260226 - add bundle policy number in AUW request
+                    + '              <attribute name="PRE_APP_ID" value="' + att.preAppId + '" />' // HKITSFDC-536_20260226 - add bundle policy number in AUW request
                     + '            </insured>'
                     + '          </caseData>]]>'
                     + '        </caseXML>'
@@ -551,7 +564,8 @@ public class TMEsalesHelper {
         public String flag { get; set; }
         public List<ProductRecord> productRecordList { get; set; } { productRecordList = new List<ProductRecord>(); }
         public String sumInsured { get; set; }// Rancho_HKITSFDC402_20250930 - add sumInsured in AUW request
-        public String bundlePolicyNo { get; set; } //HKITSFDC536_20260226 - add bundle policy no for CIR25
+        public String bundlePolicyNo { get; set; } //HKITSFDC536_20260226 - bundle policy no for CIR25
+        public String preAppId { get; set;} //HKITSFDC536_20260226 - pre-application of boundle policy for CIR25
         public PreSalesAttribute(){}
     }
     

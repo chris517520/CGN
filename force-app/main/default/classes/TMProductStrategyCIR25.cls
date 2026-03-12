@@ -15,7 +15,7 @@ public class TMProductStrategyCIR25 extends TMProductStrategyCI {
         // CIR25 can only be applied to the person insured who has active policy
         Set<String> piIdSet = new Set<String>();
         Set<String> hkidWithSFDCPolicySet = new Set<String>();
-        Map<String, String> mapExistingPolicy = new Map<String, String>();
+        Map<String, String> mapExistingPolicy = new Map<String, String>(); // HKIDSFDC_536 bundle policy number validation
         for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
             piIdSet.add(pis.pi.Personal_ID__c);
         }
@@ -52,7 +52,8 @@ public class TMProductStrategyCIR25 extends TMProductStrategyCI {
                 }
             }
         }
-
+        
+        // HKIDSFDC_536 bundle policy number validation
         for (TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList) {
             System.debug('PI Bundle_policy_number__c: ' + pis.pi.Bundle_Policy_Number__c);
             if (pis.piValidationItem.otherValidation && String.isNotBlank(pis.pi.Bundle_Policy_Number__c)){
