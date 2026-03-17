@@ -21,7 +21,47 @@ public abstract class TMProductStrategyVHIS extends TMProductStrategy{
     
     public override void discountValidation(){
         super.discountValidation(ptvs,productCode);
-        vhisSuper_2026Q1Validation(); // HKITSFDC_521_Discount
+        Boolean hasWithDeductible = false; // include at least one with defuctible plan
+        for (TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList) {
+            if (pis.pi.Benefit_Level__c != '1') {
+                hasWithDeductible = true;
+                break;
+            }
+        }
+        for (TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList) {
+            if (productCode == 'VSUPG' || productCode == 'VSPWG') {
+                if (pis.availableDiscountMap.containsKey('SPECIAL 2ND YR 17% DISCOUNT')){
+                    pis.availableDiscountMap.put('SPECIAL 2ND YR 17% DISCOUNT', false);
+                    if (ptvs.ctrl.amountOfPI == 1 && pis.pi.Benefit_Level__c != '1') {
+                        pis.availableDiscountMap.put('SPECIAL 2ND YR 17% DISCOUNT', true);
+                    }
+                }
+
+                if (pis.availableDiscountMap.containsKey('YR1&2 17% YR3 42%')){
+                    pis.availableDiscountMap.put('YR1&2 17% YR3 42%', false);
+                    if (ptvs.ctrl.amountOfPI > 1 && pis.pi.Benefit_Level__c != '1') {
+                        pis.availableDiscountMap.put('YR1&2 17% YR3 42%', true);
+                    }
+                }
+                
+                if (pis.availableDiscountMap.containsKey('YR1 17% DISCOUNT')){
+                    pis.availableDiscountMap.put('YR1 17% DISCOUNT', false);
+                    if (!hasWithDeductible && ptvs.ctrl.amountOfPI > 1) {
+                        pis.availableDiscountMap.put('YR1 17% DISCOUNT', true);
+                    } else if (hasWithDeductible && pis.pi.Benefit_Level__c == '1') {
+                        pis.availableDiscountMap.put('YR1 17% DISCOUNT', true);
+                    }
+                }
+
+                if (pis.availableDiscountMap.containsKey('YR2 9% YR3 7%')) {
+                    pis.availableDiscountMap.put('YR2 9% YR3 7%', false);
+                    if (pis.pi.Benefit_Level__c != '1') {
+                        pis.availableDiscountMap.put('YR2 9% YR3 7%', true);
+                    }
+                }
+            }
+        }
+        // vhisSuper_2026Q1Validation(); // HKITSFDC_521_Discount
         childOfferDiscountValidation();
         childGroupOfferDiscountValidation();
         kidsOfferDiscountValidation();

@@ -20,7 +20,21 @@ public abstract class TMProductStrategyNEL extends TMProductStrategy{
     }      
    
     public override void discountValidation(){
-        super.discountValidation(ptvs,productCode);        
+        super.discountValidation(ptvs,productCode);
+        for (TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList) {
+            if (productCode == 'NELG2' || productCode == 'NESG2') {
+                if (pis.availableDiscountMap.containsKey('SPECIAL 2ND YR 17% DISCOUNT') && 
+                    ptvs.ctrl.amountOfPI > 1
+                ) {
+                    pis.availableDiscountMap.put('SPECIAL 2ND YR 17% DISCOUNT', false);
+                }
+
+                if (pis.availableDiscountMap.containsKey('YR1&2 17% YR3 25%') && 
+                (ptvs.ctrl.amountOfPI == 1 || ('Son'.equals(pis.pi.Relationship__c) || 'Daughter'.equals(pis.pi.Relationship__c)))) {
+                    pis.availableDiscountMap.put('YR1&2 17% YR3 25%', false);
+                }
+            }
+        }
         //Nicole_Elite Revamp_20210319
         // Rancho_AH24240_20220224: comment for duplicate logic
         // system.debug('[TMProductStrategyNEL firstYDisEliMap]'+ptvs.ctrl.firstYDisEliMap);
