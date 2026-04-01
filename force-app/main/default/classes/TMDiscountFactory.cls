@@ -66,6 +66,10 @@ public class TMDiscountFactory{
             return new TMProductStrategy15C8L(ptvs);
         }else if('25C8L'.equals(ptvs.ctrl.selectedProduct.product_code__c)){
             return new TMProductStrategy25C8L(ptvs);
+        }else if('CIB25'.equals(ptvs.ctrl.selectedProduct.product_code__c)){
+            return new TMProductStrategyCIB25(ptvs);
+        }else if('CIR25'.equals(ptvs.ctrl.selectedProduct.product_code__c)){
+            return new TMProductStrategyCIR25(ptvs);
         }
         //Wellness CI
         //Rancho_HKITSFDC398_20250909 - 2025Q4 CX Campaign - add AB product

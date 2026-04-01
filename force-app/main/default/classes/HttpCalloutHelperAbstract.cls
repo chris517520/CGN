@@ -504,6 +504,20 @@ public without sharing abstract class HttpCalloutHelperAbstract{
             req.setBody(body);
         }
         req.setHeader('Content-Type', 'text/xml;charset=UTF-8'); 
+         //HKITSFDC-712 BEGIN
+         if(calloutSetting != null && calloutSetting.X_API_Key__c != null && !String.isBlank(calloutSetting.X_API_Key__c) ){
+            system.debug('[HKTISFDC-712 try to set ' + calloutSetting.X_API_Key__c);
+             if ( req.getHeader('X-API-KEY') == null ) { //just add if not has it
+                system.debug('[HKTISFDC-712  set as no exsitng header ' + calloutSetting.X_API_Key__c);
+                req.setHeader('X-API-KEY',calloutSetting.X_API_Key__c);
+            } 
+            else{
+                system.debug('[HKTISFDC-712] key in header already ' + req.getHeader('X-API-KEY'));
+            } 
+            
+        }
+         system.debug('[HKTISFDC-712]  print header X-API-KEY' + req.getHeader('X-API-KEY') );
+        //HKITSFDC-712 ENDED
         if(String.isNotBlank(this.sslCertificateName)){
             req.setClientCertificateName(this.sslCertificateName);
         }

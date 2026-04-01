@@ -23,6 +23,25 @@ public abstract class TMProductStrategyCI extends TMproductStrategy{
 
     public override void discountValidation(){
         super.discountValidation(ptvs, productCode);
+        Boolean bypassValidation = false;
+        for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
+            if(!pis.piPolicy.Policy_No__c.startsWith('CTM')){
+                bypassValidation = true;
+                break;
+            }
+        }
+        if (!bypassValidation) {
+            for (TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList) {
+                if (productCode == 'CIB25' || productCode == 'CIR25') {
+                    if (pis.availableDiscountMap.containsKey('YR1 35% DISCOUNT') && ptvs.ctrl.amountOfPI > 1){
+                        pis.availableDiscountMap.put('YR1 35% DISCOUNT', false);
+                    }
+                    if (pis.availableDiscountMap.containsKey('YR1 50% DISCOUNT') && ptvs.ctrl.amountOfPI == 1){
+                        pis.availableDiscountMap.put('YR1 50% DISCOUNT', false);
+                    }
+                }
+            }
+        }
     }
     
     public virtual override void piValidation(){

@@ -20,25 +20,33 @@ public abstract class TMProductStrategyNEL extends TMProductStrategy{
     }      
    
     public override void discountValidation(){
-        super.discountValidation(ptvs,productCode);        
-        //Nicole_Elite Revamp_20210319
-        // Rancho_AH24240_20220224: comment for duplicate logic
-        // system.debug('[TMProductStrategyNEL firstYDisEliMap]'+ptvs.ctrl.firstYDisEliMap);
-        // for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){    
-        //     system.debug(pis.pi.Personal_ID__c+'s discount before:'+pis.availableDiscountMap);
-        //     if(pis.availableDiscountMap.containsKey('PROMOTION') && ptvs.ctrl.firstYDisEliMap!=null){
-        //         if(ptvs.ctrl.firstYDisEliMap.containsKey(pis.pi.Personal_ID__c)&&ptvs.ctrl.firstYDisEliMap.get(pis.pi.Personal_ID__c)){
-        //             pis.availableDiscountMap.put('PROMOTION',true);
-        //         }else{
-        //             pis.availableDiscountMap.put('PROMOTION',false);
-        //         }
-        //     }
-        //     system.debug(pis.pi.Personal_ID__c+'s discount after:'+pis.availableDiscountMap);
-        // }
+        super.discountValidation(ptvs,productCode);
+        Boolean bypassValidation = false;
+        for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
+            if(!pis.piPolicy.Policy_No__c.startsWith('CTM')){
+                bypassValidation = true;
+                break;
+            }
+        }
+        if (!bypassValidation) {
+            for (TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList) {
+                if (productCode == 'NELG2' || productCode == 'NESG2') {
+                    if (pis.availableDiscountMap.containsKey('SPECIAL 2ND YR 17% DISCOUNT') && 
+                        ptvs.ctrl.amountOfPI > 1
+                    ) {
+                        pis.availableDiscountMap.put('SPECIAL 2ND YR 17% DISCOUNT', false);
+                    }
+
+                    if (pis.availableDiscountMap.containsKey('YR1&2 17% YR3 25%') && 
+                    (ptvs.ctrl.amountOfPI == 1 || ('Son'.equals(pis.pi.Relationship__c) || 'Daughter'.equals(pis.pi.Relationship__c)))) {
+                        pis.availableDiscountMap.put('YR1&2 17% YR3 25%', false);
+                    }
+                }
+            }
+        }
 
         // HKITSFDC_521_Discount - 20260116 - Campaign Mapping for Elite360 2026 Q1 Campaign (1 Feb 2025 to 31 Mar 2026) 
-        elite360_2026Q1ValidationCMT();
-        elite360_2026Q1ValidationSTP();
+        // elite360_2026Q1ValidationCMT();
         
         for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){                        
             if(pis.availableDiscountMap.containsKey('CHILD DISCOUNT*')){
@@ -52,8 +60,6 @@ public abstract class TMProductStrategyNEL extends TMProductStrategy{
             **/
             break;
         }
-
-        
     }
     
     public override void piValidation(){        
@@ -616,57 +622,4 @@ public abstract class TMProductStrategyNEL extends TMProductStrategy{
         }
     }
 
-    public void elite360_2026Q1ValidationSTP(){
-        Integer amountofInsured = ptvs.ctrl.amountOfPI;
-        List<String> lstDiscount = new List<String>{
-            '1 App. W/O Ext. Coverage',
-            '1 App. WITH Ext. Coverage',
-            '2-3 App. W/O Ext. Coverage',
-            '2-3 App. WITH Ext.Coverage',
-            '4-6 App. W/O Ext. Coverage',
-            '4-6 App. WITH Ext. Coverage',
-            'YR2 20% DISCOUNT'
-        };
-        // Only for NELG2 and NESG2
-        if (productCode != 'NELG2' && productCode != 'NESG2') {
-            return;
-        }
-
-        Boolean eSalesFlag = false;
-        for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
-            if(pis.piPolicy.Policy_No__c.startsWith('STP')){
-                eSalesFlag = true;
-                break;
-            }
-        }
-
-        if(eSalesFlag){
-            // Set default false
-            for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
-                for (String discountType : lstDiscount) {
-                    if (pis.availableDiscountMap.containsKey(discountType)) {
-                        pis.availableDiscountMap.put(discountType, false);
-                    }
-                }
-            }
-
-            for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
-                if (pis.pi.Insured_Type__c == 'PH = PI' || pis.pi.Insured_Type__c == 'Spouse') {
-                    if (amountofInsured == 1) {
-                        pis.availableDiscountMap.put('1 App. W/O Ext. Coverage', true);  
-                    } else if (amountofInsured >= 2 && amountofInsured <= 3) {
-                        pis.availableDiscountMap.put('2-3 App. W/O Ext. Coverage', true);
-                    } else if (amountofInsured >= 4 && amountofInsured <= 5) {
-                        pis.availableDiscountMap.put('4-6 App. W/O Ext. Coverage', true);  
-                    }
-                }
-
-                // 1 Child discount
-                if (pis.pi.PI_Age__c < 18 && amountofInsured == 1) {
-                    pis.availableDiscountMap.put('1 App. W/O Ext. Coverage', true);  
-                }
-            }
-        }
-            
-    }
 }

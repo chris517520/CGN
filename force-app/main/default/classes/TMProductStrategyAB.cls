@@ -47,10 +47,11 @@ public abstract class TMProductStrategyAB extends TMProductStrategy{
                 }
                 System.debug('AB current available discount map: '+pis.availableDiscountMap);
 
-                // HKITSFDC_521_Discount
-                if(pis.availableDiscountMap.containsKey('YR2 20% DISCOUNT')){
-                    if (pis.pi.Benefit_Level__c == '1' || pis.pi.Benefit_Level__c == '5' || pis.pi.Benefit_Level__c == '9') {
-                        pis.availableDiscountMap.put('YR2 20% DISCOUNT',false);
+                // HKITSFDC_688_Discount
+                if (pis.availableDiscountMap.containsKey('YR2 9% YR3 7%')) {
+                    pis.availableDiscountMap.put('YR2 9% YR3 7%', false);
+                    if (pis.pi.Benefit_Level__c != '1' && pis.pi.Benefit_Level__c != '5' && pis.pi.Benefit_Level__c != '9') {
+                        pis.availableDiscountMap.put('YR2 9% YR3 7%', true);
                     }
                 }
             }
@@ -72,17 +73,17 @@ public abstract class TMProductStrategyAB extends TMProductStrategy{
         Boolean controlFlag = false;
         for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
             // Rancho_HKITSFDC333_20250818 - CX product not allow standalone child
+            // HKITSFDC707 child only transaction should set parentPIId mandatory
+            if(pis.isParentPIIdMandatory && pis.displayParentPIId && String.isBlank(pis.pi.Parent_PI_ID__c)){
+                ptvs.ctrl.pageMsg = 'Cathy Premier plan does not allow standalone child enrollment';
+                pis.piValidationItem.otherValidation=false;
+                return;
+            }
+            
             System.debug('pis.pi.Insured_Type__c: '+pis.pi.Insured_Type__c + ', pis.pi.PI_Age__c: '+pis.pi.PI_Age__c);
             if(pis.pi.Insured_Type__c == 'Dependent' && pis.pi.PI_Age__c < 18){
                 if(pis.pi.Relationship__c == 'Son' || pis.pi.Relationship__c == 'Daughter'){
                     controlFlag = true;
-                }
-                
-                if(ptvs.ctrl.amountOfPI == 1){
-                    System.debug('standalone child policy');
-                    ptvs.ctrl.pageMsg = 'Cathy Premier plan does not allow standalone child enrollment';
-                    pis.piValidationItem.otherValidation=false;
-                    return;
                 }
             }
             piTypeSet.add(pis.pi.Relationship__c);
@@ -114,6 +115,23 @@ public abstract class TMProductStrategyAB extends TMProductStrategy{
 
     public override void transactionValidation(){
         super.transactionValidation(ptvs,productCode);
+        Boolean isChildOnlyTransaction = true;
+        // HKITSFDC707 child only transaction should set parentPIId mandatory
+        for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
+            System.debug('Relationship__c: '+pis.pi.Relationship__c);
+            if (pis.pi.Relationship__c == 'Policy Holder' || pis.pi.Relationship__c=='Spouse') {
+                isChildOnlyTransaction = false;
+                break;
+            }
+        }
+        for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
+            if(isChildOnlyTransaction && (pis.pi.Relationship__c == 'Son' || pis.pi.Relationship__c == 'Daughter')){
+                pis.isParentPIIdMandatory = true;
+            } else{
+                pis.isParentPIIdMandatory = false;
+            }
+        }
+        // HKITSFDC707 end
     }
 
     /**************************************************************************************

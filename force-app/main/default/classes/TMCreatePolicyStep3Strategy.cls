@@ -183,21 +183,7 @@ public class TMCreatePolicyStep3Strategy implements TMCreatePolicyStepStrategy{
             }
             
             //special case
-            if(pis.isParentPIIdMandatory && pis.displayParentPIId){
-                if(String.isNotEmpty(pis.pi.Parent_PI_ID__c)){
-                    Matcher parentPIIdMatcher = personalIdPattern.matcher(pis.pi.Parent_PI_ID__c);
-                    if(!parentPIIdMatcher.matches()){
-                        System.debug('[TMCreatePolicyStep3Strategy] checkPIPHRequiredField() pi parentPIId format validation');
-                        warningMsg = 'Please input valid Personal ID number.';
-                        pass = false;
-                        break;
-                    }
-                }else{
-                    System.debug('[TMCreatePolicyStep3Strategy] checkPIPHRequiredField() pi Parent_PI_ID not null validation');
-                    pass = false;
-                    break;
-                }
-            }else if(pis.displayParentPIId && String.isNotEmpty(pis.pi.Parent_PI_ID__c)){
+            if(pis.displayParentPIId && String.isNotEmpty(pis.pi.Parent_PI_ID__c)){
                 Matcher parentPIIdMatcher = personalIdPattern.matcher(pis.pi.Parent_PI_ID__c);
                 if(!parentPIIdMatcher.matches()){
                     System.debug('[TMCreatePolicyStep3Strategy] checkPIPHRequiredField() pi parentPIId format validation');
@@ -206,6 +192,7 @@ public class TMCreatePolicyStep3Strategy implements TMCreatePolicyStepStrategy{
                     break;
                 }
             }
+            
             //SP100
             //if(productCode == '@SP100'){
             if(newPolicy.Product_Code__c == '@SP100'){
