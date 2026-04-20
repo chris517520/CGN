@@ -1,0 +1,853 @@
+<apex:page Controller="BaseBrkDoctorCNListCtrl" sidebar="false" showHeader="false">
+
+    <head>
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover" />
+        <!--additional css, bootstrap, jquery,js libraries-->
+        <apex:includeScript value="{!URLFOR($Resource.signature_pad_1_5)}" />
+        <apex:includeScript value="{!$Resource.modernizr}" />
+        <apex:stylesheet value="{!URLFOR($Resource.Cigna_HK_Icons, 'Cigna-HK-Icons.css')}"/>
+        <link rel="stylesheet" href="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/jquery-ui.min.css')}" />
+        <!--CR-56_Link_20220214-->
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/jquery-ui-1.13.min.js')}"></script>
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_ui, 'jquery-ui/datepicker-zh-TW.js')}"></script>
+        
+        <!-- CR-56_Link_20220214 -->
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'jquery.validate_new.min.js')}"/>
+
+        <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, 'additional-methods.min.js')}" />
+
+        <apex:outputPanel rendered="{!lang == 'zh'}" layout="none">
+            <script type="text/javascript" src="{!URLFOR($Resource.jQuery_Validation, '/localization/messages_zh_TW.min.js')}" />
+        </apex:outputPanel>
+        <style>
+
+            select::-ms-expand {
+                display: none;
+            }
+
+            /* hide input */
+            .cigna-radio input.radio:empty {
+                margin-left: -999px;
+            }
+
+            .cigna-radio label {
+                width: 120px;
+                font-size: 1em;
+                font-weight: normal;
+            }
+
+            /* style label */
+            .cigna-radio input.radio:empty ~ label {
+                position: relative;
+                float: left;
+                line-height: 32px;
+                text-indent: 3.25em;
+                cursor: pointer;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+
+            .cigna-radio input.radio:empty ~ label:before {
+                position: absolute;
+                display: block;
+                top: 2px;
+                bottom: 0;
+                left: 0;
+                content: '';
+            }
+
+            /* toggle on */
+            .cigna-radio input.radio:checked:not(:disabled) ~ label:before {
+                content:"\f058";
+                text-indent: 0.4em;
+                color: #39B54A;
+                font: normal normal normal 24px/1 FontAwesome;
+            }
+
+            .cigna-radio input.radio:not(checked):not(:disabled) ~ label:before {
+                content:"\f058";
+                text-indent: 0.4em;
+                color: #C8C9C7;
+                font: normal normal normal 24px/1 FontAwesome;
+            }
+
+            .cigna-radio input.radio:disabled ~ label {
+                color: #bdb6d6;
+            }
+
+            .cigna-radio input.radio:disabled ~ label:before {
+                content:"\f058";
+                text-indent: 0.4em;
+                color: #bdb6d6;
+                font: normal normal normal 24px/1 FontAwesome;
+            }
+
+
+
+            .bs .form-field-style-select:disabled {
+                background: none !important;
+                border-color: #bdb6d6 !important;
+                color: #bdb6b6 !important;
+            }
+            .bs .value-row {
+                padding-bottom: 5px;
+            }
+
+            .bs .card-content {
+                font-weight: bold;
+                font-size: 0.8em;
+            }
+
+            .bs .dl-font {
+                font-size: 0.9em;
+                line-height: 18px;
+            }
+
+            .bs .doctor-card {
+                margin-left: -10px;
+                margin-right: -10px;
+                padding-left: 10px;
+                padding-top: 10px;
+                padding-bottom: 5px;
+                border-top: rgba(207,207,207,1) solid 1px;
+                border-bottom: rgba(207,207,207,1) solid 1px
+            }
+
+            .bs .table-font{
+                font-size: 0.7em;
+                word-break: break-all;
+            }
+
+            .modal-body {
+                height: 600px;
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+
+            #HKList {
+                padding: 0 60px;
+                padding-bottom: 10px;
+            }
+
+            #WWList {
+                padding: 0 75px
+            }
+
+
+            .bs .content-label {
+                padding-left: 20px;
+            }
+
+            .bs .table-row {
+                padding-bottom: 10px;
+            }
+
+            .bs .even-row {
+                background-color: rgb(242, 242, 242);
+            }
+
+            @media screen and (min-width: 768px) {
+                #wwSearchPanel {
+                    padding-top: 10px;
+                }
+
+                #mapPanel {
+                    padding: 0 60px;
+                }
+
+                .modal:before {
+                    display: inline-block;
+                    vertical-align: middle;
+                    height: 100%;
+                }
+                .modal-dialog {
+                    display: inline-block;
+                    text-align: left;
+                    vertical-align: middle;
+                }
+                #map {
+                    font-family: Arial;
+                    font-size: 12px;
+                    line-height: normal !important;
+                    height: 400px;
+                //width: 100%;
+                    background: transparent;
+                }
+                #ListView {
+                    max-height: 400px;
+                    min-height: 400px;
+                    margin-bottom: 50px;
+                    overflow: auto;
+                }
+                #map-wrapper {
+                    margin-bottom: 50px;
+                }
+                #clinic-done {
+                    margin-bottom: 50px;
+                }
+                .bs .detail-font {
+                    font-size: 0.9em;
+                }
+                div#VCIntroMessage {
+                    display: none;
+                    position: absolute;
+                    z-index: 11;
+                    margin: 150px auto 0px auto;
+                    width: 80%;
+                    height: 60%;
+                    background: #FFF;
+                    color: #000;
+                    left: 10%;
+                    padding: 20px;
+                    border-radius: 5px;
+                }
+            }
+
+            @media (min-width: 768px) and (max-width: 991px) {
+
+                #ListView {
+                    max-height: 500px !important;
+                }
+
+                #HKList {
+                    padding: 0 0;
+                    padding-bottom: 10px;
+                }
+
+                #WWList {
+                    padding: 0 15px;
+                    padding-bottom: 10px;
+                }
+            }
+
+            @media (max-width: 767px) {
+
+                .bs .modal-dialog {
+                    position: relative;
+                    width: 80%;
+                    margin: 10px;
+                }
+
+                .dl-mobile-padding {
+                    padding-bottom: 20px;
+                }
+
+                #wwSearchPanel {
+                    padding-top: 30px;
+                }
+
+                .modal:before {
+                    display: inline-block;
+                    vertical-align: middle;
+                    height: 100%;
+                }
+
+                .modal-dialog {
+                    display: inline-block;
+                    text-align: left;
+                    vertical-align: middle;
+                }
+
+               
+                #ListView {
+                    padding-top: 30px;
+                    max-height: 400px;
+                    min-height: 400px;
+                    margin-bottom: 50px;
+                    overflow: auto;
+                }
+                #HKList, #WWList {
+                    padding: 0 20px
+                }
+
+                .bs .detail-font {
+                    font-size: 0.8em;
+                }
+
+                .bs #list-back {
+                    /*position: fixed;*/
+                    /*top: 200px;*/
+                    /*width: 100%;*/
+                    /*z-index: 7;*/
+                    /*background: white;*/
+                }
+
+                div#VCIntroMessage {
+                    display: none;
+                    position: absolute;
+                    z-index: 11;
+                    margin: 100px auto 0px auto;
+                    width: 90%;
+                    height: 80%;
+                    background: #FFF;
+                    color: #000;
+                    left: 5%;
+                    padding: 20px;
+                    border-radius: 5px;
+                }
+
+            }
+
+            .bs .mobile-version-button {
+                height: 30px;
+                font-size: 0.8em;
+                padding: 8px;
+            }
+
+            .bs .no-border-input {
+                padding: 0;
+                border: none;
+                background: none;
+            }
+
+            .bs .no-dpicon {
+                -webkit-appearance: none;
+                -webkit-border-radius: 0px;
+                -moz-appearance: none;
+                appearance: none;
+            }
+
+            .bs .all-page-width {
+                margin-left: -15px;
+                padding: 0px;
+            }
+
+            .bs td {
+                /* Rancho_HKITSFDC264_20250903 - replace "Gotham SSm A", "Gotham SSm B" */
+                font-family: "ValueSansRegular", Arial, Helvetica, sans-serif;
+            }
+
+            .disPanel select {
+                border: 0px;
+                border-bottom: 1px solid #58595B;
+                background: url({!$Resource.select_arrow_style}) no-repeat 98% 50% !important;
+                background-size: 7px 7px !important;
+                padding-right: 20px;
+                padding-left: 12px;
+                -moz-appearance: none;
+                -webkit-appearance: none;
+                appearance: none;
+                width: 100%;
+                border-radius: 0px;
+                height: 34px !important;
+            }
+
+            .bs .doctor-pagination {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                margin: 10px;
+                margin-bottom: 20px;
+                width: 100%;
+            }
+
+            .bs .doctor-pagination-link {
+                display: inline-block;
+                min-width: 32px;
+                padding: 5px 10px;
+                text-align: center;
+                border: 1px solid #004986;
+                color: #004986;
+                background: #fff;
+                cursor: pointer;
+            }
+
+            .bs .doctor-pagination-link.is-active {
+                color: #fff;
+                background: #004986;
+                cursor: default;
+            }
+
+            .bs .doctor-pagination-link.is-disabled {
+                border-color: #c8c9c7;
+                color: #c8c9c7;
+                cursor: default;
+            }
+        </style>
+
+        <script type="text/javascript">
+            var changeLanguageWarningRequired = true;
+            var tempScrollTop;
+            var Cigna = Cigna || {};
+            Cigna.DrList = function() {
+
+                function showLabelLoading() {
+                    tempScrollTop = $('#ListView').scrollTop();
+                    $('#pagination-controls').hide();
+                    $('#pagination-icon').fadeIn(100);
+                }
+
+                function hideLabelLoading() {
+                    $('#ListView').scrollTop(tempScrollTop);
+                    $('#pagination-icon').hide();
+                    $('#pagination-controls').fadeIn(100);
+                }
+
+                var validator;
+
+                //Functions for Loading
+                function showLoading() {
+                    $('#login-loading').fadeIn(100);
+                }
+
+                function finishSubmission() {
+                    $('#login-loading').fadeOut(100);
+                }
+
+                function loadList(page){
+                    showLabelLoading();
+                    DrListAF.loadMore(page);
+                }
+
+                function openDetail(rowNum) {
+                    $('.header-bar').css('position', 'relative');
+
+                    $('#modal-clinic-detail').html($('#clinic-' + rowNum + '-detail').html());
+                    $('#modal-clinic-detail #appointment-date').attr("id","appointment-date-target")
+                    Cigna.DatepickerUtil.init('#appointment-date-target');
+                    $( "#appointment-date-target" ).datepicker("option", { minDate: 0});
+                    $('#myModal').modal('show');
+
+                    $('#location-param input[id$="appointed-doctor"]').val($('.modal-content #appointment-doctor').val());
+                    $('#location-param input[id$="appointed-time"]').val($('.modal-content #appointment-time').val());
+
+                    $("#list-back-panel").hide();
+                }
+
+                //Functions for navigation
+                function goBack() {
+                    DrListAF.back();
+                    $("#searchPanel").hide();
+                    $('#myModal').modal('hide');
+
+                }
+
+                function backToSearch() {
+                    nextPage();
+                    DrListAF.back();
+                    $('.header-bar').css('position', 'relative');
+                    $('#ListView').css("padding-top", "20px");
+
+                }
+
+                return {
+                    showLoading: showLoading,
+                    finishSubmission: finishSubmission,
+                    openDetail: openDetail,
+                    goBack: goBack,
+                    backToSearch: backToSearch,
+                    showLabelLoading: showLabelLoading,
+                    hideLabelLoading: hideLabelLoading,
+                    loadList: loadList
+                }
+            }();
+
+            Cigna.DrList.showLoading();
+
+
+
+            $(document).ready(function() {
+                //Initialize jQuery Validation
+                $("form[id*='myform']").validate({});
+
+                //Binding Button
+                //CR-56_Link_20220214
+                $("#detail-back-btn").on("click",function() {
+                    $("#ListView").show();
+                    $("#clinic-detail-panel").hide();
+                    $("#detail-back").hide();
+                    $("#list-back-panel").show();
+                    console.log('detail-back-btn');
+                    $("#searchPanel").show();
+
+                    if(!$('#map').is(':visible')){
+                        $('.header-bar').css("position", "fixed");
+                    }
+                });
+
+                $('#myModal').on('shown.bs.modal', function () {
+                    $('#modal-clinic-detail').scrollTop(0);
+                });
+
+                console.log('isBrokerPortal---'+Cigna.Util.isBrokerPortal());
+                if(Cigna.Util.isBrokerPortal){
+                    console.log('isBrokerPortal---'+Cigna.Util.isBrokerPortal());
+                    $('#HKList').attr('style','display:none');
+                    $('#searchPanel').attr('style','display:none');
+                    $('#MapPan').hide();
+                    $('#backButton').attr('style','display:none');
+                    $('#doctor-statement').attr('style','display:none');
+                }
+
+            });
+
+            function nextPage() {
+                $('#HKList').attr('style','display:block');
+                $('#searchPanel').attr('style','display:block');
+                $('#MapPan').show();
+                $('#backButton').attr('style','display:block');
+                $('#doctor-statement').attr('style','display:block');
+                $('#paginationPanelWrapper').show();
+
+                $('#initPage').hide();
+                $('#nextButton').hide();
+            }
+
+            function backPage() {
+                $('#HKList').attr('style','display:none');
+                $('#searchPanel').attr('style','display:none');
+                $('#MapPan').hide();
+                $('#backButton').attr('style','display:none');
+                $('#doctor-statement').attr('style','display:none');
+                $('#paginationPanelWrapper').hide();
+
+                $('#initPage').show();
+                $('#nextButton').show();
+            }
+        </script>
+    </head>
+    <apex:form id="myform">
+        <div id="location-param" style="display: none;">
+           
+        </div>
+        <div class="bs">
+            <apex:pageMessages ></apex:pageMessages>
+            <!-- For HK List-->
+            <apex:actionFunction name="searchKeyWord" action="{!searchClinicByKeyWord}" reRender="TopPanel,paginationPanel" namespace="DrListAF" status="loader-icon">
+                <apex:param name="firstParam" assignTo="{!currentpage}" value="1" />
+            </apex:actionFunction>
+            <apex:actionFunction name="loadMore" action="{!loadMore}" namespace="DrListAF" reRender="TopPanel,paginationPanel" oncomplete="
+                Cigna.DrList.hideLabelLoading();">
+                <apex:param name="firstParam" assignTo="{!currentpage}" value="" />
+            </apex:actionFunction>
+            
+            <apex:actionFunction name="back" action="{!backToSearch}" namespace="DrListAF"/>
+            <apex:actionFunction name="backRefresh" action="{!backToSearchRefresh}" namespace="DrListAF" />
+
+            <apex:actionFunction name="nextBtn" action="{!isEnableNextBtn}" reRender="nextBtn,productName" namespace="DrListAF" status="loader-icon">
+            </apex:actionFunction>
+
+            <div class="bs" id="doctor-container">
+                <div id="detail-back" class="bs row" style="padding-top: 10px;display:none">
+                    <div class="bs col-xs-12">
+                        <p><a id="detail-back-btn" href="#" class="bs cigna-fg-orange-medium"><i class="ci-hk-arrow-29" aria-hidden="true"></i>
+                                {!$Label.Back}</a>
+                        </p>
+                    </div>
+                </div>
+                <div id="list-back-panel" style="{!IF(currentPanel == 'L','','display:none;')}">
+                    <div id="list-back" class="bs row visible-xs-block">
+                        <div class="bs col-xs-12" style="padding-top: 10px;">
+                            <p><a onclick="Cigna.DrList.backToSearch();"  href="#" class="bs cigna-fg-orange-medium"><i class="ci-hk-arrow-29" aria-hidden="true"></i> {!$Label.Back}</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bs row cigna-question-list" id="initPage">
+                    <div class="bs col-xs-12 col-sm-12 col-lg-12" style="padding-top: 50px;padding-right: 50px">
+                        <apex:outputPanel layout="block" styleClass="bs cigna-quote-question cigna-fg-gray-dark  col-xs-12" >
+                            <apex:outputPanel rendered="{!contains(transKey,'~BrkDoctorList_Select~')}">
+                                <div class="bs col-sm-12 col-xs-12 cigna-fg-orange-medium">
+                                    <div class="bs ci-hk-clipboard ci-hk-lg">
+                                    </div>
+                                    <b>{!transField['BrkDoctorList_Select'][$Label.Header_Language_Code_Current]}</b>
+                                </div>
+                            </apex:outputPanel>
+                            <br/>
+                            <br/>
+                            <div id="selectProduct" class="bs col-sm-4 col-xs-4">
+                                <apex:selectList style="height:34px;" value="{!selectedPolicyProduct}" size="1" styleClass="bs form-field-style-select" onchange="DrListAF.nextBtn();">
+                                    <apex:selectOptions value="{!policyProductList}" />
+                                </apex:selectList>
+                            </div>
+                        </apex:outputPanel>
+                    </div>
+                </div>
+                <!-- next button -->
+                <div id="nextButton">
+                    <!-- web -->
+                    <div class="bs row nextStepBtnIn3" style="padding-top: 20px; padding-bottom: 20px;">
+                        <div class="bs col-sm-3 col-md-3 col-xs-3 col-lg-3 "></div>
+                        <apex:outputPanel id="nextBtn">
+                        <div class="bs col-sm-6 col-md-6 col-xs-6 col-lg-6 onclick-pointer mobile-version-button cigna-fg-white {!IF(enableNextBtn,'cigna-bg-orange-dark','cigna-bg-gray-dark')} desktop-action-btn" 
+                            onclick="nextPage();DrListAF.searchKeyWord()" 
+                            STYLE="{!IF(enableNextBtn,'','pointer-events: none;')}">
+                                {!$Label.Next}
+                        </div>
+                        </apex:outputPanel>
+                    </div>
+                </div>
+                <!-- Back Button -->
+                <div class="bs row" style="padding-top:10px;" id="backButton">
+                    <div class="bs col-lg-12 cigna-fg-orange-medium onclick-pointer" onclick="backPage()">
+                        <i class="ci-hk-arrow-29 ci-hk-sm" aria-hidden="true"></i> {!$Label.Back}
+                    </div>
+                </div>
+                <!-- Back Button End -->
+
+                <apex:outputPanel >
+                    <div id="HKList" class="tab-pane bs">
+                        <div id="searchPanel" class="bs">
+                            <div class="bs" style="padding: 0px 15px;">
+                                <apex:outputPanel id="productName">
+                                    <div class="bs row" style="padding: 5px 0px;" >
+                                        <div class="bs col-sm-10 col-md-10 col-lg-10 col-xs-10 cigna-fg-blue-medium" style="padding: 0px 15px;">
+                                            <apex:outputPanel rendered="{!contains(transKey,'~BrkDoctorList_Product~')}">
+                                            {!transField['BrkDoctorList_Product'][$Label.Header_Language_Code_Current]} : {!policyProductName}
+                                            </apex:outputPanel>
+                                        </div>
+                                    </div>
+                                </apex:outputPanel>
+                                <div class="bs row" style="padding: 10px 15px 0px 15px;" >
+                                    <div class="bs col-sm-2 col-md-2 col-lg-2 col-xs-2" style="padding: 0px;">
+                                        <apex:outputText value="{!$Label.Mainland_China}" style="display:block;line-height:34px;background:none !important" styleClass="bs form-field-style-select"></apex:outputText>
+                                    </div>
+                                    <div class="bs col-sm-3 col-md-3 col-lg-3 col-xs-3 disPanel" style="padding: 0px 5px;">
+                                        <apex:inputField styleClass="bs form-field-style-select" value="{!searchCriteriaDesktop.Province_Municipality__c}" />
+                                    </div>
+                                    <div class="bs col-sm-2 col-md-2 col-lg-2 col-xs-2 disPanel" style="padding: 0px 5px;">
+                                        <apex:inputField styleClass="bs form-field-style-select" value="{!searchCriteriaDesktop.Province_City__c}" />
+                                    </div>
+                                </div>
+
+                                <div class="bs row" style="padding: 5px 0px;">
+                                    <div class="bs col-sm-10 col-md-10 col-lg-10 col-xs-10" style="padding: 0px 15px;">
+                                        <apex:inputText id="specialty" styleClass="bs form-field-style" value="{!theSpecialty}" html-placeholder="{!$Label.Search_Specialty}" />
+                                    </div>
+                                    <div class="bs col-sm-2 col-md-2 col-lg-2 col-xs-2" style="padding: 0px 5px">
+                                        <div id="seach-button" onclick="DrListAF.searchKeyWord()" class="bs mobile-version-button onclick-pointer cigna-fg-white cigna-bg-orange-dark desktop-action-btn" style="width: 90%;">
+                                                {!$Label.Doctor_List_Search_Button}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                <div id="MapPan">
+                    <apex:outputPanel id="mapPanel" layout="block">
+                        <div id="mapPanel" class="bs">
+                            <apex:outputPanel id="TopPanel" layout="block">
+                                <apex:variable value="{!1}" var="rowNum" />
+                                <div id="ListView" class="bs col-sm-12 col-md-12 col-xs-12 col-lg-12" style="padding-right:0px;-webkit-transform: translate3d(0, 0, 0);">
+                                    <div class='bs'>
+                                        <apex:outputPanel layout="block" rendered="{!availableClinicList.size == 0}">
+                                            <div style="text-align: center;padding-top: 20px;">
+                                                <p>{!$Label.Doctor_List_No_Record_Found}</p>
+                                            </div>
+                                        </apex:outputPanel>
+                                        <apex:repeat value="{!availableClinicList}" var="currentClinic">
+                                            <div id="clinic-{!currentClinic.id}">
+                                                <div class="bs {!IF(isForWW,'','onclick-pointer')}" onclick="if('{!isForWW}' == 'false'){if($(window).width() < 768){$(document).scrollTop(0)};Cigna.DrList.openDetail({!rowNum})}">
+                                                    <!--<td class='Centre_num'>{!rowNum}</td> -->
+                                                    <span class="mark" style="display:none" />
+                                                    <div class='bs col-sm-12 col-md-12 col-lg-12 col-xs-12 list-content' style="padding: 10px;border-bottom: 1px solid grey;">
+                                                        <div style="font-size: 0.9em;margin-bottom: 5px;">
+                                                            <apex:outputText escape="false" value="{!currentClinic.Network_Clinic_Name_en__c}"/>
+                                                            <apex:outputPanel >
+                                                                <i class="ci-hk-arrow-31" aria-hidden="true" style="float:right;color: #134688;"></i>
+                                                            </apex:outputPanel>
+                                                        </div>
+                                                        <div style="font-size: 0.7em;line-height: 1.5em;">
+                                                            <apex:outputText escape="false" value="{!currentClinic.Address_en__c}"/>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Detail List -->
+                                            <div id="clinic-{!rowNum}-detail" class="bs panel-body" style="display:none;">
+                                                <div class="bs row">
+                                                    <div class="bs col-lg-12" style="font-size: 1em;margin-bottom: 5px;">
+                                                        <apex:outputText escape="false" value="{!currentClinic.Network_Clinic_Name_en__c}"/>                                            
+                                                    </div>
+                                                </div>
+                                                <div class="bs row" style="padding-bottom:15px">
+                                                    <div class="bs col-lg-12 col-xs-12">
+                                                        <apex:outputText escape="false" value="{!currentClinic.Address_en__c}"/>
+                                                    </div>
+                                                </div>
+                                                <div id="generalInfo" class="bs row" style="padding-bottom:30px">
+                                                    <div class="bs col-lg-12 col-xs-12" style="border-bottom:1px solid grey; margin-bottom: 10px; padding-bottom: 10px; font-weight: bold">
+                                                        <apex:outputText escape="false" value="{!$Label.General_Info}"/>
+                                                    </div>
+                                                    <div class="bs col-lg-12 col-xs-12">
+                                                        <apex:outputText escape="false" value="{!$Label.Telephone}"/>
+                                                    </div>
+                                                    <div class="bs col-lg-12 col-xs-12" style="margin-bottom:10px">
+                                                        <apex:outputText escape="false" value="{!currentClinic.Telephone__c}"/>
+                                                    </div>
+                                                     <div class="bs col-lg-12 col-xs-12">
+                                                        <apex:outputText escape="false" value="{!$Label.Working_Time}"/>
+                                                    </div>
+                                                    <div class="bs col-lg-12 col-xs-12">
+                                                        <apex:outputText value="{!SUBSTITUTE(SUBSTITUTE(JSENCODE(currentClinic.Opening_Hours_en__c),'\\r\\n','<br/>'),'\\n','<br/>')}" escape="false"/>
+                                                    </div>
+                                                </div>
+
+                                                <div id="hospitalDetail" class="bs row" style="padding-bottom:15px">
+                                                    <div class="bs col-lg-12 col-xs-12" style="border-bottom:1px solid grey; margin-bottom: 10px; padding-bottom: 10px; font-weight: bold">
+                                                        <apex:outputText escape="false" value="{!$Label.Hospital_Detail}"/>
+                                                    </div>
+                                                    <div class="bs col-lg-12 col-xs-12">
+                                                        <apex:outputText escape="false" value="{!$Label.Doc_Category}"/>
+                                                    </div>
+                                                    <div class="bs col-lg-12 col-xs-12" style="margin-bottom:10px">
+                                                        <apex:outputText escape="false" value="{!currentClinic.Hospital_Category__c}"/>
+                                                    </div>
+                                                    <div class="bs col-lg-12 col-xs-12">
+                                                        <apex:outputText escape="false" value="{!$Label.Doc_Type}"/>
+                                                    </div>
+                                                    <div class="bs col-lg-12 col-xs-12" style="margin-bottom:10px">
+                                                        <apex:outputText escape="false" value="{!currentClinic.Clinic_Type__c}"/>
+                                                    </div>
+                                                    <div class="bs col-lg-12 col-xs-12">
+                                                        <apex:outputText escape="false" value="{!$Label.Outpatient_Inpatient}"/>
+                                                    </div>
+                                                    <div class="bs col-lg-12 col-xs-12" style="margin-bottom:10px">
+                                                        <apex:outputText escape="false" value="{!currentClinic.Patient_Type__c}"/>
+                                                    </div>
+                                                    <div class="bs col-lg-12 col-xs-12">
+                                                        <apex:outputText escape="false" value="{!$Label.CN_Doctor_List_Specialty}"/>
+                                                    </div>
+                                                    <div class="bs col-lg-12 col-xs-12" style="margin-bottom:10px">
+                                                        <apex:outputText escape="false" value="{!currentClinic.Specialty__c}"/>
+                                                    </div>
+                                                    <div class="bs col-lg-12 col-xs-12">
+                                                        <apex:outputText escape="false" value="{!$Label.CN_Doctor_List_Language}"/>
+                                                    </div>
+                                                    <div class="bs col-lg-12 col-xs-12" style="margin-bottom:10px">
+                                                        <apex:outputText escape="false" value="{!currentClinic.Language__c}"/>
+                                                    </div>
+                                                    <div class="bs col-lg-12 col-xs-12">
+                                                        <apex:outputText escape="false" value="{!$Label.CN_Doctor_List_Notice}"/>
+                                                    </div>
+                                                    <div class="bs col-lg-12 col-xs-12" style="margin-bottom:10px">
+                                                        <apex:outputText escape="false" value="{!currentClinic.Notice__c}"/>
+                                                    </div>
+                                                    <div class="bs col-lg-12 col-xs-12">
+                                                        <apex:outputText escape="false" value="{!$Label.CN_Doctor_List_Cashless}"/>
+                                                    </div>
+                                                    <apex:outputPanel rendered="{!lang == 'zh'}">
+                                                        <div class="bs col-lg-12 col-xs-12" style="margin-bottom:10px">
+                                                            <apex:outputText escape="false" value="{!currentClinic.Cashless_Availability_zh__c}"/>
+                                                        </div>
+                                                    </apex:outputPanel>
+                                                    <apex:outputPanel rendered="{!lang == 'en'}" >
+                                                        <div class="bs col-lg-12 col-xs-12" style="margin-bottom:10px">
+                                                            <apex:outputText escape="false" value="{!currentClinic.Cashless_Availability_en__c}"/>
+                                                        </div>
+                                                    </apex:outputPanel>
+                                                    <div class="bs col-lg-12 col-xs-12">
+                                                        <apex:outputText escape="false" value="{!$Label.CN_Doctor_List_Direct_Billing_Method}"/>
+                                                    </div>
+                                                    <div class="bs col-lg-12 col-xs-12" style="margin-bottom:10px">
+                                                        <apex:outputText escape="false" value="{!currentClinic.Direct_Billing_Method__c}"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                                        </apex:repeat>
+            
+                                        <script>
+                                            var isIE = /(MSIE|Trident\/|Edge\/)/i.test(navigator.userAgent);
+                                            if(isIE){
+                                                $('#ListView').css('max-height','360px');
+                                                $('#ListView').css('min-height','360px');
+                                            }
+                                        </script>
+                                    </div>
+                                </div>
+
+                                <div id="clinic-detail-panel" style="display:none;" class="bs col-sm-12 col-md-12 col-xs-12 col-lg-12">
+                                </div>
+                                
+                            </apex:outputPanel>
+                        </div>
+                    </apex:outputPanel>
+                </div>
+                <!-- Statement Label -->
+                <div id="doctor-statement" class="bs row">
+                    <div class="bs col-sm-12 col-md-12 col-lg-12 col-xs-12" style="text-align: center;font-size: 0.8em;color: #58595B;padding: 10px;">
+                        <apex:outputText escape="false" value="{!$Label.CN_Doctor_Statement}"/>
+                    </div>
+                </div>
+                <div id="paginationPanelWrapper">
+                <apex:outputPanel id="paginationPanel" layout="block">
+                    <apex:outputPanel layout="block" rendered="{!renderShowMore}">
+                        <div class="bs col-lg-12 col-xs-12">
+                            <div id="pagination-controls" class="doctor-pagination">
+                                <apex:outputPanel rendered="{!hasPreviousPage}" layout="none">
+                                    <span class="doctor-pagination-link" onclick="Cigna.DrList.loadList({!currentpage - 1});">{!$Label.Page_Previous}</span>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!NOT(hasPreviousPage)}" layout="none">
+                                    <span class="doctor-pagination-link is-disabled">{!$Label.Page_Previous}</span>
+                                </apex:outputPanel>
+                                <apex:repeat value="{!paginationPages}" var="pageNumber">
+                                    <span class="doctor-pagination-link {!IF(pageNumber = currentpage, 'is-active', '')}" onclick="if ({!pageNumber} != {!currentpage}) { Cigna.DrList.loadList({!pageNumber}); }">{!pageNumber}</span>
+                                </apex:repeat>
+                                <apex:outputPanel rendered="{!hasNextPage}" layout="none">
+                                    <span class="doctor-pagination-link" onclick="Cigna.DrList.loadList({!currentpage + 1});">{!$Label.Page_Next}</span>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!NOT(hasNextPage)}" layout="none">
+                                    <span class="doctor-pagination-link is-disabled">{!$Label.Page_Next}</span>
+                                </apex:outputPanel>
+                            </div>
+                            <i id="pagination-icon" style="display: none;color:#004986;font-size: 1.5em;margin: 10px;" class="bs spinner-icon fa fa-spinner fa-pulse fa-fw"></i>
+                        </div>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+                </div>
+                
+
+
+                <div id="clinic-done" class="bs col-sm-12 col-md-12 col-xs-12 col-lg-12" style="{!IF(currentPanel == 'F','','display:none;')}">
+                    <div class="bs row">
+                        <div class="bs col-sm-12 col-lg-12 cigna-fg-green-medium" style="font-size: 3.8em;margin-bottom: 10px;text-align: center;padding: 10px 0;">
+                            <i class="fa fa-check-circle-o" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                    <div class="bs row">
+                        <div class="bs col-md-4 col-xs-0  col-sm-3 col-lg-4"></div>
+                        <div class="bs col-md-4 col-xs-12  col-sm-6 col-lg-4" style="text-align: center;font-size: 1em;">
+                            <p>{!$Label.Doctor_List_Booking_Done}</p>
+                        </div>
+                        <div class="bs col-md-4 col-xs-0  col-sm-3 col-lg-4"></div>
+                    </div>
+                    <div id="action-bar" class="bs visible-xs cigna-floating-bottom-panel" style="left:0px;">
+                        <div id="back-btn" class="bs cigna-action-btn-group cigna-fg-white cigna-bg-orange-dark" onclick="DrListAF.backRefresh()">
+                            <a class="action-btn cigna-fg-white" role="button">
+                                <i class="ci-hk-doctor" aria-hidden="true"></i>
+                                <br/>{!$Label.Doctor_List_Back_To_List_Button}
+                            </a>
+                        </div>
+                    </div>
+                    <div class="bs row hidden-xs" style="padding-bottom: 20px;">
+                        <div class="bs col-sm-4 col-md-4 col-xs-3 col-lg-4 "></div>
+                        <div id="back-btn-dt" onclick="DrListAF.backRefresh()" class="bs col-sm-4 col-md-4 onclick-pointer col-xs-6 col-lg-4 mobile-version-button cigna-fg-white cigna-bg-orange-dark desktop-action-btn">
+                                {!$Label.Doctor_List_Back_To_List_Button}
+                        </div>
+                        <div class="bs col-sm-4 col-md-4 col-xs-3 col-lg-4"></div>
+                    </div>
+                </div>
+                <!-- Modal -->
+                <div class="modal fade" id="myModal" role="dialog" style="text-align: center;z-index: 8;">
+                    <span class="bs loading-helper"></span>
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header" style="padding: 0px;border: none;">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            </div>
+                            <div id="modal-clinic-detail" class="modal-body" style="padding-top: 0px; margin-left: 15px; margin-right: 15px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </apex:form>
+</apex:page>

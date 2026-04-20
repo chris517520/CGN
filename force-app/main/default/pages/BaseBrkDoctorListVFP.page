@@ -399,6 +399,40 @@
                 overflow-x: hidden;
             }
 
+            .bs .doctor-pagination {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                margin: 10px;
+                margin-bottom: 20px;
+                width: 100%;
+            }
+
+            .bs .doctor-pagination-link {
+                display: inline-block;
+                min-width: 32px;
+                padding: 5px 10px;
+                text-align: center;
+                border: 1px solid #004986;
+                color: #004986;
+                background: #fff;
+                cursor: pointer;
+            }
+
+            .bs .doctor-pagination-link.is-active {
+                color: #fff;
+                background: #004986;
+                cursor: default;
+            }
+
+            .bs .doctor-pagination-link.is-disabled {
+                border-color: #c8c9c7;
+                color: #c8c9c7;
+                cursor: default;
+            }
+
         </style>
         <script type="text/javascript">
             var changeLanguageWarningRequired = true;
@@ -408,14 +442,14 @@
 
                 function showLabelLoading() {
                     tempScrollTop = $('#ListView').scrollTop();
-                    $('#loadMore-label').hide();
-                    $('#loadMore-icon').fadeIn(100);
+                    $('#pagination-controls').hide();
+                    $('#pagination-icon').fadeIn(100);
                 }
 
                 function hideLabelLoading() {
                     $('#ListView').scrollTop(tempScrollTop);
-                    $('#loadMore-icon').hide();
-                    $('#loadMore-label').fadeIn(100);
+                    $('#pagination-icon').hide();
+                    $('#pagination-controls').fadeIn(100);
                 }
 
                 var myOptions = {
@@ -777,6 +811,7 @@
                 $('#searchPanel').attr('style','display:block');
                 $('#MapPan').show();
                 $('#backButton').attr('style','display:block');
+                $('#paginationPanelWrapper').show();
 
                 $('#initPage').hide();
                 $('#nextbtnxs').hide();
@@ -788,6 +823,7 @@
                 $('#searchPanel').attr('style','display:none');
                 $('#MapPan').hide();
                 $('#backButton').attr('style','display:none');
+                $('#paginationPanelWrapper').hide();
 
                 $('#initPage').show();
                 $('#nextbtnxs').show();
@@ -819,7 +855,7 @@
         <div class="bs">
             <apex:pageMessages ></apex:pageMessages>
             <!-- For HK List-->
-            <apex:actionFunction name="searchKeyWord" action="{!searchClinicByKeyWord}" reRender="TopPanel" namespace="DrListAF" status="loader-icon">
+            <apex:actionFunction name="searchKeyWord" action="{!searchClinicByKeyWord}" reRender="TopPanel,paginationPanel" namespace="DrListAF" status="loader-icon">
                 <apex:param name="firstParam" assignTo="{!currentpage}" value="1" />
             </apex:actionFunction>
 
@@ -827,7 +863,7 @@
 
             </apex:actionFunction>
 
-            <apex:actionFunction name="loadMore" action="{!loadMore}" namespace="DrListAF" reRender="TopPanel" oncomplete="
+            <apex:actionFunction name="loadMore" action="{!loadMore}" namespace="DrListAF" reRender="TopPanel,paginationPanel" oncomplete="
                 Cigna.DrList.hideLabelLoading();">
                 <apex:param name="firstParam" assignTo="{!currentpage}" value="" />
             </apex:actionFunction>
@@ -1502,14 +1538,7 @@
                                             <apex:variable var="rowNum" value="{!rowNum + 1}" />
                                         </apex:repeat>
                                         <!-- Load More -->
-                                        <apex:outputPanel layout="block" rendered="{!renderShowMore}">
-                                            <div class="bs">
-                                                <label id="loadMore-label" class="cigna-fg-white cigna-bg-blue-dark onclick-pointer"  onclick="Cigna.DrList.loadList({!currentpage+1});" style="padding: 5px;margin: 10px;margin-bottom: 20px;">
-                                                        {!$Label.Doctor_List_Load_More}
-                                                </label>
-                                                <i id="loadMore-icon" style="display: none;color:#004986;font-size: 1.5em;margin: 10px;" class="bs spinner-icon fa fa-spinner fa-pulse fa-fw"></i>
-                                            </div>
-                                        </apex:outputPanel>
+                                        <!-- Load More (replaced by paginationPanel below) -->
                                         <script>
                                             var isIE = /(MSIE|Trident\/|Edge\/)/i.test(navigator.userAgent);
                                             if(isIE){
@@ -1659,6 +1688,32 @@
                     </apex:outputPanel>
                 </div>
 
+                <div id="paginationPanelWrapper">
+                <apex:outputPanel id="paginationPanel" layout="block">
+                    <apex:outputPanel layout="block" rendered="{!renderShowMore}">
+                        <div class="bs col-lg-12 col-xs-12">
+                            <div id="pagination-controls" class="doctor-pagination">
+                                <apex:outputPanel rendered="{!hasPreviousPage}" layout="none">
+                                    <span class="doctor-pagination-link" onclick="Cigna.DrList.loadList({!currentpage - 1});">{!$Label.Page_Previous}</span>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!NOT(hasPreviousPage)}" layout="none">
+                                    <span class="doctor-pagination-link is-disabled">{!$Label.Page_Previous}</span>
+                                </apex:outputPanel>
+                                <apex:repeat value="{!paginationPages}" var="pageNumber">
+                                    <span class="doctor-pagination-link {!IF(pageNumber = currentpage, 'is-active', '')}" onclick="if ({!pageNumber} != {!currentpage}) { Cigna.DrList.loadList({!pageNumber}); }">{!pageNumber}</span>
+                                </apex:repeat>
+                                <apex:outputPanel rendered="{!hasNextPage}" layout="none">
+                                    <span class="doctor-pagination-link" onclick="Cigna.DrList.loadList({!currentpage + 1});">{!$Label.Page_Next}</span>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!NOT(hasNextPage)}" layout="none">
+                                    <span class="doctor-pagination-link is-disabled">{!$Label.Page_Next}</span>
+                                </apex:outputPanel>
+                            </div>
+                            <i id="pagination-icon" style="display: none;color:#004986;font-size: 1.5em;margin: 10px;" class="bs spinner-icon fa fa-spinner fa-pulse fa-fw"></i>
+                        </div>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+                </div>
 
                 <div id="clinic-done" class="bs col-sm-12 col-md-12 col-xs-12 col-lg-12" style="{!IF(currentPanel == 'F','','display:none;')}">
                     <div class="bs row">

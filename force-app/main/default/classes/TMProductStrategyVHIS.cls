@@ -45,16 +45,18 @@ public abstract class TMProductStrategyVHIS extends TMProductStrategy{
                         }
                     }
 
+                    // HKITSFDC_721 Remove family validation checking 
                     if (pis.availableDiscountMap.containsKey('YR1&2 17% YR3 42%')){
                         pis.availableDiscountMap.put('YR1&2 17% YR3 42%', false);
-                        if (ptvs.ctrl.amountOfPI > 1 && pis.pi.Benefit_Level__c != '1') {
+                        if (pis.pi.Benefit_Level__c != '1') { // remove ptvs.ctrl.amountOfPI > 1
                             pis.availableDiscountMap.put('YR1&2 17% YR3 42%', true);
                         }
                     }
                     
+                    // HKITSFDC_721 Remove family validation checking 
                     if (pis.availableDiscountMap.containsKey('YR1 17% DISCOUNT')){
                         pis.availableDiscountMap.put('YR1 17% DISCOUNT', false);
-                        if (!hasWithDeductible && ptvs.ctrl.amountOfPI > 1) {
+                        if (!hasWithDeductible) { // remove ptvs.ctrl.amountOfPI > 1
                             pis.availableDiscountMap.put('YR1 17% DISCOUNT', true);
                         } else if (hasWithDeductible && pis.pi.Benefit_Level__c == '1') {
                             pis.availableDiscountMap.put('YR1 17% DISCOUNT', true);

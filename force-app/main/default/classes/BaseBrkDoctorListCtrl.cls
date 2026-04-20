@@ -92,6 +92,7 @@ public class BaseBrkDoctorListCtrl {
     public Integer currentpage {get;set;}
     public Integer totalRecord {get;set;}
     public boolean renderShowMore {get;set;}
+    public Integer totalPages { get; set; }
     private boolean resetTotalRecord {get;set;}
     public boolean hideHeader {get;set;}
     private boolean IPMIChecked {get;set;}
@@ -252,6 +253,7 @@ public class BaseBrkDoctorListCtrl {
     }
     public void resetParams() {
         renderShowMore = false;
+        totalPages = 0;
         clinicIdByKeyWord = new Set<Id>();
         filterByKeyword = false;
         selectedPolicy = null;
@@ -559,6 +561,7 @@ public class BaseBrkDoctorListCtrl {
         wwSelectedCity = '';
         currentpage = 1;
         resetTotalRecord = true;
+        totalPages = 0;
         hideHeader = false;
         //add by Andy for Clinic display enhancement 2020-05-27
         showESF = false; //default as false
@@ -887,17 +890,16 @@ public class BaseBrkDoctorListCtrl {
             queryStr = queryStr.substring(0, queryStr.length()-1) + ')';
         }
 
+        String orderStr;
         if(!noUserLocation){
-            limitStr += ' ORDER BY Show_Prioritization_Flag__c DESC,DISTANCE( Coordinate__c, GEOLOCATION( :latitude, :longitude ), \'km\') ';
+            orderStr = ' ORDER BY Show_Prioritization_Flag__c DESC,DISTANCE( Coordinate__c, GEOLOCATION( :latitude, :longitude ), \'km\') ';
         } else {
-            limitStr += ' ORDER BY Show_Prioritization_Flag__c DESC,Name ';
+            orderStr = ' ORDER BY Show_Prioritization_Flag__c DESC,Name ';
         }
 
-        /*add by Tovid on 2021-09-15 for project: Veracode sep */
-        //limitStr += ' LIMIT '+ currentpage*recordPerPage;
-        Integer limitCount = currentpage*recordPerPage;
-        String limiCountStr = String.valueOf(limitCount);
-        limitStr += ' LIMIT '+ String.escapeSingleQuotes(limiCountStr); 
+        Integer limitCount = recordPerPage;
+        Integer offsetCount = (currentpage - 1) * recordPerPage;
+        limitStr = orderStr + ' LIMIT ' + String.valueOf(limitCount) + ' OFFSET ' + String.valueOf(offsetCount);
 
         System.debug('queryStr:'+details+ queryStr+limitStr);
         System.debug('searchCriteria:'+searchCriteria);
@@ -913,11 +915,18 @@ public class BaseBrkDoctorListCtrl {
             totalRecord = Database.countQuery(total + queryStr);
         }
 
-        if(totalRecord > currentpage*recordPerPage){
-            renderShowMore = true;
-        } else {
-            renderShowMore =  false;
+        totalPages = totalRecord == null || totalRecord == 0
+            ? 0
+            : Integer.valueOf(Math.ceil((Decimal) totalRecord / recordPerPage));
+
+        if (totalPages > 0 && currentpage > totalPages) {
+            currentpage = totalPages;
+            offsetCount = (currentpage - 1) * recordPerPage;
+            limitStr = orderStr + ' LIMIT ' + String.valueOf(limitCount) + ' OFFSET ' + String.valueOf(offsetCount);
+            availableClinicList = Database.query(details + queryStr + limitStr);
         }
+
+        renderShowMore = totalPages != null && totalPages > 0;
 
         System.debug('totalRecord:'+totalRecord);
 
@@ -1195,6 +1204,29 @@ public class BaseBrkDoctorListCtrl {
 
         return escapedText;
     }
+    
+    public Boolean getHasPreviousPage() {
+        return currentpage != null && currentpage > 1;
+    }
+
+    public Boolean getHasNextPage() {
+        return totalPages != null && currentpage != null && currentpage < totalPages;
+    }
+
+    public List<Integer> getPaginationPages() {
+        List<Integer> pageNumbers = new List<Integer>();
+        if (totalPages == null || totalPages == 0) {
+            return pageNumbers;
+        }
+        Integer windowSize = 10;
+        Integer startPage = ((currentpage - 1) / windowSize) * windowSize + 1;
+        Integer endPage = Math.min(startPage + windowSize - 1, totalPages);
+        for (Integer pageNumber = startPage; pageNumber <= endPage; pageNumber++) {
+            pageNumbers.add(pageNumber);
+        }
+        return pageNumbers;
+    }
+
     //add by Andy for Clinic display enhancement 2020-05-27
     /*public void checkESFAndOPRiderFunction(){
         PolicyCalloutHelper helper = new PolicyCalloutHelper();

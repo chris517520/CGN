@@ -869,8 +869,8 @@ public without sharing abstract class HttpCalloutHelperAbstract{
                         + '<requestBody>' + requestBody + '</requestBody>'
                         + '<responseBody>' + (response == null ? '' : response.getBody().escapeXML()) + '</responseBody>'
                         + '<responseStat>' + (response == null ? '' : response.getStatus()) + '</responseStat>'
-                        + '<errorMsg>' + errorMsg + '</errorMsg>'
-                        + '<errorDetail>' + errorDetail + '</errorDetail>'
+                        + '<errorMsg>' + (errorMsg == null ? '' : errorMsg.escapeXML()) + '</errorMsg>'
+                        + '<errorDetail>' + (errorDetail == null ? '' : errorDetail.escapeXML()) + '</errorDetail>' // HKITSFDC-213
                         + '<WSFunctionName>' + this.functionName + '</WSFunctionName>'
                         + '<callerId>' + userinfo.getUserId() + '</callerId>'
                         + '<callTime>' + callTimeStr + '</callTime>'

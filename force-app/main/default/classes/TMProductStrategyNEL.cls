@@ -37,10 +37,11 @@ public abstract class TMProductStrategyNEL extends TMProductStrategy{
                         pis.availableDiscountMap.put('SPECIAL 2ND YR 17% DISCOUNT', false);
                     }
 
-                    if (pis.availableDiscountMap.containsKey('YR1&2 17% YR3 25%') && 
-                    (ptvs.ctrl.amountOfPI == 1 || ('Son'.equals(pis.pi.Relationship__c) || 'Daughter'.equals(pis.pi.Relationship__c)))) {
-                        pis.availableDiscountMap.put('YR1&2 17% YR3 25%', false);
-                    }
+                    // HKITSFDC_721 Remove family validation checking 
+                    // if (pis.availableDiscountMap.containsKey('YR1&2 17% YR3 25%') && 
+                    // (ptvs.ctrl.amountOfPI == 1 || ('Son'.equals(pis.pi.Relationship__c) || 'Daughter'.equals(pis.pi.Relationship__c)))) {
+                    //     pis.availableDiscountMap.put('YR1&2 17% YR3 25%', false);
+                    // }
                 }
             }
         }
