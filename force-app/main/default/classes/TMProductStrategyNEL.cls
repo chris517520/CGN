@@ -557,70 +557,70 @@ public abstract class TMProductStrategyNEL extends TMProductStrategy{
     **/
 
     // Elite360 2026 Q1 validation
-    public void elite360_2026Q1ValidationCMT(){
-        Integer amountofInsured = ptvs.ctrl.amountOfPI;
-        List<String> lstDiscount = new List<String>{
-            '1 App. W/O Ext. Coverage',
-            '1 App. WITH Ext. Coverage',
-            '2-3 App. W/O Ext. Coverage',
-            '2-3 App. WITH Ext.Coverage',
-            '4-6 App. W/O Ext. Coverage',
-            '4-6 App. WITH Ext. Coverage',
-            'YR2 20% DISCOUNT'
-        };
-        // Only for NELG2 and NESG2
-        if (productCode != 'NELG2' && productCode != 'NESG2') {
-            return;
-        }
-        // Only for TM policies
-        for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
-            if(!pis.piPolicy.Policy_No__c.startsWith('CTM')){
-                return;
-            }
-        }
+    // public void elite360_2026Q1ValidationCMT(){
+    //     Integer amountofInsured = ptvs.ctrl.amountOfPI;
+    //     List<String> lstDiscount = new List<String>{
+    //         '1 App. W/O Ext. Coverage',
+    //         '1 App. WITH Ext. Coverage',
+    //         '2-3 App. W/O Ext. Coverage',
+    //         '2-3 App. WITH Ext.Coverage',
+    //         '4-6 App. W/O Ext. Coverage',
+    //         '4-6 App. WITH Ext. Coverage',
+    //         'YR2 20% DISCOUNT'
+    //     };
+    //     // Only for NELG2 and NESG2
+    //     if (productCode != 'NELG2' && productCode != 'NESG2') {
+    //         return;
+    //     }
+    //     // Only for TM policies
+    //     for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
+    //         if(!pis.piPolicy.Policy_No__c.startsWith('CTM')){
+    //             return;
+    //         }
+    //     }
         
-        // Set default false
-        for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
-            for (String discountType : lstDiscount) {
-                if (pis.availableDiscountMap.containsKey(discountType)) {
-                    pis.availableDiscountMap.put(discountType, false);
-                }
-            }
-        }
+    //     // Set default false
+    //     for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
+    //         for (String discountType : lstDiscount) {
+    //             if (pis.availableDiscountMap.containsKey(discountType)) {
+    //                 pis.availableDiscountMap.put(discountType, false);
+    //             }
+    //         }
+    //     }
         
-        // set to true base on the amount of insured and insured type
-        for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
-            for (String discountType : lstDiscount) {
-                if (pis.availableDiscountMap.containsKey(discountType)) {
-                    if (pis.pi.Insured_Type__c == 'PH = PI' || pis.pi.Insured_Type__c == 'Spouse') {
-                        if (amountofInsured == 1) {
-                            if (discountType == '1 App. W/O Ext. Coverage' || discountType == '1 App. WITH Ext. Coverage') {
-                                pis.availableDiscountMap.put(discountType, true);   
-                            }
-                            // referral
-                            if (discountType == '2-3 App. W/O Ext. Coverage' || discountType == '2-3 App. WITH Ext.Coverage') {
-                                pis.availableDiscountMap.put(discountType, true);     
-                            }
-                        } else if (amountofInsured >= 2 && amountofInsured <= 3) {
-                            if (discountType == '2-3 App. W/O Ext. Coverage' || discountType == '2-3 App. WITH Ext.Coverage') {
-                                pis.availableDiscountMap.put(discountType, true);     
-                            }
-                        } else if (amountofInsured >= 4 && amountofInsured <= 5) {
-                            if (discountType == '4-6 App. W/O Ext. Coverage' || discountType == '4-6 App. WITH Ext. Coverage') {
-                                pis.availableDiscountMap.put(discountType, true);     
-                            }             
-                        }
-                    }
+    //     // set to true base on the amount of insured and insured type
+    //     for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){
+    //         for (String discountType : lstDiscount) {
+    //             if (pis.availableDiscountMap.containsKey(discountType)) {
+    //                 if (pis.pi.Insured_Type__c == 'PH = PI' || pis.pi.Insured_Type__c == 'Spouse') {
+    //                     if (amountofInsured == 1) {
+    //                         if (discountType == '1 App. W/O Ext. Coverage' || discountType == '1 App. WITH Ext. Coverage') {
+    //                             pis.availableDiscountMap.put(discountType, true);   
+    //                         }
+    //                         // referral
+    //                         if (discountType == '2-3 App. W/O Ext. Coverage' || discountType == '2-3 App. WITH Ext.Coverage') {
+    //                             pis.availableDiscountMap.put(discountType, true);     
+    //                         }
+    //                     } else if (amountofInsured >= 2 && amountofInsured <= 3) {
+    //                         if (discountType == '2-3 App. W/O Ext. Coverage' || discountType == '2-3 App. WITH Ext.Coverage') {
+    //                             pis.availableDiscountMap.put(discountType, true);     
+    //                         }
+    //                     } else if (amountofInsured >= 4 && amountofInsured <= 5) {
+    //                         if (discountType == '4-6 App. W/O Ext. Coverage' || discountType == '4-6 App. WITH Ext. Coverage') {
+    //                             pis.availableDiscountMap.put(discountType, true);     
+    //                         }             
+    //                     }
+    //                 }
 
-                    // 1 Child discount
-                    if (pis.pi.PI_Age__c < 18 && amountofInsured == 1) {
-                        if (discountType == '1 App. W/O Ext. Coverage' || discountType == '1 App. WITH Ext. Coverage') {
-                            pis.availableDiscountMap.put(discountType, true);   
-                        }
-                    }
-                }
-            }   
-        }
-    }
+    //                 // 1 Child discount
+    //                 if (pis.pi.PI_Age__c < 18 && amountofInsured == 1) {
+    //                     if (discountType == '1 App. W/O Ext. Coverage' || discountType == '1 App. WITH Ext. Coverage') {
+    //                         pis.availableDiscountMap.put(discountType, true);   
+    //                     }
+    //                 }
+    //             }
+    //         }   
+    //     }
+    // }
 
 }

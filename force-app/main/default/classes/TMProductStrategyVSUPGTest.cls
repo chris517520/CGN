@@ -88,6 +88,8 @@ public class TMProductStrategyVSUPGTest{
         pi1.PI_Age__c = 40;
         pis1.availableDiscountMap = new Map<String, Boolean>();
         pis1.availableDiscountMap.put('SPOUSE DISCOUNT',true);
+        pis1.availableDiscountMap.put('SPECIAL 2ND YR 17% DISCOUNT',true);
+        pis1.availableDiscountMap.put('YR1&2 17% YR3 42%',true);
         pis1.pi = pi1;
         pis1.piPolicy = np1;
         piList.add(pis1); 
@@ -100,6 +102,8 @@ public class TMProductStrategyVSUPGTest{
         pi2.PI_Age__c = 38;
         pis2.availableDiscountMap = new Map<String, Boolean>();
         pis2.availableDiscountMap.put('SPOUSE DISCOUNT',true);
+        pis2.availableDiscountMap.put('SPECIAL 2ND YR 17% DISCOUNT',true);
+        pis2.availableDiscountMap.put('YR1&2 17% YR3 42%',true);
         pis2.pi = pi2;
         pis2.piPolicy = np2;
         piList.add(pis2); 
@@ -114,6 +118,9 @@ public class TMProductStrategyVSUPGTest{
         pis3.availableDiscountMap.put('CHILD DISCOUNT*',true);
         pis3.availableDiscountMap.put('GROUP DISCOUNT (CHILD)',true);
         pis3.availableDiscountMap.put('KIDS DISCOUNT',true);
+        pis3.availableDiscountMap.put('KIDS DISCOUNT',true);
+        pis3.availableDiscountMap.put('SPECIAL 2ND YR 17% DISCOUNT',true);
+        pis3.availableDiscountMap.put('YR1&2 17% YR3 42%',true);
         pis3.pi = pi3;
         pis3.piPolicy = np3;
         piList.add(pis3); 
@@ -170,10 +177,12 @@ public class TMProductStrategyVSUPGTest{
     }
 
     @isTest
-    static void testvhisSuper_2026Q1Validation(){
+    static void testDiscountValidation4(){
         generateData();
         Map<String, Boolean> availableDiscountMap = new Map<String, Boolean>();
-        availableDiscountMap.put('1 App. W/O Ext. Coverage', true);
+        availableDiscountMap.put('SPECIAL 2ND YR 17% DISCOUNT', true);
+        availableDiscountMap.put('YR1&2 17% YR3 42%', true);
+        availableDiscountMap.put('YR1 17% DISCOUNT', true);
         for (TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList) {
             System.debug('PersonInsuredStructure:');
             pis.availableDiscountMap = availableDiscountMap;
@@ -183,7 +192,7 @@ public class TMProductStrategyVSUPGTest{
         Test.setMock(HttpcalloutMock.class,ResponseMock);
         TMProductStrategyVSUPG tmpsvsupg = new TMProductStrategyVSUPG(ptvs);
         selectedProduct.Product_Code__c = 'VSUPG';
-        tmpsvsupg.vhisSuper_2026Q1Validation();
+        tmpsvsupg.discountValidation();
         Test.stopTest();
     }
     
