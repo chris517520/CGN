@@ -29,11 +29,6 @@ public without sharing class TaskTriggerHandler{
     
     public static void onBeforeInsert(List<Task> newList){
         system.debug('TaskTriggerHandler.onBeforeInsert in');
-        for (Task t : newList) {
-            System.debug('New Task Record Type: ' + recordTypeMap.get(t.recordTypeId));
-            System.debug('New isSetReminder: ' + t.IsReminderSet);
-            System.debug('New ReminderDateTime: ' + t.ReminderDateTime);
-        }
         If(isBDUser){
             TaskTriggerHandler.dueDateValidation(newList);
         }
@@ -141,9 +136,12 @@ public without sharing class TaskTriggerHandler{
         if(!tmtaskList.isEmpty()){
             TaskTriggerHandler.updateRelatedAccount(tmtaskList);
             TaskTriggerHandler.updateOppFieldsAfterCreateForTM(tmtaskList);
-            // TaskTriggerHandler.insertOptoutHistory(new Map<Id, Task>(), tmtaskList); // HKITSFDC-451 Remove automation of auto-create Opt_out_History__c
+            TaskTriggerHandler.insertOptoutHistory(new Map<Id, Task>(), tmtaskList); // HKITSFDC - 563 optout history
             // TaskTriggerHandler.newSARecd(tmtaskList);// Rancho_SpeechAnalytics_20210607
         }
+        //HKITSFDC-542 BEGIN
+        TaskTriggerHandler.enqueueStpDropOffUpdateSavedAppOnAfterInsert(newList);
+        //HKITSFDC-542 ENDED
         system.debug('TaskTriggerHandler.onAfterInsert out');
     }
     
@@ -202,7 +200,7 @@ public without sharing class TaskTriggerHandler{
         if(!tmtaskList.isEmpty()){
             TaskTriggerHandler.updateRelatedAccount(tmtaskList);
             TaskTriggerHandler.updateOppFieldsAfterUpdateForTM(tmtaskList);
-            // TaskTriggerHandler.insertOptoutHistory(oldMap, tmtaskList);// HKITSFDC-451 Remove automation of auto-create Opt_out_History__c 
+            TaskTriggerHandler.insertOptoutHistory(oldMap, tmtaskList); // HKITSFDC - 563 optout history
             // TaskTriggerHandler.newSARecd(tmtaskList);// Rancho_SpeechAnalytics_20210607
         }
         system.debug('TaskTriggerHandler.onAfterUpdate out');
@@ -318,7 +316,7 @@ public without sharing class TaskTriggerHandler{
         Map<Id,Task> oppIdTaskMap = new Map<Id,Task>();
         for(Task newTask : newList){
             String whatId = newTask.WhatId;
-            
+
             if(isOpportunityId(whatId)){
                 oppIdTaskMap.put(whatId, newTask);
             }
@@ -353,7 +351,6 @@ public without sharing class TaskTriggerHandler{
                     opp.Team_Leader_Approved__c = false;
                 }
             }
-            System.debug('oppList:'+oppList);
             update oppList;
         }
         system.debug('updateOppFieldsAfterCreateForTM end');
@@ -372,7 +369,7 @@ public without sharing class TaskTriggerHandler{
         system.debug('updateOppFieldsAfterUpdateForTM begin');
         Map<Id,Task> oppIdTaskMap = new Map<Id,Task>();
         for(Task newTask : newList){
-            String whatId = newTask.WhatId;  
+            String whatId = newTask.WhatId;
             if(isOpportunityId(whatId)){
                 oppIdTaskMap.put(whatId, newTask);
             }
@@ -578,6 +575,52 @@ public without sharing class TaskTriggerHandler{
         return(whatId != null && whatId.startsWith(Schema.SObjectType.Opportunity.getKeyPrefix()));
     }
     
+     //HKITSFDC-542 BEGIN
+    public static void enqueueStpDropOffUpdateSavedAppOnAfterInsert(List<Task> newList) {
+        if (newList == null || newList.isEmpty()) {
+            return;
+        }
+        Set<Id> oppIds = new Set<Id>();
+        List<Task> candidates = new List<Task>();
+        for (Task t : newList) {
+            if (recordTypeMap.get(t.RecordTypeId) != RECORD_TYPE_TM_CALL) {
+                continue;
+            }
+            if (!isOpportunityId(String.valueOf(t.WhatId))) {
+                continue;
+            }
+            String term = STPDropOffCalloutHelper.getTermCodeFromTask(t);
+            if (!STPDropOffCalloutHelper.isStpDropOffQualifiedTerm(term)) {
+                continue;
+            }
+            candidates.add(t);
+            oppIds.add(t.WhatId);
+        }
+        if (candidates.isEmpty()) {
+            return;
+        }
+        //HKITSFDC-542 STPDropOff remove (enqueue gated on Opportunity.Source_of_Activity__c / Opportunity.TM_Followed__c)
+        //Map<Id, Opportunity> oppMap = new Map<Id, Opportunity>([
+        //    SELECT Id, Source_of_Activity__c, TM_Followed__c FROM Opportunity WHERE Id IN :oppIds
+        //]);
+        //if (o != null && o.Source_of_Activity__c == STPDropOffCalloutHelper.STP_ACTIVITY && o.TM_Followed__c != true) {
+        Set<Id> oppIdsWithResumeNpNotFollowed = STPDropOffCalloutHelper.opportunityIdsWithStpResumePolicyNotFollowed(oppIds); //HKTISFDC-542 followup gate — NP TM_Followed__c false + ResumeUrl__c
+        Set<Id> taskIdSet = new Set<Id>();
+        for (Task t : candidates) {
+            if (oppIdsWithResumeNpNotFollowed.contains(t.WhatId)) { //HKTISFDC-542 followup gate
+                taskIdSet.add(t.Id); //HKTISFDC-542 followup gate
+            } //HKTISFDC-542 followup gate
+        }
+        if (taskIdSet.isEmpty()) {
+            return;
+        }
+        if (!System.isFuture() && !System.isBatch()) {
+            STPDropOffCalloutHelper.processTaskIdsAsync(new List<Id>(taskIdSet));
+        }
+    }
+    //HKITSFDC-542 ENDED
+
+    
     /*
     * DPSP-607
     *   Logic 1. Define term code with different levels, and any new call details of the oppty should 
@@ -671,7 +714,7 @@ public without sharing class TaskTriggerHandler{
                             system.debug('[TaskTriggerHandler] checkCallResultLevel logic5 term code level validation failed >>' + t.result__c);
                             t.addError('Success term code 407 could be entered only when latest manual application record is inputted.');
                             continue;
-                        }                   
+                        }
                     }
                 }
             }
@@ -767,7 +810,7 @@ public without sharing class TaskTriggerHandler{
             }
         }
     }
-        
+    
     /**
      *  Rancho_SpeechAnalytics_20210607 new Speech Analytics Log record when log a call
      **/
