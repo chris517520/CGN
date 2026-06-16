@@ -36,9 +36,10 @@ public abstract class TMProductStrategyCI extends TMproductStrategy{
                     if (pis.availableDiscountMap.containsKey('YR1 35% DISCOUNT') && ptvs.ctrl.amountOfPI > 1){
                         pis.availableDiscountMap.put('YR1 35% DISCOUNT', false);
                     }
-                    if (pis.availableDiscountMap.containsKey('YR1 50% DISCOUNT') && ptvs.ctrl.amountOfPI == 1){
-                        pis.availableDiscountMap.put('YR1 50% DISCOUNT', false);
-                    }
+                    // HKITSFDC_721 Remove family validation checking 
+                    // if (pis.availableDiscountMap.containsKey('YR1 50% DISCOUNT') && ptvs.ctrl.amountOfPI == 1){
+                    //     pis.availableDiscountMap.put('YR1 50% DISCOUNT', false);
+                    // }
                 }
             }
         }

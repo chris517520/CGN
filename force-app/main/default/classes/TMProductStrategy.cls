@@ -194,6 +194,7 @@ public abstract class TMProductStrategy{
             //PI inforcePolicies in SFDC preparation
             Map<String,List<Person_insured__c>> piPersonalIdPIPolicyListMap = getPiPersonalIdPIPolicyListMap(ptvs.ctrl.personInsuredStructureList, productCode, pvc.Duplicate_Policy_Checking__c);            
             List<GA_Product_Validation_Checking__c> GAProductValidationCheckingTable = getGAProductValidationCheckingTable();
+            Map<String, String> mapExistingPolicy = getPolicyUnderOpportunity(ptvs.ctrl.personInsuredStructureList, ptvs.ctrl.opportunityId); // HKIDSFDC_536 bundle policy number validation
             for(TMCreatePolicyCtrl.PersonInsuredStructure pis : ptvs.ctrl.personInsuredStructureList){                
                 // rest flag
                 pis.piValidationItem.otherValidation=true;
@@ -213,6 +214,18 @@ public abstract class TMProductStrategy{
                     break;
                 }
                 //SPS-333
+
+                //HKIDSFDC_536 bundle policy number validation
+                System.debug('>>> HKIDSFDC_536 bundle policy number validation: pis.piValidationItem.otherValidation: ' + pis.piValidationItem.otherValidation);
+                if (pis.piValidationItem.otherValidation && String.isNotBlank(pis.pi.Bundle_Policy_Number__c)){
+                    if (!mapExistingPolicy.containsKey(pis.pi.Bundle_Policy_Number__c) ||
+                        mapExistingPolicy.get(pis.pi.Bundle_Policy_Number__c) != pis.pi.Personal_ID__c){
+                        ptvs.ctrl.pageMsg = 'Please confirm you have inputted the correct bundle Policy no.';
+                        pis.piValidationItem.otherValidation=false;
+                        break;
+                    }
+                }
+
                 
                  /**
                  * SSN Check add by kermit
@@ -874,5 +887,33 @@ public abstract class TMProductStrategy{
     
     private List<GA_Product_Validation_Checking__c> getGAProductValidationCheckingTable(){       
         return [select name,AUW__c,Channel__c,Insured_Type__c,Post_Duplication_Checking__c,Side_Order__c,UW_Requirement__c from GA_Product_Validation_Checking__c];
+    }
+
+    
+    /**
+    * @description Get the policy number with the same opportunity for the insured person 
+    * @param personInsuredStructureList 
+    * @param opportunityId
+    * @return Map<String, String> 
+    **/
+    private Map<String, String> getPolicyUnderOpportunity(List<TMCreatePolicyCtrl.PersonInsuredStructure> personInsuredStructureList, String opportunityId){
+        Map<String, String> mapExistingPolicy = new Map<String, String>();
+        Set<String> piIdSet = new Set<String>();
+        Set<String> policyIdSet = new Set<String>();
+        for (TMCreatePolicyCtrl.PersonInsuredStructure pis : personInsuredStructureList) {
+            piIdSet.add(pis.pi.Personal_ID__c);
+            policyIdSet.add(pis.piPolicy.id);
+        }
+        System.debug('piIdSet: ' + piIdSet);
+        System.debug('policyIdSet: ' + policyIdSet);
+        system.debug('opportunityId: ' + opportunityId);
+        for(Person_Insured__c np : [SELECT Id,Personal_ID__c,New_Policy__r.Policy_No__c FROM Person_Insured__c 
+                                    WHERE Personal_ID__c IN :piIdSet 
+                                    AND New_Policy__r.Policy_Status__c='Completed' 
+                                    AND New_Policy__r.Opportunity__c = :opportunityId
+                                    AND New_Policy__r.Id NOT IN :policyIdSet]){
+            mapExistingPolicy.put(np.New_Policy__r.Policy_No__c, np.Personal_ID__c);
+        }
+        return mapExistingPolicy;
     }
 }
