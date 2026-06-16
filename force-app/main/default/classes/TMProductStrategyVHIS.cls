@@ -63,10 +63,41 @@ public abstract class TMProductStrategyVHIS extends TMProductStrategy{
                         }
                     }
 
-                    if (pis.availableDiscountMap.containsKey('YR2 9% YR3 7%')) {
-                        pis.availableDiscountMap.put('YR2 9% YR3 7%', false);
+                    // HKITSFDC_751 2026 Q3 discount code
+                    // 98
+                    if (pis.availableDiscountMap.containsKey('YR2 9% YR3 7% DISCOUNT')) {
+                        pis.availableDiscountMap.put('YR2 9% YR3 7% DISCOUNT', false);
                         if (pis.pi.Benefit_Level__c != '1') {
-                            pis.availableDiscountMap.put('YR2 9% YR3 7%', true);
+                            pis.availableDiscountMap.put('YR2 9% YR3 7% DISCOUNT', true);
+                        }
+                    }
+
+                    //83
+                    if (pis.availableDiscountMap.containsKey('YR1 50% DISCOUNT')) {
+                        pis.availableDiscountMap.put('YR1 50% DISCOUNT', false);
+                        if (pis.pi.Benefit_Level__c != '1') {
+                            pis.availableDiscountMap.put('YR1 50% DISCOUNT', true);
+                        }
+                    }
+                    //A1
+                    if (pis.availableDiscountMap.containsKey('SPECIAL YR1 & YR2 DISCOUNT 1')) {
+                        pis.availableDiscountMap.put('SPECIAL YR1 & YR2 DISCOUNT 1', false);
+                        if (pis.pi.Benefit_Level__c != '1') {
+                            pis.availableDiscountMap.put('SPECIAL YR1 & YR2 DISCOUNT 1', true);
+                        }
+                    }
+                    //A2
+                    if (pis.availableDiscountMap.containsKey('SPECIAL YR1 & YR2 DISCOUNT 2')) {
+                        pis.availableDiscountMap.put('SPECIAL YR1 & YR2 DISCOUNT 2', false);
+                        if (pis.pi.Benefit_Level__c != '1') {
+                            pis.availableDiscountMap.put('SPECIAL YR1 & YR2 DISCOUNT 2', true);
+                        }
+                    }
+                    //A3
+                    if (pis.availableDiscountMap.containsKey('SPECIAL YR1 & YR2 DISCOUNT 3')) {
+                        pis.availableDiscountMap.put('SPECIAL YR1 & YR2 DISCOUNT 3', false);
+                        if (pis.pi.Benefit_Level__c != '1') {
+                            pis.availableDiscountMap.put('SPECIAL YR1 & YR2 DISCOUNT 3', true);
                         }
                     }
                 }

@@ -40,6 +40,22 @@ public abstract class TMProductStrategyCI extends TMproductStrategy{
                     // if (pis.availableDiscountMap.containsKey('YR1 50% DISCOUNT') && ptvs.ctrl.amountOfPI == 1){
                     //     pis.availableDiscountMap.put('YR1 50% DISCOUNT', false);
                     // }
+                    // HKITSFDC_721 end
+
+                    // HKITSFDC_751 2026 Q3 Discount code
+                    if (pis.availableDiscountMap.containsKey('YR1 35% DISCOUNT')) {
+                        pis.availableDiscountMap.put('YR1 35% DISCOUNT', false);
+                        if (productCode == 'CIB25') {
+                            pis.availableDiscountMap.put('YR1 35% DISCOUNT', true);
+                        }
+                    }
+
+                    if (pis.availableDiscountMap.containsKey('YR1 55% PROMOTION DISCOUNT')) {
+                        pis.availableDiscountMap.put('YR1 55% PROMOTION DISCOUNT', false);
+                        if (productCode == 'CIR25') {
+                            pis.availableDiscountMap.put('YR1 55% PROMOTION DISCOUNT', true);
+                        }
+                    }
                 }
             }
         }

@@ -47,11 +47,11 @@ public abstract class TMProductStrategyAB extends TMProductStrategy{
                 }
                 System.debug('AB current available discount map: '+pis.availableDiscountMap);
 
-                // HKITSFDC_688_Discount
-                if (pis.availableDiscountMap.containsKey('YR2 9% YR3 7%')) {
-                    pis.availableDiscountMap.put('YR2 9% YR3 7%', false);
+                // HKITSFDC_688_Discount & HKITSFDC_751 2026 Q3 Discount code
+                if (pis.availableDiscountMap.containsKey('YR2 9% YR3 7% DISCOUNT')) {
+                    pis.availableDiscountMap.put('YR2 9% YR3 7% DISCOUNT', false);
                     if (pis.pi.Benefit_Level__c != '1' && pis.pi.Benefit_Level__c != '5' && pis.pi.Benefit_Level__c != '9') {
-                        pis.availableDiscountMap.put('YR2 9% YR3 7%', true);
+                        pis.availableDiscountMap.put('YR2 9% YR3 7% DISCOUNT', true);
                     }
                 }
             }
