@@ -73,6 +73,7 @@ public without sharing class TMCreateAccAndOppCtrl{
     public Account accountAfterProcess{get;set;}
 
     public boolean isUnidentifiedCall{get;set;}
+    public boolean isOverallOptout{get;set;}
 
     public Integer ACCage{get;set;}
 
@@ -110,6 +111,8 @@ public without sharing class TMCreateAccAndOppCtrl{
         newOppty = new Opportunity();
         newOppty.name = 'DO NOT MODIFY';
         isUnidentifiedCall = false;
+        isOverallOptout = true;
+
         isTransfer = false;
         isDirectCreate = false;
         
@@ -251,6 +254,7 @@ public without sharing class TMCreateAccAndOppCtrl{
         newAccount.LastName = lastName;
         newAccount.FirstName = firstName;
         newAccount.Salutation = salutation;
+        newAccount.Overall_Opt_Out__pc = isOverallOptout;
         if(acctAge != null && acctAge != ''){
             newAccount.Age__c = Decimal.valueOf(acctAge);
         }

@@ -1372,7 +1372,7 @@ global class MyCgnRegisterUser {
      * @param    req          [RegisterData]
      */
     public static void updateContOpt(RegisterData req){
-        User regisUser=[SELECT Id,ContactId,MobilePhone,Email FROM User WHERE Id=:req.userId];
+        User regisUser=[SELECT Id,ContactId,MobilePhone,Email,AccountId FROM User WHERE Id=:req.userId];
         Contact cont=new Contact();
         Boolean isTDUser=String.isNotBlank(req.isTDUser)?true:false;
         if(String.isNotBlank(regisUser.ContactId)){
