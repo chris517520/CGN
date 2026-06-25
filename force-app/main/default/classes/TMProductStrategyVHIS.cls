@@ -80,24 +80,24 @@ public abstract class TMProductStrategyVHIS extends TMProductStrategy{
                         }
                     }
                     //A1
-                    if (pis.availableDiscountMap.containsKey('SPECIAL YR1 & YR2 DISCOUNT 1')) {
-                        pis.availableDiscountMap.put('SPECIAL YR1 & YR2 DISCOUNT 1', false);
+                    if (pis.availableDiscountMap.containsKey('2026Q3 2-3PPL')) {
+                        pis.availableDiscountMap.put('2026Q3 2-3PPL', false);
                         if (pis.pi.Benefit_Level__c != '1') {
-                            pis.availableDiscountMap.put('SPECIAL YR1 & YR2 DISCOUNT 1', true);
+                            pis.availableDiscountMap.put('2026Q3 2-3PPL', true);
                         }
                     }
                     //A2
-                    if (pis.availableDiscountMap.containsKey('SPECIAL YR1 & YR2 DISCOUNT 2')) {
-                        pis.availableDiscountMap.put('SPECIAL YR1 & YR2 DISCOUNT 2', false);
+                    if (pis.availableDiscountMap.containsKey('2026Q3 4-5PPL')) {
+                        pis.availableDiscountMap.put('2026Q3 4-5PPL', false);
                         if (pis.pi.Benefit_Level__c != '1') {
-                            pis.availableDiscountMap.put('SPECIAL YR1 & YR2 DISCOUNT 2', true);
+                            pis.availableDiscountMap.put('2026Q3 4-5PPL', true);
                         }
                     }
                     //A3
-                    if (pis.availableDiscountMap.containsKey('SPECIAL YR1 & YR2 DISCOUNT 3')) {
-                        pis.availableDiscountMap.put('SPECIAL YR1 & YR2 DISCOUNT 3', false);
+                    if (pis.availableDiscountMap.containsKey('2026Q3 6PPL')) {
+                        pis.availableDiscountMap.put('2026Q3 6PPL', false);
                         if (pis.pi.Benefit_Level__c != '1') {
-                            pis.availableDiscountMap.put('SPECIAL YR1 & YR2 DISCOUNT 3', true);
+                            pis.availableDiscountMap.put('2026Q3 6PPL', true);
                         }
                     }
                 }

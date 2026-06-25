@@ -50,10 +50,10 @@ public abstract class TMProductStrategyCI extends TMproductStrategy{
                         }
                     }
 
-                    if (pis.availableDiscountMap.containsKey('YR1 55% PROMOTION DISCOUNT')) {
-                        pis.availableDiscountMap.put('YR1 55% PROMOTION DISCOUNT', false);
+                    if (pis.availableDiscountMap.containsKey('YR1 50% PROMOTION DISCOUNT')) {
+                        pis.availableDiscountMap.put('YR1 50% PROMOTION DISCOUNT', false);
                         if (productCode == 'CIR25') {
-                            pis.availableDiscountMap.put('YR1 55% PROMOTION DISCOUNT', true);
+                            pis.availableDiscountMap.put('YR1 50% PROMOTION DISCOUNT', true);
                         }
                     }
                 }
