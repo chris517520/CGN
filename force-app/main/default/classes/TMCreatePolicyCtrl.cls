@@ -586,7 +586,7 @@ global class TMCreatePolicyCtrl {
         isGAChannel=(cam.Channel__r.Is_GA_Channel__c==true);
         initProduct(cam);
         productIdCampaignMap.put(cam.Core_Product__c,cam);
-        isCXagent=couponUtil.checkCampaignScope(cam.Business_Partner__r.Sponsor_Code__c);//JOBR-217
+        isCXagent= couponUtil.checkCampaignScope(cam.Business_Partner__r.Sponsor_Code__c);//JOBR-217 , cannot change HKTISFDC-730
     }
     
     /** 
@@ -814,7 +814,8 @@ global class TMCreatePolicyCtrl {
             pIds.add(policy.id);
         }
         personInsuredStructureList=new List<PersonInsuredStructure>();
-         List<person_insured__c> piList = [select Id, Name, Other_Reason_for_PI_age_over_18__c,Reason_for_PI_age_over_18__c, Insured_Type__c,Benefit_Level__c,Rider__c,Insured_Last_Name__c, Basic_Plan__c,Insured_First_Name__c,Insured_Name_Chi__c,Marital_Status__c,Gender__c,Smoker__c,Date_of_Birth__c,Nationality__c,ID_Type__c,Personal_ID__c,Weight__c,Benefit_lv_DP_SP_larger_than_MI__c,Weight_Unit__c,Height__c,Height_Unit__c,Home_Phone__c,Mobile_Phone__c,Office_Phone__c,Email__c,Position__c,Income_HKD__c,Corresponding_Address_1__c,Insured_Type_Code__c,Corresponding_Address_2__c,Corresponding_Address_3__c,Corresponding_Address_4__c,Corresponding_Address_Country__c,New_Policy__c,New_Policy__r.Opportunity__r.RecordType.DeveloperName,New_Policy__r.Product_Code__c,New_Policy__r.Id, Person_Insured_Name__c, PI_Age__c,Relationship__c,Education_Level__c,Place_of_Birth__c,Parent_PI_ID__c,New_Policy__r.Pre_Sales_Result__c, New_Policy__r.UW_Result__c, New_Policy__r.UW_Overrall_Result__c,Residential_Address_1__c,Residential_Address_2__c,Residential_Address_3__c,Residential_Address_4__c,Is_Email_Needed__c,Height_Inch__c, LHB_certificate_number__c, LHB_policy_number__c, Declare_new_marriage_new_born_baby__c, Residential_Address_Country__c,Place_of_Residence_picklist__c,Spouse_PI_ID__c,Cancer_Declaration__c, Accident_Declaration__c,Is_GA__c,Asia_Miles_Membership_First_Name__c,Asia_Miles_Membership_Last_Name__c,Asia_Miles_Membership_Num__c,Bundle_policy_number__c,(select id,Last_Name__c,First_Name__c,Person_ID__c,Beneficiary_Type__c,Gender__c,Relationship__c,Percent__c,Person_Insured__c,Policy__c from Beneficiary__r )//AM project jack add/* add by Jack on 2021-12-03 for project: JR1829 */
+        // HKITSFDC-536 Add Bundle_policy_number__c in query
+        List<person_insured__c> piList = [select Id, Name, Other_Reason_for_PI_age_over_18__c,Reason_for_PI_age_over_18__c, Insured_Type__c,Benefit_Level__c,Rider__c,Insured_Last_Name__c, Basic_Plan__c,Insured_First_Name__c,Insured_Name_Chi__c,Marital_Status__c,Gender__c,Smoker__c,Date_of_Birth__c,Nationality__c,ID_Type__c,Personal_ID__c,Weight__c,Benefit_lv_DP_SP_larger_than_MI__c,Weight_Unit__c,Height__c,Height_Unit__c,Home_Phone__c,Mobile_Phone__c,Office_Phone__c,Email__c,Position__c,Income_HKD__c,Corresponding_Address_1__c,Insured_Type_Code__c,Corresponding_Address_2__c,Corresponding_Address_3__c,Corresponding_Address_4__c,Corresponding_Address_Country__c,New_Policy__c,New_Policy__r.Opportunity__r.RecordType.DeveloperName,New_Policy__r.Product_Code__c,New_Policy__r.Id, Person_Insured_Name__c, PI_Age__c,Relationship__c,Education_Level__c,Place_of_Birth__c,Parent_PI_ID__c,New_Policy__r.Pre_Sales_Result__c, New_Policy__r.UW_Result__c, New_Policy__r.UW_Overrall_Result__c,Residential_Address_1__c,Residential_Address_2__c,Residential_Address_3__c,Residential_Address_4__c,Is_Email_Needed__c,Height_Inch__c, LHB_certificate_number__c, LHB_policy_number__c, Declare_new_marriage_new_born_baby__c, Residential_Address_Country__c,Place_of_Residence_picklist__c,Spouse_PI_ID__c,Cancer_Declaration__c, Accident_Declaration__c,Is_GA__c,Asia_Miles_Membership_First_Name__c,Asia_Miles_Membership_Last_Name__c,Asia_Miles_Membership_Num__c,Bundle_policy_number__c,(select id,Last_Name__c,First_Name__c,Person_ID__c,Beneficiary_Type__c,Gender__c,Relationship__c,Percent__c,Person_Insured__c,Policy__c from Beneficiary__r )//AM project jack add/* add by Jack on 2021-12-03 for project: JR1829 */
          //(select Id, Application_Id__c, Full_Result__c, Is_Basic_Plan__c, Loading__c, Person_Insured__c, Policy__c, Presales_Result__c, Product__c, Source__c, Submission_Date_Time__c, Overrall_Result__c, 
 //Appeal__c, UW_EXCL_1__c, UW_EXCL_10__c, UW_EXCL_2__c, UW_EXCL_3__c, UW_EXCL_4__c, UW_EXCL_5__c, UW_EXCL_6__c, UW_EXCL_7__c, UW_EXCL_8__c, UW_EXCL_9__c,Remarks_to_Cigna_Underwriter__c,
 // Presales_Result_Attribute__c,AUW_URL__c,LastModifiedDate,PreSales_Result_Msg__c from UW_Result__r order by createddate desc)                                    
@@ -4173,15 +4174,6 @@ global class TMCreatePolicyCtrl {
         Boolean isError = false;
         System.debug('[selectDiscount1] currentPolicyNo='+currentPolicyNo);
         System.debug('[discount12Options] discount12Options='+discount12Options);
-        Set<String> set2026Q1Discount = new Set<String>{
-            '1 App. W/O Ext. Coverage',
-            '1 App. WITH Ext. Coverage',
-            '2-3 App. W/O Ext. Coverage',
-            '2-3 App. WITH Ext.Coverage',
-            '4-6 App. W/O Ext. Coverage',
-            '4-6 App. WITH Ext. Coverage',
-            'YR2 20% DISCOUNT'
-        };
         for(PersonInsuredStructure pis : personInsuredStructureList){
             // only validate the discount for current policy if current policy number is not blank
             // or validate the discount for all policies
@@ -4240,11 +4232,6 @@ global class TMCreatePolicyCtrl {
                 pis.discountErrorMsg='This discount 1 is not eligible';
                 pis.discount1=null;
                 isError = true;
-            }else if (set2026Q1Discount.contains(pis.discount2) && set2026Q1Discount.contains(pis.discount1)) {
-                pis.showDiscountErrorMsg=2;
-                pis.discountErrorMsg='This discount 1 is not eligible';
-                pis.discount1=null;
-                isError = true;
             }else{//jack add for friend and family discount in SFDC
                 pis.showDiscountErrorMsg=0;
             }
@@ -4268,15 +4255,6 @@ global class TMCreatePolicyCtrl {
         // Rancho_HKITSFDC398_20250909 - 2025Q4 CX Campaign - allow select different discount for each policy
         Boolean isError = false;
         System.debug('[selectDiscount2] currentPolicyNo='+currentPolicyNo);
-        Set<String> set2026Q1Discount = new Set<String>{
-            '1 App. W/O Ext. Coverage',
-            '1 App. WITH Ext. Coverage',
-            '2-3 App. W/O Ext. Coverage',
-            '2-3 App. WITH Ext.Coverage',
-            '4-6 App. W/O Ext. Coverage',
-            '4-6 App. WITH Ext. Coverage',
-            'YR2 20% DISCOUNT'
-        };
         
         for(PersonInsuredStructure pis : personInsuredStructureList){
             System.debug('pi policy no: '+pis.piPolicy.Policy_No__c);
@@ -4330,12 +4308,6 @@ global class TMCreatePolicyCtrl {
                 isError = true;
             }else if('YR1 50% DISCOUNT'.equals(pis.discount2) && amountOfPI > 5 && exceedDiscountUsageLimit(pis.discount2)){// Rancho_HKITSFDC402_20250930 - discount 83 only available for up to 5 policies
                 System.debug('discount usage limit exceeded');
-                ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR,'This discount 2 is not eligible'));
-                pis.showDiscountErrorMsg=2;
-                pis.discountErrorMsg='This discount 2 is not eligible';
-                pis.discount2=null;
-                isError = true;
-            }else if (set2026Q1Discount.contains(pis.discount2) && set2026Q1Discount.contains(pis.discount1)) { // Rancho_HKITSFDC406_20251205 - discount 1-6 apps only available for up to 6 policies
                 ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR,'This discount 2 is not eligible'));
                 pis.showDiscountErrorMsg=2;
                 pis.discountErrorMsg='This discount 2 is not eligible';
