@@ -73,7 +73,7 @@ public without sharing class TMCreateAccAndOppCtrl{
     public Account accountAfterProcess{get;set;}
 
     public boolean isUnidentifiedCall{get;set;}
-    public boolean isOverallOptout{get;set;}
+    public boolean isOverallOptout{get;set;} // HKITSFDC-563
 
     public Integer ACCage{get;set;}
 
@@ -111,7 +111,7 @@ public without sharing class TMCreateAccAndOppCtrl{
         newOppty = new Opportunity();
         newOppty.name = 'DO NOT MODIFY';
         isUnidentifiedCall = false;
-        isOverallOptout = true;
+        isOverallOptout = true; //HKITSFDC-563, default to true
 
         isTransfer = false;
         isDirectCreate = false;
@@ -254,7 +254,7 @@ public without sharing class TMCreateAccAndOppCtrl{
         newAccount.LastName = lastName;
         newAccount.FirstName = firstName;
         newAccount.Salutation = salutation;
-        newAccount.Overall_Opt_Out__pc = isOverallOptout;
+        newAccount.Overall_Opt_Out__pc = isOverallOptout; // HKITSFDC-563
         if(acctAge != null && acctAge != ''){
             newAccount.Age__c = Decimal.valueOf(acctAge);
         }
@@ -327,14 +327,19 @@ public without sharing class TMCreateAccAndOppCtrl{
                         ApexPages.Message msg = new ApexPages.Message(ApexPages.Severity.ERROR,'Invalid Mobile Phone number. Please input again.');
                         ApexPages.addMessage(msg);
                         validationPass = false;
+                    //HKITSFDC-766 Add the validation for mobile phone number opt-out
+                    }else if(processingHelper.processContactNumber(newAccount.personMobilePhone)=='') {                                            
+                        ApexPages.Message msg = new ApexPages.Message(ApexPages.Severity.ERROR,'Mobile number is opt-out in Marketing list.');
+                        ApexPages.addMessage(msg);
+                        validationPass = false;
                     }
+                    //HKITSFDC-766 End
                 }else if(isMobileEmpty && String.isNotBlank(newAccount.personMobilePhone)){
                     ApexPages.Message msg = new ApexPages.Message(ApexPages.Severity.ERROR,'Please check the mobile phone field.');
                     ApexPages.addMessage(msg);
                     validationPass = false;
                 }
-                
-                //3. Hotline Number validation
+                        //3. Hotline Number validation
                 //DPSP-493 If is referral case , the "Hotline Number" should not mandatory
                 if(!isReferralOpp){
                     if(!String.isNotBlank(newOppty.Hotline_Number__c) || !shortHotlineNumList.contains(newOppty.Hotline_Number__c)){
